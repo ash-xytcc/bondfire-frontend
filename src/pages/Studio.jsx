@@ -227,6 +227,10 @@ function makeShapeElement(patch = {}) {
 		radius: 16,
 		flipX: false,
 		flipY: false,
+		cropLeft: 0,
+		cropRight: 0,
+		cropTop: 0,
+		cropBottom: 0,
 		...patch,
 	};
 }
@@ -497,29 +501,68 @@ function getSelectionVisualMetrics(zoom, isMobileViewport) {
 
 
 
+function isCropCapableElement(el) {
+	return ["image", "svg", "shape"].includes(String(el?.type || ""));
+}
 
-function getCropValues(el) {
+function getElementCrop(el) {
 	return {
-		cropLeft: Math.max(0, Number(el?.cropLeft || 0)),
-		cropRight: Math.max(0, Number(el?.cropRight || 0)),
-		cropTop: Math.max(0, Number(el?.cropTop || 0)),
-		cropBottom: Math.max(0, Number(el?.cropBottom || 0)),
+		left: Math.max(0, Number(el?.cropLeft || 0)),
+		right: Math.max(0, Number(el?.cropRight || 0)),
+		top: Math.max(0, Number(el?.cropTop || 0)),
+		bottom: Math.max(0, Number(el?.cropBottom || 0)),
 	};
 }
 
-function getVisibleAssetFrame(el) {
-	const { cropLeft, cropRight, cropTop, cropBottom } = getCropValues(el);
+function getContentFrame(el) {
+	const crop = getElementCrop(el);
+	const frameWidth = Math.max(1, Number(el?.width || 1));
+	const frameHeight = Math.max(1, Number(el?.height || 1));
 	return {
-		width: Number(el?.width || 0),
-		height: Number(el?.height || 0),
-		totalWidth: Number(el?.width || 0) + cropLeft + cropRight,
-		totalHeight: Number(el?.height || 0) + cropTop + cropBottom,
-		cropLeft,
-		cropRight,
-		cropTop,
-		cropBottom,
+		frameWidth,
+		frameHeight,
+		contentWidth: frameWidth + crop.left + crop.right,
+		contentHeight: frameHeight + crop.top + crop.bottom,
+		offsetX: -crop.left,
+		offsetY: -crop.top,
+		crop,
 	};
 }
+
+function applyCropDrag(start, handle, dx, dy) {
+	const minFrame = 24;
+	let x = Number(start.x || 0);
+	let y = Number(start.y || 0);
+	let width = Math.max(minFrame, Number(start.width || minFrame));
+	let height = Math.max(minFrame, Number(start.height || minFrame));
+	let cropLeft = Math.max(0, Number(start.cropLeft || 0));
+	let cropRight = Math.max(0, Number(start.cropRight || 0));
+	let cropTop = Math.max(0, Number(start.cropTop || 0));
+	let cropBottom = Math.max(0, Number(start.cropBottom || 0));
+
+	if (handle === "w") {
+		const delta = clamp(dx, -cropLeft, width - minFrame);
+		x += delta;
+		width -= delta;
+		cropLeft += delta;
+	} else if (handle === "e") {
+		const delta = clamp(dx, -cropRight, width - minFrame);
+		width += delta;
+		cropRight -= delta;
+	} else if (handle === "n") {
+		const delta = clamp(dy, -cropTop, height - minFrame);
+		y += delta;
+		height -= delta;
+		cropTop += delta;
+	} else if (handle === "s") {
+		const delta = clamp(dy, -cropBottom, height - minFrame);
+		height += delta;
+		cropBottom -= delta;
+	}
+
+	return { x, y, width, height, cropLeft, cropRight, cropTop, cropBottom };
+}
+
 async function loadImageData(src) {
 	return await new Promise((resolve, reject) => {
 		const img = new Image();
@@ -578,7 +621,6 @@ function getElementTransform(el) {
 	return `rotate(${el?.rotation || 0}deg) scale(${scaleX}, ${scaleY})`;
 }
 
-
 async function renderDocToCanvas(doc, bindings) {
 	const canvas = document.createElement("canvas");
 	canvas.width = doc.width;
@@ -588,7 +630,6 @@ async function renderDocToCanvas(doc, bindings) {
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	for (const el of doc.elements || []) {
 		if (el.hidden) continue;
-		const frame = getVisibleAssetFrame(el);
 		ctx.save();
 		ctx.globalAlpha = Number(el.opacity ?? 1);
 		ctx.translate(Number(el.x || 0) + Number(el.width || 0) / 2, Number(el.y || 0) + Number(el.height || 0) / 2);
@@ -596,10 +637,11 @@ async function renderDocToCanvas(doc, bindings) {
 		ctx.scale(el.flipX ? -1 : 1, el.flipY ? -1 : 1);
 		ctx.translate(-Number(el.width || 0) / 2, -Number(el.height || 0) / 2);
 		if (el.type === "shape") {
+			const frame = getContentFrame(el);
 			ctx.save();
-			roundRectPath(ctx, 0, 0, frame.width, frame.height, Number(el.radius || 0));
+			roundRectPath(ctx, 0, 0, frame.frameWidth, frame.frameHeight, Number(el.radius || 0));
 			ctx.clip();
-			roundRectPath(ctx, -frame.cropLeft, -frame.cropTop, frame.totalWidth, frame.totalHeight, Number(el.radius || 0));
+			roundRectPath(ctx, frame.offsetX, frame.offsetY, frame.contentWidth, frame.contentHeight, Number(el.radius || 0));
 			ctx.fillStyle = el.fill || "transparent";
 			ctx.fill();
 			if (Number(el.strokeWidth || 0) > 0) {
@@ -611,19 +653,31 @@ async function renderDocToCanvas(doc, bindings) {
 		} else if (el.type === "svg" && el.svg) {
 			try {
 				const img = await loadImageData(svgMarkupToDataUrl(el.svg, el.fill));
+				const frame = getContentFrame(el);
 				ctx.save();
-				roundRectPath(ctx, 0, 0, frame.width, frame.height, 12);
+				roundRectPath(ctx, 0, 0, frame.frameWidth, frame.frameHeight, 12);
 				ctx.clip();
-				ctx.drawImage(img, -frame.cropLeft, -frame.cropTop, frame.totalWidth, frame.totalHeight);
+				ctx.drawImage(img, frame.offsetX, frame.offsetY, frame.contentWidth, frame.contentHeight);
 				ctx.restore();
 			} catch {}
 		} else if (el.type === "image" && el.src) {
 			try {
 				const img = await loadImageData(el.src);
+				const frame = getContentFrame(el);
 				ctx.save();
-				roundRectPath(ctx, 0, 0, frame.width, frame.height, 12);
+				roundRectPath(ctx, 0, 0, frame.frameWidth, frame.frameHeight, 12);
 				ctx.clip();
-				ctx.drawImage(img, -frame.cropLeft, -frame.cropTop, frame.totalWidth, frame.totalHeight);
+				const fit = el.fit || "cover";
+				if (fit === "fill") {
+					ctx.drawImage(img, frame.offsetX, frame.offsetY, frame.contentWidth, frame.contentHeight);
+				} else {
+					const rw = frame.contentWidth / img.width;
+					const rh = frame.contentHeight / img.height;
+					const scale = fit === "contain" ? Math.min(rw, rh) : Math.max(rw, rh);
+					const dw = img.width * scale;
+					const dh = img.height * scale;
+					ctx.drawImage(img, frame.offsetX + (frame.contentWidth - dw) / 2, frame.offsetY + (frame.contentHeight - dh) / 2, dw, dh);
+				}
 				ctx.restore();
 			} catch {}
 		} else if (el.type === "text") {
@@ -710,6 +764,7 @@ export default function Studio() {
 	const studioNeedsRemoteHydrationRef = React.useRef(false);
 	const studioHasAppliedRemoteRef = React.useRef(false);
 	const studioInitialHydrationTimerRef = React.useRef(null);
+	const studioIgnoreRemoteUntilRef = React.useRef(0);
 	const pinchStateRef = React.useRef(null);
 
 	React.useEffect(() => {
@@ -758,6 +813,7 @@ export default function Studio() {
 		studioPendingRemoteRef.current = null;
 		studioNeedsRemoteHydrationRef.current = false;
 		studioHasAppliedRemoteRef.current = false;
+		studioIgnoreRemoteUntilRef.current = 0;
 
 		(async () => {
 if (!orgId) {
@@ -887,6 +943,7 @@ React.useEffect(() => {
 			}
 			await saveStudioStateToServer(orgId, { docs: encDocs, blocks: encBlocks });
 			studioLastSharedSaveRef.current = Date.now();
+			studioIgnoreRemoteUntilRef.current = Date.now() + 2500;
 			studioFastPollUntilRef.current = Date.now() + 12000;
 			setStudioRemoteNotice(null);
 			setStudioSyncMsg("");
@@ -1043,6 +1100,20 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	}
 	const remoteDocs = remoteState.docs || [];
 	const remoteBlocks = remoteState.blocks || [];
+	const localDocsJson = JSON.stringify(normalizeDocs(docs));
+	const remoteDocsJson = JSON.stringify(normalizeDocs(remoteDocs));
+	const localBlocksJson = JSON.stringify(Array.isArray(savedBlocks) ? savedBlocks : []);
+	const remoteBlocksJson = JSON.stringify(Array.isArray(remoteBlocks) ? remoteBlocks : []);
+	const remoteMatchesLocal = localDocsJson === remoteDocsJson && localBlocksJson === remoteBlocksJson;
+	if (!forceApply && Date.now() < Number(studioIgnoreRemoteUntilRef.current || 0)) {
+		if (remoteMatchesLocal) {
+			studioRemoteSigRef.current = sig;
+			studioHasAppliedRemoteRef.current = true;
+			studioNeedsRemoteHydrationRef.current = false;
+			setStudioKeyNotice(null);
+		}
+		return false;
+	}
 	if (hasRemoteRows && !remoteDocs.length && !remoteBlocks.length) {
 		studioNeedsRemoteHydrationRef.current = true;
 		setStudioKeyNotice({
@@ -1052,8 +1123,9 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 		setStudioSyncMsg("Studio found remote state but this device could not decrypt it yet.");
 		return false;
 	}
-	if (!sig || sig === studioRemoteSigRef.current) {
+	if (!sig || sig === studioRemoteSigRef.current || remoteMatchesLocal) {
 		if (remoteDocs.length || remoteBlocks.length) {
+			if (sig) studioRemoteSigRef.current = sig;
 			studioHasAppliedRemoteRef.current = true;
 			studioNeedsRemoteHydrationRef.current = false;
 			setStudioKeyNotice(null);
@@ -1083,6 +1155,10 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	saveDocs(orgId, remoteDocs);
 	saveBlocks(orgId, remoteBlocks);
 	setCurrentId((prev) => remoteDocs.some((doc) => doc.id === prev) ? prev : (remoteDocs[0]?.id || null));
+	setSelectedIds((prev) => {
+		const validIds = new Set((remoteDocs || []).flatMap((doc) => (doc.pages || []).flatMap((page) => (page.elements || []).map((el) => el.id))));
+		return (Array.isArray(prev) ? prev : []).filter((id) => validIds.has(id));
+	});
 	studioLastRemoteApplyRef.current = Date.now();
 	studioLastSharedSaveRef.current = studioLastRemoteApplyRef.current;
 	studioHasAppliedRemoteRef.current = true;
@@ -1829,7 +1905,6 @@ const addImage = () => {
 		e.preventDefault();
 		e.stopPropagation();
 		const { clientX, clientY } = getEventClientPoint(e);
-		const crop = getCropValues(selected);
 		setResizeState({
 			startX: clientX,
 			startY: clientY,
@@ -1837,13 +1912,13 @@ const addImage = () => {
 			y: Number(selected.y || 0),
 			width: Number(selected.width || 1),
 			height: Number(selected.height || 1),
-			cropLeft: crop.cropLeft,
-			cropRight: crop.cropRight,
-			cropTop: crop.cropTop,
-			cropBottom: crop.cropBottom,
+			cropLeft: Number(selected.cropLeft || 0),
+			cropRight: Number(selected.cropRight || 0),
+			cropTop: Number(selected.cropTop || 0),
+			cropBottom: Number(selected.cropBottom || 0),
 			id: selected.id,
 			handle,
-			isCrop: ["n", "e", "s", "w"].includes(handle),
+			mode: handle.length === 1 && isCropCapableElement(selected) ? "crop" : "resize",
 		});
 	};
 
@@ -1944,55 +2019,15 @@ const addImage = () => {
 					};
 				});
 			}
-			
-if (resizeState && currentPage) {
+			if (resizeState && currentPage) {
 				const el = (currentPage?.elements || []).find((item) => item.id === resizeState.id);
 				if (!el) return;
 				const dx = (clientX - resizeState.startX) / zoom;
 				const dy = (clientY - resizeState.startY) / zoom;
 				const handle = resizeState.handle || "se";
-				if (resizeState.isCrop && ["image", "svg", "shape"].includes(el.type)) {
-					const minW = 24;
-					const minH = 24;
-					const totalWidth = Number(resizeState.width || 0) + Number(resizeState.cropLeft || 0) + Number(resizeState.cropRight || 0);
-					const totalHeight = Number(resizeState.height || 0) + Number(resizeState.cropTop || 0) + Number(resizeState.cropBottom || 0);
-					let nextX = resizeState.x;
-					let nextY = resizeState.y;
-					let nextWidth = resizeState.width;
-					let nextHeight = resizeState.height;
-					let nextCropLeft = Number(resizeState.cropLeft || 0);
-					let nextCropRight = Number(resizeState.cropRight || 0);
-					let nextCropTop = Number(resizeState.cropTop || 0);
-					let nextCropBottom = Number(resizeState.cropBottom || 0);
-					if (handle === "w") {
-						nextCropLeft = clamp(Number(resizeState.cropLeft || 0) + dx, 0, totalWidth - Number(resizeState.cropRight || 0) - minW);
-						const delta = nextCropLeft - Number(resizeState.cropLeft || 0);
-						nextX = resizeState.x + delta;
-						nextWidth = resizeState.width - delta;
-					} else if (handle === "e") {
-						nextCropRight = clamp(Number(resizeState.cropRight || 0) - dx, 0, totalWidth - Number(resizeState.cropLeft || 0) - minW);
-						const delta = nextCropRight - Number(resizeState.cropRight || 0);
-						nextWidth = resizeState.width - delta;
-					} else if (handle === "n") {
-						nextCropTop = clamp(Number(resizeState.cropTop || 0) + dy, 0, totalHeight - Number(resizeState.cropBottom || 0) - minH);
-						const delta = nextCropTop - Number(resizeState.cropTop || 0);
-						nextY = resizeState.y + delta;
-						nextHeight = resizeState.height - delta;
-					} else if (handle === "s") {
-						nextCropBottom = clamp(Number(resizeState.cropBottom || 0) - dy, 0, totalHeight - Number(resizeState.cropTop || 0) - minH);
-						const delta = nextCropBottom - Number(resizeState.cropBottom || 0);
-						nextHeight = resizeState.height - delta;
-					}
-					updateElement(resizeState.id, {
-						x: nextX,
-						y: nextY,
-						width: nextWidth,
-						height: nextHeight,
-						cropLeft: nextCropLeft,
-						cropRight: nextCropRight,
-						cropTop: nextCropTop,
-						cropBottom: nextCropBottom,
-					});
+				if (resizeState.mode === "crop" && handle.length === 1 && isCropCapableElement(el)) {
+					const patch = applyCropDrag(resizeState, handle, dx, dy);
+					updateElement(resizeState.id, patch);
 				} else {
 					let nextX = resizeState.x;
 					let nextY = resizeState.y;
@@ -2835,7 +2870,8 @@ React.useEffect(() => {
 															if (el.hidden) return null;
 															const isSelected = selectedIds.includes(el.id);
 															const isCanvasBackground = el.type === "shape" && Number(el.x || 0) <= 0 && Number(el.y || 0) <= 0 && Number(el.width || 0) >= (currentPage?.width || currentDoc.width) && Number(el.height || 0) >= (currentPage?.height || currentDoc.height);
-															const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: getElementTransform(el), boxSizing: "border-box", outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, userSelect: "none", cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none" };
+															const frame = getContentFrame(el);
+									const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: getElementTransform(el), boxSizing: "border-box", outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, userSelect: "none", cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none" };
 															if (el.type === "text") return <div
 															key={el.id}
 															onMouseDown={(e) => { if (textEditId === el.id) { e.stopPropagation(); return; } startElementDrag(e, el); }} onTouchStart={(e) => { if (textEditId === el.id) { e.stopPropagation(); return; } startElementDrag(e, el); }}
@@ -2846,14 +2882,14 @@ React.useEffect(() => {
 															onBlur={(e) => { updateElement(el.id, { text: e.currentTarget.innerText }); setTextEditId(null); }}
 															style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden", cursor: textEditId === el.id ? "text" : common.cursor }}
 														>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
-															if (el.type === "svg") return <img key={el.id} alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common }} draggable={false} />;
-															return <img key={el.id} alt="" src={el.src} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
+															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: el.radius || 0 }}><div style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
+															if (el.type === "svg") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, pointerEvents: "none" }} draggable={false} /></div>;
+															return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none" }} draggable={false} /></div>;
 														})}
 														{selectionBounds ? (
 														<>
 															<div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: `${selectionVisuals.outlineWidth}px solid #8b5cf6`, boxShadow: `0 0 0 ${selectionVisuals.inset}px rgba(255,255,255,0.9) inset`, pointerEvents: "none", zIndex: 8, borderRadius: 2 / Math.max(zoom, 0.1) }} />
-															{["image", "svg", "shape"].includes(selected?.type) ? [
+															{isCropCapableElement(selected) ? [
 																{ key: "crop-n", handle: "n", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
 																{ key: "crop-e", handle: "e", cursor: "ew-resize", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cropThickness / 2, top: Number(selected.y || 0) + (Number(selected.height || 0) - selectionVisuals.cropLength) / 2, width: selectionVisuals.cropThickness, height: selectionVisuals.cropLength },
 																{ key: "crop-s", handle: "s", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
@@ -2872,10 +2908,12 @@ React.useEffect(() => {
 												) : (
 													(page.elements || []).map((el) => {
 														if (el.hidden) return null;
-														const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
+														const frame = getContentFrame(el);
+									const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
 														if (el.type === "text") return <div key={el.id} style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden" }}>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-														if (el.type === "shape") return <div key={el.id} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
-														return <img key={el.id} alt="" src={el.src} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
+														if (el.type === "shape") return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: el.radius || 0 }}><div style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
+														if (el.type === "svg") return <div key={el.id} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, pointerEvents: "none" }} draggable={false} /></div>;
+												return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none" }} draggable={false} /></div>;
 													})
 												)}
 											</div>

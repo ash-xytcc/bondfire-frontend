@@ -246,10 +246,6 @@ function makeImageElement(patch = {}) {
 		opacity: 1,
 		fit: "cover",
 		src: "",
-		cropLeft: 0,
-		cropRight: 0,
-		cropTop: 0,
-		cropBottom: 0,
 		flipX: false,
 		flipY: false,
 		...patch,
@@ -495,45 +491,24 @@ function getSelectionVisualMetrics(zoom, isMobileViewport) {
 	};
 }
 
-function getImageCropValues(el) {
+function isCropCapableElement(el) {
+	return ["image", "svg", "shape"].includes(String(el?.type || ""));
+}
+
+function getCropInsets(el) {
 	return {
-		cropLeft: Math.max(0, Number(el?.cropLeft || 0)),
-		cropRight: Math.max(0, Number(el?.cropRight || 0)),
-		cropTop: Math.max(0, Number(el?.cropTop || 0)),
-		cropBottom: Math.max(0, Number(el?.cropBottom || 0)),
+		left: Math.max(0, Number(el?.cropLeft || 0)),
+		right: Math.max(0, Number(el?.cropRight || 0)),
+		top: Math.max(0, Number(el?.cropTop || 0)),
+		bottom: Math.max(0, Number(el?.cropBottom || 0)),
 	};
 }
 
-function getImageFrameStyles(el) {
-	const { cropLeft, cropRight, cropTop, cropBottom } = getImageCropValues(el);
-	return {
-		frameStyle: {
-			position: "absolute",
-			left: Number(el?.x || 0),
-			top: Number(el?.y || 0),
-			width: Number(el?.width || 0),
-			height: Number(el?.height || 0),
-			opacity: el?.opacity ?? 1,
-			transform: getElementTransform(el),
-			boxSizing: "border-box",
-			userSelect: "none",
-			touchAction: "none",
-			overflow: "hidden",
-			borderRadius: 12,
-		},
-		imageStyle: {
-			position: "absolute",
-			left: -cropLeft,
-			top: -cropTop,
-			width: `calc(100% + ${cropLeft + cropRight}px)`,
-			height: `calc(100% + ${cropTop + cropBottom}px)`,
-			objectFit: el?.fit || "cover",
-			maxWidth: "none",
-			maxHeight: "none",
-			pointerEvents: "none",
-			userSelect: "none",
-		},
-	};
+function getElementBaseSize(el) {
+	const crop = getCropInsets(el);
+	const width = Math.max(1, Number(el?.assetWidth || 0) || (Number(el?.width || 0) + crop.left + crop.right));
+	const height = Math.max(1, Number(el?.assetHeight || 0) || (Number(el?.height || 0) + crop.top + crop.bottom));
+	return { width, height };
 }
 
 
@@ -607,7 +582,12 @@ async function renderDocToCanvas(doc, bindings) {
 		ctx.scale(el.flipX ? -1 : 1, el.flipY ? -1 : 1);
 		ctx.translate(-Number(el.width || 0) / 2, -Number(el.height || 0) / 2);
 		if (el.type === "shape") {
+			const crop = getCropInsets(el);
+			const base = getElementBaseSize(el);
+			ctx.save();
 			roundRectPath(ctx, 0, 0, Number(el.width || 0), Number(el.height || 0), Number(el.radius || 0));
+			ctx.clip();
+						roundRectPath(ctx, 0, 0, base.width, base.height, Number(el.radius || 0));
 			ctx.fillStyle = el.fill || "transparent";
 			ctx.fill();
 			if (Number(el.strokeWidth || 0) > 0) {
@@ -615,30 +595,36 @@ async function renderDocToCanvas(doc, bindings) {
 				ctx.strokeStyle = el.stroke || "transparent";
 				ctx.stroke();
 			}
+			ctx.restore();
 		} else if (el.type === "svg" && el.svg) {
 			try {
+				const crop = getCropInsets(el);
+				const base = getElementBaseSize(el);
 				const img = await loadImageData(svgMarkupToDataUrl(el.svg, el.fill));
-				ctx.drawImage(img, 0, 0, Number(el.width || 0), Number(el.height || 0));
+				ctx.save();
+				roundRectPath(ctx, 0, 0, Number(el.width || 0), Number(el.height || 0), 12);
+				ctx.clip();
+				ctx.drawImage(img, 0, 0, base.width, base.height);
+				ctx.restore();
 			} catch {}
 		} else if (el.type === "image" && el.src) {
 			try {
+				const crop = getCropInsets(el);
+				const base = getElementBaseSize(el);
 				const img = await loadImageData(el.src);
-				const { cropLeft, cropRight, cropTop, cropBottom } = getImageCropValues(el);
-				const frameW = Number(el.width || 0) + cropLeft + cropRight;
-				const frameH = Number(el.height || 0) + cropTop + cropBottom;
 				ctx.save();
 				roundRectPath(ctx, 0, 0, Number(el.width || 0), Number(el.height || 0), 12);
 				ctx.clip();
 				const fit = el.fit || "cover";
 				if (fit === "fill") {
-					ctx.drawImage(img, -cropLeft, -cropTop, frameW, frameH);
+					ctx.drawImage(img, 0, 0, base.width, base.height);
 				} else {
-					const rw = frameW / img.width;
-					const rh = frameH / img.height;
+					const rw = base.width / img.width;
+					const rh = base.height / img.height;
 					const scale = fit === "contain" ? Math.min(rw, rh) : Math.max(rw, rh);
 					const dw = img.width * scale;
 					const dh = img.height * scale;
-					ctx.drawImage(img, (frameW - dw) / 2 - cropLeft, (frameH - dh) / 2 - cropTop, dw, dh);
+					ctx.drawImage(img, (base.width - dw) / 2, (base.height - dh) / 2, dw, dh);
 				}
 				ctx.restore();
 			} catch {}
@@ -787,16 +773,16 @@ try {
 	if (!cancelled) setStudioSyncMsg(String(err?.message || err || "Studio sync failed. Using local cache."));
 } finally {
 	if (!cancelled) {
-	studioLoadedRef.current = true;
-	setStudioReady(true);
-}
+		studioLoadedRef.current = true;
+		setStudioReady(true);
+	}
 }
 		})();
 		return () => { cancelled = true; };
 	}, [orgId]);
 
 	React.useEffect(() => {
-		if (!studioReady || !orgId) return;
+		if (!studioLoadedRef.current || !orgId) return;
 		if (studioHasAppliedRemoteRef.current) return;
 		let cancelled = false;
 		let tries = 0;
@@ -962,7 +948,7 @@ React.useEffect(() => {
 		window.removeEventListener("visibilitychange", onVisible);
 		window.removeEventListener("focus", onFocus);
 	};
-}, [orgId]);
+}, [orgId, studioReady]);
 
 React.useEffect(() => {
 	if (!studioReady || !orgId) return;
@@ -986,7 +972,7 @@ React.useEffect(() => {
 			studioStreamRef.current = null;
 		}
 	};
-}, [orgId]);
+}, [orgId, studioReady]);
 
 React.useEffect(() => {
 	if (!studioReady || !orgId) return;
@@ -1858,7 +1844,9 @@ const addImage = () => {
 		e.preventDefault();
 		e.stopPropagation();
 		const { clientX, clientY } = getEventClientPoint(e);
-		const isCropHandle = selected.type === "image" && ["n", "e", "s", "w"].includes(handle);
+		const crop = getCropInsets(selected);
+		const baseSize = getElementBaseSize(selected);
+		const isCrop = isCropCapableElement(selected) && ["n", "e", "s", "w"].includes(handle);
 		setResizeState({
 			startX: clientX,
 			startY: clientY,
@@ -1866,13 +1854,15 @@ const addImage = () => {
 			y: Number(selected.y || 0),
 			width: Number(selected.width || 1),
 			height: Number(selected.height || 1),
+			cropLeft: crop.left,
+			cropRight: crop.right,
+			cropTop: crop.top,
+			cropBottom: crop.bottom,
+			assetWidth: baseSize.width,
+			assetHeight: baseSize.height,
 			id: selected.id,
 			handle,
-			mode: isCropHandle ? "crop" : "resize",
-			cropLeft: Number(selected.cropLeft || 0),
-			cropRight: Number(selected.cropRight || 0),
-			cropTop: Number(selected.cropTop || 0),
-			cropBottom: Number(selected.cropBottom || 0),
+			mode: isCrop ? "crop" : "resize",
 		});
 	};
 
@@ -1979,19 +1969,57 @@ const addImage = () => {
 				const dx = (clientX - resizeState.startX) / zoom;
 				const dy = (clientY - resizeState.startY) / zoom;
 				const handle = resizeState.handle || "se";
-				if (resizeState.mode === "crop" && el.type === "image") {
-					const minVisible = 24;
-					const maxCropX = Math.max(0, resizeState.width - minVisible);
-					const maxCropY = Math.max(0, resizeState.height - minVisible);
-					let nextCropLeft = resizeState.cropLeft;
-					let nextCropRight = resizeState.cropRight;
-					let nextCropTop = resizeState.cropTop;
-					let nextCropBottom = resizeState.cropBottom;
-					if (handle === "w") nextCropLeft = clamp(resizeState.cropLeft + dx, 0, maxCropX - resizeState.cropRight);
-					if (handle === "e") nextCropRight = clamp(resizeState.cropRight - dx, 0, maxCropX - resizeState.cropLeft);
-					if (handle === "n") nextCropTop = clamp(resizeState.cropTop + dy, 0, maxCropY - resizeState.cropBottom);
-					if (handle === "s") nextCropBottom = clamp(resizeState.cropBottom - dy, 0, maxCropY - resizeState.cropTop);
-					updateElement(resizeState.id, { cropLeft: nextCropLeft, cropRight: nextCropRight, cropTop: nextCropTop, cropBottom: nextCropBottom });
+				const minW = 24;
+				const minH = 24;
+				if (resizeState.mode === "crop" && isCropCapableElement(el)) {
+					let nextX = resizeState.x;
+					let nextY = resizeState.y;
+					let nextWidth = resizeState.width;
+					let nextHeight = resizeState.height;
+					let cropLeft = resizeState.cropLeft || 0;
+					let cropRight = resizeState.cropRight || 0;
+					let cropTop = resizeState.cropTop || 0;
+					let cropBottom = resizeState.cropBottom || 0;
+					const maxCropX = Math.max(0, (resizeState.assetWidth || resizeState.width) - minW);
+					const maxCropY = Math.max(0, (resizeState.assetHeight || resizeState.height) - minH);
+					if (handle === "w") {
+						const allowed = clamp(dx, -resizeState.cropLeft, resizeState.width - minW);
+						nextX = resizeState.x + allowed;
+						nextWidth = resizeState.width - allowed;
+						cropLeft = clamp(resizeState.cropLeft + allowed, 0, maxCropX);
+					}
+					if (handle === "e") {
+						const allowed = clamp(dx, -(resizeState.width - minW), resizeState.cropRight);
+						nextWidth = resizeState.width + allowed;
+						cropRight = clamp(resizeState.cropRight - allowed, 0, maxCropX);
+					}
+					if (handle === "n") {
+						const allowed = clamp(dy, -resizeState.cropTop, resizeState.height - minH);
+						nextY = resizeState.y + allowed;
+						nextHeight = resizeState.height - allowed;
+						cropTop = clamp(resizeState.cropTop + allowed, 0, maxCropY);
+					}
+					if (handle === "s") {
+						const allowed = clamp(dy, -(resizeState.height - minH), resizeState.cropBottom);
+						nextHeight = resizeState.height + allowed;
+						cropBottom = clamp(resizeState.cropBottom - allowed, 0, maxCropY);
+					}
+					nextX = clamp(nextX, 0, currentPage.width - minW);
+					nextY = clamp(nextY, 0, currentPage.height - minH);
+					nextWidth = clamp(nextWidth, minW, currentPage.width - nextX);
+					nextHeight = clamp(nextHeight, minH, currentPage.height - nextY);
+					updateElement(resizeState.id, {
+						x: nextX,
+						y: nextY,
+						width: nextWidth,
+						height: nextHeight,
+						cropLeft,
+						cropRight,
+						cropTop,
+						cropBottom,
+						assetWidth: resizeState.assetWidth,
+						assetHeight: resizeState.assetHeight,
+					});
 				} else {
 					let nextX = resizeState.x;
 					let nextY = resizeState.y;
@@ -2007,8 +2035,6 @@ const addImage = () => {
 						nextY = resizeState.y + dy;
 						nextHeight = resizeState.height - dy;
 					}
-					const minW = 24;
-					const minH = 24;
 					if (nextWidth < minW) {
 						if (handle.includes("w")) nextX -= (minW - nextWidth);
 						nextWidth = minW;
@@ -2852,14 +2878,24 @@ React.useEffect(() => {
 															onBlur={(e) => { updateElement(el.id, { text: e.currentTarget.innerText }); setTextEditId(null); }}
 															style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden", cursor: textEditId === el.id ? "text" : common.cursor }}
 														>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
-															if (el.type === "svg") return <img key={el.id} alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common }} draggable={false} />;
-															const imageFrame = getImageFrameStyles(el); return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, ...imageFrame.frameStyle, pointerEvents: isCanvasBackground ? "none" : "auto", cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move") }}><img alt="" src={el.src} style={imageFrame.imageStyle} draggable={false} /></div>;
+															if (el.type === "shape") {
+									const crop = getCropInsets(el);
+									const base = getElementBaseSize(el);
+									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><div style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
+								}
+															if (el.type === "svg") {
+									const crop = getCropInsets(el);
+									const base = getElementBaseSize(el);
+									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height }} draggable={false} /></div>;
+								}
+															const crop = getCropInsets(el);
+									const base = getElementBaseSize(el);
+									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} /></div>;
 														})}
 														{selectionBounds ? (
 														<>
 															<div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: `${selectionVisuals.outlineWidth}px solid #8b5cf6`, boxShadow: `0 0 0 ${selectionVisuals.inset}px rgba(255,255,255,0.9) inset`, pointerEvents: "none", zIndex: 8, borderRadius: 2 / Math.max(zoom, 0.1) }} />
-															{selected?.type === "image" ? [
+															{isCropCapableElement(selected) ? [
 																{ key: "crop-n", handle: "n", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
 																{ key: "crop-e", handle: "e", cursor: "ew-resize", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cropThickness / 2, top: Number(selected.y || 0) + (Number(selected.height || 0) - selectionVisuals.cropLength) / 2, width: selectionVisuals.cropThickness, height: selectionVisuals.cropLength },
 																{ key: "crop-s", handle: "s", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
@@ -2880,8 +2916,19 @@ React.useEffect(() => {
 														if (el.hidden) return null;
 														const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
 														if (el.type === "text") return <div key={el.id} style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden" }}>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-														if (el.type === "shape") return <div key={el.id} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
-														const imageFrame = getImageFrameStyles(el); return <div key={el.id} style={{ ...common, ...imageFrame.frameStyle }}><img alt="" src={el.src} style={imageFrame.imageStyle} draggable={false} /></div>;
+														if (el.type === "shape") {
+									const crop = getCropInsets(el);
+									const base = getElementBaseSize(el);
+									return <div key={el.id} style={{ ...common, overflow: "hidden" }}><div style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
+								}
+														if (el.type === "svg") {
+									const crop = getCropInsets(el);
+									const base = getElementBaseSize(el);
+									return <div key={el.id} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height }} draggable={false} /></div>;
+								}
+								const crop = getCropInsets(el);
+								const base = getElementBaseSize(el);
+								return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} /></div>;
 													})
 												)}
 											</div>

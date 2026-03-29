@@ -1019,15 +1019,6 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	const localBlocksJson = JSON.stringify(Array.isArray(savedBlocks) ? savedBlocks : []);
 	const remoteBlocksJson = JSON.stringify(Array.isArray(remoteBlocks) ? remoteBlocks : []);
 	const remoteMatchesLocal = localDocsJson === remoteDocsJson && localBlocksJson === remoteBlocksJson;
-	if (hasRemoteRows && !remoteDocs.length && !remoteBlocks.length) {
-		studioNeedsRemoteHydrationRef.current = true;
-		setStudioKeyNotice({
-			kind: "decrypt_empty",
-			text: "Studio found shared encrypted docs, but this device still cannot decrypt them into usable files. This usually means the org key needs to be restored or unlocked here.",
-		});
-		setStudioSyncMsg("Studio found remote state but this device could not decrypt it yet.");
-		return false;
-	}
 	if (!forceApply && Date.now() < Number(studioIgnoreRemoteUntilRef.current || 0)) {
 		if (remoteMatchesLocal) {
 			if (sig) studioRemoteSigRef.current = sig;
@@ -1035,6 +1026,15 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 			studioNeedsRemoteHydrationRef.current = false;
 			setStudioKeyNotice(null);
 		}
+		return false;
+	}
+	if (hasRemoteRows && !remoteDocs.length && !remoteBlocks.length) {
+		studioNeedsRemoteHydrationRef.current = true;
+		setStudioKeyNotice({
+			kind: "decrypt_empty",
+			text: "Studio found shared encrypted docs, but this device still cannot decrypt them into usable files. This usually means the org key needs to be restored or unlocked here.",
+		});
+		setStudioSyncMsg("Studio found remote state but this device could not decrypt it yet.");
 		return false;
 	}
 	if (!sig || sig === studioRemoteSigRef.current || remoteMatchesLocal) {

@@ -491,26 +491,6 @@ function getSelectionVisualMetrics(zoom, isMobileViewport) {
 	};
 }
 
-function isCropCapableElement(el) {
-	return ["image", "svg", "shape"].includes(String(el?.type || ""));
-}
-
-function getCropInsets(el) {
-	return {
-		left: Math.max(0, Number(el?.cropLeft || 0)),
-		right: Math.max(0, Number(el?.cropRight || 0)),
-		top: Math.max(0, Number(el?.cropTop || 0)),
-		bottom: Math.max(0, Number(el?.cropBottom || 0)),
-	};
-}
-
-function getElementBaseSize(el) {
-	const crop = getCropInsets(el);
-	const width = Math.max(1, Number(el?.assetWidth || 0) || (Number(el?.width || 0) + crop.left + crop.right));
-	const height = Math.max(1, Number(el?.assetHeight || 0) || (Number(el?.height || 0) + crop.top + crop.bottom));
-	return { width, height };
-}
-
 
 async function loadImageData(src) {
 	return await new Promise((resolve, reject) => {
@@ -582,12 +562,7 @@ async function renderDocToCanvas(doc, bindings) {
 		ctx.scale(el.flipX ? -1 : 1, el.flipY ? -1 : 1);
 		ctx.translate(-Number(el.width || 0) / 2, -Number(el.height || 0) / 2);
 		if (el.type === "shape") {
-			const crop = getCropInsets(el);
-			const base = getElementBaseSize(el);
-			ctx.save();
 			roundRectPath(ctx, 0, 0, Number(el.width || 0), Number(el.height || 0), Number(el.radius || 0));
-			ctx.clip();
-						roundRectPath(ctx, 0, 0, base.width, base.height, Number(el.radius || 0));
 			ctx.fillStyle = el.fill || "transparent";
 			ctx.fill();
 			if (Number(el.strokeWidth || 0) > 0) {
@@ -595,36 +570,27 @@ async function renderDocToCanvas(doc, bindings) {
 				ctx.strokeStyle = el.stroke || "transparent";
 				ctx.stroke();
 			}
-			ctx.restore();
 		} else if (el.type === "svg" && el.svg) {
 			try {
-				const crop = getCropInsets(el);
-				const base = getElementBaseSize(el);
 				const img = await loadImageData(svgMarkupToDataUrl(el.svg, el.fill));
-				ctx.save();
-				roundRectPath(ctx, 0, 0, Number(el.width || 0), Number(el.height || 0), 12);
-				ctx.clip();
-				ctx.drawImage(img, -crop.left, -crop.top, base.width, base.height);
-				ctx.restore();
+				ctx.drawImage(img, 0, 0, Number(el.width || 0), Number(el.height || 0));
 			} catch {}
 		} else if (el.type === "image" && el.src) {
 			try {
-				const crop = getCropInsets(el);
-				const base = getElementBaseSize(el);
 				const img = await loadImageData(el.src);
 				ctx.save();
 				roundRectPath(ctx, 0, 0, Number(el.width || 0), Number(el.height || 0), 12);
 				ctx.clip();
 				const fit = el.fit || "cover";
 				if (fit === "fill") {
-					ctx.drawImage(img, -crop.left, -crop.top, base.width, base.height);
+					ctx.drawImage(img, 0, 0, Number(el.width || 0), Number(el.height || 0));
 				} else {
-					const rw = base.width / img.width;
-					const rh = base.height / img.height;
+					const rw = Number(el.width || 0) / img.width;
+					const rh = Number(el.height || 0) / img.height;
 					const scale = fit === "contain" ? Math.min(rw, rh) : Math.max(rw, rh);
 					const dw = img.width * scale;
 					const dh = img.height * scale;
-					ctx.drawImage(img, -crop.left + (base.width - dw) / 2, -crop.top + (base.height - dh) / 2, dw, dh);
+					ctx.drawImage(img, (Number(el.width || 0) - dw) / 2, (Number(el.height || 0) - dh) / 2, dw, dh);
 				}
 				ctx.restore();
 			} catch {}
@@ -773,16 +739,16 @@ try {
 	if (!cancelled) setStudioSyncMsg(String(err?.message || err || "Studio sync failed. Using local cache."));
 } finally {
 	if (!cancelled) {
-		studioLoadedRef.current = true;
-		setStudioReady(true);
-	}
+			studioLoadedRef.current = true;
+			setStudioReady(true);
+		}
 }
 		})();
 		return () => { cancelled = true; };
 	}, [orgId]);
 
 	React.useEffect(() => {
-		if (!studioLoadedRef.current || !orgId) return;
+		if (!studioReady || !orgId) return;
 		if (studioHasAppliedRemoteRef.current) return;
 		let cancelled = false;
 		let tries = 0;
@@ -996,11 +962,7 @@ React.useEffect(() => {
 	const pending = studioPendingRemoteRef.current;
 	if (!pending) return;
 	if (dragState || resizeState || marquee || panState || guideDrag || textEditId) return;
-	const debounceWindowMs = 900;
-	const localEditAgeMs = Date.now() - Number(studioLastLocalEditRef.current || 0);
-	if (studioLastLocalEditRef.current > studioLastSharedSaveRef.current) {
-		if (localEditAgeMs <= debounceWindowMs) return;
-	}
+	if (studioLastLocalEditRef.current > studioLastSharedSaveRef.current) return;
 	const id = window.setTimeout(() => {
 		studioRemoteSigRef.current = pending.sig;
 		setDocs(pending.remoteState.docs);
@@ -1008,18 +970,12 @@ React.useEffect(() => {
 		saveDocs(orgId, pending.remoteState.docs);
 		saveBlocks(orgId, pending.remoteState.blocks);
 		setCurrentId((prev) => pending.remoteState.docs.some((doc) => doc.id === prev) ? prev : (pending.remoteState.docs[0]?.id || null));
-		setSelectedIds((prev) => {
-			const remoteDoc = pending.remoteState.docs.find((doc) => doc.id === (pending.remoteState.docs.some((doc) => doc.id === currentId) ? currentId : (pending.remoteState.docs[0]?.id || null)));
-			const remotePage = Array.isArray(remoteDoc?.pages) ? remoteDoc.pages[Math.max(0, Math.min(activePageIndex, remoteDoc.pages.length - 1))] : null;
-			const allowed = new Set((remotePage?.elements || []).map((el) => el.id));
-			return prev.filter((id) => allowed.has(id));
-		});
 		studioPendingRemoteRef.current = null;
 		studioLastRemoteApplyRef.current = Date.now();
 		studioHasAppliedRemoteRef.current = true;
 		studioNeedsRemoteHydrationRef.current = false;
 		setStudioRemoteNotice(null);
-	}, 750);
+	}, 250);
 	return () => window.clearTimeout(id);
 }, [orgId, dragState, resizeState, marquee, panState, guideDrag, textEditId, docs]);
 
@@ -1085,12 +1041,7 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	const debounceWindowMs = 900;
 	const localEditAgeMs = Date.now() - Number(studioLastLocalEditRef.current || 0);
 	const shouldTreatAsRealOverwriteRisk = hasUnsyncedLocalEdits && localEditAgeMs > debounceWindowMs;
-	if (!needsAuthoritativeRemoteHydration && !forceApply && queueIfBusy && (hasActiveInteraction || shouldTreatAsRealOverwriteRisk)) {
-		if (shouldTreatAsRealOverwriteRisk) {
-			return false;
-		}
-		studioPendingRemoteRef.current = { sig, remoteState, receivedAt: Date.now() };
-		setStudioRemoteNotice(null);
+	if (!forceApply && (hasUnsyncedLocalEdits || hasActiveInteraction)) {
 		return false;
 	}
 	studioRemoteSigRef.current = sig;
@@ -1100,13 +1051,6 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	saveDocs(orgId, remoteDocs);
 	saveBlocks(orgId, remoteBlocks);
 	setCurrentId((prev) => remoteDocs.some((doc) => doc.id === prev) ? prev : (remoteDocs[0]?.id || null));
-	setSelectedIds((prev) => {
-		const targetDocId = remoteDocs.some((doc) => doc.id === currentId) ? currentId : (remoteDocs[0]?.id || null);
-		const remoteDoc = remoteDocs.find((doc) => doc.id === targetDocId);
-		const remotePage = Array.isArray(remoteDoc?.pages) ? remoteDoc.pages[Math.max(0, Math.min(activePageIndex, remoteDoc.pages.length - 1))] : null;
-		const allowed = new Set((remotePage?.elements || []).map((el) => el.id));
-		return prev.filter((id) => allowed.has(id));
-	});
 	studioLastRemoteApplyRef.current = Date.now();
 	studioLastSharedSaveRef.current = studioLastRemoteApplyRef.current;
 	studioHasAppliedRemoteRef.current = true;
@@ -1853,9 +1797,6 @@ const addImage = () => {
 		e.preventDefault();
 		e.stopPropagation();
 		const { clientX, clientY } = getEventClientPoint(e);
-		const crop = getCropInsets(selected);
-		const baseSize = getElementBaseSize(selected);
-		const isCrop = isCropCapableElement(selected) && ["n", "e", "s", "w"].includes(handle);
 		setResizeState({
 			startX: clientX,
 			startY: clientY,
@@ -1863,15 +1804,8 @@ const addImage = () => {
 			y: Number(selected.y || 0),
 			width: Number(selected.width || 1),
 			height: Number(selected.height || 1),
-			cropLeft: crop.left,
-			cropRight: crop.right,
-			cropTop: crop.top,
-			cropBottom: crop.bottom,
-			assetWidth: baseSize.width,
-			assetHeight: baseSize.height,
 			id: selected.id,
 			handle,
-			mode: isCrop ? "crop" : "resize",
 		});
 	};
 
@@ -1978,84 +1912,35 @@ const addImage = () => {
 				const dx = (clientX - resizeState.startX) / zoom;
 				const dy = (clientY - resizeState.startY) / zoom;
 				const handle = resizeState.handle || "se";
+				let nextX = resizeState.x;
+				let nextY = resizeState.y;
+				let nextWidth = resizeState.width;
+				let nextHeight = resizeState.height;
+				if (handle.includes("e")) nextWidth = resizeState.width + dx;
+				if (handle.includes("s")) nextHeight = resizeState.height + dy;
+				if (handle.includes("w")) {
+					nextX = resizeState.x + dx;
+					nextWidth = resizeState.width - dx;
+				}
+				if (handle.includes("n")) {
+					nextY = resizeState.y + dy;
+					nextHeight = resizeState.height - dy;
+				}
 				const minW = 24;
 				const minH = 24;
-				if (resizeState.mode === "crop" && isCropCapableElement(el)) {
-					let nextX = resizeState.x;
-					let nextY = resizeState.y;
-					let nextWidth = resizeState.width;
-					let nextHeight = resizeState.height;
-					let cropLeft = resizeState.cropLeft || 0;
-					let cropRight = resizeState.cropRight || 0;
-					let cropTop = resizeState.cropTop || 0;
-					let cropBottom = resizeState.cropBottom || 0;
-					const maxCropX = Math.max(0, (resizeState.assetWidth || resizeState.width) - minW);
-					const maxCropY = Math.max(0, (resizeState.assetHeight || resizeState.height) - minH);
-					if (handle === "w") {
-						const allowed = clamp(dx, -resizeState.cropLeft, maxCropX - resizeState.cropLeft);
-						cropLeft = clamp(resizeState.cropLeft + allowed, 0, maxCropX);
-					}
-					if (handle === "e") {
-						const allowed = clamp(dx, -(resizeState.width - minW), resizeState.cropRight);
-						nextWidth = resizeState.width + allowed;
-						cropRight = clamp(resizeState.cropRight - allowed, 0, maxCropX);
-					}
-					if (handle === "n") {
-						const allowed = clamp(dy, -resizeState.cropTop, resizeState.height - minH);
-						nextY = resizeState.y + allowed;
-						nextHeight = resizeState.height - allowed;
-						cropTop = clamp(resizeState.cropTop + allowed, 0, maxCropY);
-					}
-					if (handle === "s") {
-						const allowed = clamp(dy, -(resizeState.height - minH), resizeState.cropBottom);
-						nextHeight = resizeState.height + allowed;
-						cropBottom = clamp(resizeState.cropBottom - allowed, 0, maxCropY);
-					}
-					nextX = clamp(nextX, 0, currentPage.width - minW);
-					nextY = clamp(nextY, 0, currentPage.height - minH);
-					nextWidth = clamp(nextWidth, minW, currentPage.width - nextX);
-					nextHeight = clamp(nextHeight, minH, currentPage.height - nextY);
-					updateElement(resizeState.id, {
-						x: nextX,
-						y: nextY,
-						width: nextWidth,
-						height: nextHeight,
-						cropLeft,
-						cropRight,
-						cropTop,
-						cropBottom,
-						assetWidth: resizeState.assetWidth,
-						assetHeight: resizeState.assetHeight,
-					});
-				} else {
-					let nextX = resizeState.x;
-					let nextY = resizeState.y;
-					let nextWidth = resizeState.width;
-					let nextHeight = resizeState.height;
-					if (handle.includes("e")) nextWidth = resizeState.width + dx;
-					if (handle.includes("s")) nextHeight = resizeState.height + dy;
-					if (handle.includes("w")) {
-						nextX = resizeState.x + dx;
-						nextWidth = resizeState.width - dx;
-					}
-					if (handle.includes("n")) {
-						nextY = resizeState.y + dy;
-						nextHeight = resizeState.height - dy;
-					}
-					if (nextWidth < minW) {
-						if (handle.includes("w")) nextX -= (minW - nextWidth);
-						nextWidth = minW;
-					}
-					if (nextHeight < minH) {
-						if (handle.includes("n")) nextY -= (minH - nextHeight);
-						nextHeight = minH;
-					}
-					nextX = clamp(nextX, 0, currentPage.width - minW);
-					nextY = clamp(nextY, 0, currentPage.height - minH);
-					nextWidth = clamp(nextWidth, minW, currentPage.width - nextX);
-					nextHeight = clamp(nextHeight, minH, currentPage.height - nextY);
-					updateElement(resizeState.id, { x: nextX, y: nextY, width: nextWidth, height: nextHeight });
+				if (nextWidth < minW) {
+					if (handle.includes("w")) nextX -= (minW - nextWidth);
+					nextWidth = minW;
 				}
+				if (nextHeight < minH) {
+					if (handle.includes("n")) nextY -= (minH - nextHeight);
+					nextHeight = minH;
+				}
+				nextX = clamp(nextX, 0, currentPage.width - minW);
+				nextY = clamp(nextY, 0, currentPage.height - minH);
+				nextWidth = clamp(nextWidth, minW, currentPage.width - nextX);
+				nextHeight = clamp(nextHeight, minH, currentPage.height - nextY);
+				updateElement(resizeState.id, { x: nextX, y: nextY, width: nextWidth, height: nextHeight });
 			}
 			if (marquee) {
 				const point = getMarqueePoint(clientX, clientY);
@@ -2360,7 +2245,7 @@ React.useEffect(() => {
 		studioHasAppliedRemoteRef.current = true;
 		studioNeedsRemoteHydrationRef.current = false;
 		setStudioRemoteNotice(null);
-		setStudioSyncMsg("");
+		setStudioSyncMsg("Remote Studio changes applied.");
 	}, [orgId]);
 
 	const dismissQueuedRemoteChanges = React.useCallback(() => {
@@ -2524,13 +2409,6 @@ React.useEffect(() => {
 				<div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", borderRadius: 14, background: "rgba(127,29,29,0.22)", border: "1px solid rgba(248,113,113,0.45)" }}>
 					<div style={{ fontSize: 13, lineHeight: 1.4, flex: 1, minWidth: 220 }}>{studioKeyNotice.text}</div>
 					<button onClick={retryStudioRemoteHydration} style={{ padding: "8px 10px", borderRadius: 10 }}>Retry now</button>
-				</div>
-			) : null}
-			{studioRemoteNotice ? (
-				<div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", borderRadius: 14, background: "rgba(17,24,39,0.92)", border: "1px solid rgba(255,255,255,0.12)" }}>
-					<div style={{ fontSize: 13, lineHeight: 1.35, flex: 1, minWidth: 220 }}>{studioRemoteNotice.text}</div>
-					{studioPendingRemoteRef.current ? <button onClick={applyQueuedRemoteChanges} style={{ padding: "8px 10px", borderRadius: 10 }}>Apply remote</button> : null}
-					{studioPendingRemoteRef.current ? <button onClick={dismissQueuedRemoteChanges} style={{ padding: "8px 10px", borderRadius: 10 }}>Keep mine for now</button> : null}
 				</div>
 			) : null}
 
@@ -2885,24 +2763,14 @@ React.useEffect(() => {
 															onBlur={(e) => { updateElement(el.id, { text: e.currentTarget.innerText }); setTextEditId(null); }}
 															style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden", cursor: textEditId === el.id ? "text" : common.cursor }}
 														>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-															if (el.type === "shape") {
-									const crop = getCropInsets(el);
-									const base = getElementBaseSize(el);
-									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><div style={{ position: "absolute", left: -crop.left, top: -crop.top, width: base.width, height: base.height, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
-								}
-															if (el.type === "svg") {
-									const crop = getCropInsets(el);
-									const base = getElementBaseSize(el);
-									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: -crop.left, top: -crop.top, width: base.width, height: base.height }} draggable={false} /></div>;
-								}
-															const crop = getCropInsets(el);
-									const base = getElementBaseSize(el);
-									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: -crop.left, top: -crop.top, width: base.width, height: base.height, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} /></div>;
+															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
+															if (el.type === "svg") return <img key={el.id} alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common }} draggable={false} />;
+															return <img key={el.id} alt="" src={el.src} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
 														})}
 														{selectionBounds ? (
 														<>
 															<div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: `${selectionVisuals.outlineWidth}px solid #8b5cf6`, boxShadow: `0 0 0 ${selectionVisuals.inset}px rgba(255,255,255,0.9) inset`, pointerEvents: "none", zIndex: 8, borderRadius: 2 / Math.max(zoom, 0.1) }} />
-															{isCropCapableElement(selected) ? [
+															{selected?.type === "image" ? [
 																{ key: "crop-n", handle: "n", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
 																{ key: "crop-e", handle: "e", cursor: "ew-resize", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cropThickness / 2, top: Number(selected.y || 0) + (Number(selected.height || 0) - selectionVisuals.cropLength) / 2, width: selectionVisuals.cropThickness, height: selectionVisuals.cropLength },
 																{ key: "crop-s", handle: "s", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
@@ -2923,19 +2791,8 @@ React.useEffect(() => {
 														if (el.hidden) return null;
 														const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
 														if (el.type === "text") return <div key={el.id} style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden" }}>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-														if (el.type === "shape") {
-									const crop = getCropInsets(el);
-									const base = getElementBaseSize(el);
-									return <div key={el.id} style={{ ...common, overflow: "hidden" }}><div style={{ position: "absolute", left: -crop.left, top: -crop.top, width: base.width, height: base.height, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
-								}
-														if (el.type === "svg") {
-									const crop = getCropInsets(el);
-									const base = getElementBaseSize(el);
-									return <div key={el.id} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: -crop.left, top: -crop.top, width: base.width, height: base.height }} draggable={false} /></div>;
-								}
-								const crop = getCropInsets(el);
-								const base = getElementBaseSize(el);
-								return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: -crop.left, top: -crop.top, width: base.width, height: base.height, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} /></div>;
+														if (el.type === "shape") return <div key={el.id} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
+														return <img key={el.id} alt="" src={el.src} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
 													})
 												)}
 											</div>

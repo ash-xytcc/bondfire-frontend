@@ -678,6 +678,7 @@ export default function Studio() {
 	const studioNeedsRemoteHydrationRef = React.useRef(false);
 	const studioHasAppliedRemoteRef = React.useRef(false);
 	const studioInitialHydrationTimerRef = React.useRef(null);
+	const studioIgnoreRemoteUntilRef = React.useRef(0);
 	const pinchStateRef = React.useRef(null);
 
 	React.useEffect(() => {
@@ -726,6 +727,7 @@ export default function Studio() {
 		studioPendingRemoteRef.current = null;
 		studioNeedsRemoteHydrationRef.current = false;
 		studioHasAppliedRemoteRef.current = false;
+		studioIgnoreRemoteUntilRef.current = 0;
 
 		(async () => {
 if (!orgId) {
@@ -855,6 +857,7 @@ React.useEffect(() => {
 			}
 			await saveStudioStateToServer(orgId, { docs: encDocs, blocks: encBlocks });
 			studioLastSharedSaveRef.current = Date.now();
+			studioIgnoreRemoteUntilRef.current = Date.now() + 2500;
 			studioFastPollUntilRef.current = Date.now() + 12000;
 			setStudioRemoteNotice(null);
 			setStudioSyncMsg("");
@@ -1011,6 +1014,20 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	}
 	const remoteDocs = remoteState.docs || [];
 	const remoteBlocks = remoteState.blocks || [];
+	const localDocsJson = JSON.stringify(normalizeDocs(docs));
+	const remoteDocsJson = JSON.stringify(normalizeDocs(remoteDocs));
+	const localBlocksJson = JSON.stringify(Array.isArray(savedBlocks) ? savedBlocks : []);
+	const remoteBlocksJson = JSON.stringify(Array.isArray(remoteBlocks) ? remoteBlocks : []);
+	const remoteMatchesLocal = localDocsJson === remoteDocsJson && localBlocksJson === remoteBlocksJson;
+	if (!forceApply && Date.now() < Number(studioIgnoreRemoteUntilRef.current || 0)) {
+		if (remoteMatchesLocal) {
+			studioRemoteSigRef.current = sig;
+			studioHasAppliedRemoteRef.current = true;
+			studioNeedsRemoteHydrationRef.current = false;
+			setStudioKeyNotice(null);
+		}
+		return false;
+	}
 	if (hasRemoteRows && !remoteDocs.length && !remoteBlocks.length) {
 		studioNeedsRemoteHydrationRef.current = true;
 		setStudioKeyNotice({
@@ -1020,8 +1037,9 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 		setStudioSyncMsg("Studio found remote state but this device could not decrypt it yet.");
 		return false;
 	}
-	if (!sig || sig === studioRemoteSigRef.current) {
+	if (!sig || sig === studioRemoteSigRef.current || remoteMatchesLocal) {
 		if (remoteDocs.length || remoteBlocks.length) {
+			if (sig) studioRemoteSigRef.current = sig;
 			studioHasAppliedRemoteRef.current = true;
 			studioNeedsRemoteHydrationRef.current = false;
 			setStudioKeyNotice(null);
@@ -1051,6 +1069,10 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	saveDocs(orgId, remoteDocs);
 	saveBlocks(orgId, remoteBlocks);
 	setCurrentId((prev) => remoteDocs.some((doc) => doc.id === prev) ? prev : (remoteDocs[0]?.id || null));
+	setSelectedIds((prev) => {
+		const validIds = new Set((remoteDocs || []).flatMap((doc) => (doc.pages || []).flatMap((page) => (page.elements || []).map((el) => el.id))));
+		return (Array.isArray(prev) ? prev : []).filter((id) => validIds.has(id));
+	});
 	studioLastRemoteApplyRef.current = Date.now();
 	studioLastSharedSaveRef.current = studioLastRemoteApplyRef.current;
 	studioHasAppliedRemoteRef.current = true;

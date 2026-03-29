@@ -545,7 +545,7 @@ function applyCropDrag(start, handle, dx, dy) {
 		width -= delta;
 		cropLeft += delta;
 	} else if (handle === "e") {
-		const delta = clamp(dx, -cropRight, width - minFrame);
+		const delta = clamp(dx, -(width - minFrame), cropRight);
 		width += delta;
 		cropRight -= delta;
 	} else if (handle === "n") {

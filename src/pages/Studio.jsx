@@ -499,6 +499,7 @@ function getSelectionVisualMetrics(zoom, isMobileViewport) {
 	};
 }
 
+
 function isCropCapableElement(el) {
 	return ["image", "svg", "shape"].includes(String(el?.type || ""));
 }
@@ -529,33 +530,37 @@ function getContentFrame(el) {
 
 function applyCropDrag(start, handle, dx, dy) {
 	const minFrame = 24;
+	let x = Number(start.x || 0);
+	let y = Number(start.y || 0);
+	let width = Math.max(minFrame, Number(start.width || minFrame));
+	let height = Math.max(minFrame, Number(start.height || minFrame));
 	let cropLeft = Math.max(0, Number(start.cropLeft || 0));
 	let cropRight = Math.max(0, Number(start.cropRight || 0));
 	let cropTop = Math.max(0, Number(start.cropTop || 0));
 	let cropBottom = Math.max(0, Number(start.cropBottom || 0));
-	const width = Math.max(minFrame, Number(start.width || minFrame));
-	const height = Math.max(minFrame, Number(start.height || minFrame));
 
 	if (handle === "w") {
-		cropLeft = Math.max(0, cropLeft + dx);
+		const delta = clamp(dx, -cropLeft, width - minFrame);
+		x += delta;
+		width -= delta;
+		cropLeft += delta;
 	} else if (handle === "e") {
-		cropRight = Math.max(0, cropRight - dx);
+		const delta = clamp(dx, -cropRight, width - minFrame);
+		width += delta;
+		cropRight -= delta;
 	} else if (handle === "n") {
-		cropTop = Math.max(0, cropTop + dy);
+		const delta = clamp(dy, -cropTop, height - minFrame);
+		y += delta;
+		height -= delta;
+		cropTop += delta;
 	} else if (handle === "s") {
-		cropBottom = Math.max(0, cropBottom - dy);
+		const delta = clamp(dy, -cropBottom, height - minFrame);
+		height += delta;
+		cropBottom -= delta;
 	}
 
-	return {
-		cropLeft,
-		cropRight,
-		cropTop,
-		cropBottom,
-		width,
-		height,
-	};
+	return { x, y, width, height, cropLeft, cropRight, cropTop, cropBottom };
 }
-
 
 async function loadImageData(src) {
 	return await new Promise((resolve, reject) => {
@@ -2854,7 +2859,7 @@ React.useEffect(() => {
 															const isSelected = selectedIds.includes(el.id);
 															const isCanvasBackground = el.type === "shape" && Number(el.x || 0) <= 0 && Number(el.y || 0) <= 0 && Number(el.width || 0) >= (currentPage?.width || currentDoc.width) && Number(el.height || 0) >= (currentPage?.height || currentDoc.height);
 															const frame = getContentFrame(el);
-									const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: getElementTransform(el), boxSizing: "border-box", outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, userSelect: "none", cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none" };
+															const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: getElementTransform(el), boxSizing: "border-box", outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, userSelect: "none", cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none" };
 															if (el.type === "text") return <div
 															key={el.id}
 															onMouseDown={(e) => { if (textEditId === el.id) { e.stopPropagation(); return; } startElementDrag(e, el); }} onTouchStart={(e) => { if (textEditId === el.id) { e.stopPropagation(); return; } startElementDrag(e, el); }}
@@ -2892,11 +2897,11 @@ React.useEffect(() => {
 													(page.elements || []).map((el) => {
 														if (el.hidden) return null;
 														const frame = getContentFrame(el);
-									const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
+													const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
 														if (el.type === "text") return <div key={el.id} style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden" }}>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
 														if (el.type === "shape") return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: el.radius || 0 }}><div style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
 														if (el.type === "svg") return <div key={el.id} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, pointerEvents: "none" }} draggable={false} /></div>;
-									return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none" }} draggable={false} /></div>;
+														return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none" }} draggable={false} /></div>;
 													})
 												)}
 											</div>

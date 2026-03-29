@@ -240,7 +240,6 @@ export default function FormFileView({ value, onChange, mode = "edit", fileId = 
             </label>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <button className="btn" type="button" onClick={openEditorUrl} disabled={!standaloneEditorUrl}>Open editor in browser</button>
             <button className="btn" type="button" onClick={openPublicUrl} disabled={!publicUrl}>Open public form</button>
             <button className="btn" type="button" onClick={copyPublicUrl} disabled={!publicUrl}>Copy public link</button>
             <button className="btn" type="button" onClick={regeneratePublicLink} disabled={!form.publicShare.enabled}>Regenerate link</button>

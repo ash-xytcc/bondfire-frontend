@@ -607,6 +607,20 @@ export default function Studio() {
 	const dragPayloadRef = React.useRef(null);
 	const suppressCanvasClickRef = React.useRef(false);
 
+	React.useEffect(() => {
+		const preventPinch = (e) => {
+			if (e.scale !== 1) e.preventDefault();
+		};
+
+		document.addEventListener("gesturestart", preventPinch);
+		document.addEventListener("gesturechange", preventPinch);
+
+		return () => {
+			document.removeEventListener("gesturestart", preventPinch);
+			document.removeEventListener("gesturechange", preventPinch);
+		};
+	}, []);
+
 	const [docs, setDocs] = React.useState(() => readDocs(orgId));
 	const [currentId, setCurrentId] = React.useState(() => readDocs(orgId)[0]?.id || null);
 	const [activePageIndex, setActivePageIndex] = React.useState(0);
@@ -661,22 +675,6 @@ export default function Studio() {
 	const studioHasAppliedRemoteRef = React.useRef(false);
 	const studioInitialHydrationTimerRef = React.useRef(null);
 	const pinchStateRef = React.useRef(null);
-
-
-	React.useEffect(() => {
-		const preventPinch = (e) => {
-			if (e.scale !== 1) e.preventDefault();
-		};
-
-		document.addEventListener("gesturestart", preventPinch);
-		document.addEventListener("gesturechange", preventPinch);
-
-		return () => {
-			document.removeEventListener("gesturestart", preventPinch);
-			document.removeEventListener("gesturechange", preventPinch);
-		};
-	}, []);
-
 
 	React.useEffect(() => {
 		let cancelled = false;
@@ -2211,6 +2209,7 @@ const addImage = () => {
 		const last = pageLayouts[pageLayouts.length - 1];
 		return Math.max(980, last.top + last.height + 170);
 	}, [pageLayouts]);
+	const selectionVisuals = React.useMemo(() => getSelectionVisualMetrics(zoom, isMobileViewport), [zoom, isMobileViewport]);
 React.useEffect(() => {
 	let helpId = "studio";
 	if (isMobileViewport) helpId = "studio-mobile";
@@ -2450,7 +2449,7 @@ React.useEffect(() => {
 				</div>
 
 				{leftPanel ? (
-					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, paddingBottom: isMobileViewport ? 40 : 14, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", scrollPaddingBottom: isMobileViewport ? 40 : 14, touchAction: isMobileViewport ? "pan-y" : "auto", boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, overflow: "auto", boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
 						<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, gap: 10 }}>
 							<div style={{ fontWeight: 800 }}>{leftPanel === "create" ? "Add" : leftPanel === "templates" ? "Templates" : leftPanel === "assets" ? "Assets" : leftPanel === "data" ? "Bondfire Data" : "Documents"}</div>
 							<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={() => setLeftPanel(null)}>✕</button>
@@ -2640,7 +2639,7 @@ React.useEffect(() => {
 						<div style={{ display: "flex", alignItems: "center", gap: 4, color: "white", fontSize: 11 }}>
 							<span>Opacity</span>
 							<div style={{ width: 140, display: "flex", alignItems: "center" }}>
-								<input className="bfStudioOpacitySlider" type="range" min="0.05" max="1" step="0.05" value={selected ? Number(selected.opacity ?? 1) : 1} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => updateElements(selectedIds, { opacity: Number(e.target.value) })} style={{ width: "100%", maxWidth: "100%", margin: 0, display: "block", padding: 0, background: `linear-gradient(to right, rgba(59,130,246,0.95) 0%, rgba(59,130,246,0.95) ${Math.round((selected ? Number(selected.opacity ?? 1) : 1) * 100)}%, rgba(255,255,255,0.35) ${Math.round((selected ? Number(selected.opacity ?? 1) : 1) * 100)}%, rgba(255,255,255,0.35) 100%)` }} />
+								<input type="range" min="0.05" max="1" step="0.05" value={selected ? Number(selected.opacity ?? 1) : 1} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => updateElements(selectedIds, { opacity: Number(e.target.value) })} style={{ width: "100%", margin: 0, display: "block" }} />
 							</div>
 						</div>
 						{selected && ["text", "shape", "svg"].includes(selected.type) ? (
@@ -2765,23 +2764,17 @@ React.useEffect(() => {
 															if (el.type === "svg") return <img key={el.id} alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common }} draggable={false} />;
 															return <img key={el.id} alt="" src={el.src} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
 														})}
-														{selectionBounds ? (
-														<>
-															<div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: `${selectionVisuals.outlineWidth}px solid #8b5cf6`, boxShadow: `0 0 0 ${selectionVisuals.inset}px rgba(255,255,255,0.9) inset`, pointerEvents: "none", zIndex: 8, borderRadius: 2 / Math.max(zoom, 0.1) }} />
-															{selected && isCropCapableElement(selected) ? [
-																{ key: "crop-n", handle: "n", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
-																{ key: "crop-e", handle: "e", cursor: "ew-resize", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cropThickness / 2, top: Number(selected.y || 0) + (Number(selected.height || 0) - selectionVisuals.cropLength) / 2, width: selectionVisuals.cropThickness, height: selectionVisuals.cropLength },
-																{ key: "crop-s", handle: "s", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
-																{ key: "crop-w", handle: "w", cursor: "ew-resize", left: Number(selected.x || 0) - selectionVisuals.cropThickness / 2, top: Number(selected.y || 0) + (Number(selected.height || 0) - selectionVisuals.cropLength) / 2, width: selectionVisuals.cropThickness, height: selectionVisuals.cropLength },
-															].map((bar) => <div key={bar.key} onMouseDown={(e) => startResize(e, bar.handle)} onTouchStart={(e) => startResize(e, bar.handle)} style={{ position: "absolute", left: bar.left, top: bar.top, width: bar.width, height: bar.height, borderRadius: Math.min(bar.width, bar.height) / 2, background: "#8b5cf6", border: `${selectionVisuals.outlineWidth}px solid white`, cursor: bar.cursor, zIndex: 11, touchAction: "none", boxShadow: "0 2px 10px rgba(0,0,0,0.18)" }} />) : null}
-														</>
-													) : null}
-													{selected && !selected.locked ? [
-														{ key: "nw", left: Number(selected.x || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) - selectionVisuals.cornerOffset, cursor: "nwse-resize" },
-														{ key: "ne", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) - selectionVisuals.cornerOffset, cursor: "nesw-resize" },
-														{ key: "se", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cornerOffset, cursor: "nwse-resize" },
-														{ key: "sw", left: Number(selected.x || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cornerOffset, cursor: "nesw-resize" },
-													].map((handle) => <div key={handle.key} onMouseDown={(e) => startResize(e, handle.key)} onTouchStart={(e) => startResize(e, handle.key)} style={{ position: "absolute", left: handle.left, top: handle.top, width: selectionVisuals.cornerSize, height: selectionVisuals.cornerSize, borderRadius: 999, background: "#8b5cf6", border: `${selectionVisuals.outlineWidth}px solid white`, cursor: handle.cursor, zIndex: 12, touchAction: "none", boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }} />) : null}
+														{selectionBounds ? <div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: "1px dashed rgba(255,255,255,0.75)", pointerEvents: "none", zIndex: 8 }} /> : null}
+														{selected && !selected.locked ? [
+															{ key: "nw", left: Number(selected.x || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) - (isMobileViewport ? 14 : 6), cursor: "nwse-resize", mobileVisible: true },
+															{ key: "n", left: Number(selected.x || 0) + Number(selected.width || 0) / 2 - 6, top: Number(selected.y || 0) - 6, cursor: "ns-resize", mobileVisible: false },
+															{ key: "ne", left: Number(selected.x || 0) + Number(selected.width || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) - (isMobileViewport ? 14 : 6), cursor: "nesw-resize", mobileVisible: true },
+															{ key: "e", left: Number(selected.x || 0) + Number(selected.width || 0) - 6, top: Number(selected.y || 0) + Number(selected.height || 0) / 2 - 6, cursor: "ew-resize", mobileVisible: false },
+															{ key: "se", left: Number(selected.x || 0) + Number(selected.width || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) + Number(selected.height || 0) - (isMobileViewport ? 14 : 6), cursor: "nwse-resize", mobileVisible: true },
+															{ key: "s", left: Number(selected.x || 0) + Number(selected.width || 0) / 2 - 6, top: Number(selected.y || 0) + Number(selected.height || 0) - 6, cursor: "ns-resize", mobileVisible: false },
+															{ key: "sw", left: Number(selected.x || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) + Number(selected.height || 0) - (isMobileViewport ? 14 : 6), cursor: "nesw-resize", mobileVisible: true },
+															{ key: "w", left: Number(selected.x || 0) - 6, top: Number(selected.y || 0) + Number(selected.height || 0) / 2 - 6, cursor: "ew-resize", mobileVisible: false },
+														].filter((handle) => !isMobileViewport || handle.mobileVisible).map((handle) => <div key={handle.key} onMouseDown={(e) => startResize(e, handle.key)} onTouchStart={(e) => startResize(e, handle.key)} style={{ position: "absolute", left: handle.left, top: handle.top, width: isMobileViewport ? 28 : 12, height: isMobileViewport ? 28 : 12, borderRadius: 999, background: "#ef4444", border: "2px solid white", cursor: handle.cursor, zIndex: 10, touchAction: "none", boxShadow: isMobileViewport ? "0 0 0 8px rgba(239,68,68,0.18)" : "none" }} />) : null}
 														{marquee ? <div style={{ position: "absolute", left: marquee.left, top: marquee.top, width: marquee.width, height: marquee.height, border: "1px dashed rgba(255,255,255,0.8)", background: "rgba(239,68,68,0.12)", pointerEvents: "none", zIndex: 12 }} /> : null}
 													</>
 												) : (
@@ -2949,4 +2942,3 @@ React.useEffect(() => {
 	);
 
 }
-

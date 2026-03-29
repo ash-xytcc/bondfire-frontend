@@ -246,6 +246,8 @@ function makeImageElement(patch = {}) {
 		opacity: 1,
 		fit: "cover",
 		src: "",
+		imageOffsetX: 0,
+		imageOffsetY: 0,
 		flipX: false,
 		flipY: false,
 		...patch,
@@ -280,7 +282,7 @@ function saveBlocks(orgId, blocks) {
 }
 
 async function loadStudioStateFromServer(orgId) {
-	return api(`/api/orgs/${encodeURIComponent(orgId)}/studio/state?_=${Date.now()}`);
+	return api(`/api/orgs/${encodeURIComponent(orgId)}/studio/state`);
 }
 
 async function saveStudioStateToServer(orgId, payload) {
@@ -292,7 +294,7 @@ async function saveStudioStateToServer(orgId, payload) {
 
 function openStudioUpdatesStream(orgId, onMessage) {
 	if (!orgId || typeof window === "undefined" || typeof window.EventSource === "undefined") return null;
-	const es = new window.EventSource(`/api/orgs/${encodeURIComponent(orgId)}/studio/updates?_=${Date.now()}`);
+	const es = new window.EventSource(`/api/orgs/${encodeURIComponent(orgId)}/studio/updates`);
 	const handle = (event) => {
 		try {
 			onMessage?.(JSON.parse(String(event?.data || "{}")));
@@ -474,29 +476,15 @@ function iconButtonStyle(active) {
 	};
 }
 
-function getSelectionVisualMetrics(zoom, isMobileViewport) {
-	const safeZoom = Math.max(Number(zoom || 1), 0.1);
-	const cornerScreen = isMobileViewport ? 28 : 18;
-	const cropThicknessScreen = isMobileViewport ? 18 : 14;
-	const cropLengthScreen = isMobileViewport ? 68 : 56;
-	const outlineWidthScreen = 2;
-	const insetScreen = isMobileViewport ? 2 : 1;
-	return {
-		cornerSize: cornerScreen / safeZoom,
-		cornerOffset: (cornerScreen / 2) / safeZoom,
-		cropThickness: cropThicknessScreen / safeZoom,
-		cropLength: cropLengthScreen / safeZoom,
-		outlineWidth: outlineWidthScreen / safeZoom,
-		inset: insetScreen / safeZoom,
-	};
-}
-
 
 async function loadImageData(src) {
 	return await new Promise((resolve, reject) => {
 		const img = new Image();
 		img.crossOrigin = "anonymous";
-		img.onload = () => resolve(img);
+		img.onload = () => {
+			imageRenderCache.set(src, { width: img.width, height: img.height });
+			resolve(img);
+		};
 		img.onerror = reject;
 		img.src = src;
 	});
@@ -546,6 +534,49 @@ function getElementTransform(el) {
 	return `rotate(${el?.rotation || 0}deg) scale(${scaleX}, ${scaleY})`;
 }
 
+const imageRenderCache = new Map();
+
+function getImageFrameStyle(el) {
+	const frameWidth = Number(el?.width || 0);
+	const frameHeight = Number(el?.height || 0);
+	const src = String(el?.src || "");
+	const fit = el?.fit || "cover";
+	const offsetX = Number(el?.imageOffsetX || 0);
+	const offsetY = Number(el?.imageOffsetY || 0);
+	if (!src) {
+		return { outer: { overflow: "hidden", borderRadius: 12 }, inner: { width: "100%", height: "100%", objectFit: fit || "cover" } };
+	}
+	if (fit === "fill") {
+		return {
+			outer: { overflow: "hidden", borderRadius: 12 },
+			inner: { position: "absolute", left: offsetX, top: offsetY, width: frameWidth, height: frameHeight, objectFit: "fill" },
+		};
+	}
+	const asset = imageRenderCache.get(src);
+	if (!asset?.width || !asset?.height || frameWidth <= 0 || frameHeight <= 0) {
+		return { outer: { overflow: "hidden", borderRadius: 12 }, inner: { width: "100%", height: "100%", objectFit: fit } };
+	}
+	const rw = frameWidth / asset.width;
+	const rh = frameHeight / asset.height;
+	const scale = fit === "contain" ? Math.min(rw, rh) : Math.max(rw, rh);
+	const drawWidth = asset.width * scale;
+	const drawHeight = asset.height * scale;
+	return {
+		outer: { overflow: "hidden", borderRadius: 12 },
+		inner: {
+			position: "absolute",
+			left: (frameWidth - drawWidth) / 2 + offsetX,
+			top: (frameHeight - drawHeight) / 2 + offsetY,
+			width: drawWidth,
+			height: drawHeight,
+			maxWidth: "none",
+			maxHeight: "none",
+			objectFit: "fill",
+		},
+	};
+}
+
+
 async function renderDocToCanvas(doc, bindings) {
 	const canvas = document.createElement("canvas");
 	canvas.width = doc.width;
@@ -582,15 +613,17 @@ async function renderDocToCanvas(doc, bindings) {
 				roundRectPath(ctx, 0, 0, Number(el.width || 0), Number(el.height || 0), 12);
 				ctx.clip();
 				const fit = el.fit || "cover";
+				const offsetX = Number(el.imageOffsetX || 0);
+				const offsetY = Number(el.imageOffsetY || 0);
 				if (fit === "fill") {
-					ctx.drawImage(img, 0, 0, Number(el.width || 0), Number(el.height || 0));
+					ctx.drawImage(img, offsetX, offsetY, Number(el.width || 0), Number(el.height || 0));
 				} else {
 					const rw = Number(el.width || 0) / img.width;
 					const rh = Number(el.height || 0) / img.height;
 					const scale = fit === "contain" ? Math.min(rw, rh) : Math.max(rw, rh);
 					const dw = img.width * scale;
 					const dh = img.height * scale;
-					ctx.drawImage(img, (Number(el.width || 0) - dw) / 2, (Number(el.height || 0) - dh) / 2, dw, dh);
+					ctx.drawImage(img, (Number(el.width || 0) - dw) / 2 + offsetX, (Number(el.height || 0) - dh) / 2 + offsetY, dw, dh);
 				}
 				ctx.restore();
 			} catch {}
@@ -665,6 +698,7 @@ export default function Studio() {
 	const [studioSyncMsg, setStudioSyncMsg] = React.useState("");
 	const [studioRemoteNotice, setStudioRemoteNotice] = React.useState(null);
 	const [studioKeyNotice, setStudioKeyNotice] = React.useState(null);
+	const [studioReady, setStudioReady] = React.useState(false);
 	const studioLoadedRef = React.useRef(false);
 	const studioSyncTimerRef = React.useRef(null);
 	const studioRemoteSigRef = React.useRef("");
@@ -680,22 +714,9 @@ export default function Studio() {
 	const pinchStateRef = React.useRef(null);
 
 	React.useEffect(() => {
-		const preventPinch = (e) => {
-			if (e.scale !== 1) e.preventDefault();
-		};
-
-		document.addEventListener("gesturestart", preventPinch);
-		document.addEventListener("gesturechange", preventPinch);
-
-		return () => {
-			document.removeEventListener("gesturestart", preventPinch);
-			document.removeEventListener("gesturechange", preventPinch);
-		};
-		}, []);
-
-	React.useEffect(() => {
 		let cancelled = false;
 		studioLoadedRef.current = false;
+		setStudioReady(false);
 		if (studioSyncTimerRef.current) {
 			clearTimeout(studioSyncTimerRef.current);
 			studioSyncTimerRef.current = null;
@@ -728,6 +749,7 @@ export default function Studio() {
 		(async () => {
 if (!orgId) {
 	studioLoadedRef.current = true;
+	setStudioReady(true);
 	return;
 }
 try {
@@ -735,14 +757,17 @@ try {
 } catch (err) {
 	if (!cancelled) setStudioSyncMsg(String(err?.message || err || "Studio sync failed. Using local cache."));
 } finally {
-	if (!cancelled) studioLoadedRef.current = true;
+	if (!cancelled) {
+		studioLoadedRef.current = true;
+		setStudioReady(true);
+	}
 }
 		})();
 		return () => { cancelled = true; };
 	}, [orgId]);
 
 	React.useEffect(() => {
-		if (!studioLoadedRef.current || !orgId) return;
+		if (!studioReady || !orgId) return;
 		if (studioHasAppliedRemoteRef.current) return;
 		let cancelled = false;
 		let tries = 0;
@@ -773,7 +798,7 @@ try {
 				studioInitialHydrationTimerRef.current = null;
 			}
 		};
-	}, [orgId, studioLoadedRef.current, studioSyncMsg]);
+	}, [orgId, studioReady, studioSyncMsg]);
 
 	const bindings = React.useMemo(() => getOrgBindings(orgId), [orgId]);
 	const brandKit = React.useMemo(() => getBrandKit(orgId), [orgId]);
@@ -824,7 +849,7 @@ try {
 	}, [orgId]);
 
 React.useEffect(() => {
-	if (!studioLoadedRef.current || !orgId) return;
+	if (!studioReady || !orgId) return;
 	let orgKey = null;
 	try { orgKey = getCachedOrgKey(orgId); } catch {}
 	if (!orgKey) return;
@@ -863,11 +888,11 @@ React.useEffect(() => {
 			studioSyncTimerRef.current = null;
 		}
 	};
-}, [orgId, docs, savedBlocks]);
+}, [orgId, docs, savedBlocks, studioReady]);
 
 
 React.useEffect(() => {
-	if (!studioLoadedRef.current || !orgId) return;
+	if (!studioReady || !orgId) return;
 	let cancelled = false;
 	let intervalId = null;
 
@@ -881,7 +906,7 @@ React.useEffect(() => {
 		if (intervalId) window.clearInterval(intervalId);
 		const visible = typeof document !== "undefined" ? document.visibilityState === "visible" : true;
 		const inFastMode = Date.now() < studioFastPollUntilRef.current || studioNeedsRemoteHydrationRef.current;
-		const intervalMs = visible ? 1200 : 4000;
+		const intervalMs = visible ? (inFastMode ? 1200 : 3000) : 12000;
 		intervalId = window.setInterval(poll, intervalMs);
 	};
 
@@ -908,10 +933,10 @@ React.useEffect(() => {
 		window.removeEventListener("visibilitychange", onVisible);
 		window.removeEventListener("focus", onFocus);
 	};
-}, [orgId]);
+}, [orgId, studioReady]);
 
 React.useEffect(() => {
-	if (!studioLoadedRef.current || !orgId) return;
+	if (!studioReady || !orgId) return;
 	if (studioStreamRef.current) {
 		try { studioStreamRef.current.close(); } catch {}
 		studioStreamRef.current = null;
@@ -932,10 +957,10 @@ React.useEffect(() => {
 			studioStreamRef.current = null;
 		}
 	};
-}, [orgId]);
+}, [orgId, studioReady]);
 
 React.useEffect(() => {
-	if (!studioLoadedRef.current || !orgId) return;
+	if (!studioReady || !orgId) return;
 	if (!studioNeedsRemoteHydrationRef.current) return;
 	let cancelled = false;
 	const id = window.setTimeout(async () => {
@@ -1933,6 +1958,16 @@ const addImage = () => {
 					nextY = resizeState.y + dy;
 					nextHeight = resizeState.height - dy;
 				}
+				const deltaWidth = nextWidth - resizeState.width;
+				const deltaHeight = nextHeight - resizeState.height;
+				let nextImageOffsetX = Number(el.imageOffsetX || 0);
+				let nextImageOffsetY = Number(el.imageOffsetY || 0);
+				if (el.type === "image") {
+					if (handle === "w") nextImageOffsetX += (resizeState.width - nextWidth) / 2;
+					if (handle === "e") nextImageOffsetX -= (resizeState.width - nextWidth) / 2;
+					if (handle === "n") nextImageOffsetY += (resizeState.height - nextHeight) / 2;
+					if (handle === "s") nextImageOffsetY -= (resizeState.height - nextHeight) / 2;
+				}
 				const minW = 24;
 				const minH = 24;
 				if (nextWidth < minW) {
@@ -1947,7 +1982,7 @@ const addImage = () => {
 				nextY = clamp(nextY, 0, currentPage.height - minH);
 				nextWidth = clamp(nextWidth, minW, currentPage.width - nextX);
 				nextHeight = clamp(nextHeight, minH, currentPage.height - nextY);
-				updateElement(resizeState.id, { x: nextX, y: nextY, width: nextWidth, height: nextHeight });
+				updateElement(resizeState.id, { x: nextX, y: nextY, width: nextWidth, height: nextHeight, ...(el.type === "image" ? { imageOffsetX: nextImageOffsetX, imageOffsetY: nextImageOffsetY } : {}) });
 			}
 			if (marquee) {
 				const point = getMarqueePoint(clientX, clientY);
@@ -2226,7 +2261,6 @@ const addImage = () => {
 		const last = pageLayouts[pageLayouts.length - 1];
 		return Math.max(980, last.top + last.height + 170);
 	}, [pageLayouts]);
-	const selectionVisuals = React.useMemo(() => getSelectionVisualMetrics(zoom, isMobileViewport), [zoom, isMobileViewport]);
 React.useEffect(() => {
 	let helpId = "studio";
 	if (isMobileViewport) helpId = "studio-mobile";
@@ -2779,25 +2813,19 @@ React.useEffect(() => {
 														>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
 															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
 															if (el.type === "svg") return <img key={el.id} alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common }} draggable={false} />;
-															return <img key={el.id} alt="" src={el.src} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
+															const imageFrame = getImageFrameStyle(el); return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, ...imageFrame.outer }}><img alt="" src={el.src} style={{ ...imageFrame.inner }} draggable={false} /></div>;
 														})}
-														{selectionBounds ? (
-														<>
-															<div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: `${selectionVisuals.outlineWidth}px solid #8b5cf6`, boxShadow: `0 0 0 ${selectionVisuals.inset}px rgba(255,255,255,0.9) inset`, pointerEvents: "none", zIndex: 8, borderRadius: 2 / Math.max(zoom, 0.1) }} />
-															{selected?.type === "image" ? [
-																{ key: "crop-n", handle: "n", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
-																{ key: "crop-e", handle: "e", cursor: "ew-resize", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cropThickness / 2, top: Number(selected.y || 0) + (Number(selected.height || 0) - selectionVisuals.cropLength) / 2, width: selectionVisuals.cropThickness, height: selectionVisuals.cropLength },
-																{ key: "crop-s", handle: "s", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
-																{ key: "crop-w", handle: "w", cursor: "ew-resize", left: Number(selected.x || 0) - selectionVisuals.cropThickness / 2, top: Number(selected.y || 0) + (Number(selected.height || 0) - selectionVisuals.cropLength) / 2, width: selectionVisuals.cropThickness, height: selectionVisuals.cropLength },
-															].map((bar) => <div key={bar.key} onMouseDown={(e) => startResize(e, bar.handle)} onTouchStart={(e) => startResize(e, bar.handle)} style={{ position: "absolute", left: bar.left, top: bar.top, width: bar.width, height: bar.height, borderRadius: Math.min(bar.width, bar.height) / 2, background: "#8b5cf6", border: `${selectionVisuals.outlineWidth}px solid white`, cursor: bar.cursor, zIndex: 11, touchAction: "none", boxShadow: "0 2px 10px rgba(0,0,0,0.18)" }} />) : null}
-														</>
-													) : null}
-													{selected && !selected.locked ? [
-														{ key: "nw", left: Number(selected.x || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) - selectionVisuals.cornerOffset, cursor: "nwse-resize" },
-														{ key: "ne", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) - selectionVisuals.cornerOffset, cursor: "nesw-resize" },
-														{ key: "se", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cornerOffset, cursor: "nwse-resize" },
-														{ key: "sw", left: Number(selected.x || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cornerOffset, cursor: "nesw-resize" },
-													].map((handle) => <div key={handle.key} onMouseDown={(e) => startResize(e, handle.key)} onTouchStart={(e) => startResize(e, handle.key)} style={{ position: "absolute", left: handle.left, top: handle.top, width: selectionVisuals.cornerSize, height: selectionVisuals.cornerSize, borderRadius: 999, background: "#8b5cf6", border: `${selectionVisuals.outlineWidth}px solid white`, cursor: handle.cursor, zIndex: 12, touchAction: "none", boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }} />) : null}
+														{selectionBounds ? <div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: "1px dashed rgba(255,255,255,0.75)", pointerEvents: "none", zIndex: 8 }} /> : null}
+														{selected && !selected.locked ? [
+															{ key: "nw", left: Number(selected.x || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) - (isMobileViewport ? 14 : 6), cursor: "nwse-resize", mobileVisible: true },
+															{ key: "n", left: Number(selected.x || 0) + Number(selected.width || 0) / 2 - 6, top: Number(selected.y || 0) - 6, cursor: "ns-resize", mobileVisible: false },
+															{ key: "ne", left: Number(selected.x || 0) + Number(selected.width || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) - (isMobileViewport ? 14 : 6), cursor: "nesw-resize", mobileVisible: true },
+															{ key: "e", left: Number(selected.x || 0) + Number(selected.width || 0) - 6, top: Number(selected.y || 0) + Number(selected.height || 0) / 2 - 6, cursor: "ew-resize", mobileVisible: false },
+															{ key: "se", left: Number(selected.x || 0) + Number(selected.width || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) + Number(selected.height || 0) - (isMobileViewport ? 14 : 6), cursor: "nwse-resize", mobileVisible: true },
+															{ key: "s", left: Number(selected.x || 0) + Number(selected.width || 0) / 2 - 6, top: Number(selected.y || 0) + Number(selected.height || 0) - 6, cursor: "ns-resize", mobileVisible: false },
+															{ key: "sw", left: Number(selected.x || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) + Number(selected.height || 0) - (isMobileViewport ? 14 : 6), cursor: "nesw-resize", mobileVisible: true },
+															{ key: "w", left: Number(selected.x || 0) - 6, top: Number(selected.y || 0) + Number(selected.height || 0) / 2 - 6, cursor: "ew-resize", mobileVisible: false },
+														].filter((handle) => !isMobileViewport || handle.mobileVisible).map((handle) => <div key={handle.key} onMouseDown={(e) => startResize(e, handle.key)} onTouchStart={(e) => startResize(e, handle.key)} style={{ position: "absolute", left: handle.left, top: handle.top, width: isMobileViewport ? 28 : 12, height: isMobileViewport ? 28 : 12, borderRadius: 999, background: "#ef4444", border: "2px solid white", cursor: handle.cursor, zIndex: 10, touchAction: "none", boxShadow: isMobileViewport ? "0 0 0 8px rgba(239,68,68,0.18)" : "none" }} />) : null}
 														{marquee ? <div style={{ position: "absolute", left: marquee.left, top: marquee.top, width: marquee.width, height: marquee.height, border: "1px dashed rgba(255,255,255,0.8)", background: "rgba(239,68,68,0.12)", pointerEvents: "none", zIndex: 12 }} /> : null}
 													</>
 												) : (
@@ -2806,7 +2834,7 @@ React.useEffect(() => {
 														const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
 														if (el.type === "text") return <div key={el.id} style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden" }}>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
 														if (el.type === "shape") return <div key={el.id} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
-														return <img key={el.id} alt="" src={el.src} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
+														const imageFrame = getImageFrameStyle(el); return <div key={el.id} style={{ ...common, ...imageFrame.outer }}><img alt="" src={el.src} style={{ ...imageFrame.inner }} draggable={false} /></div>;
 													})
 												)}
 											</div>
@@ -2967,4 +2995,16 @@ React.useEffect(() => {
 }
 
 
+React.useEffect(() => {
+  const preventPinch = (e) => {
+    if (e.scale !== 1) e.preventDefault();
+  };
 
+  document.addEventListener("gesturestart", preventPinch);
+  document.addEventListener("gesturechange", preventPinch);
+
+  return () => {
+    document.removeEventListener("gesturestart", preventPinch);
+    document.removeEventListener("gesturechange", preventPinch);
+  };
+}, []);

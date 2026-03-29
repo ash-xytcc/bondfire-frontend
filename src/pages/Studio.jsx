@@ -1872,7 +1872,7 @@ const addImage = () => {
 
 	React.useEffect(() => {
 		const onMove = (e) => {
-			if (e.type === "touchmove") e.preventDefault();
+			if (e.type === "touchmove" && (panState || dragState || resizeState || marquee || guideDrag || pinchStateRef.current)) e.preventDefault();
 			if (e.touches?.length >= 2 && pinchStateRef.current && workspaceRef.current) {
 				const rect = workspaceRef.current.getBoundingClientRect();
 				const t1 = e.touches[0];
@@ -2312,19 +2312,13 @@ React.useEffect(() => {
 				.bfStudioOpacitySlider {
 					-webkit-appearance: none;
 					appearance: none;
-					width: 100%;
-					max-width: 100%;
-					height: 18px;
-					margin: 0;
-					padding: 0;
-					border: 0;
-					border-radius: 999px;
 					background: transparent;
+					height: 18px;
 				}
 				.bfStudioOpacitySlider::-webkit-slider-runnable-track {
 					height: 8px;
 					border-radius: 999px;
-					background: transparent;
+					background: rgba(59,130,246,0.9);
 				}
 				.bfStudioOpacitySlider::-webkit-slider-thumb {
 					-webkit-appearance: none;
@@ -2338,11 +2332,6 @@ React.useEffect(() => {
 					box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 				}
 				.bfStudioOpacitySlider::-moz-range-track {
-					height: 8px;
-					border-radius: 999px;
-					background: transparent;
-				}
-				.bfStudioOpacitySlider::-moz-range-progress {
 					height: 8px;
 					border-radius: 999px;
 					background: rgba(59,130,246,0.9);
@@ -2463,7 +2452,7 @@ React.useEffect(() => {
 				</div>
 
 				{leftPanel ? (
-					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, overflow: "auto", boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, overflow: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y", boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
 						<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, gap: 10 }}>
 							<div style={{ fontWeight: 800 }}>{leftPanel === "create" ? "Add" : leftPanel === "templates" ? "Templates" : leftPanel === "assets" ? "Assets" : leftPanel === "data" ? "Bondfire Data" : "Documents"}</div>
 							<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={() => setLeftPanel(null)}>✕</button>
@@ -2653,7 +2642,7 @@ React.useEffect(() => {
 						<div style={{ display: "flex", alignItems: "center", gap: 4, color: "white", fontSize: 11 }}>
 							<span>Opacity</span>
 							<div style={{ width: 140, display: "flex", alignItems: "center" }}>
-								<input className="bfStudioOpacitySlider" type="range" min="0.05" max="1" step="0.05" value={selected ? Number(selected.opacity ?? 1) : 1} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => updateElements(selectedIds, { opacity: Number(e.target.value) })} style={{ width: "100%", margin: 0, display: "block", background: `linear-gradient(to right, rgba(59,130,246,0.9) 0%, rgba(59,130,246,0.9) ${selected ? Math.max(0, Math.min(100, Number(selected.opacity ?? 1) * 100)) : 100}%, rgba(255,255,255,0.32) ${selected ? Math.max(0, Math.min(100, Number(selected.opacity ?? 1) * 100)) : 100}%, rgba(255,255,255,0.32) 100%)`, borderRadius: 999, padding: 0 }} />
+								<input type="range" min="0.05" max="1" step="0.05" value={selected ? Number(selected.opacity ?? 1) : 1} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => updateElements(selectedIds, { opacity: Number(e.target.value) })} style={{ width: "100%", margin: 0, display: "block" }} />
 							</div>
 						</div>
 						{selected && ["text", "shape", "svg"].includes(selected.type) ? (

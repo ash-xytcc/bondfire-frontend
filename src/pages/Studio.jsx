@@ -663,7 +663,6 @@ export default function Studio() {
 	const pinchStateRef = React.useRef(null);
 
 
-
 	React.useEffect(() => {
 		const preventPinch = (e) => {
 			if (e.scale !== 1) e.preventDefault();
@@ -676,8 +675,7 @@ export default function Studio() {
 			document.removeEventListener("gesturestart", preventPinch);
 			document.removeEventListener("gesturechange", preventPinch);
 		};
-		}, []);
-
+	}, []);
 
 	React.useEffect(() => {
 		let cancelled = false;
@@ -1865,7 +1863,15 @@ const addImage = () => {
 
 	React.useEffect(() => {
 		const onMove = (e) => {
-			if (e.type === "touchmove") e.preventDefault();
+			const shouldBlockTouchScroll = !!(
+				pinchStateRef.current ||
+				panState ||
+				dragState ||
+				resizeState ||
+				marquee ||
+				guideDrag
+			);
+			if (e.type === "touchmove" && shouldBlockTouchScroll) e.preventDefault();
 			if (e.touches?.length >= 2 && pinchStateRef.current && workspaceRef.current) {
 				const rect = workspaceRef.current.getBoundingClientRect();
 				const t1 = e.touches[0];
@@ -2451,7 +2457,7 @@ React.useEffect(() => {
 				</div>
 
 				{leftPanel ? (
-					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, paddingBottom: isMobileViewport ? 54 : 14, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", scrollPaddingBottom: isMobileViewport ? 54 : 14, boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, paddingBottom: isMobileViewport ? 42 : 14, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", scrollPaddingBottom: isMobileViewport ? 42 : 14, touchAction: isMobileViewport ? "pan-y" : "auto", boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
 						<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, gap: 10 }}>
 							<div style={{ fontWeight: 800 }}>{leftPanel === "create" ? "Add" : leftPanel === "templates" ? "Templates" : leftPanel === "assets" ? "Assets" : leftPanel === "data" ? "Bondfire Data" : "Documents"}</div>
 							<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={() => setLeftPanel(null)}>✕</button>
@@ -2944,3 +2950,4 @@ React.useEffect(() => {
 	);
 
 }
+

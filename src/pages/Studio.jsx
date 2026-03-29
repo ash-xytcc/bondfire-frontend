@@ -280,7 +280,7 @@ function saveBlocks(orgId, blocks) {
 }
 
 async function loadStudioStateFromServer(orgId) {
-	return api(`/api/orgs/${encodeURIComponent(orgId)}/studio/state?_=${Date.now()}`);
+	return api(`/api/orgs/${encodeURIComponent(orgId)}/studio/state`);
 }
 
 async function saveStudioStateToServer(orgId, payload) {
@@ -292,7 +292,7 @@ async function saveStudioStateToServer(orgId, payload) {
 
 function openStudioUpdatesStream(orgId, onMessage) {
 	if (!orgId || typeof window === "undefined" || typeof window.EventSource === "undefined") return null;
-	const es = new window.EventSource(`/api/orgs/${encodeURIComponent(orgId)}/studio/updates?_=${Date.now()}`);
+	const es = new window.EventSource(`/api/orgs/${encodeURIComponent(orgId)}/studio/updates`);
 	const handle = (event) => {
 		try {
 			onMessage?.(JSON.parse(String(event?.data || "{}")));
@@ -474,23 +474,6 @@ function iconButtonStyle(active) {
 	};
 }
 
-function getSelectionVisualMetrics(zoom, isMobileViewport) {
-	const safeZoom = Math.max(Number(zoom || 1), 0.1);
-	const cornerScreen = isMobileViewport ? 28 : 18;
-	const cropThicknessScreen = isMobileViewport ? 18 : 14;
-	const cropLengthScreen = isMobileViewport ? 68 : 56;
-	const outlineWidthScreen = 2;
-	const insetScreen = isMobileViewport ? 2 : 1;
-	return {
-		cornerSize: cornerScreen / safeZoom,
-		cornerOffset: (cornerScreen / 2) / safeZoom,
-		cropThickness: cropThicknessScreen / safeZoom,
-		cropLength: cropLengthScreen / safeZoom,
-		outlineWidth: outlineWidthScreen / safeZoom,
-		inset: insetScreen / safeZoom,
-	};
-}
-
 
 async function loadImageData(src) {
 	return await new Promise((resolve, reject) => {
@@ -665,7 +648,6 @@ export default function Studio() {
 	const [studioSyncMsg, setStudioSyncMsg] = React.useState("");
 	const [studioRemoteNotice, setStudioRemoteNotice] = React.useState(null);
 	const [studioKeyNotice, setStudioKeyNotice] = React.useState(null);
-	const [studioReady, setStudioReady] = React.useState(false);
 	const studioLoadedRef = React.useRef(false);
 	const studioSyncTimerRef = React.useRef(null);
 	const studioRemoteSigRef = React.useRef("");
@@ -681,23 +663,8 @@ export default function Studio() {
 	const pinchStateRef = React.useRef(null);
 
 	React.useEffect(() => {
-		const preventPinch = (e) => {
-			if (e.scale !== 1) e.preventDefault();
-		};
-
-		document.addEventListener("gesturestart", preventPinch);
-		document.addEventListener("gesturechange", preventPinch);
-
-		return () => {
-			document.removeEventListener("gesturestart", preventPinch);
-			document.removeEventListener("gesturechange", preventPinch);
-		};
-		}, []);
-
-	React.useEffect(() => {
 		let cancelled = false;
 		studioLoadedRef.current = false;
-		setStudioReady(false);
 		if (studioSyncTimerRef.current) {
 			clearTimeout(studioSyncTimerRef.current);
 			studioSyncTimerRef.current = null;
@@ -730,7 +697,6 @@ export default function Studio() {
 		(async () => {
 if (!orgId) {
 	studioLoadedRef.current = true;
-	setStudioReady(true);
 	return;
 }
 try {
@@ -738,17 +704,14 @@ try {
 } catch (err) {
 	if (!cancelled) setStudioSyncMsg(String(err?.message || err || "Studio sync failed. Using local cache."));
 } finally {
-	if (!cancelled) {
-			studioLoadedRef.current = true;
-			setStudioReady(true);
-		}
+	if (!cancelled) studioLoadedRef.current = true;
 }
 		})();
 		return () => { cancelled = true; };
 	}, [orgId]);
 
 	React.useEffect(() => {
-		if (!studioReady || !orgId) return;
+		if (!studioLoadedRef.current || !orgId) return;
 		if (studioHasAppliedRemoteRef.current) return;
 		let cancelled = false;
 		let tries = 0;
@@ -779,7 +742,7 @@ try {
 				studioInitialHydrationTimerRef.current = null;
 			}
 		};
-	}, [orgId, studioReady, studioSyncMsg]);
+	}, [orgId, studioLoadedRef.current, studioSyncMsg]);
 
 	const bindings = React.useMemo(() => getOrgBindings(orgId), [orgId]);
 	const brandKit = React.useMemo(() => getBrandKit(orgId), [orgId]);
@@ -830,7 +793,7 @@ try {
 	}, [orgId]);
 
 React.useEffect(() => {
-	if (!studioReady || !orgId) return;
+	if (!studioLoadedRef.current || !orgId) return;
 	let orgKey = null;
 	try { orgKey = getCachedOrgKey(orgId); } catch {}
 	if (!orgKey) return;
@@ -873,7 +836,7 @@ React.useEffect(() => {
 
 
 React.useEffect(() => {
-	if (!studioReady || !orgId) return;
+	if (!studioLoadedRef.current || !orgId) return;
 	let cancelled = false;
 	let intervalId = null;
 
@@ -887,7 +850,7 @@ React.useEffect(() => {
 		if (intervalId) window.clearInterval(intervalId);
 		const visible = typeof document !== "undefined" ? document.visibilityState === "visible" : true;
 		const inFastMode = Date.now() < studioFastPollUntilRef.current || studioNeedsRemoteHydrationRef.current;
-		const intervalMs = visible ? 1200 : 4000;
+		const intervalMs = visible ? (inFastMode ? 1200 : 3000) : 12000;
 		intervalId = window.setInterval(poll, intervalMs);
 	};
 
@@ -914,10 +877,10 @@ React.useEffect(() => {
 		window.removeEventListener("visibilitychange", onVisible);
 		window.removeEventListener("focus", onFocus);
 	};
-}, [orgId, studioReady]);
+}, [orgId]);
 
 React.useEffect(() => {
-	if (!studioReady || !orgId) return;
+	if (!studioLoadedRef.current || !orgId) return;
 	if (studioStreamRef.current) {
 		try { studioStreamRef.current.close(); } catch {}
 		studioStreamRef.current = null;
@@ -938,10 +901,10 @@ React.useEffect(() => {
 			studioStreamRef.current = null;
 		}
 	};
-}, [orgId, studioReady]);
+}, [orgId]);
 
 React.useEffect(() => {
-	if (!studioReady || !orgId) return;
+	if (!studioLoadedRef.current || !orgId) return;
 	if (!studioNeedsRemoteHydrationRef.current) return;
 	let cancelled = false;
 	const id = window.setTimeout(async () => {
@@ -962,7 +925,11 @@ React.useEffect(() => {
 	const pending = studioPendingRemoteRef.current;
 	if (!pending) return;
 	if (dragState || resizeState || marquee || panState || guideDrag || textEditId) return;
-	if (studioLastLocalEditRef.current > studioLastSharedSaveRef.current) return;
+	const debounceWindowMs = 900;
+	const localEditAgeMs = Date.now() - Number(studioLastLocalEditRef.current || 0);
+	if (studioLastLocalEditRef.current > studioLastSharedSaveRef.current) {
+		if (localEditAgeMs <= debounceWindowMs) return;
+	}
 	const id = window.setTimeout(() => {
 		studioRemoteSigRef.current = pending.sig;
 		setDocs(pending.remoteState.docs);
@@ -975,7 +942,7 @@ React.useEffect(() => {
 		studioHasAppliedRemoteRef.current = true;
 		studioNeedsRemoteHydrationRef.current = false;
 		setStudioRemoteNotice(null);
-	}, 250);
+	}, 750);
 	return () => window.clearTimeout(id);
 }, [orgId, dragState, resizeState, marquee, panState, guideDrag, textEditId, docs]);
 
@@ -1041,7 +1008,16 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	const debounceWindowMs = 900;
 	const localEditAgeMs = Date.now() - Number(studioLastLocalEditRef.current || 0);
 	const shouldTreatAsRealOverwriteRisk = hasUnsyncedLocalEdits && localEditAgeMs > debounceWindowMs;
-	if (!forceApply && (hasUnsyncedLocalEdits || hasActiveInteraction)) {
+	if (!needsAuthoritativeRemoteHydration && !forceApply && queueIfBusy && (hasActiveInteraction || shouldTreatAsRealOverwriteRisk)) {
+		studioPendingRemoteRef.current = { sig, remoteState, receivedAt: Date.now() };
+		if (shouldTreatAsRealOverwriteRisk) {
+			setStudioRemoteNotice({
+				kind: "queued",
+				text: "Remote changes are waiting because this device still has unsynced local edits.",
+			});
+		} else {
+			setStudioRemoteNotice(null);
+		}
 		return false;
 	}
 	studioRemoteSigRef.current = sig;
@@ -2219,7 +2195,6 @@ const addImage = () => {
 		const last = pageLayouts[pageLayouts.length - 1];
 		return Math.max(980, last.top + last.height + 170);
 	}, [pageLayouts]);
-	const selectionVisuals = React.useMemo(() => getSelectionVisualMetrics(zoom, isMobileViewport), [zoom, isMobileViewport]);
 React.useEffect(() => {
 	let helpId = "studio";
 	if (isMobileViewport) helpId = "studio-mobile";
@@ -2312,19 +2287,13 @@ React.useEffect(() => {
 				.bfStudioOpacitySlider {
 					-webkit-appearance: none;
 					appearance: none;
-					width: 100%;
-					max-width: 100%;
-					height: 18px;
-					margin: 0;
-					padding: 0;
-					border: 0;
-					border-radius: 999px;
 					background: transparent;
+					height: 18px;
 				}
 				.bfStudioOpacitySlider::-webkit-slider-runnable-track {
 					height: 8px;
 					border-radius: 999px;
-					background: transparent;
+					background: rgba(59,130,246,0.9);
 				}
 				.bfStudioOpacitySlider::-webkit-slider-thumb {
 					-webkit-appearance: none;
@@ -2338,11 +2307,6 @@ React.useEffect(() => {
 					box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 				}
 				.bfStudioOpacitySlider::-moz-range-track {
-					height: 8px;
-					border-radius: 999px;
-					background: transparent;
-				}
-				.bfStudioOpacitySlider::-moz-range-progress {
 					height: 8px;
 					border-radius: 999px;
 					background: rgba(59,130,246,0.9);
@@ -2422,6 +2386,13 @@ React.useEffect(() => {
 					<button onClick={retryStudioRemoteHydration} style={{ padding: "8px 10px", borderRadius: 10 }}>Retry now</button>
 				</div>
 			) : null}
+			{studioRemoteNotice ? (
+				<div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", borderRadius: 14, background: "rgba(17,24,39,0.92)", border: "1px solid rgba(255,255,255,0.12)" }}>
+					<div style={{ fontSize: 13, lineHeight: 1.35, flex: 1, minWidth: 220 }}>{studioRemoteNotice.text}</div>
+					{studioPendingRemoteRef.current ? <button onClick={applyQueuedRemoteChanges} style={{ padding: "8px 10px", borderRadius: 10 }}>Apply remote</button> : null}
+					{studioPendingRemoteRef.current ? <button onClick={dismissQueuedRemoteChanges} style={{ padding: "8px 10px", borderRadius: 10 }}>Keep mine for now</button> : null}
+				</div>
+			) : null}
 
 			<div style={{ position: "relative", minHeight: "calc(100vh - 170px)", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden" }}>
 				<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 8) : 12, zIndex: 25, display: "grid", gap: 8 }}>
@@ -2463,7 +2434,7 @@ React.useEffect(() => {
 				</div>
 
 				{leftPanel ? (
-					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, overflow: "auto", boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, paddingBottom: isMobileViewport ? 40 : 14, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", scrollPaddingBottom: isMobileViewport ? 40 : 14, touchAction: isMobileViewport ? "pan-y" : "auto", boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
 						<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, gap: 10 }}>
 							<div style={{ fontWeight: 800 }}>{leftPanel === "create" ? "Add" : leftPanel === "templates" ? "Templates" : leftPanel === "assets" ? "Assets" : leftPanel === "data" ? "Bondfire Data" : "Documents"}</div>
 							<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={() => setLeftPanel(null)}>✕</button>
@@ -2653,7 +2624,7 @@ React.useEffect(() => {
 						<div style={{ display: "flex", alignItems: "center", gap: 4, color: "white", fontSize: 11 }}>
 							<span>Opacity</span>
 							<div style={{ width: 140, display: "flex", alignItems: "center" }}>
-								<input className="bfStudioOpacitySlider" type="range" min="0.05" max="1" step="0.05" value={selected ? Number(selected.opacity ?? 1) : 1} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => updateElements(selectedIds, { opacity: Number(e.target.value) })} style={{ width: "100%", margin: 0, display: "block", background: `linear-gradient(to right, rgba(59,130,246,0.9) 0%, rgba(59,130,246,0.9) ${selected ? Math.max(0, Math.min(100, Number(selected.opacity ?? 1) * 100)) : 100}%, rgba(255,255,255,0.32) ${selected ? Math.max(0, Math.min(100, Number(selected.opacity ?? 1) * 100)) : 100}%, rgba(255,255,255,0.32) 100%)`, borderRadius: 999, padding: 0 }} />
+								<input className="bfStudioOpacitySlider" type="range" min="0.05" max="1" step="0.05" value={selected ? Number(selected.opacity ?? 1) : 1} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => updateElements(selectedIds, { opacity: Number(e.target.value) })} style={{ width: "100%", maxWidth: "100%", margin: 0, display: "block", padding: 0, background: `linear-gradient(to right, rgba(59,130,246,0.95) 0%, rgba(59,130,246,0.95) ${Math.round((selected ? Number(selected.opacity ?? 1) : 1) * 100)}%, rgba(255,255,255,0.35) ${Math.round((selected ? Number(selected.opacity ?? 1) : 1) * 100)}%, rgba(255,255,255,0.35) 100%)` }} />
 							</div>
 						</div>
 						{selected && ["text", "shape", "svg"].includes(selected.type) ? (
@@ -2781,7 +2752,7 @@ React.useEffect(() => {
 														{selectionBounds ? (
 														<>
 															<div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: `${selectionVisuals.outlineWidth}px solid #8b5cf6`, boxShadow: `0 0 0 ${selectionVisuals.inset}px rgba(255,255,255,0.9) inset`, pointerEvents: "none", zIndex: 8, borderRadius: 2 / Math.max(zoom, 0.1) }} />
-															{selected?.type === "image" ? [
+															{selected && isCropCapableElement(selected) ? [
 																{ key: "crop-n", handle: "n", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
 																{ key: "crop-e", handle: "e", cursor: "ew-resize", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cropThickness / 2, top: Number(selected.y || 0) + (Number(selected.height || 0) - selectionVisuals.cropLength) / 2, width: selectionVisuals.cropThickness, height: selectionVisuals.cropLength },
 																{ key: "crop-s", handle: "s", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
@@ -2962,3 +2933,18 @@ React.useEffect(() => {
 	);
 
 }
+
+
+React.useEffect(() => {
+  const preventPinch = (e) => {
+    if (e.scale !== 1) e.preventDefault();
+  };
+
+  document.addEventListener("gesturestart", preventPinch);
+  document.addEventListener("gesturechange", preventPinch);
+
+  return () => {
+    document.removeEventListener("gesturestart", preventPinch);
+    document.removeEventListener("gesturechange", preventPinch);
+  };
+}, []);

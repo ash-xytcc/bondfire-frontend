@@ -1872,9 +1872,7 @@ const addImage = () => {
 
 	React.useEffect(() => {
 		const onMove = (e) => {
-			if (e.type === "touchmove" && (panState || dragState || resizeState || marquee || guideDrag || (e.touches?.length >= 2 && pinchStateRef.current))) {
-				e.preventDefault();
-			}
+			if (e.type === "touchmove" && (dragState || resizeState || marquee || panState || guideDrag || (e.touches?.length >= 2 && pinchStateRef.current))) e.preventDefault();
 			if (e.touches?.length >= 2 && pinchStateRef.current && workspaceRef.current) {
 				const rect = workspaceRef.current.getBoundingClientRect();
 				const t1 = e.touches[0];
@@ -2465,7 +2463,7 @@ React.useEffect(() => {
 				</div>
 
 				{leftPanel ? (
-					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, paddingBottom: isMobileViewport ? 44 : 14, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y", scrollPaddingBottom: isMobileViewport ? 44 : 14, boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, paddingBottom: isMobileViewport ? 72 : 14, boxSizing: "border-box", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y", scrollPaddingBottom: isMobileViewport ? 72 : 14, boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
 						<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, gap: 10 }}>
 							<div style={{ fontWeight: 800 }}>{leftPanel === "create" ? "Add" : leftPanel === "templates" ? "Templates" : leftPanel === "assets" ? "Assets" : leftPanel === "data" ? "Bondfire Data" : "Documents"}</div>
 							<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={() => setLeftPanel(null)}>✕</button>

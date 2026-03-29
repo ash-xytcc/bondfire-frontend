@@ -511,6 +511,19 @@ function getElementBaseSize(el) {
 	return { width, height };
 }
 
+function getRetainedSelectionIds(remoteDocs, currentId, activePageIndex, selectedIds) {
+	const ids = Array.isArray(selectedIds) ? selectedIds : [];
+	if (!ids.length) return [];
+	const docs = Array.isArray(remoteDocs) ? remoteDocs : [];
+	const doc = docs.find((item) => item.id === currentId) || docs[0] || null;
+	if (!doc) return [];
+	const pages = Array.isArray(doc.pages) && doc.pages.length ? doc.pages : [];
+	const page = pages[Math.max(0, Math.min(Number(activePageIndex || 0), pages.length - 1))] || pages[0] || null;
+	if (!page) return [];
+	const validIds = new Set((Array.isArray(page.elements) ? page.elements : []).map((el) => el.id));
+	return ids.filter((id) => validIds.has(id));
+}
+
 
 async function loadImageData(src) {
 	return await new Promise((resolve, reject) => {
@@ -587,7 +600,7 @@ async function renderDocToCanvas(doc, bindings) {
 			ctx.save();
 			roundRectPath(ctx, 0, 0, Number(el.width || 0), Number(el.height || 0), Number(el.radius || 0));
 			ctx.clip();
-						roundRectPath(ctx, 0, 0, base.width, base.height, Number(el.radius || 0));
+						roundRectPath(ctx, 0, -crop.top, base.width, base.height, Number(el.radius || 0));
 			ctx.fillStyle = el.fill || "transparent";
 			ctx.fill();
 			if (Number(el.strokeWidth || 0) > 0) {
@@ -604,7 +617,7 @@ async function renderDocToCanvas(doc, bindings) {
 				ctx.save();
 				roundRectPath(ctx, 0, 0, Number(el.width || 0), Number(el.height || 0), 12);
 				ctx.clip();
-				ctx.drawImage(img, 0, 0, base.width, base.height);
+				ctx.drawImage(img, 0, -crop.top, base.width, base.height);
 				ctx.restore();
 			} catch {}
 		} else if (el.type === "image" && el.src) {
@@ -617,14 +630,14 @@ async function renderDocToCanvas(doc, bindings) {
 				ctx.clip();
 				const fit = el.fit || "cover";
 				if (fit === "fill") {
-					ctx.drawImage(img, 0, 0, base.width, base.height);
+					ctx.drawImage(img, 0, -crop.top, base.width, base.height);
 				} else {
 					const rw = base.width / img.width;
 					const rh = base.height / img.height;
 					const scale = fit === "contain" ? Math.min(rw, rh) : Math.max(rw, rh);
 					const dw = img.width * scale;
 					const dh = img.height * scale;
-					ctx.drawImage(img, (base.width - dw) / 2, (base.height - dh) / 2, dw, dh);
+					ctx.drawImage(img, (base.width - dw) / 2, ((base.height - dh) / 2) - crop.top, dw, dh);
 				}
 				ctx.restore();
 			} catch {}
@@ -1008,6 +1021,7 @@ React.useEffect(() => {
 		saveDocs(orgId, pending.remoteState.docs);
 		saveBlocks(orgId, pending.remoteState.blocks);
 		setCurrentId((prev) => pending.remoteState.docs.some((doc) => doc.id === prev) ? prev : (pending.remoteState.docs[0]?.id || null));
+		setSelectedIds((prev) => getRetainedSelectionIds(pending.remoteState.docs, currentId, activePageIndex, prev));
 		studioPendingRemoteRef.current = null;
 		studioLastRemoteApplyRef.current = Date.now();
 		studioHasAppliedRemoteRef.current = true;
@@ -1081,14 +1095,7 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	const shouldTreatAsRealOverwriteRisk = hasUnsyncedLocalEdits && localEditAgeMs > debounceWindowMs;
 	if (!needsAuthoritativeRemoteHydration && !forceApply && queueIfBusy && (hasActiveInteraction || shouldTreatAsRealOverwriteRisk)) {
 		studioPendingRemoteRef.current = { sig, remoteState, receivedAt: Date.now() };
-		if (shouldTreatAsRealOverwriteRisk) {
-			setStudioRemoteNotice({
-				kind: "queued",
-				text: "Remote changes are waiting because this device still has unsynced local edits.",
-			});
-		} else {
-			setStudioRemoteNotice(null);
-		}
+		setStudioRemoteNotice(null);
 		return false;
 	}
 	studioRemoteSigRef.current = sig;
@@ -1098,6 +1105,7 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	saveDocs(orgId, remoteDocs);
 	saveBlocks(orgId, remoteBlocks);
 	setCurrentId((prev) => remoteDocs.some((doc) => doc.id === prev) ? prev : (remoteDocs[0]?.id || null));
+	setSelectedIds((prev) => getRetainedSelectionIds(remoteDocs, currentId, activePageIndex, prev));
 	studioLastRemoteApplyRef.current = Date.now();
 	studioLastSharedSaveRef.current = studioLastRemoteApplyRef.current;
 	studioHasAppliedRemoteRef.current = true;
@@ -2348,6 +2356,7 @@ React.useEffect(() => {
 		saveDocs(orgId, pending.remoteState.docs);
 		saveBlocks(orgId, pending.remoteState.blocks);
 		setCurrentId((prev) => pending.remoteState.docs.some((doc) => doc.id === prev) ? prev : (pending.remoteState.docs[0]?.id || null));
+		setSelectedIds((prev) => getRetainedSelectionIds(pending.remoteState.docs, currentId, activePageIndex, prev));
 		studioPendingRemoteRef.current = null;
 		studioLastRemoteApplyRef.current = Date.now();
 		studioHasAppliedRemoteRef.current = true;
@@ -2371,20 +2380,8 @@ React.useEffect(() => {
 	}, [orgId, studioSyncMsg, docs.length, savedBlocks.length, textEditId, dragState, resizeState, marquee, panState, guideDrag]);
 
 	React.useEffect(() => {
-		if (!studioRemoteNotice) return;
-		if (!studioPendingRemoteRef.current) {
-			setStudioRemoteNotice(null);
-			return;
-		}
-		const hasActiveInteraction = !!(dragState || resizeState || marquee || panState || guideDrag || textEditId);
-		const hasUnsyncedLocalEdits = studioLastLocalEditRef.current > studioLastSharedSaveRef.current;
-		const debounceWindowMs = 900;
-		const localEditAgeMs = Date.now() - Number(studioLastLocalEditRef.current || 0);
-		const shouldKeepBanner = hasUnsyncedLocalEdits && !hasActiveInteraction && localEditAgeMs > debounceWindowMs;
-		if (!shouldKeepBanner) {
-			setStudioRemoteNotice(null);
-		}
-	}, [studioRemoteNotice, dragState, resizeState, marquee, panState, guideDrag, textEditId, docs.length, savedBlocks.length]);
+		if (studioRemoteNotice) setStudioRemoteNotice(null);
+	}, [studioRemoteNotice]);
 
 	const activePageLayout = React.useMemo(() => {
 		if (!pageLayouts.length) return null;
@@ -2519,7 +2516,7 @@ React.useEffect(() => {
 					<button onClick={retryStudioRemoteHydration} style={{ padding: "8px 10px", borderRadius: 10 }}>Retry now</button>
 				</div>
 			) : null}
-			{studioRemoteNotice ? (
+			{false ? (
 				<div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", borderRadius: 14, background: "rgba(17,24,39,0.92)", border: "1px solid rgba(255,255,255,0.12)" }}>
 					<div style={{ fontSize: 13, lineHeight: 1.35, flex: 1, minWidth: 220 }}>{studioRemoteNotice.text}</div>
 					{studioPendingRemoteRef.current ? <button onClick={applyQueuedRemoteChanges} style={{ padding: "8px 10px", borderRadius: 10 }}>Apply remote</button> : null}
@@ -2881,16 +2878,16 @@ React.useEffect(() => {
 															if (el.type === "shape") {
 									const crop = getCropInsets(el);
 									const base = getElementBaseSize(el);
-									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><div style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
+									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><div style={{ position: "absolute", left: 0, top: -crop.top, width: base.width, height: base.height, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
 								}
 															if (el.type === "svg") {
 									const crop = getCropInsets(el);
 									const base = getElementBaseSize(el);
-									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height }} draggable={false} /></div>;
+									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: 0, top: -crop.top, width: base.width, height: base.height }} draggable={false} /></div>;
 								}
 															const crop = getCropInsets(el);
 									const base = getElementBaseSize(el);
-									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} /></div>;
+									return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: 0, top: -crop.top, width: base.width, height: base.height, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} /></div>;
 														})}
 														{selectionBounds ? (
 														<>
@@ -2919,16 +2916,16 @@ React.useEffect(() => {
 														if (el.type === "shape") {
 									const crop = getCropInsets(el);
 									const base = getElementBaseSize(el);
-									return <div key={el.id} style={{ ...common, overflow: "hidden" }}><div style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
+									return <div key={el.id} style={{ ...common, overflow: "hidden" }}><div style={{ position: "absolute", left: 0, top: -crop.top, width: base.width, height: base.height, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
 								}
 														if (el.type === "svg") {
 									const crop = getCropInsets(el);
 									const base = getElementBaseSize(el);
-									return <div key={el.id} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height }} draggable={false} /></div>;
+									return <div key={el.id} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: 0, top: -crop.top, width: base.width, height: base.height }} draggable={false} /></div>;
 								}
 								const crop = getCropInsets(el);
 								const base = getElementBaseSize(el);
-								return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: 0, top: 0, width: base.width, height: base.height, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} /></div>;
+								return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: 0, top: -crop.top, width: base.width, height: base.height, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} /></div>;
 													})
 												)}
 											</div>

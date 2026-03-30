@@ -500,6 +500,7 @@ function getSelectionVisualMetrics(zoom, isMobileViewport) {
 }
 
 
+
 function isCropCapableElement(el) {
 	return ["image", "svg", "shape"].includes(String(el?.type || ""));
 }
@@ -545,7 +546,7 @@ function applyCropDrag(start, handle, dx, dy) {
 		width -= delta;
 		cropLeft += delta;
 	} else if (handle === "e") {
-		const delta = clamp(dx, -(width - minFrame), cropRight);
+		const delta = clamp(dx, -cropRight, width - minFrame);
 		width += delta;
 		cropRight -= delta;
 	} else if (handle === "n") {
@@ -561,7 +562,6 @@ function applyCropDrag(start, handle, dx, dy) {
 
 	return { x, y, width, height, cropLeft, cropRight, cropTop, cropBottom };
 }
-
 
 async function loadImageData(src) {
 	return await new Promise((resolve, reject) => {
@@ -764,6 +764,7 @@ export default function Studio() {
 	const studioNeedsRemoteHydrationRef = React.useRef(false);
 	const studioHasAppliedRemoteRef = React.useRef(false);
 	const studioInitialHydrationTimerRef = React.useRef(null);
+	const studioIgnoreRemoteUntilRef = React.useRef(0);
 	const pinchStateRef = React.useRef(null);
 
 	React.useEffect(() => {
@@ -812,6 +813,7 @@ export default function Studio() {
 		studioPendingRemoteRef.current = null;
 		studioNeedsRemoteHydrationRef.current = false;
 		studioHasAppliedRemoteRef.current = false;
+		studioIgnoreRemoteUntilRef.current = 0;
 
 		(async () => {
 if (!orgId) {
@@ -941,6 +943,7 @@ React.useEffect(() => {
 			}
 			await saveStudioStateToServer(orgId, { docs: encDocs, blocks: encBlocks });
 			studioLastSharedSaveRef.current = Date.now();
+			studioIgnoreRemoteUntilRef.current = Date.now() + 2500;
 			studioFastPollUntilRef.current = Date.now() + 12000;
 			setStudioRemoteNotice(null);
 			setStudioSyncMsg("");
@@ -1097,6 +1100,20 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	}
 	const remoteDocs = remoteState.docs || [];
 	const remoteBlocks = remoteState.blocks || [];
+	const localDocsJson = JSON.stringify(normalizeDocs(docs));
+	const remoteDocsJson = JSON.stringify(normalizeDocs(remoteDocs));
+	const localBlocksJson = JSON.stringify(Array.isArray(savedBlocks) ? savedBlocks : []);
+	const remoteBlocksJson = JSON.stringify(Array.isArray(remoteBlocks) ? remoteBlocks : []);
+	const remoteMatchesLocal = localDocsJson === remoteDocsJson && localBlocksJson === remoteBlocksJson;
+	if (!forceApply && Date.now() < Number(studioIgnoreRemoteUntilRef.current || 0)) {
+		if (remoteMatchesLocal) {
+			studioRemoteSigRef.current = sig;
+			studioHasAppliedRemoteRef.current = true;
+			studioNeedsRemoteHydrationRef.current = false;
+			setStudioKeyNotice(null);
+		}
+		return false;
+	}
 	if (hasRemoteRows && !remoteDocs.length && !remoteBlocks.length) {
 		studioNeedsRemoteHydrationRef.current = true;
 		setStudioKeyNotice({
@@ -1106,8 +1123,9 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 		setStudioSyncMsg("Studio found remote state but this device could not decrypt it yet.");
 		return false;
 	}
-	if (!sig || sig === studioRemoteSigRef.current) {
+	if (!sig || sig === studioRemoteSigRef.current || remoteMatchesLocal) {
 		if (remoteDocs.length || remoteBlocks.length) {
+			if (sig) studioRemoteSigRef.current = sig;
 			studioHasAppliedRemoteRef.current = true;
 			studioNeedsRemoteHydrationRef.current = false;
 			setStudioKeyNotice(null);
@@ -1137,6 +1155,10 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	saveDocs(orgId, remoteDocs);
 	saveBlocks(orgId, remoteBlocks);
 	setCurrentId((prev) => remoteDocs.some((doc) => doc.id === prev) ? prev : (remoteDocs[0]?.id || null));
+	setSelectedIds((prev) => {
+		const validIds = new Set((remoteDocs || []).flatMap((doc) => (doc.pages || []).flatMap((page) => (page.elements || []).map((el) => el.id))));
+		return (Array.isArray(prev) ? prev : []).filter((id) => validIds.has(id));
+	});
 	studioLastRemoteApplyRef.current = Date.now();
 	studioLastSharedSaveRef.current = studioLastRemoteApplyRef.current;
 	studioHasAppliedRemoteRef.current = true;
@@ -2408,19 +2430,13 @@ React.useEffect(() => {
 				.bfStudioOpacitySlider {
 					-webkit-appearance: none;
 					appearance: none;
-					width: 100%;
-					max-width: 100%;
-					height: 18px;
-					margin: 0;
-					padding: 0;
-					border: 0;
-					border-radius: 999px;
 					background: transparent;
+					height: 18px;
 				}
 				.bfStudioOpacitySlider::-webkit-slider-runnable-track {
 					height: 8px;
 					border-radius: 999px;
-					background: transparent;
+					background: rgba(59,130,246,0.9);
 				}
 				.bfStudioOpacitySlider::-webkit-slider-thumb {
 					-webkit-appearance: none;
@@ -2434,11 +2450,6 @@ React.useEffect(() => {
 					box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 				}
 				.bfStudioOpacitySlider::-moz-range-track {
-					height: 8px;
-					border-radius: 999px;
-					background: transparent;
-				}
-				.bfStudioOpacitySlider::-moz-range-progress {
 					height: 8px;
 					border-radius: 999px;
 					background: rgba(59,130,246,0.9);
@@ -2749,7 +2760,7 @@ React.useEffect(() => {
 						<div style={{ display: "flex", alignItems: "center", gap: 4, color: "white", fontSize: 11 }}>
 							<span>Opacity</span>
 							<div style={{ width: 140, display: "flex", alignItems: "center" }}>
-								<input className="bfStudioOpacitySlider" type="range" min="0.05" max="1" step="0.05" value={selected ? Number(selected.opacity ?? 1) : 1} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => updateElements(selectedIds, { opacity: Number(e.target.value) })} style={{ width: "100%", margin: 0, display: "block", background: `linear-gradient(to right, rgba(59,130,246,0.9) 0%, rgba(59,130,246,0.9) ${selected ? Math.max(0, Math.min(100, Number(selected.opacity ?? 1) * 100)) : 100}%, rgba(255,255,255,0.32) ${selected ? Math.max(0, Math.min(100, Number(selected.opacity ?? 1) * 100)) : 100}%, rgba(255,255,255,0.32) 100%)`, borderRadius: 999, padding: 0 }} />
+								<input type="range" min="0.05" max="1" step="0.05" value={selected ? Number(selected.opacity ?? 1) : 1} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => updateElements(selectedIds, { opacity: Number(e.target.value) })} style={{ width: "100%", margin: 0, display: "block" }} />
 							</div>
 						</div>
 						{selected && ["text", "shape", "svg"].includes(selected.type) ? (
@@ -2860,7 +2871,8 @@ React.useEffect(() => {
 															const isSelected = selectedIds.includes(el.id);
 															const isCanvasBackground = el.type === "shape" && Number(el.x || 0) <= 0 && Number(el.y || 0) <= 0 && Number(el.width || 0) >= (currentPage?.width || currentDoc.width) && Number(el.height || 0) >= (currentPage?.height || currentDoc.height);
 															const frame = getContentFrame(el);
-										const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: getElementTransform(el), boxSizing: "border-box", outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, userSelect: "none", cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none" };
+									const frame = getContentFrame(el);
+									const common = { position: "absolute", left: el.x, top: el.y, width: frame.frameWidth, height: frame.frameHeight, opacity: el.opacity ?? 1, transform: getElementTransform(el), boxSizing: "border-box", outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, userSelect: "none", cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none", overflow: "hidden" };
 															if (el.type === "text") return <div
 															key={el.id}
 															onMouseDown={(e) => { if (textEditId === el.id) { e.stopPropagation(); return; } startElementDrag(e, el); }} onTouchStart={(e) => { if (textEditId === el.id) { e.stopPropagation(); return; } startElementDrag(e, el); }}
@@ -2871,9 +2883,9 @@ React.useEffect(() => {
 															onBlur={(e) => { updateElement(el.id, { text: e.currentTarget.innerText }); setTextEditId(null); }}
 															style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden", cursor: textEditId === el.id ? "text" : common.cursor }}
 														>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
-															if (el.type === "svg") return <img key={el.id} alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common }} draggable={false} />;
-															return <img key={el.id} alt="" src={el.src} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
+															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: el.radius || 0 }}><div style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
+															if (el.type === "svg") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, pointerEvents: "none" }} draggable={false} /></div>;
+															return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none" }} draggable={false} /></div>;
 														})}
 														{selectionBounds ? (
 														<>
@@ -2898,10 +2910,11 @@ React.useEffect(() => {
 													(page.elements || []).map((el) => {
 														if (el.hidden) return null;
 														const frame = getContentFrame(el);
-										const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
+									const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
 														if (el.type === "text") return <div key={el.id} style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden" }}>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-														if (el.type === "shape") return <div key={el.id} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
-														return <img key={el.id} alt="" src={el.src} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
+														if (el.type === "shape") return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: el.radius || 0 }}><div style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
+														if (el.type === "svg") return <div key={el.id} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, pointerEvents: "none" }} draggable={false} /></div>;
+												return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none" }} draggable={false} /></div>;
 													})
 												)}
 											</div>
@@ -3060,3 +3073,6 @@ React.useEffect(() => {
 	);
 
 }
+
+
+

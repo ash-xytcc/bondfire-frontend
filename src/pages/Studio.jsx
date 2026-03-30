@@ -2871,7 +2871,6 @@ React.useEffect(() => {
 															const isSelected = selectedIds.includes(el.id);
 															const isCanvasBackground = el.type === "shape" && Number(el.x || 0) <= 0 && Number(el.y || 0) <= 0 && Number(el.width || 0) >= (currentPage?.width || currentDoc.width) && Number(el.height || 0) >= (currentPage?.height || currentDoc.height);
 															const frame = getContentFrame(el);
-									const frame = getContentFrame(el);
 									const common = { position: "absolute", left: el.x, top: el.y, width: frame.frameWidth, height: frame.frameHeight, opacity: el.opacity ?? 1, transform: getElementTransform(el), boxSizing: "border-box", outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, userSelect: "none", cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none", overflow: "hidden" };
 															if (el.type === "text") return <div
 															key={el.id}

@@ -547,30 +547,67 @@ function isCropCapableElement(el) {
 	return el?.type === "image" || el?.type === "svg";
 }
 
+function getLegacyCropInsets(el) {
+	const width = Math.max(1, Number(el?.width || 0));
+	const height = Math.max(1, Number(el?.height || 0));
+	const left = clamp(Number(el?.cropLeft || 0), 0, width - 1);
+	const right = clamp(Number(el?.cropRight || 0), 0, Math.max(0, width - left - 1));
+	const top = clamp(Number(el?.cropTop || 0), 0, height - 1);
+	const bottom = clamp(Number(el?.cropBottom || 0), 0, Math.max(0, height - top - 1));
+	return { left, right, top, bottom };
+}
+
 function getMediaFrame(el) {
+	if (!isCropCapableElement(el)) return null;
 	const frameX = Number(el?.x || 0);
 	const frameY = Number(el?.y || 0);
-	const frameWidth = Math.max(1, Number(el?.width || 0));
-	const frameHeight = Math.max(1, Number(el?.height || 0));
-	const cropLeft = Math.max(0, Number(el?.cropLeft || 0));
-	const cropRight = Math.max(0, Number(el?.cropRight || 0));
-	const cropTop = Math.max(0, Number(el?.cropTop || 0));
-	const cropBottom = Math.max(0, Number(el?.cropBottom || 0));
-	const mediaWidth = Math.max(frameWidth, Number(el?.mediaWidth || (frameWidth + cropLeft + cropRight)));
-	const mediaHeight = Math.max(frameHeight, Number(el?.mediaHeight || (frameHeight + cropTop + cropBottom)));
-	const mediaX = Number.isFinite(Number(el?.mediaX)) ? Number(el.mediaX) : -cropLeft;
-	const mediaY = Number.isFinite(Number(el?.mediaY)) ? Number(el.mediaY) : -cropTop;
-	const minMediaX = frameWidth - mediaWidth;
-	const minMediaY = frameHeight - mediaHeight;
+	const frameWidth = Math.max(1, Number(el?.width || 1));
+	const frameHeight = Math.max(1, Number(el?.height || 1));
+	const explicitMediaWidth = Number(el?.mediaWidth || 0);
+	const explicitMediaHeight = Number(el?.mediaHeight || 0);
+	if (explicitMediaWidth > 0 && explicitMediaHeight > 0) {
+		return {
+			frameX,
+			frameY,
+			frameWidth,
+			frameHeight,
+			mediaX: Number(el?.mediaX ?? frameX),
+			mediaY: Number(el?.mediaY ?? frameY),
+			mediaWidth: explicitMediaWidth,
+			mediaHeight: explicitMediaHeight,
+		};
+	}
+	const legacy = getLegacyCropInsets(el);
 	return {
 		frameX,
 		frameY,
 		frameWidth,
 		frameHeight,
-		mediaWidth,
-		mediaHeight,
-		mediaX: clamp(mediaX, minMediaX, 0),
-		mediaY: clamp(mediaY, minMediaY, 0),
+		mediaX: frameX - legacy.left,
+		mediaY: frameY - legacy.top,
+		mediaWidth: frameWidth + legacy.left + legacy.right,
+		mediaHeight: frameHeight + legacy.top + legacy.bottom,
+	};
+}
+
+function deriveCropPatch(frame) {
+	const cropLeft = Math.max(0, Math.round(frame.frameX - frame.mediaX));
+	const cropTop = Math.max(0, Math.round(frame.frameY - frame.mediaY));
+	const cropRight = Math.max(0, Math.round((frame.mediaX + frame.mediaWidth) - (frame.frameX + frame.frameWidth)));
+	const cropBottom = Math.max(0, Math.round((frame.mediaY + frame.mediaHeight) - (frame.frameY + frame.frameHeight)));
+	return {
+		x: frame.frameX,
+		y: frame.frameY,
+		width: frame.frameWidth,
+		height: frame.frameHeight,
+		mediaX: frame.mediaX,
+		mediaY: frame.mediaY,
+		mediaWidth: frame.mediaWidth,
+		mediaHeight: frame.mediaHeight,
+		cropLeft,
+		cropRight,
+		cropTop,
+		cropBottom,
 	};
 }
 
@@ -594,6 +631,18 @@ function getElementBounds(el) {
 
 function getContentFrame(el) {
 	const frame = getMediaFrame(el);
+	if (!frame) {
+		return {
+			frameX: Number(el?.x || 0),
+			frameY: Number(el?.y || 0),
+			frameWidth: Number(el?.width || 0),
+			frameHeight: Number(el?.height || 0),
+			contentWidth: Number(el?.width || 0),
+			contentHeight: Number(el?.height || 0),
+			offsetX: 0,
+			offsetY: 0,
+		};
+	}
 	return {
 		frameX: frame.frameX,
 		frameY: frame.frameY,
@@ -601,61 +650,39 @@ function getContentFrame(el) {
 		frameHeight: frame.frameHeight,
 		contentWidth: frame.mediaWidth,
 		contentHeight: frame.mediaHeight,
-		offsetX: frame.mediaX,
-		offsetY: frame.mediaY,
+		offsetX: frame.mediaX - frame.frameX,
+		offsetY: frame.mediaY - frame.frameY,
 	};
 }
 
 function applyCropDrag(resizeState, handle, dx, dy) {
-	const minFrame = 24;
-	const frameWidth = Math.max(minFrame, Number(resizeState?.width || 0));
-	const frameHeight = Math.max(minFrame, Number(resizeState?.height || 0));
-	const mediaWidth = Math.max(frameWidth, Number(resizeState?.mediaWidth || frameWidth));
-	const mediaHeight = Math.max(frameHeight, Number(resizeState?.mediaHeight || frameHeight));
-	let x = Number(resizeState?.x || 0);
-	let y = Number(resizeState?.y || 0);
-	let width = frameWidth;
-	let height = frameHeight;
-	let mediaX = Number(resizeState?.mediaX || 0);
-	let mediaY = Number(resizeState?.mediaY || 0);
+	const minVisible = 24;
+	const mediaLeft = Number(resizeState?.mediaX ?? resizeState?.x ?? 0);
+	const mediaTop = Number(resizeState?.mediaY ?? resizeState?.y ?? 0);
+	const mediaWidth = Math.max(1, Number(resizeState?.mediaWidth || resizeState?.width || 1));
+	const mediaHeight = Math.max(1, Number(resizeState?.mediaHeight || resizeState?.height || 1));
+	const mediaRight = mediaLeft + mediaWidth;
+	const mediaBottom = mediaTop + mediaHeight;
+	let frameLeft = Number(resizeState?.x || 0);
+	let frameTop = Number(resizeState?.y || 0);
+	let frameRight = frameLeft + Math.max(1, Number(resizeState?.width || 1));
+	let frameBottom = frameTop + Math.max(1, Number(resizeState?.height || 1));
 
-	if (handle.includes("e")) {
-		width = clamp(frameWidth + dx, minFrame, mediaWidth + mediaX);
-	}
-	if (handle.includes("s")) {
-		height = clamp(frameHeight + dy, minFrame, mediaHeight + mediaY);
-	}
-	if (handle.includes("w")) {
-		const nextWidth = clamp(frameWidth - dx, minFrame, mediaWidth + Math.min(0, mediaX - dx));
-		const appliedDx = frameWidth - nextWidth;
-		x += appliedDx;
-		width = nextWidth;
-		mediaX -= appliedDx;
-	}
-	if (handle.includes("n")) {
-		const nextHeight = clamp(frameHeight - dy, minFrame, mediaHeight + Math.min(0, mediaY - dy));
-		const appliedDy = frameHeight - nextHeight;
-		y += appliedDy;
-		height = nextHeight;
-		mediaY -= appliedDy;
-	}
+	if (handle.includes("w")) frameLeft = clamp(frameLeft + dx, mediaLeft, frameRight - minVisible);
+	if (handle.includes("e")) frameRight = clamp(frameRight + dx, frameLeft + minVisible, mediaRight);
+	if (handle.includes("n")) frameTop = clamp(frameTop + dy, mediaTop, frameBottom - minVisible);
+	if (handle.includes("s")) frameBottom = clamp(frameBottom + dy, frameTop + minVisible, mediaBottom);
 
-	mediaX = clamp(mediaX, width - mediaWidth, 0);
-	mediaY = clamp(mediaY, height - mediaHeight, 0);
-	return {
-		x,
-		y,
-		width,
-		height,
-		mediaX,
-		mediaY,
+	return deriveCropPatch({
+		frameX: frameLeft,
+		frameY: frameTop,
+		frameWidth: frameRight - frameLeft,
+		frameHeight: frameBottom - frameTop,
+		mediaX: mediaLeft,
+		mediaY: mediaTop,
 		mediaWidth,
 		mediaHeight,
-		cropLeft: Math.max(0, -mediaX),
-		cropRight: Math.max(0, mediaWidth - width + mediaX),
-		cropTop: Math.max(0, -mediaY),
-		cropBottom: Math.max(0, mediaHeight - height + mediaY),
-	};
+	});
 }
 
 function StudioCroppedMedia({ el, common, src }) {
@@ -674,6 +701,7 @@ function StudioCroppedMedia({ el, common, src }) {
 					height: frame.contentHeight,
 					maxWidth: "none",
 					maxHeight: "none",
+					objectFit: "fill",
 					pointerEvents: "none",
 					userSelect: "none",
 				}}
@@ -1311,7 +1339,7 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	const addImageFromSrc = React.useCallback((src, name = "Image") => {
 		const docId = ensureDoc(currentDoc?.preset || "flyer");
 		snapshot();
-		const element = makeImageElement({ src, name });
+		const element = makeImageElement({ src, name, mediaX: 140, mediaY: 140, mediaWidth: 320, mediaHeight: 240 });
 		commitDocs((prev) => prev.map((doc) => doc.id !== docId ? doc : commitToActivePage(doc, (page) => ({ ...page, elements: [...(Array.isArray(page.elements) ? page.elements : []), element] }))));
 		setCurrentId(docId);
 		setSelectedIds([element.id]);
@@ -1322,7 +1350,7 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 		if (!asset) return;
 		const docId = ensureDoc(currentDoc?.preset || "flyer");
 		snapshot();
-		const element = makeSvgElement(asset, { name: asset.label, fill: brandKit.primary || "#111111" });
+		const element = makeSvgElement(asset, { name: asset.label, fill: brandKit.primary || "#111111", mediaX: 140, mediaY: 140, mediaWidth: Number(asset?.width || 180), mediaHeight: Number(asset?.height || 180) });
 		commitDocs((prev) => prev.map((doc) => doc.id !== docId ? doc : commitToActivePage(doc, (page) => ({
 			...page,
 			elements: [...(Array.isArray(page.elements) ? page.elements : []), element],
@@ -1339,6 +1367,10 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 			name: name || "Image",
 			x: Math.max(0, Number(point?.x || 0) - 160),
 			y: Math.max(0, Number(point?.y || 0) - 120),
+			mediaX: Math.max(0, Number(point?.x || 0) - 160),
+			mediaY: Math.max(0, Number(point?.y || 0) - 120),
+			mediaWidth: 320,
+			mediaHeight: 240,
 		});
 		commitDocs((prev) => prev.map((doc) => doc.id !== docId ? doc : commitToActivePage(doc, (page) => ({
 			...page,
@@ -1357,6 +1389,10 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 			fill: brandKit.primary || "#111111",
 			x: Math.max(0, Number(point?.x || 0) - Number(asset.width || 180) / 2),
 			y: Math.max(0, Number(point?.y || 0) - Number(asset.height || 180) / 2),
+			mediaX: Math.max(0, Number(point?.x || 0) - Number(asset.width || 180) / 2),
+			mediaY: Math.max(0, Number(point?.y || 0) - Number(asset.height || 180) / 2),
+			mediaWidth: Number(asset.width || 180),
+			mediaHeight: Number(asset.height || 180),
 		});
 		commitDocs((prev) => prev.map((doc) => doc.id !== docId ? doc : commitToActivePage(doc, (page) => ({
 			...page,
@@ -1909,6 +1945,10 @@ const addImage = () => {
 		const point = getCanvasPoint(clientX, clientY);
 		const origins = Object.fromEntries(ids.map((id) => {
 			const item = (currentPage?.elements || []).find((x) => x.id === id);
+			const frame = getMediaFrame(item || {});
+			if (frame) {
+				return [id, { x: frame.frameX, y: frame.frameY, mediaX: frame.mediaX, mediaY: frame.mediaY }];
+			}
 			return [id, { x: Number(item?.x || 0), y: Number(item?.y || 0) }];
 		}));
 		const visibleOrigins = Object.fromEntries(ids.map((id) => {
@@ -1930,22 +1970,22 @@ const addImage = () => {
 		e.preventDefault();
 		e.stopPropagation();
 		const { clientX, clientY } = getEventClientPoint(e);
-		const media = getMediaFrame(selected);
+		const frame = getMediaFrame(selected);
 		setResizeState({
 			startX: clientX,
 			startY: clientY,
-			x: media.frameX,
-			y: media.frameY,
-			width: media.frameWidth,
-			height: media.frameHeight,
-			mediaX: media.mediaX,
-			mediaY: media.mediaY,
-			mediaWidth: media.mediaWidth,
-			mediaHeight: media.mediaHeight,
-			cropLeft: Math.max(0, -media.mediaX),
-			cropRight: Math.max(0, media.mediaWidth - media.frameWidth + media.mediaX),
-			cropTop: Math.max(0, -media.mediaY),
-			cropBottom: Math.max(0, media.mediaHeight - media.frameHeight + media.mediaY),
+			x: Number(selected.x || 0),
+			y: Number(selected.y || 0),
+			width: Number(selected.width || 1),
+			height: Number(selected.height || 1),
+			cropLeft: Number(selected.cropLeft || 0),
+			cropRight: Number(selected.cropRight || 0),
+			cropTop: Number(selected.cropTop || 0),
+			cropBottom: Number(selected.cropBottom || 0),
+			mediaX: Number(frame?.mediaX ?? selected.mediaX ?? selected.x ?? 0),
+			mediaY: Number(frame?.mediaY ?? selected.mediaY ?? selected.y ?? 0),
+			mediaWidth: Number(frame?.mediaWidth ?? selected.mediaWidth ?? selected.width ?? 1),
+			mediaHeight: Number(frame?.mediaHeight ?? selected.mediaHeight ?? selected.height ?? 1),
 			id: selected.id,
 			handle,
 			mode: isCropCapableElement(selected) ? "crop" : "resize",
@@ -2043,6 +2083,19 @@ const addImage = () => {
 				const dy = point.y - Number(dragState.grabOffset?.y || 0) - Number(anchorVisibleOrigin.y || 0);
 				updateElements(dragState.ids, (el) => {
 					const base = dragState.origins[el.id] || { x: 0, y: 0 };
+					if (isCropCapableElement(el)) {
+						const frame = getMediaFrame(el);
+						return deriveCropPatch({
+							frameX: base.x + dx,
+							frameY: base.y + dy,
+							frameWidth: Number(frame?.frameWidth ?? el.width ?? 1),
+							frameHeight: Number(frame?.frameHeight ?? el.height ?? 1),
+							mediaX: Number(base.mediaX ?? frame?.mediaX ?? el.mediaX ?? el.x ?? 0) + dx,
+							mediaY: Number(base.mediaY ?? frame?.mediaY ?? el.mediaY ?? el.y ?? 0) + dy,
+							mediaWidth: Number(frame?.mediaWidth ?? el.mediaWidth ?? el.width ?? 1),
+							mediaHeight: Number(frame?.mediaHeight ?? el.mediaHeight ?? el.height ?? 1),
+						});
+					}
 					return {
 						x: base.x + dx,
 						y: base.y + dy,

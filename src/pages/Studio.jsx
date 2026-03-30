@@ -203,7 +203,7 @@ function makeTextElement(patch = {}) {
 		lineHeight: 1.1,
 		letterSpacing: 0,
 		align: "left",
-		color: "#ffffff",
+		color: "#000000",
 		...patch,
 	};
 }

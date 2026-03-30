@@ -541,6 +541,9 @@ function getElementTransform(el) {
 	return `rotate(${el?.rotation || 0}deg) scale(${scaleX}, ${scaleY})`;
 }
 
+function isCropCapableElement(el) {
+	return el?.type === "image" || el?.type === "svg";
+}
 
 function getCropInsets(el) {
 	return {
@@ -551,13 +554,19 @@ function getCropInsets(el) {
 	};
 }
 
-function isCropCapableElement(el) {
-	return el?.type === "image" || el?.type === "svg";
-}
-
 function getContentFrame(el) {
 	const width = Math.max(1, Number(el?.width || 1));
 	const height = Math.max(1, Number(el?.height || 1));
+	if (!isCropCapableElement(el)) {
+		return {
+			frameWidth: width,
+			frameHeight: height,
+			contentWidth: width,
+			contentHeight: height,
+			offsetX: 0,
+			offsetY: 0,
+		};
+	}
 	const crop = getCropInsets(el);
 	return {
 		frameWidth: width,
@@ -569,58 +578,97 @@ function getContentFrame(el) {
 	};
 }
 
-function getMediaDrawRect(el, mediaWidth, mediaHeight) {
-	const frame = getContentFrame(el);
-	if ((el?.fit || "cover") === "fill") {
-		return {
-			x: frame.offsetX,
-			y: frame.offsetY,
-			width: frame.contentWidth,
-			height: frame.contentHeight,
-		};
-	}
-	const safeMediaWidth = Math.max(1, Number(mediaWidth || 1));
-	const safeMediaHeight = Math.max(1, Number(mediaHeight || 1));
-	const rw = frame.contentWidth / safeMediaWidth;
-	const rh = frame.contentHeight / safeMediaHeight;
-	const scale = (el?.fit || "cover") === "contain" ? Math.min(rw, rh) : Math.max(rw, rh);
-	const width = safeMediaWidth * scale;
-	const height = safeMediaHeight * scale;
-	return {
-		x: frame.offsetX + (frame.contentWidth - width) / 2,
-		y: frame.offsetY + (frame.contentHeight - height) / 2,
-		width,
-		height,
-	};
-}
-
 function applyCropDrag(state, handle, dx, dy) {
 	const minSize = 24;
+	const width = Math.max(minSize, Number(state?.width || minSize));
+	const height = Math.max(minSize, Number(state?.height || minSize));
 	const cropLeft = Math.max(0, Number(state?.cropLeft || 0));
 	const cropRight = Math.max(0, Number(state?.cropRight || 0));
 	const cropTop = Math.max(0, Number(state?.cropTop || 0));
 	const cropBottom = Math.max(0, Number(state?.cropBottom || 0));
-	const startX = Number(state?.x || 0);
-	const startY = Number(state?.y || 0);
-	const startWidth = Math.max(minSize, Number(state?.width || minSize));
-	const startHeight = Math.max(minSize, Number(state?.height || minSize));
+	const totalWidth = width + cropLeft + cropRight;
+	const totalHeight = height + cropTop + cropBottom;
+	let nextX = Number(state?.x || 0);
+	let nextY = Number(state?.y || 0);
+	let nextWidth = width;
+	let nextHeight = height;
+	let nextCropLeft = cropLeft;
+	let nextCropRight = cropRight;
+	let nextCropTop = cropTop;
+	let nextCropBottom = cropBottom;
+
 	if (handle === "w") {
-		const allowed = clamp(dx, -cropLeft, startWidth - minSize);
-		return { x: startX + allowed, width: startWidth - allowed, cropLeft: cropLeft + allowed };
+		const nextVisible = clamp(width - dx, minSize, totalWidth);
+		nextWidth = nextVisible;
+		nextCropLeft = clamp(totalWidth - nextVisible - cropRight, 0, totalWidth - minSize);
+		nextX = Number(state?.x || 0) + (width - nextVisible);
 	}
 	if (handle === "e") {
-		const allowed = clamp(dx, minSize - startWidth, cropRight);
-		return { width: startWidth + allowed, cropRight: cropRight - allowed };
+		const nextVisible = clamp(width + dx, minSize, totalWidth);
+		nextWidth = nextVisible;
+		nextCropRight = clamp(totalWidth - cropLeft - nextVisible, 0, totalWidth - minSize);
 	}
 	if (handle === "n") {
-		const allowed = clamp(dy, -cropTop, startHeight - minSize);
-		return { y: startY + allowed, height: startHeight - allowed, cropTop: cropTop + allowed };
+		const nextVisible = clamp(height - dy, minSize, totalHeight);
+		nextHeight = nextVisible;
+		nextCropTop = clamp(totalHeight - nextVisible - cropBottom, 0, totalHeight - minSize);
+		nextY = Number(state?.y || 0) + (height - nextVisible);
 	}
 	if (handle === "s") {
-		const allowed = clamp(dy, minSize - startHeight, cropBottom);
-		return { height: startHeight + allowed, cropBottom: cropBottom - allowed };
+		const nextVisible = clamp(height + dy, minSize, totalHeight);
+		nextHeight = nextVisible;
+		nextCropBottom = clamp(totalHeight - cropTop - nextVisible, 0, totalHeight - minSize);
 	}
-	return {};
+
+	return {
+		x: nextX,
+		y: nextY,
+		width: nextWidth,
+		height: nextHeight,
+		cropLeft: nextCropLeft,
+		cropRight: nextCropRight,
+		cropTop: nextCropTop,
+		cropBottom: nextCropBottom,
+	};
+}
+
+function renderCroppedMediaElement(el, src, extraStyle = {}) {
+	const frame = getContentFrame(el);
+	return (
+		<div
+			style={{
+				position: "absolute",
+				left: Number(el?.x || 0),
+				top: Number(el?.y || 0),
+				width: frame.frameWidth,
+				height: frame.frameHeight,
+				opacity: Number(el?.opacity ?? 1),
+				transform: getElementTransform(el),
+				boxSizing: "border-box",
+				overflow: "hidden",
+				borderRadius: 12,
+				userSelect: "none",
+				...extraStyle,
+			}}
+		>
+			<img
+				alt=""
+				src={src}
+				draggable={false}
+				style={{
+					position: "absolute",
+					left: frame.offsetX,
+					top: frame.offsetY,
+					width: frame.contentWidth,
+					height: frame.contentHeight,
+					maxWidth: "none",
+					maxHeight: "none",
+					pointerEvents: "none",
+					userSelect: "none",
+				}}
+			/>
+		</div>
+	);
 }
 
 async function renderDocToCanvas(doc, bindings) {
@@ -669,8 +717,7 @@ async function renderDocToCanvas(doc, bindings) {
 				ctx.save();
 				roundRectPath(ctx, 0, 0, frame.frameWidth, frame.frameHeight, 12);
 				ctx.clip();
-				const drawRect = getMediaDrawRect(el, img.width, img.height);
-				ctx.drawImage(img, drawRect.x, drawRect.y, drawRect.width, drawRect.height);
+				ctx.drawImage(img, frame.offsetX, frame.offsetY, frame.contentWidth, frame.contentHeight);
 				ctx.restore();
 			} catch {}
 		} else if (el.type === "text") {
@@ -2851,9 +2898,9 @@ React.useEffect(() => {
 															onBlur={(e) => { updateElement(el.id, { text: e.currentTarget.innerText }); setTextEditId(null); }}
 															style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden", cursor: textEditId === el.id ? "text" : common.cursor }}
 														>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-											if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
-											if (el.type === "svg") { const frame = getContentFrame(el); return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none", userSelect: "none" }} draggable={false} /></div>; }
-											{ const frame = getContentFrame(el); return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none", userSelect: "none" }} draggable={false} /></div>; }
+															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
+															if (el.type === "svg") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)}>{renderCroppedMediaElement(el, svgMarkupToDataUrl(el.svg, el.fill || "#111111"), { outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none" })}</div>;
+															return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)}>{renderCroppedMediaElement(el, el.src, { outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none" })}</div>;
 														})}
 														{selectionBounds ? <div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: "1px dashed rgba(255,255,255,0.75)", pointerEvents: "none", zIndex: 8 }} /> : null}
 														{selected && !selected.locked ? [
@@ -2873,9 +2920,8 @@ React.useEffect(() => {
 														if (el.hidden) return null;
 														const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
 														if (el.type === "text") return <div key={el.id} style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden" }}>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-											if (el.type === "shape") return <div key={el.id} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
-											if (el.type === "svg") { const frame = getContentFrame(el); return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none", userSelect: "none" }} draggable={false} /></div>; }
-											{ const frame = getContentFrame(el); return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none", userSelect: "none" }} draggable={false} /></div>; }
+														if (el.type === "shape") return <div key={el.id} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
+														return el.type === "svg" ? <React.Fragment key={el.id}>{renderCroppedMediaElement(el, svgMarkupToDataUrl(el.svg, el.fill || "#111111"), { pointerEvents: "none" })}</React.Fragment> : <React.Fragment key={el.id}>{renderCroppedMediaElement(el, el.src, { pointerEvents: "none" })}</React.Fragment>;
 													})
 												)}
 											</div>

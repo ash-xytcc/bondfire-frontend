@@ -288,7 +288,7 @@ function saveBlocks(orgId, blocks) {
 }
 
 async function loadStudioStateFromServer(orgId) {
-	return api(`/api/orgs/${encodeURIComponent(orgId)}/studio/state?_=${Date.now()}`);
+	return api(`/api/orgs/${encodeURIComponent(orgId)}/studio/state`);
 }
 
 async function saveStudioStateToServer(orgId, payload) {
@@ -300,7 +300,7 @@ async function saveStudioStateToServer(orgId, payload) {
 
 function openStudioUpdatesStream(orgId, onMessage) {
 	if (!orgId || typeof window === "undefined" || typeof window.EventSource === "undefined") return null;
-	const es = new window.EventSource(`/api/orgs/${encodeURIComponent(orgId)}/studio/updates?_=${Date.now()}`);
+	const es = new window.EventSource(`/api/orgs/${encodeURIComponent(orgId)}/studio/updates`);
 	const handle = (event) => {
 		try {
 			onMessage?.(JSON.parse(String(event?.data || "{}")));
@@ -393,6 +393,88 @@ function printableName(name, fallback = "design") {
 	return String(name || fallback).trim().replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-_]/g, "").toLowerCase() || fallback;
 }
 
+function getCropInsets(el) {
+	return {
+		left: Math.max(0, Number(el?.cropLeft || 0)),
+		right: Math.max(0, Number(el?.cropRight || 0)),
+		top: Math.max(0, Number(el?.cropTop || 0)),
+		bottom: Math.max(0, Number(el?.cropBottom || 0)),
+	};
+}
+
+function isCropCapableElement(el) {
+	return !!el && ["image", "svg"].includes(String(el.type || ""));
+}
+
+function getVisibleElementBounds(el) {
+	const x = Number(el?.x || 0);
+	const y = Number(el?.y || 0);
+	const width = Math.max(1, Number(el?.width || 1));
+	const height = Math.max(1, Number(el?.height || 1));
+	if (!isCropCapableElement(el)) return { left: x, top: y, width, height };
+	const crop = getCropInsets(el);
+	const maxCropX = Math.max(0, width - 1);
+	const maxCropY = Math.max(0, height - 1);
+	const leftCrop = clamp(crop.left, 0, maxCropX);
+	const rightCrop = clamp(crop.right, 0, Math.max(0, width - leftCrop - 1));
+	const topCrop = clamp(crop.top, 0, maxCropY);
+	const bottomCrop = clamp(crop.bottom, 0, Math.max(0, height - topCrop - 1));
+	return {
+		left: x + leftCrop,
+		top: y + topCrop,
+		width: Math.max(1, width - leftCrop - rightCrop),
+		height: Math.max(1, height - topCrop - bottomCrop),
+	};
+}
+
+function getContentFrame(el) {
+	return {
+		frameWidth: Math.max(1, Number(el?.width || 1)),
+		frameHeight: Math.max(1, Number(el?.height || 1)),
+		offsetX: 0,
+		offsetY: 0,
+		contentWidth: Math.max(1, Number(el?.width || 1)),
+		contentHeight: Math.max(1, Number(el?.height || 1)),
+	};
+}
+
+function getCroppedMediaFrame(el) {
+	const bounds = getVisibleElementBounds(el);
+	const crop = getCropInsets(el);
+	return {
+		left: bounds.left,
+		top: bounds.top,
+		width: bounds.width,
+		height: bounds.height,
+		mediaOffsetX: -crop.left,
+		mediaOffsetY: -crop.top,
+		mediaWidth: Math.max(1, Number(el?.width || 1)),
+		mediaHeight: Math.max(1, Number(el?.height || 1)),
+	};
+}
+
+function applyCropDrag(state, handle, dx, dy) {
+	const width = Math.max(1, Number(state?.width || 1));
+	const height = Math.max(1, Number(state?.height || 1));
+	const minVisible = 24;
+	let cropLeft = Math.max(0, Number(state?.cropLeft || 0));
+	let cropRight = Math.max(0, Number(state?.cropRight || 0));
+	let cropTop = Math.max(0, Number(state?.cropTop || 0));
+	let cropBottom = Math.max(0, Number(state?.cropBottom || 0));
+
+	if (handle === "w") cropLeft += dx;
+	if (handle === "e") cropRight -= dx;
+	if (handle === "n") cropTop += dy;
+	if (handle === "s") cropBottom -= dy;
+
+	cropLeft = clamp(cropLeft, 0, Math.max(0, width - minVisible - cropRight));
+	cropRight = clamp(cropRight, 0, Math.max(0, width - minVisible - cropLeft));
+	cropTop = clamp(cropTop, 0, Math.max(0, height - minVisible - cropBottom));
+	cropBottom = clamp(cropBottom, 0, Math.max(0, height - minVisible - cropTop));
+
+	return { cropLeft, cropRight, cropTop, cropBottom };
+}
+
 function downloadBlob(filename, blob) {
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement("a");
@@ -426,10 +508,11 @@ function buildDriveImageUrl(orgId, fileId) {
 
 function getSelectionBounds(elements) {
 	if (!elements.length) return null;
-	const xs = elements.map((el) => Number(el.x || 0));
-	const ys = elements.map((el) => Number(el.y || 0));
-	const rights = elements.map((el) => Number(el.x || 0) + Number(el.width || 0));
-	const bottoms = elements.map((el) => Number(el.y || 0) + Number(el.height || 0));
+	const boxes = elements.map((el) => getVisibleElementBounds(el));
+	const xs = boxes.map((box) => Number(box.left || 0));
+	const ys = boxes.map((box) => Number(box.top || 0));
+	const rights = boxes.map((box) => Number(box.left || 0) + Number(box.width || 0));
+	const bottoms = boxes.map((box) => Number(box.top || 0) + Number(box.height || 0));
 	const left = Math.min(...xs);
 	const top = Math.min(...ys);
 	const right = Math.max(...rights);
@@ -438,10 +521,11 @@ function getSelectionBounds(elements) {
 }
 
 function intersectsRect(el, rect) {
-	const left = Number(el.x || 0);
-	const top = Number(el.y || 0);
-	const right = left + Number(el.width || 0);
-	const bottom = top + Number(el.height || 0);
+	const box = getVisibleElementBounds(el);
+	const left = Number(box.left || 0);
+	const top = Number(box.top || 0);
+	const right = left + Number(box.width || 0);
+	const bottom = top + Number(box.height || 0);
 	return !(right < rect.left || left > rect.left + rect.width || bottom < rect.top || top > rect.top + rect.height);
 }
 
@@ -482,85 +566,6 @@ function iconButtonStyle(active) {
 	};
 }
 
-function getSelectionVisualMetrics(zoom, isMobileViewport) {
-	const safeZoom = Math.max(Number(zoom || 1), 0.1);
-	const cornerScreen = isMobileViewport ? 28 : 18;
-	const cropThicknessScreen = isMobileViewport ? 18 : 14;
-	const cropLengthScreen = isMobileViewport ? 68 : 56;
-	const outlineWidthScreen = 2;
-	const insetScreen = isMobileViewport ? 2 : 1;
-	return {
-		cornerSize: cornerScreen / safeZoom,
-		cornerOffset: (cornerScreen / 2) / safeZoom,
-		cropThickness: cropThicknessScreen / safeZoom,
-		cropLength: cropLengthScreen / safeZoom,
-		outlineWidth: outlineWidthScreen / safeZoom,
-		inset: insetScreen / safeZoom,
-	};
-}
-
-
-function isCropCapableElement(el) {
-	return ["image", "svg", "shape"].includes(String(el?.type || ""));
-}
-
-function getElementCrop(el) {
-	return {
-		left: Math.max(0, Number(el?.cropLeft || 0)),
-		right: Math.max(0, Number(el?.cropRight || 0)),
-		top: Math.max(0, Number(el?.cropTop || 0)),
-		bottom: Math.max(0, Number(el?.cropBottom || 0)),
-	};
-}
-
-function getContentFrame(el) {
-	const crop = getElementCrop(el);
-	const frameWidth = Math.max(1, Number(el?.width || 1));
-	const frameHeight = Math.max(1, Number(el?.height || 1));
-	return {
-		frameWidth,
-		frameHeight,
-		contentWidth: frameWidth + crop.left + crop.right,
-		contentHeight: frameHeight + crop.top + crop.bottom,
-		offsetX: -crop.left,
-		offsetY: -crop.top,
-		crop,
-	};
-}
-
-function applyCropDrag(start, handle, dx, dy) {
-	const minFrame = 24;
-	let x = Number(start.x || 0);
-	let y = Number(start.y || 0);
-	let width = Math.max(minFrame, Number(start.width || minFrame));
-	let height = Math.max(minFrame, Number(start.height || minFrame));
-	let cropLeft = Math.max(0, Number(start.cropLeft || 0));
-	let cropRight = Math.max(0, Number(start.cropRight || 0));
-	let cropTop = Math.max(0, Number(start.cropTop || 0));
-	let cropBottom = Math.max(0, Number(start.cropBottom || 0));
-
-	if (handle === "w") {
-		const delta = clamp(dx, -cropLeft, width - minFrame);
-		x += delta;
-		width -= delta;
-		cropLeft += delta;
-	} else if (handle === "e") {
-		const delta = clamp(dx, -(width - minFrame), cropRight);
-		width += delta;
-		cropRight -= delta;
-	} else if (handle === "n") {
-		const delta = clamp(dy, -cropTop, height - minFrame);
-		y += delta;
-		height -= delta;
-		cropTop += delta;
-	} else if (handle === "s") {
-		const delta = clamp(dy, -cropBottom, height - minFrame);
-		height += delta;
-		cropBottom -= delta;
-	}
-
-	return { x, y, width, height, cropLeft, cropRight, cropTop, cropBottom };
-}
 
 async function loadImageData(src) {
 	return await new Promise((resolve, reject) => {
@@ -652,31 +657,21 @@ async function renderDocToCanvas(doc, bindings) {
 		} else if (el.type === "svg" && el.svg) {
 			try {
 				const img = await loadImageData(svgMarkupToDataUrl(el.svg, el.fill));
-				const frame = getContentFrame(el);
+				const frame = getCroppedMediaFrame(el);
 				ctx.save();
-				roundRectPath(ctx, 0, 0, frame.frameWidth, frame.frameHeight, 12);
+				roundRectPath(ctx, frame.mediaOffsetX < 0 ? -frame.mediaOffsetX : 0, frame.mediaOffsetY < 0 ? -frame.mediaOffsetY : 0, frame.width, frame.height, 12);
 				ctx.clip();
-				ctx.drawImage(img, frame.offsetX, frame.offsetY, frame.contentWidth, frame.contentHeight);
+				ctx.drawImage(img, 0, 0, frame.mediaWidth, frame.mediaHeight);
 				ctx.restore();
 			} catch {}
 		} else if (el.type === "image" && el.src) {
 			try {
 				const img = await loadImageData(el.src);
-				const frame = getContentFrame(el);
+				const frame = getCroppedMediaFrame(el);
 				ctx.save();
-				roundRectPath(ctx, 0, 0, frame.frameWidth, frame.frameHeight, 12);
+				roundRectPath(ctx, frame.mediaOffsetX < 0 ? -frame.mediaOffsetX : 0, frame.mediaOffsetY < 0 ? -frame.mediaOffsetY : 0, frame.width, frame.height, 12);
 				ctx.clip();
-				const fit = el.fit || "cover";
-				if (fit === "fill") {
-					ctx.drawImage(img, frame.offsetX, frame.offsetY, frame.contentWidth, frame.contentHeight);
-				} else {
-					const rw = frame.contentWidth / img.width;
-					const rh = frame.contentHeight / img.height;
-					const scale = fit === "contain" ? Math.min(rw, rh) : Math.max(rw, rh);
-					const dw = img.width * scale;
-					const dh = img.height * scale;
-					ctx.drawImage(img, frame.offsetX + (frame.contentWidth - dw) / 2, frame.offsetY + (frame.contentHeight - dh) / 2, dw, dh);
-				}
+				ctx.drawImage(img, 0, 0, frame.mediaWidth, frame.mediaHeight);
 				ctx.restore();
 			} catch {}
 		} else if (el.type === "text") {
@@ -750,7 +745,6 @@ export default function Studio() {
 	const [studioSyncMsg, setStudioSyncMsg] = React.useState("");
 	const [studioRemoteNotice, setStudioRemoteNotice] = React.useState(null);
 	const [studioKeyNotice, setStudioKeyNotice] = React.useState(null);
-	const [studioReady, setStudioReady] = React.useState(false);
 	const studioLoadedRef = React.useRef(false);
 	const studioSyncTimerRef = React.useRef(null);
 	const studioRemoteSigRef = React.useRef("");
@@ -763,27 +757,11 @@ export default function Studio() {
 	const studioNeedsRemoteHydrationRef = React.useRef(false);
 	const studioHasAppliedRemoteRef = React.useRef(false);
 	const studioInitialHydrationTimerRef = React.useRef(null);
-	const studioIgnoreRemoteUntilRef = React.useRef(0);
 	const pinchStateRef = React.useRef(null);
-
-	React.useEffect(() => {
-		const preventPinch = (e) => {
-			if (e.scale !== 1) e.preventDefault();
-		};
-
-		document.addEventListener("gesturestart", preventPinch);
-		document.addEventListener("gesturechange", preventPinch);
-
-		return () => {
-			document.removeEventListener("gesturestart", preventPinch);
-			document.removeEventListener("gesturechange", preventPinch);
-		};
-		}, []);
 
 	React.useEffect(() => {
 		let cancelled = false;
 		studioLoadedRef.current = false;
-		setStudioReady(false);
 		if (studioSyncTimerRef.current) {
 			clearTimeout(studioSyncTimerRef.current);
 			studioSyncTimerRef.current = null;
@@ -812,12 +790,10 @@ export default function Studio() {
 		studioPendingRemoteRef.current = null;
 		studioNeedsRemoteHydrationRef.current = false;
 		studioHasAppliedRemoteRef.current = false;
-		studioIgnoreRemoteUntilRef.current = 0;
 
 		(async () => {
 if (!orgId) {
 	studioLoadedRef.current = true;
-	setStudioReady(true);
 	return;
 }
 try {
@@ -825,17 +801,14 @@ try {
 } catch (err) {
 	if (!cancelled) setStudioSyncMsg(String(err?.message || err || "Studio sync failed. Using local cache."));
 } finally {
-	if (!cancelled) {
-			studioLoadedRef.current = true;
-			setStudioReady(true);
-		}
+	if (!cancelled) studioLoadedRef.current = true;
 }
 		})();
 		return () => { cancelled = true; };
 	}, [orgId]);
 
 	React.useEffect(() => {
-		if (!studioReady || !orgId) return;
+		if (!studioLoadedRef.current || !orgId) return;
 		if (studioHasAppliedRemoteRef.current) return;
 		let cancelled = false;
 		let tries = 0;
@@ -866,7 +839,7 @@ try {
 				studioInitialHydrationTimerRef.current = null;
 			}
 		};
-	}, [orgId, studioReady, studioSyncMsg]);
+	}, [orgId, studioLoadedRef.current, studioSyncMsg]);
 
 	const bindings = React.useMemo(() => getOrgBindings(orgId), [orgId]);
 	const brandKit = React.useMemo(() => getBrandKit(orgId), [orgId]);
@@ -917,7 +890,7 @@ try {
 	}, [orgId]);
 
 React.useEffect(() => {
-	if (!studioReady || !orgId) return;
+	if (!studioLoadedRef.current || !orgId) return;
 	let orgKey = null;
 	try { orgKey = getCachedOrgKey(orgId); } catch {}
 	if (!orgKey) return;
@@ -942,7 +915,6 @@ React.useEffect(() => {
 			}
 			await saveStudioStateToServer(orgId, { docs: encDocs, blocks: encBlocks });
 			studioLastSharedSaveRef.current = Date.now();
-			studioIgnoreRemoteUntilRef.current = Date.now() + 2500;
 			studioFastPollUntilRef.current = Date.now() + 12000;
 			setStudioRemoteNotice(null);
 			setStudioSyncMsg("");
@@ -961,7 +933,7 @@ React.useEffect(() => {
 
 
 React.useEffect(() => {
-	if (!studioReady || !orgId) return;
+	if (!studioLoadedRef.current || !orgId) return;
 	let cancelled = false;
 	let intervalId = null;
 
@@ -975,7 +947,7 @@ React.useEffect(() => {
 		if (intervalId) window.clearInterval(intervalId);
 		const visible = typeof document !== "undefined" ? document.visibilityState === "visible" : true;
 		const inFastMode = Date.now() < studioFastPollUntilRef.current || studioNeedsRemoteHydrationRef.current;
-		const intervalMs = visible ? 1200 : 4000;
+		const intervalMs = visible ? (inFastMode ? 1200 : 3000) : 12000;
 		intervalId = window.setInterval(poll, intervalMs);
 	};
 
@@ -1002,10 +974,10 @@ React.useEffect(() => {
 		window.removeEventListener("visibilitychange", onVisible);
 		window.removeEventListener("focus", onFocus);
 	};
-}, [orgId, studioReady]);
+}, [orgId]);
 
 React.useEffect(() => {
-	if (!studioReady || !orgId) return;
+	if (!studioLoadedRef.current || !orgId) return;
 	if (studioStreamRef.current) {
 		try { studioStreamRef.current.close(); } catch {}
 		studioStreamRef.current = null;
@@ -1026,10 +998,10 @@ React.useEffect(() => {
 			studioStreamRef.current = null;
 		}
 	};
-}, [orgId, studioReady]);
+}, [orgId]);
 
 React.useEffect(() => {
-	if (!studioReady || !orgId) return;
+	if (!studioLoadedRef.current || !orgId) return;
 	if (!studioNeedsRemoteHydrationRef.current) return;
 	let cancelled = false;
 	const id = window.setTimeout(async () => {
@@ -1050,7 +1022,11 @@ React.useEffect(() => {
 	const pending = studioPendingRemoteRef.current;
 	if (!pending) return;
 	if (dragState || resizeState || marquee || panState || guideDrag || textEditId) return;
-	if (studioLastLocalEditRef.current > studioLastSharedSaveRef.current) return;
+	const debounceWindowMs = 900;
+	const localEditAgeMs = Date.now() - Number(studioLastLocalEditRef.current || 0);
+	if (studioLastLocalEditRef.current > studioLastSharedSaveRef.current) {
+		if (localEditAgeMs <= debounceWindowMs) return;
+	}
 	const id = window.setTimeout(() => {
 		studioRemoteSigRef.current = pending.sig;
 		setDocs(pending.remoteState.docs);
@@ -1063,7 +1039,7 @@ React.useEffect(() => {
 		studioHasAppliedRemoteRef.current = true;
 		studioNeedsRemoteHydrationRef.current = false;
 		setStudioRemoteNotice(null);
-	}, 250);
+	}, 750);
 	return () => window.clearTimeout(id);
 }, [orgId, dragState, resizeState, marquee, panState, guideDrag, textEditId, docs]);
 
@@ -1099,20 +1075,6 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	}
 	const remoteDocs = remoteState.docs || [];
 	const remoteBlocks = remoteState.blocks || [];
-	const localDocsJson = JSON.stringify(normalizeDocs(docs));
-	const remoteDocsJson = JSON.stringify(normalizeDocs(remoteDocs));
-	const localBlocksJson = JSON.stringify(Array.isArray(savedBlocks) ? savedBlocks : []);
-	const remoteBlocksJson = JSON.stringify(Array.isArray(remoteBlocks) ? remoteBlocks : []);
-	const remoteMatchesLocal = localDocsJson === remoteDocsJson && localBlocksJson === remoteBlocksJson;
-	if (!forceApply && Date.now() < Number(studioIgnoreRemoteUntilRef.current || 0)) {
-		if (remoteMatchesLocal) {
-			if (sig) studioRemoteSigRef.current = sig;
-			studioHasAppliedRemoteRef.current = true;
-			studioNeedsRemoteHydrationRef.current = false;
-			setStudioKeyNotice(null);
-		}
-		return false;
-	}
 	if (hasRemoteRows && !remoteDocs.length && !remoteBlocks.length) {
 		studioNeedsRemoteHydrationRef.current = true;
 		setStudioKeyNotice({
@@ -1122,9 +1084,8 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 		setStudioSyncMsg("Studio found remote state but this device could not decrypt it yet.");
 		return false;
 	}
-	if (!sig || sig === studioRemoteSigRef.current || remoteMatchesLocal) {
+	if (!sig || sig === studioRemoteSigRef.current) {
 		if (remoteDocs.length || remoteBlocks.length) {
-			if (sig) studioRemoteSigRef.current = sig;
 			studioHasAppliedRemoteRef.current = true;
 			studioNeedsRemoteHydrationRef.current = false;
 			setStudioKeyNotice(null);
@@ -1144,7 +1105,16 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	const debounceWindowMs = 900;
 	const localEditAgeMs = Date.now() - Number(studioLastLocalEditRef.current || 0);
 	const shouldTreatAsRealOverwriteRisk = hasUnsyncedLocalEdits && localEditAgeMs > debounceWindowMs;
-	if (!forceApply && (hasUnsyncedLocalEdits || hasActiveInteraction)) {
+	if (!needsAuthoritativeRemoteHydration && !forceApply && queueIfBusy && (hasActiveInteraction || shouldTreatAsRealOverwriteRisk)) {
+		studioPendingRemoteRef.current = { sig, remoteState, receivedAt: Date.now() };
+		if (shouldTreatAsRealOverwriteRisk) {
+			setStudioRemoteNotice({
+				kind: "queued",
+				text: "Remote changes are waiting because this device still has unsynced local edits.",
+			});
+		} else {
+			setStudioRemoteNotice(null);
+		}
 		return false;
 	}
 	studioRemoteSigRef.current = sig;
@@ -1886,7 +1856,8 @@ const addImage = () => {
 			const item = (currentPage?.elements || []).find((x) => x.id === id);
 			return [id, { x: Number(item?.x || 0), y: Number(item?.y || 0) }];
 		}));
-		const anchorOrigin = origins[el.id] || { x: Number(el.x || 0), y: Number(el.y || 0) };
+		const anchorBounds = getVisibleElementBounds(el);
+		const anchorOrigin = { x: Number(anchorBounds.left || 0), y: Number(anchorBounds.top || 0) };
 		const grabOffset = {
 			x: point.x - anchorOrigin.x,
 			y: point.y - anchorOrigin.y,
@@ -2332,7 +2303,6 @@ const addImage = () => {
 		const last = pageLayouts[pageLayouts.length - 1];
 		return Math.max(980, last.top + last.height + 170);
 	}, [pageLayouts]);
-	const selectionVisuals = React.useMemo(() => getSelectionVisualMetrics(zoom, isMobileViewport), [zoom, isMobileViewport]);
 React.useEffect(() => {
 	let helpId = "studio";
 	if (isMobileViewport) helpId = "studio-mobile";
@@ -2425,19 +2395,13 @@ React.useEffect(() => {
 				.bfStudioOpacitySlider {
 					-webkit-appearance: none;
 					appearance: none;
-					width: 100%;
-					max-width: 100%;
-					height: 18px;
-					margin: 0;
-					padding: 0;
-					border: 0;
-					border-radius: 999px;
 					background: transparent;
+					height: 18px;
 				}
 				.bfStudioOpacitySlider::-webkit-slider-runnable-track {
 					height: 8px;
 					border-radius: 999px;
-					background: transparent;
+					background: rgba(59,130,246,0.9);
 				}
 				.bfStudioOpacitySlider::-webkit-slider-thumb {
 					-webkit-appearance: none;
@@ -2451,11 +2415,6 @@ React.useEffect(() => {
 					box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 				}
 				.bfStudioOpacitySlider::-moz-range-track {
-					height: 8px;
-					border-radius: 999px;
-					background: transparent;
-				}
-				.bfStudioOpacitySlider::-moz-range-progress {
 					height: 8px;
 					border-radius: 999px;
 					background: rgba(59,130,246,0.9);
@@ -2533,6 +2492,13 @@ React.useEffect(() => {
 				<div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", borderRadius: 14, background: "rgba(127,29,29,0.22)", border: "1px solid rgba(248,113,113,0.45)" }}>
 					<div style={{ fontSize: 13, lineHeight: 1.4, flex: 1, minWidth: 220 }}>{studioKeyNotice.text}</div>
 					<button onClick={retryStudioRemoteHydration} style={{ padding: "8px 10px", borderRadius: 10 }}>Retry now</button>
+				</div>
+			) : null}
+			{studioRemoteNotice ? (
+				<div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", borderRadius: 14, background: "rgba(17,24,39,0.92)", border: "1px solid rgba(255,255,255,0.12)" }}>
+					<div style={{ fontSize: 13, lineHeight: 1.35, flex: 1, minWidth: 220 }}>{studioRemoteNotice.text}</div>
+					{studioPendingRemoteRef.current ? <button onClick={applyQueuedRemoteChanges} style={{ padding: "8px 10px", borderRadius: 10 }}>Apply remote</button> : null}
+					{studioPendingRemoteRef.current ? <button onClick={dismissQueuedRemoteChanges} style={{ padding: "8px 10px", borderRadius: 10 }}>Keep mine for now</button> : null}
 				</div>
 			) : null}
 
@@ -2766,7 +2732,7 @@ React.useEffect(() => {
 						<div style={{ display: "flex", alignItems: "center", gap: 4, color: "white", fontSize: 11 }}>
 							<span>Opacity</span>
 							<div style={{ width: 140, display: "flex", alignItems: "center" }}>
-								<input className="bfStudioOpacitySlider" type="range" min="0.05" max="1" step="0.05" value={selected ? Number(selected.opacity ?? 1) : 1} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => updateElements(selectedIds, { opacity: Number(e.target.value) })} style={{ width: "100%", margin: 0, display: "block", background: `linear-gradient(to right, rgba(59,130,246,0.9) 0%, rgba(59,130,246,0.9) ${selected ? Math.max(0, Math.min(100, Number(selected.opacity ?? 1) * 100)) : 100}%, rgba(255,255,255,0.32) ${selected ? Math.max(0, Math.min(100, Number(selected.opacity ?? 1) * 100)) : 100}%, rgba(255,255,255,0.32) 100%)`, borderRadius: 999, padding: 0 }} />
+								<input type="range" min="0.05" max="1" step="0.05" value={selected ? Number(selected.opacity ?? 1) : 1} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => updateElements(selectedIds, { opacity: Number(e.target.value) })} style={{ width: "100%", margin: 0, display: "block" }} />
 							</div>
 						</div>
 						{selected && ["text", "shape", "svg"].includes(selected.type) ? (
@@ -2876,7 +2842,6 @@ React.useEffect(() => {
 															if (el.hidden) return null;
 															const isSelected = selectedIds.includes(el.id);
 															const isCanvasBackground = el.type === "shape" && Number(el.x || 0) <= 0 && Number(el.y || 0) <= 0 && Number(el.width || 0) >= (currentPage?.width || currentDoc.width) && Number(el.height || 0) >= (currentPage?.height || currentDoc.height);
-															const frame = getContentFrame(el);
 															const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: getElementTransform(el), boxSizing: "border-box", outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, userSelect: "none", cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none" };
 															if (el.type === "text") return <div
 															key={el.id}
@@ -2888,38 +2853,30 @@ React.useEffect(() => {
 															onBlur={(e) => { updateElement(el.id, { text: e.currentTarget.innerText }); setTextEditId(null); }}
 															style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden", cursor: textEditId === el.id ? "text" : common.cursor }}
 														>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: el.radius || 0 }}><div style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
-															if (el.type === "svg") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, pointerEvents: "none" }} draggable={false} /></div>;
-															return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none" }} draggable={false} /></div>;
+															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
+															if (el.type === "svg") return <img key={el.id} alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common }} draggable={false} />;
+															return <img key={el.id} alt="" src={el.src} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
 														})}
-														{selectionBounds ? (
-														<>
-															<div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: `${selectionVisuals.outlineWidth}px solid #8b5cf6`, boxShadow: `0 0 0 ${selectionVisuals.inset}px rgba(255,255,255,0.9) inset`, pointerEvents: "none", zIndex: 8, borderRadius: 2 / Math.max(zoom, 0.1) }} />
-															{isCropCapableElement(selected) ? [
-																{ key: "crop-n", handle: "n", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
-																{ key: "crop-e", handle: "e", cursor: "ew-resize", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cropThickness / 2, top: Number(selected.y || 0) + (Number(selected.height || 0) - selectionVisuals.cropLength) / 2, width: selectionVisuals.cropThickness, height: selectionVisuals.cropLength },
-																{ key: "crop-s", handle: "s", cursor: "ns-resize", left: Number(selected.x || 0) + (Number(selected.width || 0) - selectionVisuals.cropLength) / 2, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cropThickness / 2, width: selectionVisuals.cropLength, height: selectionVisuals.cropThickness },
-																{ key: "crop-w", handle: "w", cursor: "ew-resize", left: Number(selected.x || 0) - selectionVisuals.cropThickness / 2, top: Number(selected.y || 0) + (Number(selected.height || 0) - selectionVisuals.cropLength) / 2, width: selectionVisuals.cropThickness, height: selectionVisuals.cropLength },
-															].map((bar) => <div key={bar.key} onMouseDown={(e) => startResize(e, bar.handle)} onTouchStart={(e) => startResize(e, bar.handle)} style={{ position: "absolute", left: bar.left, top: bar.top, width: bar.width, height: bar.height, borderRadius: Math.min(bar.width, bar.height) / 2, background: "#8b5cf6", border: `${selectionVisuals.outlineWidth}px solid white`, cursor: bar.cursor, zIndex: 11, touchAction: "none", boxShadow: "0 2px 10px rgba(0,0,0,0.18)" }} />) : null}
-														</>
-													) : null}
-													{selected && !selected.locked ? [
-														{ key: "nw", left: Number(selected.x || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) - selectionVisuals.cornerOffset, cursor: "nwse-resize" },
-														{ key: "ne", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) - selectionVisuals.cornerOffset, cursor: "nesw-resize" },
-														{ key: "se", left: Number(selected.x || 0) + Number(selected.width || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cornerOffset, cursor: "nwse-resize" },
-														{ key: "sw", left: Number(selected.x || 0) - selectionVisuals.cornerOffset, top: Number(selected.y || 0) + Number(selected.height || 0) - selectionVisuals.cornerOffset, cursor: "nesw-resize" },
-													].map((handle) => <div key={handle.key} onMouseDown={(e) => startResize(e, handle.key)} onTouchStart={(e) => startResize(e, handle.key)} style={{ position: "absolute", left: handle.left, top: handle.top, width: selectionVisuals.cornerSize, height: selectionVisuals.cornerSize, borderRadius: 999, background: "#8b5cf6", border: `${selectionVisuals.outlineWidth}px solid white`, cursor: handle.cursor, zIndex: 12, touchAction: "none", boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }} />) : null}
+														{selectionBounds ? <div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: "1px dashed rgba(255,255,255,0.75)", pointerEvents: "none", zIndex: 8 }} /> : null}
+														{selected && !selected.locked ? [
+															{ key: "nw", left: Number(selected.x || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) - (isMobileViewport ? 14 : 6), cursor: "nwse-resize", mobileVisible: true },
+															{ key: "n", left: Number(selected.x || 0) + Number(selected.width || 0) / 2 - 6, top: Number(selected.y || 0) - 6, cursor: "ns-resize", mobileVisible: false },
+															{ key: "ne", left: Number(selected.x || 0) + Number(selected.width || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) - (isMobileViewport ? 14 : 6), cursor: "nesw-resize", mobileVisible: true },
+															{ key: "e", left: Number(selected.x || 0) + Number(selected.width || 0) - 6, top: Number(selected.y || 0) + Number(selected.height || 0) / 2 - 6, cursor: "ew-resize", mobileVisible: false },
+															{ key: "se", left: Number(selected.x || 0) + Number(selected.width || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) + Number(selected.height || 0) - (isMobileViewport ? 14 : 6), cursor: "nwse-resize", mobileVisible: true },
+															{ key: "s", left: Number(selected.x || 0) + Number(selected.width || 0) / 2 - 6, top: Number(selected.y || 0) + Number(selected.height || 0) - 6, cursor: "ns-resize", mobileVisible: false },
+															{ key: "sw", left: Number(selected.x || 0) - (isMobileViewport ? 14 : 6), top: Number(selected.y || 0) + Number(selected.height || 0) - (isMobileViewport ? 14 : 6), cursor: "nesw-resize", mobileVisible: true },
+															{ key: "w", left: Number(selected.x || 0) - 6, top: Number(selected.y || 0) + Number(selected.height || 0) / 2 - 6, cursor: "ew-resize", mobileVisible: false },
+														].filter((handle) => !isMobileViewport || handle.mobileVisible).map((handle) => <div key={handle.key} onMouseDown={(e) => startResize(e, handle.key)} onTouchStart={(e) => startResize(e, handle.key)} style={{ position: "absolute", left: handle.left, top: handle.top, width: isMobileViewport ? 28 : 12, height: isMobileViewport ? 28 : 12, borderRadius: 999, background: "#ef4444", border: "2px solid white", cursor: handle.cursor, zIndex: 10, touchAction: "none", boxShadow: isMobileViewport ? "0 0 0 8px rgba(239,68,68,0.18)" : "none" }} />) : null}
 														{marquee ? <div style={{ position: "absolute", left: marquee.left, top: marquee.top, width: marquee.width, height: marquee.height, border: "1px dashed rgba(255,255,255,0.8)", background: "rgba(239,68,68,0.12)", pointerEvents: "none", zIndex: 12 }} /> : null}
 													</>
 												) : (
 													(page.elements || []).map((el) => {
 														if (el.hidden) return null;
-														const frame = getContentFrame(el);
-													const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
+														const common = { position: "absolute", left: el.x, top: el.y, width: el.width, height: el.height, opacity: el.opacity ?? 1, transform: `rotate(${el.rotation || 0}deg)`, boxSizing: "border-box", pointerEvents: "none" };
 														if (el.type === "text") return <div key={el.id} style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden" }}>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
-														if (el.type === "shape") return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: el.radius || 0 }}><div style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0, boxSizing: "border-box" }} /></div>;
-														if (el.type === "svg") return <div key={el.id} style={{ ...common, overflow: "hidden" }}><img alt="" src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, pointerEvents: "none" }} draggable={false} /></div>;
-														return <div key={el.id} style={{ ...common, overflow: "hidden", borderRadius: 12 }}><img alt="" src={el.src} style={{ position: "absolute", left: frame.offsetX, top: frame.offsetY, width: frame.contentWidth, height: frame.contentHeight, objectFit: el.fit || "cover", pointerEvents: "none" }} draggable={false} /></div>;
+														if (el.type === "shape") return <div key={el.id} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
+														return <img key={el.id} alt="" src={el.src} style={{ ...common, objectFit: el.fit || "cover", borderRadius: 12 }} draggable={false} />;
 													})
 												)}
 											</div>

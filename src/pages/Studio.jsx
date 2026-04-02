@@ -506,6 +506,17 @@ function roundRectPath(ctx, x, y, width, height, radius) {
 	ctx.closePath();
 }
 
+function drawImageCover(ctx, img, x, y, width, height) {
+	const iw = Math.max(1, Number(img?.naturalWidth || img?.width || 1));
+	const ih = Math.max(1, Number(img?.naturalHeight || img?.height || 1));
+	const scale = Math.max(width / iw, height / ih);
+	const drawWidth = iw * scale;
+	const drawHeight = ih * scale;
+	const drawX = x + (width - drawWidth) / 2;
+	const drawY = y + (height - drawHeight) / 2;
+	ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+}
+
 function svgMarkupToDataUrl(svg, fill = "#111111") {
 	const safeFill = String(fill || "#111111");
 	const markup = String(svg || "").replace(/currentColor/g, safeFill);
@@ -689,23 +700,33 @@ function StudioCroppedMedia({ el, common, src }) {
 	const frame = getContentFrame(el);
 	return (
 		<div style={{ ...common, left: frame.frameX, top: frame.frameY, width: frame.frameWidth, height: frame.frameHeight, overflow: "hidden", borderRadius: 12 }}>
-			<img
-				alt=""
-				src={src}
-				draggable={false}
+			<div
 				style={{
 					position: "absolute",
 					left: frame.offsetX,
 					top: frame.offsetY,
 					width: frame.contentWidth,
 					height: frame.contentHeight,
-					maxWidth: "none",
-					maxHeight: "none",
-					objectFit: "fill",
 					pointerEvents: "none",
 					userSelect: "none",
 				}}
-			/>
+			>
+				<img
+					alt=""
+					src={src}
+					draggable={false}
+					style={{
+						display: "block",
+						width: "100%",
+						height: "100%",
+						maxWidth: "none",
+						maxHeight: "none",
+						objectFit: "cover",
+						pointerEvents: "none",
+						userSelect: "none",
+					}}
+				/>
+			</div>
 		</div>
 	);
 }
@@ -744,7 +765,7 @@ async function renderDocToCanvas(doc, bindings) {
 				ctx.save();
 				roundRectPath(ctx, 0, 0, frame.frameWidth, frame.frameHeight, 12);
 				ctx.clip();
-				ctx.drawImage(img, frame.offsetX, frame.offsetY, frame.contentWidth, frame.contentHeight);
+				drawImageCover(ctx, img, frame.offsetX, frame.offsetY, frame.contentWidth, frame.contentHeight);
 				ctx.restore();
 			} catch {}
 		} else if (el.type === "image" && el.src) {
@@ -754,7 +775,7 @@ async function renderDocToCanvas(doc, bindings) {
 				ctx.save();
 				roundRectPath(ctx, 0, 0, frame.frameWidth, frame.frameHeight, 12);
 				ctx.clip();
-				ctx.drawImage(img, frame.offsetX, frame.offsetY, frame.contentWidth, frame.contentHeight);
+				drawImageCover(ctx, img, frame.offsetX, frame.offsetY, frame.contentWidth, frame.contentHeight);
 				ctx.restore();
 			} catch {}
 		} else if (el.type === "text") {
@@ -2141,7 +2162,30 @@ const addImage = () => {
 					nextY = clamp(nextY, 0, currentPage.height - minH);
 					nextWidth = clamp(nextWidth, minW, currentPage.width - nextX);
 					nextHeight = clamp(nextHeight, minH, currentPage.height - nextY);
-					updateElement(resizeState.id, { x: nextX, y: nextY, width: nextWidth, height: nextHeight });
+					if (isCropCapableElement(el)) {
+						const baseWidth = Math.max(1, Number(resizeState.width || 1));
+						const baseHeight = Math.max(1, Number(resizeState.height || 1));
+						const scaleX = nextWidth / baseWidth;
+						const scaleY = nextHeight / baseHeight;
+						const cropOffsetX = Number(resizeState.x || 0) - Number(resizeState.mediaX || 0);
+						const cropOffsetY = Number(resizeState.y || 0) - Number(resizeState.mediaY || 0);
+						updateElement(resizeState.id, {
+							x: nextX,
+							y: nextY,
+							width: nextWidth,
+							height: nextHeight,
+							mediaX: nextX - cropOffsetX * scaleX,
+							mediaY: nextY - cropOffsetY * scaleY,
+							mediaWidth: Math.max(minW, Number(resizeState.mediaWidth || resizeState.width || 1) * scaleX),
+							mediaHeight: Math.max(minH, Number(resizeState.mediaHeight || resizeState.height || 1) * scaleY),
+							cropLeft: Math.max(0, Number(resizeState.cropLeft || 0) * scaleX),
+							cropRight: Math.max(0, Number(resizeState.cropRight || 0) * scaleX),
+							cropTop: Math.max(0, Number(resizeState.cropTop || 0) * scaleY),
+							cropBottom: Math.max(0, Number(resizeState.cropBottom || 0) * scaleY),
+						});
+					} else {
+						updateElement(resizeState.id, { x: nextX, y: nextY, width: nextWidth, height: nextHeight });
+					}
 				}
 			}
 			if (marquee) {
@@ -2978,15 +3022,20 @@ React.useEffect(() => {
 														})}
 														{selectionBounds ? <div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: "1px dashed rgba(255,255,255,0.75)", pointerEvents: "none", zIndex: 8 }} /> : null}
 														{selected && !selected.locked ? (() => { const selectedBounds = getElementBounds(selected); return [
-															{ key: "nw", left: Number(selectedBounds.x || 0) - (isMobileViewport ? 14 : 6), top: Number(selectedBounds.y || 0) - (isMobileViewport ? 14 : 6), cursor: "nwse-resize", mobileVisible: true },
-															{ key: "n", left: Number(selectedBounds.x || 0) + Number(selectedBounds.width || 0) / 2 - 6, top: Number(selectedBounds.y || 0) - 6, cursor: "ns-resize", mobileVisible: false },
-															{ key: "ne", left: Number(selectedBounds.x || 0) + Number(selectedBounds.width || 0) - (isMobileViewport ? 14 : 6), top: Number(selectedBounds.y || 0) - (isMobileViewport ? 14 : 6), cursor: "nesw-resize", mobileVisible: true },
-															{ key: "e", left: Number(selectedBounds.x || 0) + Number(selectedBounds.width || 0) - 6, top: Number(selectedBounds.y || 0) + Number(selectedBounds.height || 0) / 2 - 6, cursor: "ew-resize", mobileVisible: false },
-															{ key: "se", left: Number(selectedBounds.x || 0) + Number(selectedBounds.width || 0) - (isMobileViewport ? 14 : 6), top: Number(selectedBounds.y || 0) + Number(selectedBounds.height || 0) - (isMobileViewport ? 14 : 6), cursor: "nwse-resize", mobileVisible: true },
-															{ key: "s", left: Number(selectedBounds.x || 0) + Number(selectedBounds.width || 0) / 2 - 6, top: Number(selectedBounds.y || 0) + Number(selectedBounds.height || 0) - 6, cursor: "ns-resize", mobileVisible: false },
-															{ key: "sw", left: Number(selectedBounds.x || 0) - (isMobileViewport ? 14 : 6), top: Number(selectedBounds.y || 0) + Number(selectedBounds.height || 0) - (isMobileViewport ? 14 : 6), cursor: "nesw-resize", mobileVisible: true },
-															{ key: "w", left: Number(selectedBounds.x || 0) - 6, top: Number(selectedBounds.y || 0) + Number(selectedBounds.height || 0) / 2 - 6, cursor: "ew-resize", mobileVisible: false },
-														].filter((handle) => !isMobileViewport || handle.mobileVisible).map((handle) => <div key={handle.key} onMouseDown={(e) => startResize(e, handle.key)} onTouchStart={(e) => startResize(e, handle.key)} style={{ position: "absolute", left: handle.left, top: handle.top, width: isMobileViewport ? 28 : 12, height: isMobileViewport ? 28 : 12, borderRadius: 999, background: "#ef4444", border: "2px solid white", cursor: handle.cursor, zIndex: 10, touchAction: "none", boxShadow: isMobileViewport ? "0 0 0 8px rgba(239,68,68,0.18)" : "none" }} />); })() : null}
+															{ key: "nw", left: Number(selectedBounds.x || 0) - (isMobileViewport ? 14 : 8), top: Number(selectedBounds.y || 0) - (isMobileViewport ? 14 : 8), cursor: "nwse-resize", mobileVisible: true, kind: "corner" },
+															{ key: "n", left: Number(selectedBounds.x || 0) + Number(selectedBounds.width || 0) / 2 - (isMobileViewport ? 14 : 10), top: Number(selectedBounds.y || 0) - (isMobileViewport ? 14 : 4), cursor: "ns-resize", mobileVisible: false, kind: "side" },
+															{ key: "ne", left: Number(selectedBounds.x || 0) + Number(selectedBounds.width || 0) - (isMobileViewport ? 14 : 8), top: Number(selectedBounds.y || 0) - (isMobileViewport ? 14 : 8), cursor: "nesw-resize", mobileVisible: true, kind: "corner" },
+															{ key: "e", left: Number(selectedBounds.x || 0) + Number(selectedBounds.width || 0) - (isMobileViewport ? 14 : 4), top: Number(selectedBounds.y || 0) + Number(selectedBounds.height || 0) / 2 - (isMobileViewport ? 14 : 10), cursor: "ew-resize", mobileVisible: false, kind: "side" },
+															{ key: "se", left: Number(selectedBounds.x || 0) + Number(selectedBounds.width || 0) - (isMobileViewport ? 14 : 8), top: Number(selectedBounds.y || 0) + Number(selectedBounds.height || 0) - (isMobileViewport ? 14 : 8), cursor: "nwse-resize", mobileVisible: true, kind: "corner" },
+															{ key: "s", left: Number(selectedBounds.x || 0) + Number(selectedBounds.width || 0) / 2 - (isMobileViewport ? 14 : 10), top: Number(selectedBounds.y || 0) + Number(selectedBounds.height || 0) - (isMobileViewport ? 14 : 4), cursor: "ns-resize", mobileVisible: false, kind: "side" },
+															{ key: "sw", left: Number(selectedBounds.x || 0) - (isMobileViewport ? 14 : 8), top: Number(selectedBounds.y || 0) + Number(selectedBounds.height || 0) - (isMobileViewport ? 14 : 8), cursor: "nesw-resize", mobileVisible: true, kind: "corner" },
+															{ key: "w", left: Number(selectedBounds.x || 0) - (isMobileViewport ? 14 : 4), top: Number(selectedBounds.y || 0) + Number(selectedBounds.height || 0) / 2 - (isMobileViewport ? 14 : 10), cursor: "ew-resize", mobileVisible: false, kind: "side" },
+														].filter((handle) => !isMobileViewport || handle.mobileVisible).map((handle) => {
+															const isCorner = handle.kind === "corner";
+															const width = isMobileViewport ? 28 : (isCorner ? 16 : (handle.key === "n" || handle.key === "s" ? 20 : 8));
+															const height = isMobileViewport ? 28 : (isCorner ? 16 : (handle.key === "n" || handle.key === "s" ? 8 : 20));
+															return <div key={handle.key} onMouseDown={(e) => startResize(e, handle.key)} onTouchStart={(e) => startResize(e, handle.key)} style={{ position: "absolute", left: handle.left, top: handle.top, width, height, borderRadius: isCorner ? 999 : 999, background: "#ef4444", border: "2px solid white", cursor: handle.cursor, zIndex: 10, touchAction: "none", boxShadow: isMobileViewport ? "0 0 0 8px rgba(239,68,68,0.18)" : "none" }} />;
+														}); })() : null}
 														{marquee ? <div style={{ position: "absolute", left: marquee.left, top: marquee.top, width: marquee.width, height: marquee.height, border: "1px dashed rgba(255,255,255,0.8)", background: "rgba(239,68,68,0.12)", pointerEvents: "none", zIndex: 12 }} /> : null}
 													</>
 												) : (

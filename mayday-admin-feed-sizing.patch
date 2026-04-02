@@ -1,0 +1,72 @@
+diff --git a/src/pages/ApplicationsDashboardPage.jsx b/src/pages/ApplicationsDashboardPage.jsx
+index 57a3271..local 100644
+--- a/src/pages/ApplicationsDashboardPage.jsx
++++ b/src/pages/ApplicationsDashboardPage.jsx
+@@
+ function FeedItemCard({ item, hidden, onToggleHidden }) {
+   return (
+     <article className="rounded-[1.5rem] border border-[#e3a7a5]/18 bg-black/20 p-4 sm:p-5">
+       <div className="flex flex-wrap items-start justify-between gap-3">
+-        <div>
++        <div className="min-w-0">
+           <p className="text-[10px] uppercase tracking-[0.18em] text-[#e3a7a5]/76">{item.source === 'hashtag' ? 'hashtag' : 'official'}</p>
+-          <h3 className="mt-2 text-lg font-black uppercase tracking-tight text-[#f7f1e8]">{item.username || 'instagram post'}</h3>
++          <h3 className="mt-2 truncate text-lg font-black uppercase tracking-tight text-[#f7f1e8]">{item.username || 'instagram post'}</h3>
+           <p className="mt-1 text-xs text-[#f7f1e8]/58">{formatDate(item.timestamp)}</p>
+         </div>
+@@
+-      {item.media_url ? (
+-        <img src={item.media_url} alt={item.caption || 'Instagram post'} className="mt-4 aspect-[16/10] w-full rounded-[1rem] border border-[#e3a7a5]/15 object-cover" />
+-      ) : null}
+-      <p className="mt-4 text-sm leading-7 text-[#f7f1e8]/82">{item.caption || 'No caption found.'}</p>
+-      <div className="mt-3 break-all text-xs text-[#f7f1e8]/56">{item.permalink || ''}</div>
++      <div className="mt-4 grid gap-4 lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start">
++        {item.media_url ? (
++          <img
++            src={item.media_url}
++            alt={item.caption || 'Instagram post'}
++            className="h-40 w-full rounded-[1rem] border border-[#e3a7a5]/15 object-cover lg:h-32"
++          />
++        ) : (
++          <div className="flex h-40 w-full items-center justify-center rounded-[1rem] border border-[#e3a7a5]/15 bg-black/15 text-xs uppercase tracking-[0.16em] text-[#f7f1e8]/48 lg:h-32">
++            no image
++          </div>
++        )}
++
++        <div className="min-w-0">
++          <p className="text-sm leading-6 text-[#f7f1e8]/82">{item.caption || 'No caption found.'}</p>
++          <div className="mt-3 break-all text-xs leading-5 text-[#f7f1e8]/56">{item.permalink || ''}</div>
++        </div>
++      </div>
+     </article>
+   )
+ }
+@@
+-              <div className="grid gap-4">
++              <div className="grid gap-4 xl:grid-cols-2">
+                 {feedItems.map((item) => (
+                   <FeedItemCard
+                     key={item.permalink || item.id}
+                     item={item}
+                     hidden={hiddenPermalinks.has(item.permalink)}
+                     onToggleHidden={() => toggleHiddenPermalink(item.permalink)}
+                   />
+                 ))}
+               </div>
+
+diff --git a/src/pages/MayDayWelcomeCenter.jsx b/src/pages/MayDayWelcomeCenter.jsx
+index c7acbfb..local 100644
+--- a/src/pages/MayDayWelcomeCenter.jsx
++++ b/src/pages/MayDayWelcomeCenter.jsx
+@@
+-            <img src="/shop/poster-2026-pink-green.png" alt="May Day on the Harbor 2026 poster art" className="absolute inset-0 h-full w-full object-cover object-bottom" />
++            <img
++              src="/shop/poster-2026-pink-green.png"
++              alt="May Day on the Harbor 2026 poster art"
++              className="absolute inset-0 h-full w-full object-cover object-bottom"
++              onError={(event) => {
++                if (event.currentTarget.dataset.fallbackApplied === 'true') return
++                event.currentTarget.dataset.fallbackApplied = 'true'
++                event.currentTarget.src = '/shop/poster.webp'
++              }}
++            />

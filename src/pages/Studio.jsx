@@ -548,8 +548,8 @@ function isCropCapableElement(el) {
 }
 
 function getLegacyCropInsets(el) {
-	const width = Math.max(1, Number(el?.width || 0));
-	const height = Math.max(1, Number(el?.height || 0));
+	const width = Math.max(1, Number(el?.width || el?.mediaWidth || 0));
+	const height = Math.max(1, Number(el?.height || el?.mediaHeight || 0));
 	const left = clamp(Number(el?.cropLeft || 0), 0, width - 1);
 	const right = clamp(Number(el?.cropRight || 0), 0, Math.max(0, width - left - 1));
 	const top = clamp(Number(el?.cropTop || 0), 0, height - 1);
@@ -559,51 +559,70 @@ function getLegacyCropInsets(el) {
 
 function getMediaFrame(el) {
 	if (!isCropCapableElement(el)) return null;
-	const frameX = Number(el?.x || 0);
-	const frameY = Number(el?.y || 0);
-	const frameWidth = Math.max(1, Number(el?.width || 1));
-	const frameHeight = Math.max(1, Number(el?.height || 1));
+	const x = Number(el?.x || 0);
+	const y = Number(el?.y || 0);
+	const width = Math.max(1, Number(el?.width || 1));
+	const height = Math.max(1, Number(el?.height || 1));
+	const explicitMediaX = Number(el?.mediaX ?? x);
+	const explicitMediaY = Number(el?.mediaY ?? y);
 	const explicitMediaWidth = Number(el?.mediaWidth || 0);
 	const explicitMediaHeight = Number(el?.mediaHeight || 0);
-	if (explicitMediaWidth > 0 && explicitMediaHeight > 0) {
-		return {
-			frameX,
-			frameY,
-			frameWidth,
-			frameHeight,
-			mediaX: Number(el?.mediaX ?? frameX),
-			mediaY: Number(el?.mediaY ?? frameY),
-			mediaWidth: explicitMediaWidth,
-			mediaHeight: explicitMediaHeight,
-		};
-	}
 	const legacy = getLegacyCropInsets(el);
+	const hasSeparateMediaBox = explicitMediaWidth > 0 && explicitMediaHeight > 0 && (
+		Math.abs(explicitMediaX - x) > 0.01 ||
+		Math.abs(explicitMediaY - y) > 0.01 ||
+		Math.abs(explicitMediaWidth - width) > 0.01 ||
+		Math.abs(explicitMediaHeight - height) > 0.01
+	);
+
+	if (hasSeparateMediaBox) {
+		const mediaX = explicitMediaX;
+		const mediaY = explicitMediaY;
+		const mediaWidth = Math.max(1, explicitMediaWidth);
+		const mediaHeight = Math.max(1, explicitMediaHeight);
+		const frameX = clamp(x, mediaX, mediaX + mediaWidth - 1);
+		const frameY = clamp(y, mediaY, mediaY + mediaHeight - 1);
+		const frameWidth = clamp(width, 1, mediaX + mediaWidth - frameX);
+		const frameHeight = clamp(height, 1, mediaY + mediaHeight - frameY);
+		return { frameX, frameY, frameWidth, frameHeight, mediaX, mediaY, mediaWidth, mediaHeight };
+	}
+
+	const visibleWidth = Math.max(1, width - legacy.left - legacy.right);
+	const visibleHeight = Math.max(1, height - legacy.top - legacy.bottom);
 	return {
-		frameX,
-		frameY,
-		frameWidth,
-		frameHeight,
-		mediaX: frameX - legacy.left,
-		mediaY: frameY - legacy.top,
-		mediaWidth: frameWidth + legacy.left + legacy.right,
-		mediaHeight: frameHeight + legacy.top + legacy.bottom,
+		frameX: x + legacy.left,
+		frameY: y + legacy.top,
+		frameWidth: visibleWidth,
+		frameHeight: visibleHeight,
+		mediaX: x,
+		mediaY: y,
+		mediaWidth: width,
+		mediaHeight: height,
 	};
 }
 
 function deriveCropPatch(frame) {
-	const cropLeft = Math.max(0, Math.round(frame.frameX - frame.mediaX));
-	const cropTop = Math.max(0, Math.round(frame.frameY - frame.mediaY));
-	const cropRight = Math.max(0, Math.round((frame.mediaX + frame.mediaWidth) - (frame.frameX + frame.frameWidth)));
-	const cropBottom = Math.max(0, Math.round((frame.mediaY + frame.mediaHeight) - (frame.frameY + frame.frameHeight)));
+	const mediaX = Number(frame.mediaX || 0);
+	const mediaY = Number(frame.mediaY || 0);
+	const mediaWidth = Math.max(1, Number(frame.mediaWidth || 1));
+	const mediaHeight = Math.max(1, Number(frame.mediaHeight || 1));
+	const frameX = clamp(Number(frame.frameX || mediaX), mediaX, mediaX + mediaWidth - 1);
+	const frameY = clamp(Number(frame.frameY || mediaY), mediaY, mediaY + mediaHeight - 1);
+	const frameWidth = clamp(Number(frame.frameWidth || mediaWidth), 1, mediaX + mediaWidth - frameX);
+	const frameHeight = clamp(Number(frame.frameHeight || mediaHeight), 1, mediaY + mediaHeight - frameY);
+	const cropLeft = Math.max(0, Math.round(frameX - mediaX));
+	const cropTop = Math.max(0, Math.round(frameY - mediaY));
+	const cropRight = Math.max(0, Math.round((mediaX + mediaWidth) - (frameX + frameWidth)));
+	const cropBottom = Math.max(0, Math.round((mediaY + mediaHeight) - (frameY + frameHeight)));
 	return {
-		x: frame.frameX,
-		y: frame.frameY,
-		width: frame.frameWidth,
-		height: frame.frameHeight,
-		mediaX: frame.mediaX,
-		mediaY: frame.mediaY,
-		mediaWidth: frame.mediaWidth,
-		mediaHeight: frame.mediaHeight,
+		x: mediaX,
+		y: mediaY,
+		width: mediaWidth,
+		height: mediaHeight,
+		mediaX,
+		mediaY,
+		mediaWidth,
+		mediaHeight,
 		cropLeft,
 		cropRight,
 		cropTop,
@@ -657,31 +676,31 @@ function getContentFrame(el) {
 
 function applyCropDrag(resizeState, handle, dx, dy) {
 	const minVisible = 24;
-	const mediaLeft = Number(resizeState?.mediaX ?? resizeState?.x ?? 0);
-	const mediaTop = Number(resizeState?.mediaY ?? resizeState?.y ?? 0);
+	const mediaX = Number(resizeState?.mediaX ?? resizeState?.x ?? 0);
+	const mediaY = Number(resizeState?.mediaY ?? resizeState?.y ?? 0);
 	const mediaWidth = Math.max(1, Number(resizeState?.mediaWidth || resizeState?.width || 1));
 	const mediaHeight = Math.max(1, Number(resizeState?.mediaHeight || resizeState?.height || 1));
-	const mediaRight = mediaLeft + mediaWidth;
-	const mediaBottom = mediaTop + mediaHeight;
-	let frameLeft = Number(resizeState?.x || 0);
-	let frameTop = Number(resizeState?.y || 0);
-	let frameRight = frameLeft + Math.max(1, Number(resizeState?.width || 1));
-	let frameBottom = frameTop + Math.max(1, Number(resizeState?.height || 1));
+	const mediaRight = mediaX + mediaWidth;
+	const mediaBottom = mediaY + mediaHeight;
+	let frameLeft = Number(resizeState?.frameX ?? (Number(resizeState?.x || 0) + Number(resizeState?.cropLeft || 0)));
+	let frameTop = Number(resizeState?.frameY ?? (Number(resizeState?.y || 0) + Number(resizeState?.cropTop || 0)));
+	let frameRight = frameLeft + Math.max(1, Number(resizeState?.frameWidth ?? (Number(resizeState?.width || 1) - Number(resizeState?.cropLeft || 0) - Number(resizeState?.cropRight || 0))));
+	let frameBottom = frameTop + Math.max(1, Number(resizeState?.frameHeight ?? (Number(resizeState?.height || 1) - Number(resizeState?.cropTop || 0) - Number(resizeState?.cropBottom || 0))));
 
-	if (handle.includes("w")) frameLeft = clamp(frameLeft + dx, mediaLeft, frameRight - minVisible);
+	if (handle.includes("w")) frameLeft = clamp(frameLeft + dx, mediaX, frameRight - minVisible);
 	if (handle.includes("e")) frameRight = clamp(frameRight + dx, frameLeft + minVisible, mediaRight);
-	if (handle.includes("n")) frameTop = clamp(frameTop + dy, mediaTop, frameBottom - minVisible);
+	if (handle.includes("n")) frameTop = clamp(frameTop + dy, mediaY, frameBottom - minVisible);
 	if (handle.includes("s")) frameBottom = clamp(frameBottom + dy, frameTop + minVisible, mediaBottom);
 
 	return deriveCropPatch({
+		mediaX,
+		mediaY,
+		mediaWidth,
+		mediaHeight,
 		frameX: frameLeft,
 		frameY: frameTop,
 		frameWidth: frameRight - frameLeft,
 		frameHeight: frameBottom - frameTop,
-		mediaX: mediaLeft,
-		mediaY: mediaTop,
-		mediaWidth,
-		mediaHeight,
 	});
 }
 
@@ -759,7 +778,7 @@ async function renderDocToCanvas(doc, bindings) {
 			} catch {}
 		} else if (el.type === "text") {
 			const text = applyBindings(el.text || "", bindings);
-			ctx.fillStyle = el.color || "#fff";
+			ctx.fillStyle = el.color || "#000000";
 			ctx.textBaseline = "top";
 			ctx.font = `${Number(el.fontWeight || 700)} ${Number(el.fontSize || 36)}px ${el.fontFamily || FALLBACK_FONT}`;
 			const lines = String(text).split("\n");
@@ -1978,6 +1997,10 @@ const addImage = () => {
 			y: Number(selected.y || 0),
 			width: Number(selected.width || 1),
 			height: Number(selected.height || 1),
+			frameX: Number(frame?.frameX ?? selected.x ?? 0),
+			frameY: Number(frame?.frameY ?? selected.y ?? 0),
+			frameWidth: Number(frame?.frameWidth ?? selected.width ?? 1),
+			frameHeight: Number(frame?.frameHeight ?? selected.height ?? 1),
 			cropLeft: Number(selected.cropLeft || 0),
 			cropRight: Number(selected.cropRight || 0),
 			cropTop: Number(selected.cropTop || 0),
@@ -2969,7 +2992,7 @@ React.useEffect(() => {
 															contentEditable={textEditId === el.id}
 															suppressContentEditableWarning
 															onBlur={(e) => { updateElement(el.id, { text: e.currentTarget.innerText }); setTextEditId(null); }}
-															style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden", cursor: textEditId === el.id ? "text" : common.cursor }}
+															style={{ ...common, color: el.color || "#000000", fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden", cursor: textEditId === el.id ? "text" : common.cursor }}
 														>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
 															if (el.type === "shape") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
 															if (el.type === "svg") return <div key={el.id} onMouseDown={(e) => startElementDrag(e, el)} onTouchStart={(e) => startElementDrag(e, el)} onClick={(e) => { e.stopPropagation(); if (!(e.shiftKey || e.ctrlKey || e.metaKey)) selectElement(el, false); closeMenus(); }} onContextMenu={(e) => openContextMenu(e, el)}><StudioCroppedMedia el={el} common={common} src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} /></div>;
@@ -2993,7 +3016,7 @@ React.useEffect(() => {
 														if (el.hidden) return null;
 														const bounds = getElementBounds(el);
 													const common = { position: "absolute", left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height, opacity: el.opacity ?? 1, transform: getElementTransform(el), boxSizing: "border-box", pointerEvents: "none" };
-														if (el.type === "text") return <div key={el.id} style={{ ...common, color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden" }}>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
+														if (el.type === "text") return <div key={el.id} style={{ ...common, color: el.color || "#000000", fontSize: el.fontSize, fontWeight: el.fontWeight, fontFamily: el.fontFamily || FALLBACK_FONT, lineHeight: el.lineHeight, letterSpacing: `${el.letterSpacing || 0}px`, textAlign: el.align, whiteSpace: "pre-wrap", overflow: "hidden" }}>{showBoundPreview ? applyBindings(el.text, bindings) : el.text}</div>;
 														if (el.type === "shape") return <div key={el.id} style={{ ...common, background: el.fill, border: `${el.strokeWidth || 0}px solid ${el.stroke || "transparent"}`, borderRadius: el.radius || 0 }} />;
 														if (el.type === "svg") return <StudioCroppedMedia key={el.id} el={el} common={common} src={svgMarkupToDataUrl(el.svg, el.fill || "#111111")} />;
 													return <StudioCroppedMedia key={el.id} el={el} common={common} src={el.src} />;
@@ -3107,7 +3130,7 @@ React.useEffect(() => {
 										</div>
 									</div>
 									<label>Alignment<select value={selected.align || "left"} onChange={(e) => updateElement(selected.id, { align: e.target.value })} style={{ width: "100%" }}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
-									<label>Text color<input type="color" value={selected.color || "#ffffff"} onChange={(e) => updateElement(selected.id, { color: e.target.value })} style={{ width: "100%" }} /></label>
+									<label>Text color<input type="color" value={selected.color || "#000000"} onChange={(e) => updateElement(selected.id, { color: e.target.value })} style={{ width: "100%" }} /></label>
 								</>) : null}
 								{selected.type === "shape" ? (<>
 									<label>Fill<input type="color" value={selected.fill || "#ef4444"} onChange={(e) => updateElement(selected.id, { fill: e.target.value })} style={{ width: "100%" }} /></label>

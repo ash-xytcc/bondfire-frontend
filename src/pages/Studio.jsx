@@ -543,7 +543,6 @@ function getElementTransform(el) {
 	return `rotate(${el?.rotation || 0}deg) scale(${scaleX}, ${scaleY})`;
 }
 
-
 function isCropCapableElement(el) {
 	return el?.type === "image" || el?.type === "svg";
 }
@@ -557,14 +556,7 @@ function getCropInsets(el, mediaWidth, mediaHeight) {
 }
 
 function getMediaBounds(el) {
-	if (!isCropCapableElement(el)) {
-		return {
-			x: Number(el?.x || 0),
-			y: Number(el?.y || 0),
-			width: Math.max(1, Number(el?.width || 0)),
-			height: Math.max(1, Number(el?.height || 0)),
-		};
-	}
+	if (!isCropCapableElement(el)) return null;
 	const mediaWidth = Math.max(1, Number(el?.mediaWidth || el?.width || 1));
 	const mediaHeight = Math.max(1, Number(el?.mediaHeight || el?.height || 1));
 	return {
@@ -609,13 +601,11 @@ function getContentFrame(el) {
 	}
 	const media = getMediaBounds(el);
 	const crop = getCropInsets(el, media.width, media.height);
-	const frameWidth = Math.max(24, media.width - crop.left - crop.right);
-	const frameHeight = Math.max(24, media.height - crop.top - crop.bottom);
 	return {
 		frameX: media.x + crop.left,
 		frameY: media.y + crop.top,
-		frameWidth,
-		frameHeight,
+		frameWidth: Math.max(24, media.width - crop.left - crop.right),
+		frameHeight: Math.max(24, media.height - crop.top - crop.bottom),
 		contentWidth: media.width,
 		contentHeight: media.height,
 		offsetX: -crop.left,
@@ -637,12 +627,7 @@ function applyCropDrag(resizeState, handle, dx, dy) {
 	if (handle.includes("n")) cropTop = clamp(Number(resizeState?.cropTop || 0) + dy, 0, Math.max(0, mediaHeight - cropBottom - minVisible));
 	if (handle.includes("s")) cropBottom = clamp(Number(resizeState?.cropBottom || 0) - dy, 0, Math.max(0, mediaHeight - cropTop - minVisible));
 
-	return {
-		cropLeft,
-		cropRight,
-		cropTop,
-		cropBottom,
-	};
+	return { cropLeft, cropRight, cropTop, cropBottom };
 }
 
 function StudioCroppedMedia({ el, common, src }) {
@@ -1905,8 +1890,8 @@ const addImage = () => {
 		const point = getCanvasPoint(clientX, clientY);
 		const origins = Object.fromEntries(ids.map((id) => {
 			const item = (currentPage?.elements || []).find((x) => x.id === id);
-			const media = getMediaBounds(item || {});
 			if (isCropCapableElement(item)) {
+				const media = getMediaBounds(item || {});
 				return [id, { x: media.x, y: media.y }];
 			}
 			return [id, { x: Number(item?.x || 0), y: Number(item?.y || 0) }];
@@ -1942,10 +1927,10 @@ const addImage = () => {
 			cropRight: Number(selected.cropRight || 0),
 			cropTop: Number(selected.cropTop || 0),
 			cropBottom: Number(selected.cropBottom || 0),
-			mediaX: Number(media.x),
-			mediaY: Number(media.y),
-			mediaWidth: Number(media.width),
-			mediaHeight: Number(media.height),
+			mediaX: Number(media?.x ?? selected.mediaX ?? selected.x ?? 0),
+			mediaY: Number(media?.y ?? selected.mediaY ?? selected.y ?? 0),
+			mediaWidth: Number(media?.width ?? selected.mediaWidth ?? selected.width ?? 1),
+			mediaHeight: Number(media?.height ?? selected.mediaHeight ?? selected.height ?? 1),
 			id: selected.id,
 			handle,
 			mode: isCropCapableElement(selected) ? "crop" : "resize",

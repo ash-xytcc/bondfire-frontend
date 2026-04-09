@@ -1,6 +1,7 @@
 // src/pages/SignIn.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getBranding } from "../lib/appVariant.js";
 
 function fireAuthChanged() {
 	try {
@@ -18,6 +19,7 @@ function startDemo(navigate) {
 
 export default function SignIn() {
 	const navigate = useNavigate();
+	const brand = getBranding();
 
 	const [mode, setMode] = useState("login");
 
@@ -169,9 +171,9 @@ export default function SignIn() {
 
 	return (
 		<div style={{ maxWidth: 520, margin: "8vh auto", padding: 16 }}>
-			<h1 style={{ marginBottom: 6 }}>Welcome to Bondfire</h1>
+			<h1 style={{ marginBottom: 6 }}>Welcome to {brand.appName}</h1>
 			<p className="helper" style={{ marginTop: 0 }}>
-				{mode === "login" ? "Sign in to continue." : "Create your account and your first org."}
+				{mode === "login" ? "Sign in to continue." : `Create your account and your first ${brand.key === "dpg" ? "workspace" : "org"}.`}
 			</p>
 
 			<div style={{ display: "flex", gap: 8, marginTop: 12 }}>

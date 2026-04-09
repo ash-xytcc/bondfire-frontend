@@ -24,6 +24,9 @@ import SignIn from "./pages/SignIn.jsx";
 import Security from "./pages/Security.jsx";
 import Drive from "./pages/Drive.jsx";
 import Studio from "./pages/Studio.jsx";
+import Attendees from "./pages/Attendees.jsx";
+import Sessions from "./pages/Sessions.jsx";
+import DpgPublicHome from "./pages/DpgPublicHome.jsx";
 
 // COMPONENTS
 import AppHeader from "./components/AppHeader.jsx";
@@ -33,6 +36,7 @@ import DemoBanner from "./demo/DemoBanner.jsx";
 import DemoSpotlightTour from "./demo/DemoSpotlightTour.jsx";
 import DemoBoot from "./pages/DemoBoot.jsx";
 import { isDemoMode, disableDemoMode } from "./demo/demoMode.js";
+import { getAdminBasePath, getAppVariant, isDpgVariant } from "./lib/appVariant.js";
 
 /* -------------------------------- Error Boundary ------------------------------- */
 class ErrorBoundary extends React.Component {
@@ -259,6 +263,7 @@ function Shell() {
 				>
 					<Route index element={<Overview />} />
 					<Route path="overview" element={<Overview />} />
+					<Route path="attendees" element={<Attendees />} />
 					<Route path="people" element={<People />} />
 					<Route path="inventory" element={<Inventory />} />
 					<Route path="needs" element={<Needs />} />
@@ -267,6 +272,7 @@ function Shell() {
 					<Route path="settings" element={<Settings />} />
 					<Route path="drive" element={<Drive />} />
 					<Route path="studio" element={<Studio />} />
+					<Route path="sessions" element={<Sessions />} />
 					<Route path="public" element={<OrgPublicPreview />} />
 					<Route path="chat" element={<BondfireChat />} />
 					<Route path="guard/*" element={<OrgSecretGuard />} />
@@ -282,12 +288,29 @@ function Shell() {
 }
 
 /* ---------------------------------- App ---------------------------------- */
-export default function App() {
+function AdminApp() {
+	const basename = getAdminBasePath();
+
 	return (
-		<HashRouter>
+		<HashRouter basename={basename || undefined}>
 			<ErrorBoundary>
 				<Shell />
 			</ErrorBoundary>
 		</HashRouter>
 	);
+}
+
+export default function App() {
+	const variant = getAppVariant();
+
+	if (variant === "dpg") {
+		const pathname = typeof window !== "undefined" ? window.location.pathname || "/" : "/";
+		const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
+
+		if (!isAdminPath) {
+			return <DpgPublicHome />;
+		}
+	}
+
+	return <AdminApp />;
 }

@@ -1,8 +1,8 @@
 // src/components/AppHeader.jsx
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { getBranding, isDpgVariant } from "../lib/appVariant.js";
 
-const homeHref = "/orgs";
 
 function useOrgIdFromPath() {
   const loc = useLocation();
@@ -47,6 +47,7 @@ function readOrgNameFromStorage(orgId) {
 }
 
 const Brand = ({ orgId, logoSrc }) => {
+  const brand = getBranding();
   const inferredOrgId = orgId || useOrgIdFromPath();
   const [orgName, setOrgName] = React.useState(() => readOrgNameFromStorage(inferredOrgId));
   const [orgLogo, setOrgLogo] = React.useState(() => readOrgLogo(inferredOrgId));
@@ -80,13 +81,13 @@ const Brand = ({ orgId, logoSrc }) => {
   }, [inferredOrgId]);
 
   const label = orgName || "Org";
-  const imgSrc = logoSrc || "/logo-bondfire.png";
+  const imgSrc = logoSrc || brand.logoSrc || "/logo-bondfire.png";
 
   return (
     <div className="bf-brand-wrap">
-      <Link className="bf-brand" to={homeHref}>
-        <img src={imgSrc} alt="Bondfire logo" />
-        <span>Bondfire</span>
+      <Link className="bf-brand" to={brand.homeHref}>
+        <img src={imgSrc} alt={`${brand.appName} logo`} />
+        <span>{brand.appName}</span>
       </Link>
 
       {inferredOrgId ? (
@@ -151,14 +152,15 @@ function OrgNav({ variant = "desktop" }) {
   const items = base
     ? [
         ["Dashboard", `${base}/overview`, "nav-overview"],
-        ["People", `${base}/people`, "nav-people"],
-        ["Inventory", `${base}/inventory`, "nav-inventory"],
-        ["Needs", `${base}/needs`, "nav-needs"],
-        ["Meetings", `${base}/meetings`, "nav-meetings"],
+        ["Attendees", `${base}/attendees`, "nav-attendees"],
         ["Drive", `${base}/drive`, "nav-drive"],
+        ["Meetings", `${base}/meetings`, "nav-meetings"],
+        ["Needs", `${base}/needs`, "nav-needs"],
+        ["Inventory", `${base}/inventory`, "nav-inventory"],
+        ["People", `${base}/people`, "nav-people"],
         ["Studio", `${base}/studio`, "nav-studio"],
         ["Settings", `${base}/settings`, "nav-settings"],
-        ["Chat", `${base}/chat`, "nav-chat"],
+        ["Sessions", `${base}/sessions`, "nav-sessions"],
       ]
     : [];
 
@@ -183,7 +185,7 @@ function OrgNav({ variant = "desktop" }) {
         className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
         title="All orgs"
       >
-        All Orgs
+        {isDpgVariant() ? "All Workspaces" : "All Orgs"}
       </NavLink>
 
       {items.map(([label, to, tourId]) => (
@@ -351,6 +353,10 @@ export default function AppHeader({ onLogout, showLogout }) {
             >
               Logout
             </button>
+          ) : null}
+
+          {getBranding().poweredByBondfire ? (
+            <div style={{ marginTop: 16, fontSize: 12, opacity: 0.72 }}>Powered by Bondfire</div>
           ) : null}
         </div>
       </div>

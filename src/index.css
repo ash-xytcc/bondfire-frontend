@@ -1,3 +1,18 @@
+@font-face{
+  font-family:"Fancy Shadow";
+  src:url("/fonts/FancyShadow.ttf") format("truetype");
+  font-weight:400;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:"Formulario 1312";
+  src:url("/fonts/Formulario-1312.ttf") format("truetype");
+  font-weight:400;
+  font-style:normal;
+  font-display:swap;
+}
+
 :root{
   --bg:#0b0b0b;
   --panel:#141414;
@@ -6,10 +21,21 @@
   --border:#222;
   --red:#8a1111;
   --red-2:#b01515;
+  --dpg-green:#385032;
+  --dpg-blue:#5f94dd;
+  --dpg-blue-dark:#4e84cf;
+  --dpg-paper:#f4f2eb;
+  --dpg-ink:#182016;
 }
 *{box-sizing:border-box}
 html,body,#root{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+body[data-app-variant="dpg"]{font-family:"Formulario 1312", Inter, system-ui, Arial, sans-serif;}
+body[data-app-variant="dpg"] h1,
+body[data-app-variant="dpg"] h2,
+body[data-app-variant="dpg"] h3,
+body[data-app-variant="dpg"] .bf-auth-shell h1,
+body[data-app-variant="dpg"] .dpg-display-font{font-family:"Fancy Shadow", Georgia, serif; letter-spacing:.01em;}
 a{text-decoration:none;color:inherit}
 button{background:var(--red);border:1px solid var(--red-2);color:#fff;padding:10px 14px;border-radius:10px;cursor:pointer}
 button:hover{filter:brightness(1.1)}
@@ -132,11 +158,11 @@ input[type="file"]{padding:6px}
 .bf-appHeader-right{
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
-.bf-appHeader-right{ margin-left: auto; }
+.bf-appHeader-right{ margin-left: auto; min-width:0; display:flex; align-items:center; gap:10px; }
 
 .bf-brand{
   display: inline-flex;
@@ -154,13 +180,14 @@ input[type="file"]{padding:6px}
   object-fit: contain;
 }
 
-.bf-nav-desktop{ display: block; }
+.bf-nav-desktop{ display:block; min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
 
 .bf-appnav{
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: nowrap;
+  min-width:max-content;
 }
 
 .bf-appnav-link-btn {
@@ -1504,6 +1531,7 @@ html, body {
   }
 }
 
+<<<<<<< Updated upstream
 /* DPG local cleanup patch */
 .bf-appHeader{
   flex-wrap: wrap;
@@ -1535,4 +1563,160 @@ html, body {
   .bf-appHeader-right{
     justify-content: flex-start;
   }
+=======
+
+/* ===============================
+   Variant-aware DPG admin reskin
+   =============================== */
+body[data-app-variant="dpg"]{
+  --bg:#eef1ec;
+  --panel:#f7f8f4;
+  --muted:#587086;
+  --text:#182018;
+  --border:rgba(56,80,50,.18);
+  --red:#385032;
+  --red-2:#5f94dd;
+}
+
+
+html[data-app-variant="dpg"] .helper,
+body[data-app-variant="dpg"] .helper{ color: var(--muted); }
+body[data-app-variant="dpg"] .bf-appHeader{
+  background: rgba(247,248,244,.96);
+  border-bottom-color: rgba(56,80,50,.14);
+}
+body[data-app-variant="dpg"] .bf-appHeader.is-dpg{
+  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+}
+body[data-app-variant="dpg"] .bf-brand{
+  color: #182018;
+}
+body[data-app-variant="dpg"] .bf-brand img{
+  filter: saturate(.6) brightness(.95);
+}
+body[data-app-variant="dpg"] .bf-brand-subtle{
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #587086;
+}
+body[data-app-variant="dpg"] .bf-appnav-link,
+body[data-app-variant="dpg"] .bf-logout,
+body[data-app-variant="dpg"] .bf-hamburger{
+  background: rgba(255,255,255,0.035);
+  border-color: rgba(217,196,170,.14);
+  color: #182018;
+}
+body[data-app-variant="dpg"] .bf-appnav-link.is-active{
+  background: rgba(95,148,221,.16);
+  border-color: rgba(95,148,221,.34);
+}
+body[data-app-variant="dpg"] .btn,
+body[data-app-variant="dpg"] a.btn{
+  background: rgba(95,148,221,.12);
+  border-color: rgba(56,80,50,.18);
+  color: #1f3550;
+}
+body[data-app-variant="dpg"] .btn:hover,
+body[data-app-variant="dpg"] a.btn:hover{
+  background: rgba(95,148,221,.18);
+}
+body[data-app-variant="dpg"] .btn-red,
+body[data-app-variant="dpg"] a.btn-red,
+body[data-app-variant="dpg"] button{
+  background: var(--red);
+  border-color: var(--red-2);
+  color: #ffffff;
+}
+body[data-app-variant="dpg"] .btn:disabled,
+body[data-app-variant="dpg"] .btn-red:disabled,
+body[data-app-variant="dpg"] button:disabled{
+  opacity: 1;
+  color: #4b657f;
+  background: rgba(95,148,221,.12);
+  border-color: rgba(95,148,221,.22);
+  cursor: not-allowed;
+}
+body[data-app-variant="dpg"] input,
+body[data-app-variant="dpg"] select,
+body[data-app-variant="dpg"] textarea{
+  background: #120f0e;
+  border-color: rgba(56,80,50,.18);
+  color: #f8faf8;
+}
+body[data-app-variant="dpg"] input::placeholder,
+body[data-app-variant="dpg"] textarea::placeholder{
+  color: rgba(248,250,248,.6);
+}
+body[data-app-variant="dpg"] .card,
+body[data-app-variant="dpg"] .kpi,
+body[data-app-variant="dpg"] .orgpill,
+body[data-app-variant="dpg"] .linkbtn,
+body[data-app-variant="dpg"] .tag{
+  background: #ffffff;
+  border-color: rgba(56,80,50,.12);
+}
+.bf-powered-by{
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(56,80,50,.10);
+  color: var(--muted);
+  font-size: 12px;
+}
+.bf-auth-page{
+  min-height: 100vh;
+  display: grid;
+  place-items: start center;
+  padding: 56px 16px 24px;
+}
+.bf-auth-shell{
+  width: min(560px, 100%);
+}
+.bf-auth-kicker{
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bf-auth-footer-note{
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+body[data-app-variant="dpg"] .bf-auth-page.is-dpg{
+  background:
+    radial-gradient(circle at top left, rgba(95,148,221,.14), transparent 38%),
+    radial-gradient(circle at top right, rgba(56,80,50,.10), transparent 28%),
+    linear-gradient(180deg, #eef1ec 0%, #e5ece3 100%);
+}
+body[data-app-variant="dpg"] .bf-auth-shell{
+  background: rgba(255,255,255,.84);
+  border: 1px solid rgba(56,80,50,.12);
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.25);
+}
+body[data-app-variant="dpg"] .bf-auth-shell h1{
+  color: #182018;
+  font-family: "Fancy Shadow", Georgia, serif;
+}
+
+body[data-app-variant="dpg"] .bf-drive-root,
+body[data-app-variant="dpg"] .bf-drive-root .helper{
+  color:#3e5871;
+}
+body[data-app-variant="dpg"] .bf-drive-root .card{
+  background:#fff;
+  border-color:rgba(56,80,50,.12);
+}
+body[data-app-variant="dpg"] .bf-drive-root textarea,
+body[data-app-variant="dpg"] .bf-drive-root input,
+body[data-app-variant="dpg"] .bf-drive-root select{
+  font-family:"Formulario 1312", serif;
+>>>>>>> Stashed changes
 }

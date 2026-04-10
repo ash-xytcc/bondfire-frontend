@@ -1,5 +1,6 @@
 import { json } from "../../_lib/http.js";
 import { requireOrgRole } from "../../_lib/auth.js";
+import { ensureLocalCompatSchema } from "../../_lib/localCompat.js";
 
 async function safeRun(env, sql, binds = []) {
   try {
@@ -131,7 +132,14 @@ export async function onRequestGet({ env, request, params }) {
   const a = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!a.ok) return a.resp;
 
+<<<<<<< Updated upstream
   await ensureDashboardLocalCompatibility(env);
+=======
+  await ensureLocalCompatSchema(env.BF_DB);
+
+  // The dashboard should never hard-crash because one table is missing
+  // (migrations happen, humans forget things, etc.).
+>>>>>>> Stashed changes
 
   const peopleCount = await safeFirst(
     env,

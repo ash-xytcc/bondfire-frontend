@@ -12,6 +12,7 @@ import DriveCreateModal from "../components/drive/DriveCreateModal.jsx";
 import SpreadsheetFileView from "../components/drive/SpreadsheetFileView.jsx";
 import FormFileView from "../components/drive/FormFileView.jsx";
 import { renderTemplate } from "../components/drive/templateEngine.js";
+import { isDpgVariant } from "../lib/appVariant.js";
 
 const LEGACY_STORAGE_KEY = "bf_drive_v14";
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
@@ -992,10 +993,16 @@ export default function Drive() {
     { id: "form", label: "Form", hint: "Build an intake form with a live preview.", icon: "☑", onClick: createForm },
   ];
 
+  const dpg = isDpgVariant();
   const driveGridStyle = isMobile ? { display: "block", height: "100%" } : { display: "grid", gridTemplateColumns: `${sidebarWidth}px 6px minmax(0,1fr)`, height: "100%" };
+  const shellBg = dpg ? "#f4f2eb" : "#0b0b0b";
+  const panelBg = dpg ? "#fff" : "rgba(10,10,12,0.98)";
+  const panelBorder = dpg ? "1px solid rgba(56,80,50,0.12)" : "1px solid rgba(255,255,255,0.08)";
+  const divider = dpg ? "rgba(56,80,50,0.12)" : "#1b1b1b";
+  const titleColor = dpg ? "#182018" : "#fff";
 
   return (
-    <div style={{ position: focusMode ? "fixed" : "relative", inset: focusMode ? 0 : "auto", zIndex: focusMode ? 80 : "auto", background: "#0b0b0b", height: workspaceHeight }}>
+    <div className={dpg ? "bf-drive-root is-dpg" : "bf-drive-root"} style={{ position: focusMode ? "fixed" : "relative", inset: focusMode ? 0 : "auto", zIndex: focusMode ? 80 : "auto", background: shellBg, height: workspaceHeight }}>
       <input ref={fileInputRef} type="file" multiple style={{ display: "none" }} onChange={onUploadFiles} />
       <input ref={folderInputRef} type="file" multiple style={{ display: "none" }} onChange={onUploadFolder} />
 
@@ -1009,8 +1016,8 @@ export default function Drive() {
               <div className="helper" style={{ marginLeft: "auto" }}>Mobile Drive</div>
             </div>
             {mobileSidebarOpen ? (
-              <div style={{ position: "fixed", inset: focusMode ? 0 : "56px 8px 8px", zIndex: 95, background: "rgba(10,10,12,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 48px rgba(0,0,0,0.45)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 10px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#101012" }}>
+              <div style={{ position: "fixed", inset: focusMode ? 0 : "56px 8px 8px", zIndex: 95, background: panelBg, border: panelBorder, borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 48px rgba(0,0,0,0.45)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 10px", borderBottom: panelBorder, background: dpg ? "#f6f4ed" : "#101012" }}>
                   <div style={{ fontWeight: 800 }}>Drive Explorer</div>
                   <button className="btn" type="button" onClick={() => setMobileSidebarOpen(false)} style={{ padding: "6px 10px" }}>Done</button>
                 </div>
@@ -1056,7 +1063,7 @@ export default function Drive() {
           </>
         ) : (
           <>
-            <div style={{ borderRight: "1px solid #1b1b1b", overflow: "hidden" }}>
+            <div style={{ borderRight: `1px solid ${divider}`, overflow: "hidden" }}>
               <DriveSidebar
                 folders={folders}
                 notes={notes}
@@ -1105,7 +1112,7 @@ export default function Drive() {
               />
             </div>
 
-            <div onMouseDown={() => beginResize("sidebar")} style={{ cursor: "col-resize", background: "rgba(255,255,255,0.03)" }} title="Drag to resize explorer" />
+            <div onMouseDown={() => beginResize("sidebar")} style={{ cursor: "col-resize", background: dpg ? "rgba(56,80,50,0.08)" : "rgba(255,255,255,0.03)" }} title="Drag to resize explorer" />
           </>
         )}
 
@@ -1126,7 +1133,7 @@ export default function Drive() {
           ) : showEditableDocument ? (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
-                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" style={{ flex: 1, minWidth: isMobile ? 120 : 220, fontSize: isMobile ? 18 : 20, fontWeight: 800, background: "transparent", border: "none", outline: "none", color: "#fff", padding: "2px 0" }} />
+                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" style={{ flex: 1, minWidth: isMobile ? 120 : 220, fontSize: isMobile ? 18 : 20, fontWeight: 800, background: "transparent", border: "none", outline: "none", color: titleColor, padding: "2px 0" }} />
                 <span className="helper">{status}</span>
                 {selectedFile && !fileIsEditable ? <span className="helper">read only</span> : null}
               </div>

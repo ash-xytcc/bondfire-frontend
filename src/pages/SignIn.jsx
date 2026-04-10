@@ -1,7 +1,7 @@
 // src/pages/SignIn.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getBranding } from "../lib/appVariant.js";
+import { applyAppVariantToDocument, getAppBrand, isDpgVariant } from "../lib/appVariant.js";
 
 function fireAuthChanged() {
 	try {
@@ -19,23 +19,24 @@ function startDemo(navigate) {
 
 export default function SignIn() {
 	const navigate = useNavigate();
-	const brand = getBranding();
+  const dpg = isDpgVariant();
+  const brand = getAppBrand();
 
 	const [mode, setMode] = useState("login");
-
 	const [email, setEmail] = useState("");
 	const [pass, setPass] = useState("");
 	const [inviteCode, setInviteCode] = useState("");
-
 	const [mfaStep, setMfaStep] = useState(null);
 	const [mfaCode, setMfaCode] = useState("");
 	const [mfaRecovery, setMfaRecovery] = useState("");
-
 	const [name, setName] = useState("");
-	const [orgName, setOrgName] = useState("Bondfire");
-
+	const [orgName, setOrgName] = useState(dpg ? "Dual Power West" : "Bondfire");
 	const [err, setErr] = useState("");
 	const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    applyAppVariantToDocument();
+  }, []);
 
 	async function postJson(url, body) {
 		const res = await fetch(url, {
@@ -61,7 +62,6 @@ export default function SignIn() {
 
 			const { res, data } = await postJson(url, payload);
 
-			// MFA challenge flow
 			if (
 				mode === "login" &&
 				res.ok &&
@@ -78,14 +78,12 @@ export default function SignIn() {
 				throw new Error(data?.error || (mode === "register" ? "Register failed" : "Login failed"));
 			}
 
-			// At this point cookies should be set. Verify session.
 			const meRes = await fetch("/api/auth/me", { credentials: "include" });
 			const meData = await safeJson(meRes);
 			if (!meRes.ok || !meData?.ok) {
 				throw new Error("SESSION_NOT_ESTABLISHED");
 			}
 
-			// Register convenience: if register returned org id, jump in.
 			if (mode === "register" && data?.org?.id) {
 				try {
 					localStorage.setItem("bf_orgs", JSON.stringify([data.org]));
@@ -95,7 +93,6 @@ export default function SignIn() {
 				return;
 			}
 
-			// Optional invite join (login mode)
 			const trimmedCode = String(inviteCode || "").trim().toUpperCase();
 			if (trimmedCode) {
 				const { res: jRes, data: jData } = await postJson("/api/invites/redeem", { code: trimmedCode });
@@ -109,7 +106,6 @@ export default function SignIn() {
 				}
 			}
 
-			// Cache org list for UX (non critical)
 			try {
 				const orgsRes = await fetch("/api/orgs", { credentials: "include" });
 				const orgsData = await safeJson(orgsRes);
@@ -141,14 +137,12 @@ export default function SignIn() {
 				throw new Error(data?.error || "MFA failed");
 			}
 
-			// Verify session cookies actually landed
 			const meRes = await fetch("/api/auth/me", { credentials: "include" });
 			const meData = await safeJson(meRes);
 			if (!meRes.ok || !meData?.ok) {
 				throw new Error("SESSION_NOT_ESTABLISHED");
 			}
 
-			// Cache org list for UX
 			try {
 				const orgsRes = await fetch("/api/orgs", { credentials: "include" });
 				const orgsData = await safeJson(orgsRes);
@@ -170,13 +164,21 @@ export default function SignIn() {
 	}
 
 	return (
-		<div style={{ maxWidth: 520, margin: "8vh auto", padding: 16 }}>
-			<h1 style={{ marginBottom: 6 }}>Welcome to {brand.appName}</h1>
+		<div className={`bf-auth-page${dpg ? " is-dpg" : ""}`}>
+      <div className="bf-auth-shell">
+        <div className="bf-auth-kicker">{dpg ? "Dual Power West organizer space" : "Bondfire"}</div>
+			<h1 style={{ marginBottom: 6 }}>{dpg ? "Welcome to Dual Power West" : "Welcome to Bondfire"}</h1>
 			<p className="helper" style={{ marginTop: 0 }}>
-				{mode === "login" ? "Sign in to continue." : `Create your account and your first ${brand.key === "dpg" ? "workspace" : "org"}.`}
+				{mode === "login"
+            ? dpg
+              ? "Sign in to the organizer workspace."
+              : "Sign in to continue."
+            : dpg
+              ? "Create an account for the shared organizer workspace."
+              : "Create your account and your first org."}
 			</p>
 
-			<div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+			<div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
 				<button
 					type="button"
 					className={mode === "login" ? "btn-red" : "btn"}
@@ -208,7 +210,7 @@ export default function SignIn() {
 			</div>
 
 			{err && (
-				<div className="helper" style={{ color: "crimson", marginTop: 12 }}>
+				<div className="helper" style={{ color: "#ff8e7f", marginTop: 12 }}>
 					{String(err)}
 				</div>
 			)}
@@ -219,36 +221,11 @@ export default function SignIn() {
 						MFA required for <b>{mfaStep.email}</b>. Enter your authenticator code or a recovery code.
 					</div>
 
-					<input
-						className="input"
-						type="text"
-						placeholder="Authenticator code (6 digits)"
-						value={mfaCode}
-						onChange={(e) => setMfaCode(e.target.value)}
-						autoFocus
-					/>
+					<input className="input" type="text" placeholder="Authenticator code (6 digits)" value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} autoFocus />
+					<input className="input" type="text" placeholder="Recovery code (optional)" value={mfaRecovery} onChange={(e) => setMfaRecovery(e.target.value)} />
 
-					<input
-						className="input"
-						type="text"
-						placeholder="Recovery code (optional)"
-						value={mfaRecovery}
-						onChange={(e) => setMfaRecovery(e.target.value)}
-					/>
-
-					<button className="btn-red" disabled={busy}>
-						{busy ? "Verifying…" : "Verify"}
-					</button>
-					<button
-						type="button"
-						className="btn"
-						disabled={busy}
-						onClick={() => {
-							setMfaStep(null);
-							setMfaCode("");
-							setMfaRecovery("");
-						}}
-					>
+					<button className="btn-red" disabled={busy}>{busy ? "Verifying…" : "Verify"}</button>
+					<button type="button" className="btn" disabled={busy} onClick={() => { setMfaStep(null); setMfaCode(""); setMfaRecovery(""); }}>
 						Back
 					</button>
 				</form>
@@ -256,47 +233,16 @@ export default function SignIn() {
 				<form onSubmit={handleSubmit} className="grid" style={{ gap: 10, marginTop: 12 }}>
 					{mode === "register" && (
 						<>
-							<input
-								className="input"
-								type="text"
-								placeholder="Name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-							/>
-							<input
-								className="input"
-								type="text"
-								placeholder="Org name"
-								value={orgName}
-								onChange={(e) => setOrgName(e.target.value)}
-							/>
+							<input className="input" type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+							{!dpg ? <input className="input" type="text" placeholder="Org name" value={orgName} onChange={(e) => setOrgName(e.target.value)} /> : null}
 						</>
 					)}
 
-					<input
-						className="input"
-						type="email"
-						placeholder="Email"
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						autoFocus
-					/>
-					<input
-						className="input"
-						type="password"
-						placeholder="Password"
-						value={pass}
-						onChange={(e) => setPass(e.target.value)}
-					/>
+					<input className="input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
+					<input className="input" type="password" placeholder="Password" value={pass} onChange={(e) => setPass(e.target.value)} />
 
 					{mode === "login" && (
-						<input
-							className="input"
-							type="text"
-							placeholder="Invite code (optional)"
-							value={inviteCode}
-							onChange={(e) => setInviteCode(e.target.value)}
-						/>
+						<input className="input" type="text" placeholder={dpg ? "Invite code if you have one" : "Invite code (optional)"} value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
 					)}
 
 					<button className="btn-red" disabled={busy}>
@@ -304,6 +250,12 @@ export default function SignIn() {
 					</button>
 				</form>
 			)}
+
+        <div className="bf-auth-footer-note">
+          {dpg ? "Shared organizer access, encrypted work, and private ops live here." : ""}
+          {brand.footerLabel ? <span>{brand.footerLabel}</span> : null}
+        </div>
+      </div>
 		</div>
 	);
 }

@@ -125,6 +125,21 @@ function RequireAuth({ children }) {
 }
 
 /* ---------------------------------- Shell ---------------------------------- */
+function getDpgDefaultOrgPath() {
+	try {
+		const orgs = JSON.parse(localStorage.getItem("bf_orgs") || "[]");
+		const first = Array.isArray(orgs) ? orgs.find((o) => o?.id) : null;
+		return first?.id ? `/org/${encodeURIComponent(first.id)}/overview` : null;
+	} catch {
+		return null;
+	}
+}
+
+function DpgOrgsRedirect() {
+	const target = getDpgDefaultOrgPath();
+	return target ? <Navigate to={target} replace /> : <OrgDash />;
+}
+
 function Shell() {
 	const loc = useLocation();
 	const path = loc.pathname || "/";
@@ -237,7 +252,7 @@ function Shell() {
 					path="/orgs"
 					element={
 						<RequireAuth>
-							<OrgDash />
+							{isDpgVariant() ? <DpgOrgsRedirect /> : <OrgDash />}
 						</RequireAuth>
 					}
 				/>
@@ -264,7 +279,7 @@ function Shell() {
 					<Route index element={<Overview />} />
 					<Route path="overview" element={<Overview />} />
 					<Route path="attendees" element={<Attendees />} />
-					<Route path="people" element={<People />} />
+					<Route path="people" element={isDpgVariant() ? <Navigate to="../overview" replace /> : <People />} />
 					<Route path="inventory" element={<Inventory />} />
 					<Route path="needs" element={<Needs />} />
 					<Route path="meetings" element={<Meetings />} />
@@ -274,7 +289,7 @@ function Shell() {
 					<Route path="studio" element={<Studio />} />
 					<Route path="sessions" element={<Sessions />} />
 					<Route path="public" element={<OrgPublicPreview />} />
-					<Route path="chat" element={<BondfireChat />} />
+					<Route path="chat" element={isDpgVariant() ? <Navigate to="../overview" replace /> : <BondfireChat />} />
 					<Route path="guard/*" element={<OrgSecretGuard />} />
 				</Route>
 

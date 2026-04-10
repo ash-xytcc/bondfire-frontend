@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --port 5174",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:full": "npm run build && npx wrangler pages dev dist --persist-to .wrangler/state",
+    "db:seed:local": "npx wrangler d1 execute bondfire-local --local --persist-to .wrangler/state --file=./db/schema.sql && npx wrangler d1 execute bondfire-local --local --persist-to .wrangler/state --file=./db/migrations/2026-01-01_local_bootstrap_missing_tables.sql && npx wrangler d1 execute bondfire-local --local --persist-to .wrangler/state --file=./db/migrations/2026-01-02_local_bootstrap_users_columns.sql && npx wrangler d1 execute bondfire-local --local --persist-to .wrangler/state --file=./db/migrations/2026-02-22_zk_everything.sql && npx wrangler d1 execute bondfire-local --local --persist-to .wrangler/state --file=./db/migrations/2026-03-25_studio_zk.sql"
   },
   "dependencies": {
     "lucide-react": "^0.577.0",

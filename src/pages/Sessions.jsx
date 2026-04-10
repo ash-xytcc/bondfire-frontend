@@ -1,6 +1,19 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
+function getOrgDisplayName(orgId) {
+  if (!orgId) return "current workspace";
+  try {
+    const settings = JSON.parse(localStorage.getItem(`bf_org_settings_${orgId}`) || "{}");
+    const orgs = JSON.parse(localStorage.getItem("bf_orgs") || "[]");
+    const match = Array.isArray(orgs) ? orgs.find((o) => o?.id === orgId) : null;
+    return String(settings?.name || match?.name || orgId);
+  } catch {
+    return String(orgId);
+  }
+}
+
+
 const stickyBase = {
   borderRadius: 12,
   padding: 14,
@@ -39,7 +52,7 @@ export default function Sessions() {
       </div>
 
       <div className="card" style={{ padding: 16 }}>
-        <strong>Current org:</strong> {orgId || 'unknown'}
+        <strong>Current org:</strong> {getOrgDisplayName(orgId)}
       </div>
     </div>
   );

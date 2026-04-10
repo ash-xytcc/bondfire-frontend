@@ -7,6 +7,9 @@ import {
 	Navigate,
 	useLocation,
 } from "react-router-dom";
+import { getAppMode, isRedHarborMode } from "./lib/appMode";
+import RedHarborLanding from "./pages/redharbor/RedHarborLanding.jsx";
+import CommsPage from "./pages/CommsPage.jsx";
 
 // PAGES
 import OrgPublicPreview from "./pages/OrgPublicPreview.jsx";

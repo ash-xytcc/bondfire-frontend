@@ -8,50 +8,44 @@ function scrollToId(id) {
 
 export default function RedHarborHero() {
   return (
-    <section className="rh-hero">
-      <div className="rh-kicker">grays harbor branch</div>
+    <section className="rh-landing-hero">
+      <div className="rh-landing-kicker">Grays Harbor Branch</div>
+      <h1 className="rh-landing-title">
+        Red
+        <br />
+        Harbor
+      </h1>
+      <p className="rh-landing-lead">
+        A public front door for the branch and a private workspace behind it. Local, grounded,
+        and built for real organizing instead of startup theater.
+      </p>
 
-      <div className="rh-hero-grid">
-        <div>
-          <h1 className="rh-title">
-            red
-            <br />
-            harbor
-          </h1>
-          <p className="rh-lead">
-            A local front door for workers, organizers, and branch members on the harbor. Public
-            information lives here. Internal records, meetings, and operations stay behind sign in.
-          </p>
-        </div>
-
-        <aside className="rh-hero-aside">
-          <div className="rh-aside-label">muted maritime institutional</div>
-          <p className="rh-aside-copy">
-            Built to feel local, steady, and real. Less app. Less slogan. More like a harbor office
-            that has quietly been here long enough to matter.
-          </p>
-
-          <div className="rh-button-row">
-            <a className="rh-btn rh-btn-primary" href="/?app=red-harbor#/signin">
-              Member Sign In
-            </a>
-            <button className="rh-btn" type="button" onClick={() => scrollToId("get-involved")}>
-              Get Involved
-            </button>
-            <button className="rh-btn" type="button" onClick={() => scrollToId("resources")}>
-              Resources
-            </button>
-          </div>
-        </aside>
+      <div className="rh-auth-toolbar">
+        <a className="rh-btn rh-btn-primary" href="/?app=red-harbor#/signin">
+          Member Sign In
+        </a>
+        <button className="rh-btn" type="button" onClick={() => scrollToId("get-involved")}>
+          Get Involved
+        </button>
+        <button className="rh-btn" type="button" onClick={() => scrollToId("resources")}>
+          Resources
+        </button>
       </div>
 
-      <div className="rh-rule" />
-
-      <div className="rh-bands">
-        <div className="rh-band">workplace support</div>
-        <div className="rh-band">branch meetings</div>
-        <div className="rh-band">organizing tools</div>
-        <div className="rh-band">local structure</div>
+      <div className="rh-landing-grid">
+        <div className="rh-land-panel">
+          <h3>Local structure</h3>
+          <p>
+            Meetings, follow up, branch coordination, and the slow unglamorous work that lets people
+            actually rely on a union.
+          </p>
+        </div>
+        <div className="rh-land-panel">
+          <h3>Private operations</h3>
+          <p>
+            Sensitive records and working materials stay inside the internal system where they belong.
+          </p>
+        </div>
       </div>
     </section>
   );

@@ -18,6 +18,16 @@ async function getOrgCryptoKeyVersion(db, orgId) {
   }
 }
 
+async function ensureMeetingsPublicColumn(db) {
+  try {
+    await db
+      .prepare("ALTER TABLE meetings ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0")
+      .run();
+  } catch {
+    // ignore (already exists)
+  }
+}
+
 async function ensureMeetingsCompat(db) {
   await safeRun(db, `CREATE TABLE IF NOT EXISTS meetings (
     id TEXT PRIMARY KEY,

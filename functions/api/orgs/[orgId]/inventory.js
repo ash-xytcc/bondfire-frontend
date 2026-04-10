@@ -18,6 +18,18 @@ async function getOrgCryptoKeyVersion(db, orgId) {
   }
 }
 
+async function ensureInventoryParsTable(db) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS inventory_pars (
+      org_id TEXT NOT NULL,
+      item_id TEXT NOT NULL,
+      par INTEGER NOT NULL DEFAULT 0,
+      updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      PRIMARY KEY (org_id, item_id)
+    )
+  `).run()
+}
+
 async function ensureInventoryCompat(db) {
   await safeRun(db, `CREATE TABLE IF NOT EXISTS inventory (
     id TEXT PRIMARY KEY,

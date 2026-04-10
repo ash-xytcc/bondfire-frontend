@@ -3,6 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { isDemoMode } from "../demo/demoMode.js";
 import { ensureDemoOrgList, resetDemoState } from "../demo/demoStore.js";
+import { STARTER_PACKS, applyOrgPack } from "../lib/orgPacks.js";
 
 /* ---------- API helper ---------- */
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
@@ -108,6 +109,7 @@ export default function OrgDash() {
   const [msg, setMsg] = React.useState("");
 
   const [newOrgName, setNewOrgName] = React.useState("");
+  const [starterPack, setStarterPack] = React.useState("union-branch");
   const [inviteCode, setInviteCode] = React.useState("");
   const deleteOrg = async (org) => {
     const id = org?.id;
@@ -162,17 +164,17 @@ export default function OrgDash() {
       }
       const r = await authFetch("/api/orgs/create", { method: "POST", body: { name } });
       setNewOrgName("");
-      // Update list immediately. Do NOT auto-enter the org.
       if (r?.org?.id) {
+        await applyOrgPack(r.org, starterPack);
         setOrgs((prev) => {
           const exists = prev.some((o) => o?.id === r.org.id);
           return exists ? prev : [r.org, ...prev];
         });
-        setMsg(`Created "${r.org.name || r.org.id}".`);
+        const chosen = STARTER_PACKS.find((p) => p.id === starterPack);
+        setMsg(`Created "${r.org.name || r.org.id}" with ${chosen?.label || "starter pack"}.`);
       } else {
         setMsg("Created.");
       }
-      // Refresh from server as a follow-up (if auth is healthy, it will confirm membership).
       await load();
     } catch (e2) {
       setMsg(e2.message || "Failed to create org");
@@ -236,8 +238,25 @@ export default function OrgDash() {
                 className="input"
                 value={newOrgName}
                 onChange={(e) => setNewOrgName(e.target.value)}
-                placeholder="e.g. Bondfire Team"
+                placeholder="e.g. IWW Red Harbor"
               />
+            </label>
+            <label className="grid" style={{ gap: 6 }}>
+              <span className="helper">Starter pack</span>
+              <select
+                className="input"
+                value={starterPack}
+                onChange={(e) => setStarterPack(e.target.value)}
+              >
+                {STARTER_PACKS.map((pack) => (
+                  <option key={pack.id} value={pack.id}>
+                    {pack.label}
+                  </option>
+                ))}
+              </select>
+              <span className="helper">
+                {(STARTER_PACKS.find((p) => p.id === starterPack) || {}).description || ""}
+              </span>
             </label>
             <button className="btn-red" disabled={busy || !newOrgName.trim()}>
               Create

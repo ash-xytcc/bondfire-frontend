@@ -1,6 +1,7 @@
 // src/components/AppHeader.jsx
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { getOrgModules } from "../lib/orgPacks.js";
 
 const homeHref = "/orgs";
 
@@ -148,18 +149,23 @@ function OrgNav({ variant = "desktop" }) {
     : undefined;
 
   const base = orgId ? `/org/${orgId}` : null;
+  const enabled = orgId ? getOrgModules(orgId) : [];
+  const defs = [
+    ["overview", "Dashboard", `${base}/overview`, "nav-overview"],
+    ["people", "People", `${base}/people`, "nav-people"],
+    ["inventory", "Inventory", `${base}/inventory`, "nav-inventory"],
+    ["needs", "Needs", `${base}/needs`, "nav-needs"],
+    ["meetings", "Meetings", `${base}/meetings`, "nav-meetings"],
+    ["drive", "Drive", `${base}/drive`, "nav-drive"],
+    ["studio", "Studio", `${base}/studio`, "nav-studio"],
+    ["settings", "Settings", `${base}/settings`, "nav-settings"],
+    ["chat", "Chat", `${base}/chat`, "nav-chat"],
+    ["public", "Public Page", `${base}/public`, "nav-public"],
+  ];
   const items = base
-    ? [
-        ["Dashboard", `${base}/overview`, "nav-overview"],
-        ["People", `${base}/people`, "nav-people"],
-        ["Inventory", `${base}/inventory`, "nav-inventory"],
-        ["Needs", `${base}/needs`, "nav-needs"],
-        ["Meetings", `${base}/meetings`, "nav-meetings"],
-        ["Drive", `${base}/drive`, "nav-drive"],
-        ["Studio", `${base}/studio`, "nav-studio"],
-        ["Settings", `${base}/settings`, "nav-settings"],
-        ["Chat", `${base}/chat`, "nav-chat"],
-      ]
+    ? defs
+        .filter(([key]) => enabled.includes(key))
+        .map(([, label, to, tourId]) => [label, to, tourId])
     : [];
 
   return (

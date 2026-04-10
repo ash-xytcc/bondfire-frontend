@@ -251,7 +251,7 @@ body.rh-body {
   background:
     linear-gradient(180deg, rgba(255,255,255,0.06), transparent 18%),
     linear-gradient(180deg, rgba(24,40,48,0.58), rgba(24,40,48,0.70)),
-    url('/src/assets/redharbor/steamboat.jpg') center/cover no-repeat;
+    url('../assets/redharbor/steamboat.jpg') center/cover no-repeat;
   box-shadow: 0 14px 30px rgba(0,0,0,0.22);
   filter: saturate(0.55) contrast(0.95);
 }

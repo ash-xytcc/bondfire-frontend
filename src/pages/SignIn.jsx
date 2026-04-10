@@ -312,25 +312,50 @@ export default function SignIn() {
 		<div className="rh-signin-wrap">
 			<div className="rh-signin-shell">
 				<div className="rh-signin-left">
-					<div className="rh-kicker">iww red harbor</div>
-					<h1 className="rh-signin-title">members access</h1>
+					<div className="rh-signin-mark">red harbor members access</div>
+					<div className="rh-signin-band">private branch workspace</div>
+
+					<h1 className="rh-signin-title">
+						Enter
+						<br />
+						the
+						<br />
+						backend
+					</h1>
+
 					<p className="rh-signin-copy">
-						Sign in to access internal meetings, records, documents, organizing tools, and branch operations.
-						Public information belongs on the front door. Sensitive work belongs behind it.
+						This is the internal side of Red Harbor. Meetings, records, documents, roles,
+						and private branch operations live here. Public information belongs on the front
+						door. Working information belongs behind it.
 					</p>
 
 					<div className="rh-rule" />
 
-					<ul className="rh-signin-list">
-						<li>internal branch coordination</li>
-						<li>documents, meeting notes, and records</li>
-						<li>people, roles, and permissions</li>
-						<li>private operations, not public marketing copy</li>
-					</ul>
+					<div className="rh-signin-grid">
+						<div className="rh-signin-card">
+							<h3>Internal Coordination</h3>
+							<p>Branch operations, follow up, internal structure, and shared working context.</p>
+						</div>
+
+						<div className="rh-signin-card">
+							<h3>Records and Notes</h3>
+							<p>Meeting notes, documents, branch memory, and materials that should not be public.</p>
+						</div>
+
+						<div className="rh-signin-card">
+							<h3>People and Roles</h3>
+							<p>Members, responsibilities, permissions, and the unglamorous skeleton that keeps work moving.</p>
+						</div>
+
+						<div className="rh-signin-card">
+							<h3>Private Operations</h3>
+							<p>Not a public brochure, not a generic dashboard, and not something bosses need to browse.</p>
+						</div>
+					</div>
 
 					<p className="rh-signin-note">
-						If you are here to see what the branch is about, go back to the public front page. If you are here
-						to work, this is the door.
+						If you just want to understand the branch, go back to the public front page. If
+						you are here to work, this is the door.
 					</p>
 
 					<div className="rh-button-row">
@@ -341,13 +366,15 @@ export default function SignIn() {
 				</div>
 
 				<div className="rh-signin-right">
-					<div className="rh-auth-card">
+					<div className="rh-auth-wrap">
 						<div className="rh-auth-head">
-							<h1>{mode === "register" ? "Create Access" : "Sign In"}</h1>
+							<h1>{mfaStep ? "Verify Access" : mode === "register" ? "Create Access" : "Sign In"}</h1>
 							<p>
-								{mode === "login"
-									? "Use your account to enter the Red Harbor backend."
-									: "Create your account and your first Red Harbor workspace."}
+								{mfaStep
+									? "Complete multi factor verification to enter the Red Harbor backend."
+									: mode === "register"
+										? "Create your account and your first Red Harbor workspace."
+										: "Use your account to enter the Red Harbor backend."}
 							</p>
 						</div>
 
@@ -359,7 +386,7 @@ export default function SignIn() {
 									setErr("");
 									setMode("login");
 								}}
-								disabled={busy}
+								disabled={busy || !!mfaStep}
 							>
 								Sign In
 							</button>
@@ -370,14 +397,16 @@ export default function SignIn() {
 									setErr("");
 									setMode("register");
 								}}
-								disabled={busy}
+								disabled={busy || !!mfaStep}
 							>
 								Create Account
 							</button>
-						</div>
-
-						<div className="rh-auth-actions">
-							<button type="button" className="rh-btn" onClick={() => startDemo(navigate)} disabled={busy}>
+							<button
+								type="button"
+								className="rh-btn"
+								onClick={() => startDemo(navigate)}
+								disabled={busy}
+							>
 								Try Demo
 							</button>
 						</div>
@@ -385,15 +414,11 @@ export default function SignIn() {
 						{err ? <div className="rh-error">{String(err)}</div> : null}
 
 						{mfaStep ? (
-							<form onSubmit={handleMfaVerify} className="rh-auth-card">
-								<div className="rh-signin-copy">
-									MFA required for <b>{mfaStep.email}</b>. Enter your authenticator code or a recovery code.
-								</div>
-
+							<form onSubmit={handleMfaVerify} className="rh-auth-form">
 								<input
 									className="rh-input"
 									type="text"
-									placeholder="Authenticator code (6 digits)"
+									placeholder="Authenticator code"
 									value={mfaCode}
 									onChange={(e) => setMfaCode(e.target.value)}
 									autoFocus
@@ -402,14 +427,14 @@ export default function SignIn() {
 								<input
 									className="rh-input"
 									type="text"
-									placeholder="Recovery code (optional)"
+									placeholder="Recovery code optional"
 									value={mfaRecovery}
 									onChange={(e) => setMfaRecovery(e.target.value)}
 								/>
 
 								<div className="rh-auth-actions">
 									<button className="rh-btn rh-btn-primary" disabled={busy}>
-										{busy ? "Verifying…" : "Verify"}
+										{busy ? "Verifying…" : "Verify Access"}
 									</button>
 									<button
 										type="button"
@@ -426,8 +451,8 @@ export default function SignIn() {
 								</div>
 							</form>
 						) : (
-							<form onSubmit={handleSubmit} className="rh-auth-card">
-								{mode === "register" && (
+							<form onSubmit={handleSubmit} className="rh-auth-form">
+								{mode === "register" ? (
 									<>
 										<input
 											className="rh-input"
@@ -444,7 +469,7 @@ export default function SignIn() {
 											onChange={(e) => setOrgName(e.target.value)}
 										/>
 									</>
-								)}
+								) : null}
 
 								<input
 									className="rh-input"
@@ -467,7 +492,7 @@ export default function SignIn() {
 									<input
 										className="rh-input"
 										type="text"
-										placeholder="Invite code (optional)"
+										placeholder="Invite code optional"
 										value={inviteCode}
 										onChange={(e) => setInviteCode(e.target.value)}
 									/>
@@ -478,6 +503,10 @@ export default function SignIn() {
 								</button>
 							</form>
 						)}
+
+						<div className="rh-auth-footer">
+							Public side for outreach. Private side for branch work. Two doors, on purpose.
+						</div>
 					</div>
 				</div>
 			</div>

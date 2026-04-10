@@ -197,7 +197,7 @@ function OrgNav({ variant = "desktop" }) {
                 }
               : undefined
           }
-          className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
+          className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`} style={{ padding: "6px 10px", fontSize: 13, whiteSpace: "nowrap" }}
           title="All workspaces"
         >
           All Orgs
@@ -217,7 +217,7 @@ function OrgNav({ variant = "desktop" }) {
                 }
               : undefined
           }
-          className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
+          className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`} style={{ padding: "6px 10px", fontSize: 13, whiteSpace: "nowrap" }}
           data-tour={tourId}
         >
           {label}

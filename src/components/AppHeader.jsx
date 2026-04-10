@@ -153,18 +153,30 @@ function OrgNav({ variant = "desktop" }) {
   const isRedHarbor = appMode === "red-harbor";
   const base = orgId ? `/org/${orgId}` : null;
   const enabled = orgId ? getOrgModules(orgId) : [];
-  const defs = [
-    ["overview", "Dashboard", `${base}/overview`, "nav-overview"],
-    ["people", "People", `${base}/people`, "nav-people"],
-    ["inventory", "Inventory", `${base}/inventory`, "nav-inventory"],
-    ["needs", "Needs", `${base}/needs`, "nav-needs"],
-    ["meetings", "Meetings", `${base}/meetings`, "nav-meetings"],
-    ["drive", "Drive", `${base}/drive`, "nav-drive"],
-    ["studio", "Studio", `${base}/studio`, "nav-studio"],
-    ["settings", "Settings", `${base}/settings`, "nav-settings"],
-    ["chat", "Chat", `${base}/chat`, "nav-chat"],
-    ["public", "Public Page", `${base}/public`, "nav-public"],
-  ];
+  const defs = isRedHarbor
+    ? [
+        ["overview", "Branch Overview", `${base}/overview`, "nav-overview"],
+        ["people", "Members", `${base}/people`, "nav-people"],
+        ["inventory", "Supplies", `${base}/inventory`, "nav-inventory"],
+        ["needs", "Requests", `${base}/needs`, "nav-needs"],
+        ["meetings", "Meetings", `${base}/meetings`, "nav-meetings"],
+        ["drive", "Documents", `${base}/drive`, "nav-drive"],
+        ["studio", "Studio", `${base}/studio`, "nav-studio"],
+        ["settings", "Branch Settings", `${base}/settings`, "nav-settings"],
+        ["chat", "Comms", `${base}/chat`, "nav-chat"],
+      ]
+    : [
+        ["overview", "Dashboard", `${base}/overview`, "nav-overview"],
+        ["people", "People", `${base}/people`, "nav-people"],
+        ["inventory", "Inventory", `${base}/inventory`, "nav-inventory"],
+        ["needs", "Needs", `${base}/needs`, "nav-needs"],
+        ["meetings", "Meetings", `${base}/meetings`, "nav-meetings"],
+        ["drive", "Drive", `${base}/drive`, "nav-drive"],
+        ["studio", "Studio", `${base}/studio`, "nav-studio"],
+        ["settings", "Settings", `${base}/settings`, "nav-settings"],
+        ["chat", "Chat", `${base}/chat`, "nav-chat"],
+        ["public", "Public Page", `${base}/public`, "nav-public"],
+      ];
   const brandLabel = isRedHarbor ? "IWW Red Harbor" : "Bondfire";
 
   const items = base
@@ -192,9 +204,9 @@ function OrgNav({ variant = "desktop" }) {
             : undefined
         }
         className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
-        title="All orgs"
+        title={isRedHarbor ? "All branches" : "All orgs"}
       >
-        All Orgs
+        {isRedHarbor ? "All Branches" : "All Orgs"}
       </NavLink>
 
       {items.map(([label, to, tourId]) => (

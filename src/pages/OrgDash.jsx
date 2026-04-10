@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { isDemoMode } from "../demo/demoMode.js";
 import { ensureDemoOrgList, resetDemoState } from "../demo/demoStore.js";
 import { STARTER_PACKS, applyOrgPack } from "../lib/orgPacks.js";
+import { getAppMode } from "../lib/appMode";
 
 /* ---------- API helper ---------- */
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
@@ -103,6 +104,34 @@ export default function OrgDash() {
   const nav = useNavigate();
   const demoMode = isDemoMode();
   const isMobile = useIsMobile(720);
+  const isRedHarbor = getAppMode() === "red-harbor";
+  const nouns = isRedHarbor
+    ? {
+        singular: "branch",
+        plural: "branches",
+        dashboard: "Branch Dashboard",
+        create: "Create a new branch",
+        createBtn: "Create Branch",
+        join: "Join with an invite code",
+        joinBtn: "Join Branch",
+        yours: "Your branches",
+        openBtn: "Enter Branch",
+        orgName: "Branch name",
+        choose: "Choose a branch to enter its workspace, or create or join one.",
+      }
+    : {
+        singular: "org",
+        plural: "orgs",
+        dashboard: "Org Dashboard",
+        create: "Create a new org",
+        createBtn: "Create",
+        join: "Join with an invite code",
+        joinBtn: "Join",
+        yours: "Your orgs",
+        openBtn: "Open",
+        orgName: "Organization name",
+        choose: "Choose an organization to enter its workspace, or create or join one.",
+      };
 
   const [orgs, setOrgs] = React.useState([]);
   const [busy, setBusy] = React.useState(false);
@@ -208,8 +237,8 @@ export default function OrgDash() {
 
   return (
     <div style={{ padding: 16 }}>
-      <h1 style={{ marginTop: 0 }}>Org Dashboard</h1>
-      <p className="helper">Choose an organization to enter its workspace, or create or join one.</p>
+      <h1 style={{ marginTop: 0 }}>{nouns.dashboard}</h1>
+      <p className="helper">{nouns.choose}</p>
 
       {demoMode ? (
         <div className="card" style={{ padding: 12, marginBottom: 16, background: "rgba(255,255,255,0.03)" }}>
@@ -230,15 +259,15 @@ export default function OrgDash() {
         }}
       >
         <div className="card" style={{ padding: 16 }}>
-          <h2 style={{ marginTop: 0 }}>Create a new org</h2>
+          <h2 style={{ marginTop: 0 }}>{nouns.create}</h2>
           <form onSubmit={createOrg} className="grid" style={{ gap: 10 }}>
             <label className="grid" style={{ gap: 6 }}>
-              <span className="helper">Organization name</span>
+              <span className="helper">{nouns.orgName}</span>
               <input
                 className="input"
                 value={newOrgName}
                 onChange={(e) => setNewOrgName(e.target.value)}
-                placeholder="e.g. IWW Red Harbor"
+                placeholder={isRedHarbor ? "e.g. IWW Red Harbor" : "e.g. My Organization"}
               />
             </label>
             <label className="grid" style={{ gap: 6 }}>
@@ -259,13 +288,13 @@ export default function OrgDash() {
               </span>
             </label>
             <button className="btn-red" disabled={busy || !newOrgName.trim()}>
-              Create
+              {nouns.createBtn}
             </button>
           </form>
         </div>
 
         <div className="card" style={{ padding: 16 }}>
-          <h2 style={{ marginTop: 0 }}>Join with an invite code</h2>
+          <h2 style={{ marginTop: 0 }}>{nouns.join}</h2>
           <form onSubmit={joinWithInvite} className="grid" style={{ gap: 10 }}>
             <label className="grid" style={{ gap: 6 }}>
               <span className="helper">Invite code</span>
@@ -279,7 +308,7 @@ export default function OrgDash() {
               />
             </label>
             <button className="btn-red" disabled={busy || !inviteCode.trim()}>
-              Join
+              {nouns.joinBtn}
             </button>
           </form>
         </div>
@@ -287,7 +316,7 @@ export default function OrgDash() {
 
       <div className="card" style={{ padding: 16, marginTop: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <h2 style={{ margin: 0, flex: 1, minWidth: 140 }}>Your orgs</h2>
+          <h2 style={{ margin: 0, flex: 1, minWidth: 140 }}>{nouns.yours}</h2>
           <button className="btn" style={{ whiteSpace: "nowrap" }} onClick={load} disabled={busy}>
             Refresh
           </button>
@@ -300,7 +329,9 @@ export default function OrgDash() {
         )}
 
         {orgs.length === 0 ? (
-          <div className="helper" style={{ marginTop: 12 }}>No orgs yet.</div>
+          <div className="helper" style={{ marginTop: 12 }}>
+            {isRedHarbor ? "No branches yet." : "No orgs yet."}
+          </div>
         ) : (
           <div style={{ marginTop: 12 }}>
             {orgs.map((o) => (
@@ -330,7 +361,7 @@ export default function OrgDash() {
                     onClick={() => nav(`/org/${encodeURIComponent(o.id)}`)}
                     disabled={busy}
                   >
-                    Open
+                    {nouns.openBtn}
                   </button>
 
                   <button

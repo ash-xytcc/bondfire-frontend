@@ -1,5 +1,4 @@
 import React from "react";
-import { getAppMode, isRedHarborMode } from "./lib/appMode";
 import {
 	HashRouter,
 	Routes,

@@ -303,7 +303,7 @@ export default function AppHeader({ onLogout, showLogout }) {
         </div>
 
         <div className="bf-appHeader-right">
-          <div className="bf-nav-desktop" style={{ display: "flex", flexWrap: "wrap", gap: 8, minWidth: 0 }}>
+          <div className="bf-nav-desktop" style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden", flexWrap: "nowrap" }} style={{ display: "flex", flexWrap: "wrap", gap: 8, minWidth: 0 }}>
             <OrgNav variant="desktop" />
           </div>
 

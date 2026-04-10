@@ -1531,39 +1531,6 @@ html, body {
   }
 }
 
-<<<<<<< Updated upstream
-/* DPG local cleanup patch */
-.bf-appHeader{
-  flex-wrap: wrap;
-  align-items: flex-start;
-}
-.bf-appHeader-left{
-  flex: 0 0 auto;
-}
-.bf-appHeader-right{
-  flex: 1 1 900px;
-  min-width: 0;
-  flex-wrap: wrap;
-  row-gap: 8px;
-  justify-content: flex-end;
-}
-.bf-nav-desktop{
-  flex: 1 1 760px;
-  min-width: 0;
-}
-.bf-appnav{
-  flex-wrap: wrap !important;
-  overflow: visible !important;
-  white-space: normal;
-}
-.bf-appnav-link{
-  flex: 0 0 auto;
-}
-@media (max-width: 1200px){
-  .bf-appHeader-right{
-    justify-content: flex-start;
-  }
-=======
 
 /* ===============================
    Variant-aware DPG admin reskin
@@ -1718,5 +1685,4 @@ body[data-app-variant="dpg"] .bf-drive-root textarea,
 body[data-app-variant="dpg"] .bf-drive-root input,
 body[data-app-variant="dpg"] .bf-drive-root select{
   font-family:"Formulario 1312", serif;
->>>>>>> Stashed changes
 }

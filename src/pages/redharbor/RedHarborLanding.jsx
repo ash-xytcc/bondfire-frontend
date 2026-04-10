@@ -27,38 +27,38 @@ export default function RedHarborLanding() {
       <Section
         id="what-we-do"
         label="what we do"
-        title="A local branch built for real organizing"
+        title="A local branch built for durable organizing"
       >
         <div className="rh-grid-2">
           <div className="rh-panel">
             <h3>Workplace Support</h3>
             <p>
-              Talk with workers about organizing on the job, mapping relationships, identifying
-              pressure points, and building collective power with some actual structure behind it.
+              Workers can connect with organizers about problems on the job, workplace dynamics, and
+              practical next steps toward acting together.
             </p>
           </div>
 
           <div className="rh-panel">
-            <h3>Meetings and Training</h3>
+            <h3>Meetings and Follow Up</h3>
             <p>
-              Hold branch meetings, follow up, and practical organizer development that moves people
-              from interest to participation instead of leaving them stranded at slogans.
+              The branch keeps a real meeting rhythm, internal notes, and ongoing coordination so
+              people are not left floating after first contact.
             </p>
           </div>
 
           <div className="rh-panel">
             <h3>Mutual Support</h3>
             <p>
-              Maintain a branch that can hold people through campaigns, emergencies, and the slow
-              ordinary work of trust, logistics, and showing up for one another.
+              A branch should be able to hold people through campaigns, emergencies, and the slower
+              work of trust, logistics, and shared responsibility.
             </p>
           </div>
 
           <div className="rh-panel">
-            <h3>Internal Coordination</h3>
+            <h3>Internal Operations</h3>
             <p>
-              Keep internal records, documents, meeting notes, and operations in the private backend
-              where they belong, instead of hanging them out for bosses and cops to browse.
+              Documents, records, and sensitive coordination stay in the private backend instead of
+              living out in public where they do not belong.
             </p>
           </div>
         </div>
@@ -67,30 +67,30 @@ export default function RedHarborLanding() {
       <Section
         id="get-involved"
         label="get involved"
-        title="Several ways in, none of them require pretending to be polished"
+        title="A few clear ways in"
       >
         <div className="rh-grid-3">
           <div className="rh-panel">
             <h3>Talk to an Organizer</h3>
             <p>
-              If something is happening at work and you need to talk strategy, support, or next
-              steps, start there.
+              Start here if something is happening at work and you need support, strategy, or a sane
+              conversation about next steps.
             </p>
           </div>
 
           <div className="rh-panel">
             <h3>Join the Branch</h3>
             <p>
-              If you want to plug into local meetings, committees, or organizing work, this is where
-              that path begins.
+              For workers who want to plug into local meetings, branch structure, and ongoing
+              organizing work.
             </p>
           </div>
 
           <div className="rh-panel">
-            <h3>Volunteer Skills or Time</h3>
+            <h3>Offer Time or Skills</h3>
             <p>
-              Printing, rides, research, outreach, food, logistics, design, tech. Branch work takes
-              many forms and most of them are not glamorous.
+              Design, outreach, logistics, rides, research, printing, food, tech. Durable branch
+              work takes all kinds.
             </p>
           </div>
         </div>
@@ -105,29 +105,29 @@ export default function RedHarborLanding() {
         </div>
       </Section>
 
-      <Section id="meetings" label="meetings" title="Public meeting rhythm">
+      <Section id="meetings" label="meetings" title="Meeting rhythm and branch cadence">
         <div className="rh-grid-2">
           <div className="rh-panel rh-meeting">
             <div className="rh-aside-label">next branch meeting</div>
             <div className="rh-meeting-time">Thursday 6:00 PM</div>
-            <div className="rh-meeting-meta">General Branch Meeting</div>
+            <div className="rh-meeting-meta">General branch meeting</div>
             <p>
-              Use this as a live-looking placeholder for now. Once you have a real cadence to show,
-              we can swap in actual branch meeting info and location details.
+              Placeholder for now, but enough to make the site feel alive and locally grounded
+              instead of like a brochure abandoned in a lobby.
             </p>
           </div>
 
           <div className="rh-panel">
             <h3>Membership and Dues</h3>
             <p>
-              This is where dues structure, joining information, and branch expectations will live.
-              For now it signals that the site has room for actual union logistics, not just a mood.
+              This area is reserved for dues structure, joining information, and practical member
+              expectations once you are ready to publish them.
             </p>
           </div>
         </div>
       </Section>
 
-      <Section id="resources" label="resources" title="Starting points for workers">
+      <Section id="resources" label="resources" title="Useful starting points">
         <div className="rh-grid-3">
           <a className="rh-resource-link" href="https://www.iww.org" target="_blank" rel="noreferrer">
             <strong>Industrial Workers of the World</strong>
@@ -141,16 +141,15 @@ export default function RedHarborLanding() {
 
           <a className="rh-resource-link" href="mailto:redharbor@iww.org">
             <strong>Contact Red Harbor</strong>
-            <span>Use a placeholder branch email for now and swap it once the real address is set.</span>
+            <span>Use a placeholder branch address for now and swap in the real one later.</span>
           </a>
         </div>
       </Section>
 
-      <Section id="contact" label="contact" title="The front door and the internal door">
+      <Section id="contact" label="contact" title="Public front door, private workroom">
         <p className="rh-footer-note">
-          This public side is the front door. The private Bondfire backend is where the branch handles
-          internal coordination, meetings, notes, documents, and sensitive operations. One public face,
-          one internal workspace, no fake public org-page detour.
+          This public side introduces the branch. The private backend is where meetings, records,
+          documents, and internal operations live. One face outward, one workspace inward.
         </p>
 
         <div className="rh-button-row" style={{ marginTop: 18 }}>

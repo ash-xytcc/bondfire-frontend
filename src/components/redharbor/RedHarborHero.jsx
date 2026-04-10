@@ -9,7 +9,7 @@ function scrollToId(id) {
 export default function RedHarborHero() {
   return (
     <section className="rh-hero">
-      <div className="rh-kicker">industrial workers of the world</div>
+      <div className="rh-kicker">grays harbor branch</div>
 
       <div className="rh-hero-grid">
         <div>
@@ -19,17 +19,16 @@ export default function RedHarborHero() {
             harbor
           </h1>
           <p className="rh-lead">
-            A local branch front door built for workers, organizers, and people looking for a real
-            structure to plug into. Public information lives here. Internal operations stay behind
-            sign in.
+            A local front door for workers, organizers, and branch members on the harbor. Public
+            information lives here. Internal records, meetings, and operations stay behind sign in.
           </p>
         </div>
 
         <aside className="rh-hero-aside">
-          <div className="rh-aside-label">grays harbor branch</div>
+          <div className="rh-aside-label">muted maritime institutional</div>
           <p className="rh-aside-copy">
-            Practical organizing. Branch coordination. Training. Mutual support. No generic SaaS
-            nonsense. Just a union site that looks like it belongs to people who mean it.
+            Built to feel local, steady, and real. Less app. Less slogan. More like a harbor office
+            that has quietly been here long enough to matter.
           </p>
 
           <div className="rh-button-row">
@@ -49,10 +48,10 @@ export default function RedHarborHero() {
       <div className="rh-rule" />
 
       <div className="rh-bands">
-        <div className="rh-band">workplace organizing</div>
+        <div className="rh-band">workplace support</div>
         <div className="rh-band">branch meetings</div>
-        <div className="rh-band">direct action</div>
-        <div className="rh-band">solidarity and support</div>
+        <div className="rh-band">organizing tools</div>
+        <div className="rh-band">local structure</div>
       </div>
     </section>
   );

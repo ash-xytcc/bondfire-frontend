@@ -88,7 +88,7 @@ const Brand = ({ orgId, logoSrc }) => {
     <div className="bf-brand-wrap">
       <Link className="bf-brand" to={homeHref}>
         <img src={imgSrc} alt="Bondfire logo" />
-        <span>{brandLabel}</span>
+        <span>{label}</span>
       </Link>
 
       {inferredOrgId ? (

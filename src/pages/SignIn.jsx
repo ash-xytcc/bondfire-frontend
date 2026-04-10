@@ -1,6 +1,8 @@
 // src/pages/SignIn.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { isRedHarborMode } from "../lib/appMode";
+import "../styles/redharbor.css";
 
 function fireAuthChanged() {
 	try {
@@ -18,6 +20,7 @@ function startDemo(navigate) {
 
 export default function SignIn() {
 	const navigate = useNavigate();
+	const redHarborMode = isRedHarborMode();
 
 	const [mode, setMode] = useState("login");
 
@@ -30,10 +33,15 @@ export default function SignIn() {
 	const [mfaRecovery, setMfaRecovery] = useState("");
 
 	const [name, setName] = useState("");
-	const [orgName, setOrgName] = useState("Bondfire");
+	const [orgName, setOrgName] = useState(redHarborMode ? "IWW Red Harbor" : "Bondfire");
 
 	const [err, setErr] = useState("");
 	const [busy, setBusy] = useState(false);
+
+	useEffect(() => {
+		if (redHarborMode) document.body.classList.add("rh-body");
+		return () => document.body.classList.remove("rh-body");
+	}, [redHarborMode]);
 
 	async function postJson(url, body) {
 		const res = await fetch(url, {
@@ -59,7 +67,6 @@ export default function SignIn() {
 
 			const { res, data } = await postJson(url, payload);
 
-			// MFA challenge flow
 			if (
 				mode === "login" &&
 				res.ok &&
@@ -76,14 +83,12 @@ export default function SignIn() {
 				throw new Error(data?.error || (mode === "register" ? "Register failed" : "Login failed"));
 			}
 
-			// At this point cookies should be set. Verify session.
 			const meRes = await fetch("/api/auth/me", { credentials: "include" });
 			const meData = await safeJson(meRes);
 			if (!meRes.ok || !meData?.ok) {
 				throw new Error("SESSION_NOT_ESTABLISHED");
 			}
 
-			// Register convenience: if register returned org id, jump in.
 			if (mode === "register" && data?.org?.id) {
 				try {
 					localStorage.setItem("bf_orgs", JSON.stringify([data.org]));
@@ -93,7 +98,6 @@ export default function SignIn() {
 				return;
 			}
 
-			// Optional invite join (login mode)
 			const trimmedCode = String(inviteCode || "").trim().toUpperCase();
 			if (trimmedCode) {
 				const { res: jRes, data: jData } = await postJson("/api/invites/redeem", { code: trimmedCode });
@@ -107,7 +111,6 @@ export default function SignIn() {
 				}
 			}
 
-			// Cache org list for UX (non critical)
 			try {
 				const orgsRes = await fetch("/api/orgs", { credentials: "include" });
 				const orgsData = await safeJson(orgsRes);
@@ -139,14 +142,12 @@ export default function SignIn() {
 				throw new Error(data?.error || "MFA failed");
 			}
 
-			// Verify session cookies actually landed
 			const meRes = await fetch("/api/auth/me", { credentials: "include" });
 			const meData = await safeJson(meRes);
 			if (!meRes.ok || !meData?.ok) {
 				throw new Error("SESSION_NOT_ESTABLISHED");
 			}
 
-			// Cache org list for UX
 			try {
 				const orgsRes = await fetch("/api/orgs", { credentials: "include" });
 				const orgsData = await safeJson(orgsRes);
@@ -167,141 +168,319 @@ export default function SignIn() {
 		}
 	}
 
-	return (
-		<div style={{ maxWidth: 520, margin: "8vh auto", padding: 16 }}>
-			<h1 style={{ marginBottom: 6 }}>Welcome to Bondfire</h1>
-			<p className="helper" style={{ marginTop: 0 }}>
-				{mode === "login" ? "Sign in to continue." : "Create your account and your first org."}
-			</p>
+	if (!redHarborMode) {
+		return (
+			<div style={{ maxWidth: 520, margin: "8vh auto", padding: 16 }}>
+				<h1 style={{ marginBottom: 6 }}>Welcome to Bondfire</h1>
+				<p className="helper" style={{ marginTop: 0 }}>
+					{mode === "login" ? "Sign in to continue." : "Create your account and your first org."}
+				</p>
 
-			<div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-				<button
-					type="button"
-					className={mode === "login" ? "btn-red" : "btn"}
-					onClick={() => {
-						setErr("");
-						setMode("login");
-					}}
-					disabled={busy}
-				>
-					Sign in
-				</button>
-				<button
-					type="button"
-					className={mode === "register" ? "btn-red" : "btn"}
-					onClick={() => {
-						setErr("");
-						setMode("register");
-					}}
-					disabled={busy}
-				>
-					Create account
-				</button>
-			</div>
-
-			<div style={{ marginTop: 12 }}>
-				<button type="button" className="btn" onClick={() => startDemo(navigate)} disabled={busy}>
-					Try Demo (no account required)
-				</button>
-			</div>
-
-			{err && (
-				<div className="helper" style={{ color: "crimson", marginTop: 12 }}>
-					{String(err)}
-				</div>
-			)}
-
-			{mfaStep ? (
-				<form onSubmit={handleMfaVerify} className="grid" style={{ gap: 10, marginTop: 12 }}>
-					<div className="helper">
-						MFA required for <b>{mfaStep.email}</b>. Enter your authenticator code or a recovery code.
-					</div>
-
-					<input
-						className="input"
-						type="text"
-						placeholder="Authenticator code (6 digits)"
-						value={mfaCode}
-						onChange={(e) => setMfaCode(e.target.value)}
-						autoFocus
-					/>
-
-					<input
-						className="input"
-						type="text"
-						placeholder="Recovery code (optional)"
-						value={mfaRecovery}
-						onChange={(e) => setMfaRecovery(e.target.value)}
-					/>
-
-					<button className="btn-red" disabled={busy}>
-						{busy ? "Verifying…" : "Verify"}
+				<div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+					<button
+						type="button"
+						className={mode === "login" ? "btn-red" : "btn"}
+						onClick={() => {
+							setErr("");
+							setMode("login");
+						}}
+						disabled={busy}
+					>
+						Sign in
 					</button>
 					<button
 						type="button"
-						className="btn"
-						disabled={busy}
+						className={mode === "register" ? "btn-red" : "btn"}
 						onClick={() => {
-							setMfaStep(null);
-							setMfaCode("");
-							setMfaRecovery("");
+							setErr("");
+							setMode("register");
 						}}
+						disabled={busy}
 					>
-						Back
+						Create account
 					</button>
-				</form>
-			) : (
-				<form onSubmit={handleSubmit} className="grid" style={{ gap: 10, marginTop: 12 }}>
-					{mode === "register" && (
-						<>
-							<input
-								className="input"
-								type="text"
-								placeholder="Name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-							/>
-							<input
-								className="input"
-								type="text"
-								placeholder="Org name"
-								value={orgName}
-								onChange={(e) => setOrgName(e.target.value)}
-							/>
-						</>
-					)}
+				</div>
 
-					<input
-						className="input"
-						type="email"
-						placeholder="Email"
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						autoFocus
-					/>
-					<input
-						className="input"
-						type="password"
-						placeholder="Password"
-						value={pass}
-						onChange={(e) => setPass(e.target.value)}
-					/>
+				<div style={{ marginTop: 12 }}>
+					<button type="button" className="btn" onClick={() => startDemo(navigate)} disabled={busy}>
+						Try Demo (no account required)
+					</button>
+				</div>
 
-					{mode === "login" && (
+				{err && (
+					<div className="helper" style={{ color: "crimson", marginTop: 12 }}>
+						{String(err)}
+					</div>
+				)}
+
+				{mfaStep ? (
+					<form onSubmit={handleMfaVerify} className="grid" style={{ gap: 10, marginTop: 12 }}>
+						<div className="helper">
+							MFA required for <b>{mfaStep.email}</b>. Enter your authenticator code or a recovery code.
+						</div>
+
 						<input
 							className="input"
 							type="text"
-							placeholder="Invite code (optional)"
-							value={inviteCode}
-							onChange={(e) => setInviteCode(e.target.value)}
+							placeholder="Authenticator code (6 digits)"
+							value={mfaCode}
+							onChange={(e) => setMfaCode(e.target.value)}
+							autoFocus
 						/>
-					)}
 
-					<button className="btn-red" disabled={busy}>
-						{busy ? "Working…" : mode === "register" ? "Create account" : "Sign in"}
-					</button>
-				</form>
-			)}
+						<input
+							className="input"
+							type="text"
+							placeholder="Recovery code (optional)"
+							value={mfaRecovery}
+							onChange={(e) => setMfaRecovery(e.target.value)}
+						/>
+
+						<button className="btn-red" disabled={busy}>
+							{busy ? "Verifying…" : "Verify"}
+						</button>
+						<button
+							type="button"
+							className="btn"
+							disabled={busy}
+							onClick={() => {
+								setMfaStep(null);
+								setMfaCode("");
+								setMfaRecovery("");
+							}}
+						>
+							Back
+						</button>
+					</form>
+				) : (
+					<form onSubmit={handleSubmit} className="grid" style={{ gap: 10, marginTop: 12 }}>
+						{mode === "register" && (
+							<>
+								<input
+									className="input"
+									type="text"
+									placeholder="Name"
+									value={name}
+									onChange={(e) => setName(e.target.value)}
+								/>
+								<input
+									className="input"
+									type="text"
+									placeholder="Org name"
+									value={orgName}
+									onChange={(e) => setOrgName(e.target.value)}
+								/>
+							</>
+						)}
+
+						<input
+							className="input"
+							type="email"
+							placeholder="Email"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							autoFocus
+						/>
+						<input
+							className="input"
+							type="password"
+							placeholder="Password"
+							value={pass}
+							onChange={(e) => setPass(e.target.value)}
+						/>
+
+						{mode === "login" && (
+							<input
+								className="input"
+								type="text"
+								placeholder="Invite code (optional)"
+								value={inviteCode}
+								onChange={(e) => setInviteCode(e.target.value)}
+							/>
+						)}
+
+						<button className="btn-red" disabled={busy}>
+							{busy ? "Working…" : mode === "register" ? "Create account" : "Sign in"}
+						</button>
+					</form>
+				)}
+			</div>
+		);
+	}
+
+	return (
+		<div className="rh-signin-wrap">
+			<div className="rh-signin-shell">
+				<div className="rh-signin-left">
+					<div className="rh-kicker">iww red harbor</div>
+					<h1 className="rh-signin-title">members access</h1>
+					<p className="rh-signin-copy">
+						Sign in to access internal meetings, records, documents, organizing tools, and branch operations.
+						Public information belongs on the front door. Sensitive work belongs behind it.
+					</p>
+
+					<div className="rh-rule" />
+
+					<ul className="rh-signin-list">
+						<li>internal branch coordination</li>
+						<li>documents, meeting notes, and records</li>
+						<li>people, roles, and permissions</li>
+						<li>private operations, not public marketing copy</li>
+					</ul>
+
+					<p className="rh-signin-note">
+						If you are here to see what the branch is about, go back to the public front page. If you are here
+						to work, this is the door.
+					</p>
+
+					<div className="rh-button-row">
+						<a className="rh-btn" href="/?app=red-harbor#/red-harbor">
+							Back to Front Door
+						</a>
+					</div>
+				</div>
+
+				<div className="rh-signin-right">
+					<div className="rh-auth-card">
+						<div className="rh-auth-head">
+							<h1>{mode === "register" ? "Create Access" : "Sign In"}</h1>
+							<p>
+								{mode === "login"
+									? "Use your account to enter the Red Harbor backend."
+									: "Create your account and your first Red Harbor workspace."}
+							</p>
+						</div>
+
+						<div className="rh-auth-switches">
+							<button
+								type="button"
+								className={`rh-btn ${mode === "login" ? "rh-btn-primary" : ""}`}
+								onClick={() => {
+									setErr("");
+									setMode("login");
+								}}
+								disabled={busy}
+							>
+								Sign In
+							</button>
+							<button
+								type="button"
+								className={`rh-btn ${mode === "register" ? "rh-btn-primary" : ""}`}
+								onClick={() => {
+									setErr("");
+									setMode("register");
+								}}
+								disabled={busy}
+							>
+								Create Account
+							</button>
+						</div>
+
+						<div className="rh-auth-actions">
+							<button type="button" className="rh-btn" onClick={() => startDemo(navigate)} disabled={busy}>
+								Try Demo
+							</button>
+						</div>
+
+						{err ? <div className="rh-error">{String(err)}</div> : null}
+
+						{mfaStep ? (
+							<form onSubmit={handleMfaVerify} className="rh-auth-card">
+								<div className="rh-signin-copy">
+									MFA required for <b>{mfaStep.email}</b>. Enter your authenticator code or a recovery code.
+								</div>
+
+								<input
+									className="rh-input"
+									type="text"
+									placeholder="Authenticator code (6 digits)"
+									value={mfaCode}
+									onChange={(e) => setMfaCode(e.target.value)}
+									autoFocus
+								/>
+
+								<input
+									className="rh-input"
+									type="text"
+									placeholder="Recovery code (optional)"
+									value={mfaRecovery}
+									onChange={(e) => setMfaRecovery(e.target.value)}
+								/>
+
+								<div className="rh-auth-actions">
+									<button className="rh-btn rh-btn-primary" disabled={busy}>
+										{busy ? "Verifying…" : "Verify"}
+									</button>
+									<button
+										type="button"
+										className="rh-btn"
+										disabled={busy}
+										onClick={() => {
+											setMfaStep(null);
+											setMfaCode("");
+											setMfaRecovery("");
+										}}
+									>
+										Back
+									</button>
+								</div>
+							</form>
+						) : (
+							<form onSubmit={handleSubmit} className="rh-auth-card">
+								{mode === "register" && (
+									<>
+										<input
+											className="rh-input"
+											type="text"
+											placeholder="Name"
+											value={name}
+											onChange={(e) => setName(e.target.value)}
+										/>
+										<input
+											className="rh-input"
+											type="text"
+											placeholder="Org name"
+											value={orgName}
+											onChange={(e) => setOrgName(e.target.value)}
+										/>
+									</>
+								)}
+
+								<input
+									className="rh-input"
+									type="email"
+									placeholder="Email"
+									value={email}
+									onChange={(e) => setEmail(e.target.value)}
+									autoFocus
+								/>
+
+								<input
+									className="rh-input"
+									type="password"
+									placeholder="Password"
+									value={pass}
+									onChange={(e) => setPass(e.target.value)}
+								/>
+
+								{mode === "login" ? (
+									<input
+										className="rh-input"
+										type="text"
+										placeholder="Invite code (optional)"
+										value={inviteCode}
+										onChange={(e) => setInviteCode(e.target.value)}
+									/>
+								) : null}
+
+								<button className="rh-btn rh-btn-primary" disabled={busy}>
+									{busy ? "Working…" : mode === "register" ? "Create Account" : "Sign In"}
+								</button>
+							</form>
+						)}
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }

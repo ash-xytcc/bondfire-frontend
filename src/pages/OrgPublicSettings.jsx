@@ -4,27 +4,35 @@ function randSlug() {
   return Math.random().toString(36).slice(2, 8);
 }
 
-export default function OrgPublicSettings({ orgId, orgName }) {
+const DEFAULT_TITLE = '';
+const DEFAULT_ABOUT = '';
+const DEFAULT_FEATURES = '';
+const DEFAULT_LINKS = '';
+const TITLE_PLACEHOLDER = 'Dual Power West Public Info';
+const ABOUT_PLACEHOLDER = 'What visitors should know before they arrive.';
+const FEATURES_PLACEHOLDER = 'Schedule preview\nAccessibility info\nVolunteer details';
+const LINKS_PLACEHOLDER = 'Main site | https://dualpowerwest.org\nRSVP | https://dualpowerwest.org/rsvp';
+
+export default function OrgPublicSettings({ orgId }) {
   const [enabled, setEnabled] = React.useState(false);
   const [slug, setSlug] = React.useState('');
-  const [title, setTitle] = React.useState(orgName || '');
-  const [about, setAbout] = React.useState('');
-  const [features, setFeatures] = React.useState('');
-  const [links, setLinks] = React.useState('');
+  const [title, setTitle] = React.useState(DEFAULT_TITLE);
+  const [about, setAbout] = React.useState(DEFAULT_ABOUT);
+  const [features, setFeatures] = React.useState(DEFAULT_FEATURES);
+  const [links, setLinks] = React.useState(DEFAULT_LINKS);
   const [msg, setMsg] = React.useState('');
 
-  // load
   React.useEffect(() => {
     try {
       const s = JSON.parse(localStorage.getItem(`bf_public_${orgId}`) || '{}');
       if (s.enabled != null) setEnabled(!!s.enabled);
       if (s.slug) setSlug(s.slug);
-      if (s.title) setTitle(s.title);
-      if (s.about) setAbout(s.about);
+      if (typeof s.title === 'string') setTitle(s.title);
+      if (typeof s.about === 'string') setAbout(s.about);
       if (Array.isArray(s.features)) setFeatures(s.features.join('\n'));
       if (Array.isArray(s.links)) setLinks(s.links.map(l => `${l.text} | ${l.url}`).join('\n'));
     } catch {}
-  }, [orgId, orgName]);
+  }, [orgId]);
 
   const save = (e) => {
     e?.preventDefault();
@@ -40,12 +48,9 @@ export default function OrgPublicSettings({ orgId, orgName }) {
       }).filter(Boolean),
     };
 
-    // write org settings
     localStorage.setItem(`bf_public_${orgId}`, JSON.stringify(payload));
 
-    // maintain slug index
     const idx = JSON.parse(localStorage.getItem('bf_public_slug_index') || '{}');
-    // remove old mapping(s) for this org
     for (const [k,v] of Object.entries(idx)) if (v === orgId) delete idx[k];
     if (payload.slug) idx[payload.slug] = orgId;
     localStorage.setItem('bf_public_slug_index', JSON.stringify(idx));
@@ -64,7 +69,7 @@ export default function OrgPublicSettings({ orgId, orgName }) {
   return (
     <div className="card" style={{ padding:16 }}>
       <h3>Public Page</h3>
-      <p className="helper">Share a read‑only page. Only what you enable is shown.</p>
+      <p className="helper">Set up the public-facing page visitors will see without pre-filling your real org data.</p>
 
       <form onSubmit={save} className="grid" style={{ gap:8, marginTop:8 }}>
         <label className="row" style={{ gap:8, alignItems:'center' }}>
@@ -75,7 +80,7 @@ export default function OrgPublicSettings({ orgId, orgName }) {
         <label className="grid" style={{ gap:6 }}>
           <span className="helper">Share URL (slug)</span>
           <div className="row" style={{ gap:8 }}>
-            <input style={{ flex:1 }} value={slug} onChange={e=>setSlug(e.target.value)} placeholder="e.g. bondfire-team" />
+            <input style={{ flex:1 }} value={slug} onChange={e=>setSlug(e.target.value)} placeholder="e.g. dual-power-west" />
             <button type="button" onClick={gen}>Generate</button>
           </div>
           {publicUrl && <a className="helper" href={publicUrl} target="_blank" rel="noreferrer">{publicUrl}</a>}
@@ -83,22 +88,22 @@ export default function OrgPublicSettings({ orgId, orgName }) {
 
         <label className="grid" style={{ gap:6 }}>
           <span className="helper">Title</span>
-          <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Public page title" />
+          <input value={title} onChange={e=>setTitle(e.target.value)} placeholder={TITLE_PLACEHOLDER} />
         </label>
 
         <label className="grid" style={{ gap:6 }}>
           <span className="helper">About</span>
-          <textarea rows={3} value={about} onChange={e=>setAbout(e.target.value)} placeholder="Short description" />
+          <textarea rows={3} value={about} onChange={e=>setAbout(e.target.value)} placeholder={ABOUT_PLACEHOLDER} />
         </label>
 
         <label className="grid" style={{ gap:6 }}>
           <span className="helper">Features (one per line)</span>
-          <textarea rows={3} value={features} onChange={e=>setFeatures(e.target.value)} placeholder={"Donations tracker\nVolunteers\nEvents"} />
+          <textarea rows={3} value={features} onChange={e=>setFeatures(e.target.value)} placeholder={FEATURES_PLACEHOLDER} />
         </label>
 
         <label className="grid" style={{ gap:6 }}>
           <span className="helper">Links (Text | URL per line)</span>
-          <textarea rows={3} value={links} onChange={e=>setLinks(e.target.value)} placeholder={"Website | https://example.org\nTwitter | https://x.com/yourorg"} />
+          <textarea rows={3} value={links} onChange={e=>setLinks(e.target.value)} placeholder={LINKS_PLACEHOLDER} />
         </label>
 
         <div className="row" style={{ gap:8 }}>

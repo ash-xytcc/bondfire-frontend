@@ -1503,3 +1503,36 @@ html, body {
     grid-template-columns:1fr;
   }
 }
+
+/* DPG local cleanup patch */
+.bf-appHeader{
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.bf-appHeader-left{
+  flex: 0 0 auto;
+}
+.bf-appHeader-right{
+  flex: 1 1 900px;
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 8px;
+  justify-content: flex-end;
+}
+.bf-nav-desktop{
+  flex: 1 1 760px;
+  min-width: 0;
+}
+.bf-appnav{
+  flex-wrap: wrap !important;
+  overflow: visible !important;
+  white-space: normal;
+}
+.bf-appnav-link{
+  flex: 0 0 auto;
+}
+@media (max-width: 1200px){
+  .bf-appHeader-right{
+    justify-content: flex-start;
+  }
+}

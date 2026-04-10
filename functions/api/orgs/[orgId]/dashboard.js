@@ -1,6 +1,17 @@
 import { json } from "../../_lib/http.js";
 import { requireOrgRole } from "../../_lib/auth.js";
 
+async function safeRun(env, sql, binds = []) {
+  try {
+    const stmt = env.BF_DB.prepare(sql);
+    if (Array.isArray(binds) && binds.length) return await stmt.bind(...binds).run();
+    return await stmt.run();
+  } catch (e) {
+    console.warn("dashboard safeRun failed", e);
+    return null;
+  }
+}
+
 async function safeFirst(env, sql, binds = [], fallback = null) {
   try {
     const stmt = env.BF_DB.prepare(sql);
@@ -23,13 +34,104 @@ async function safeAll(env, sql, binds = [], fallback = []) {
   }
 }
 
+async function ensureDashboardLocalCompatibility(env) {
+  // Minimal local-safe tables/columns so dashboard queries do not explode on bootstrap databases.
+  await safeRun(env, `CREATE TABLE IF NOT EXISTS inventory (
+    id TEXT PRIMARY KEY,
+    org_id TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    qty REAL NOT NULL DEFAULT 0,
+    unit TEXT NOT NULL DEFAULT '',
+    category TEXT NOT NULL DEFAULT '',
+    location TEXT NOT NULL DEFAULT '',
+    notes TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0
+  )`);
+  await safeRun(env, `CREATE TABLE IF NOT EXISTS meetings (
+    id TEXT PRIMARY KEY,
+    org_id TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    starts_at INTEGER,
+    ends_at INTEGER,
+    location TEXT NOT NULL DEFAULT '',
+    notes TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0
+  )`);
+  await safeRun(env, `CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+    id TEXT PRIMARY KEY,
+    org_id TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL DEFAULT 0
+  )`);
+  await safeRun(env, `CREATE TABLE IF NOT EXISTS pledges (
+    id TEXT PRIMARY KEY,
+    org_id TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    qty REAL NOT NULL DEFAULT 0,
+    unit TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0
+  )`);
+  await safeRun(env, `CREATE TABLE IF NOT EXISTS public_intakes (
+    id TEXT PRIMARY KEY,
+    org_id TEXT NOT NULL,
+    kind TEXT NOT NULL DEFAULT '',
+    name TEXT NOT NULL DEFAULT '',
+    contact TEXT NOT NULL DEFAULT '',
+    details TEXT NOT NULL DEFAULT '',
+    extra TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'new',
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0
+  )`);
+  await safeRun(env, `CREATE TABLE IF NOT EXISTS activity (
+    id TEXT PRIMARY KEY,
+    org_id TEXT NOT NULL,
+    kind TEXT NOT NULL DEFAULT '',
+    message TEXT NOT NULL DEFAULT '',
+    actor_user_id TEXT,
+    created_at INTEGER NOT NULL DEFAULT 0
+  )`);
+
+  const alterStatements = [
+    "ALTER TABLE people ADD COLUMN encrypted_blob TEXT",
+    "ALTER TABLE people ADD COLUMN key_version INTEGER",
+    "ALTER TABLE needs ADD COLUMN encrypted_blob TEXT",
+    "ALTER TABLE needs ADD COLUMN key_version INTEGER",
+    "ALTER TABLE inventory ADD COLUMN encrypted_blob TEXT",
+    "ALTER TABLE inventory ADD COLUMN key_version INTEGER",
+    "ALTER TABLE inventory ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE meetings ADD COLUMN encrypted_blob TEXT",
+    "ALTER TABLE meetings ADD COLUMN key_version INTEGER",
+    "ALTER TABLE meetings ADD COLUMN agenda TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE newsletter_subscribers ADD COLUMN encrypted_blob TEXT",
+    "ALTER TABLE newsletter_subscribers ADD COLUMN key_version INTEGER",
+    "ALTER TABLE pledges ADD COLUMN encrypted_blob TEXT",
+    "ALTER TABLE pledges ADD COLUMN key_version INTEGER",
+  ];
+  for (const sql of alterStatements) await safeRun(env, sql);
+
+  await safeRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS inventory_pars (
+      org_id TEXT NOT NULL,
+      inventory_id TEXT NOT NULL,
+      par REAL,
+      updated_at INTEGER,
+      PRIMARY KEY (org_id, inventory_id)
+    )`
+  );
+}
+
 export async function onRequestGet({ env, request, params }) {
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!a.ok) return a.resp;
 
-  // The dashboard should never hard-crash because one table is missing
-  // (migrations happen, humans forget things, etc.).
+  await ensureDashboardLocalCompatibility(env);
 
   const peopleCount = await safeFirst(
     env,
@@ -88,19 +190,6 @@ export async function onRequestGet({ env, request, params }) {
     []
   );
 
-  await safeFirst(
-    env,
-    `CREATE TABLE IF NOT EXISTS inventory_pars (
-      org_id TEXT NOT NULL,
-      inventory_id TEXT NOT NULL,
-      par REAL,
-      updated_at INTEGER,
-      PRIMARY KEY (org_id, inventory_id)
-    )`,
-    [],
-    null
-  );
-
   const inventory = await safeAll(
     env,
     `SELECT i.id, i.name, i.qty, i.unit, i.category, i.encrypted_blob, i.key_version, ip.par
@@ -113,7 +202,6 @@ export async function onRequestGet({ env, request, params }) {
     []
   );
 
-  
   const newsletterCount = await safeFirst(
     env,
     "SELECT COUNT(*) as c FROM newsletter_subscribers WHERE org_id = ?",

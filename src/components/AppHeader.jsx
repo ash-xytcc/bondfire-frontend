@@ -229,6 +229,10 @@ function OrgNav({ variant = "desktop" }) {
 
 export default function AppHeader({ onLogout, showLogout }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [isCompactNav, setIsCompactNav] = React.useState(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return window.matchMedia("(max-width: 1200px)").matches;
+  });
   const loc = useLocation();
   const dpg = isDpgVariant();
   const brand = getAppBrand();

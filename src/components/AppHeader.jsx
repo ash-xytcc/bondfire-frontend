@@ -303,11 +303,9 @@ export default function AppHeader({ onLogout, showLogout }) {
         </div>
 
         <div className="bf-appHeader-right">
-          {!isCompactNav ? (
-            <div className="bf-nav-desktop">
-              <OrgNav variant="desktop" />
-            </div>
-          ) : null}
+          <div className="bf-nav-desktop" style={{ display: "flex", flexWrap: "wrap", gap: 8, minWidth: 0 }}>
+            <OrgNav variant="desktop" />
+          </div>
 
           {showLogout ? (
             <button
@@ -320,17 +318,16 @@ export default function AppHeader({ onLogout, showLogout }) {
             </button>
           ) : null}
 
-          {isCompactNav ? (
-            <button
-              className="bf-hamburger"
-              type="button"
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileOpen ? "true" : "false"}
-              onClick={() => setMobileOpen((v) => !v)}
-            >
-              <span aria-hidden="true">☰</span>
-            </button>
-          ) : null}
+          <button
+            className="bf-hamburger"
+            type="button"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen ? "true" : "false"}
+            onClick={() => setMobileOpen((v) => !v)}
+            style={{ marginLeft: 8 }}
+          >
+            <span aria-hidden="true">☰</span>
+          </button>
         </div>
       </header>
 

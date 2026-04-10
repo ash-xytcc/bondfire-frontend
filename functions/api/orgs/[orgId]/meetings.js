@@ -2,6 +2,11 @@ import { json, bad, now, uuid } from "../../_lib/http.js";
 import { requireOrgRole } from "../../_lib/auth.js";
 import { logActivity } from "../../_lib/activity.js";
 import { ensureLocalCompatSchema } from "../../_lib/localCompat.js";
+
+async function ensureMeetingsZkColumns() {
+  return;
+}
+
 async function getOrgCryptoKeyVersion(db, orgId) {
   try {
     const r = await db.prepare("SELECT key_version FROM org_crypto WHERE org_id = ?").bind(orgId).first();

@@ -14,8 +14,8 @@ export default function RedHarborHero() {
         and durable local structure. This is the public face of that work.
       </p>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 20 }}>
-        <a className="btn-red" href="/#/p/red-harbor?app=red-harbor">Public Page</a>
-        <a className="btn" href="/#/orgs?app=red-harbor">Open Ops</a>
+        <a className="btn-red" href="/?app=red-harbor#/p/red-harbor">Public Page</a>
+        <a className="btn" href="/?app=red-harbor#/orgs">Open Ops</a>
       </div>
     </section>
   );

@@ -1,15 +1,7 @@
 import { json, bad, now, uuid } from "../../_lib/http.js";
 import { requireOrgRole } from "../../_lib/auth.js";
 import { logActivity } from "../../_lib/activity.js";
-<<<<<<< Updated upstream
-
-async function safeRun(db, sql) {
-  try { return await db.prepare(sql).run(); } catch { return null; }
-}
-
-=======
 import { ensureLocalCompatSchema } from "../../_lib/localCompat.js";
->>>>>>> Stashed changes
 async function getOrgCryptoKeyVersion(db, orgId) {
   try {
     const r = await db.prepare("SELECT key_version FROM org_crypto WHERE org_id = ?").bind(orgId).first();
@@ -65,14 +57,10 @@ export async function onRequestGet({ env, request, params }) {
   const a = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!a.ok) return a.resp;
 
-<<<<<<< Updated upstream
-  await ensureInventoryCompat(env.BF_DB);
-=======
   await ensureLocalCompatSchema(env.BF_DB);
   await ensureLocalCompatSchema(env.BF_DB);
   await ensureLocalCompatSchema(env.BF_DB);
   await ensureInventoryParsTable(env.BF_DB);
->>>>>>> Stashed changes
   const res = await env.BF_DB.prepare(
     `SELECT i.id, i.name, i.qty, i.unit, i.category, i.location, i.notes,
             i.encrypted_notes, i.encrypted_blob, i.key_version,

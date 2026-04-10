@@ -2,6 +2,7 @@
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { getOrgModules } from "../lib/orgPacks.js";
+import { getAppMode } from "../lib/appMode";
 
 const homeHref = "/orgs";
 
@@ -87,7 +88,7 @@ const Brand = ({ orgId, logoSrc }) => {
     <div className="bf-brand-wrap">
       <Link className="bf-brand" to={homeHref}>
         <img src={imgSrc} alt="Bondfire logo" />
-        <span>Bondfire</span>
+        <span>{brandLabel}</span>
       </Link>
 
       {inferredOrgId ? (
@@ -148,6 +149,8 @@ function OrgNav({ variant = "desktop" }) {
       }
     : undefined;
 
+  const appMode = getAppMode();
+  const isRedHarbor = appMode === "red-harbor";
   const base = orgId ? `/org/${orgId}` : null;
   const enabled = orgId ? getOrgModules(orgId) : [];
   const defs = [
@@ -162,6 +165,8 @@ function OrgNav({ variant = "desktop" }) {
     ["chat", "Chat", `${base}/chat`, "nav-chat"],
     ["public", "Public Page", `${base}/public`, "nav-public"],
   ];
+  const brandLabel = isRedHarbor ? "IWW Red Harbor" : "Bondfire";
+
   const items = base
     ? defs
         .filter(([key]) => enabled.includes(key))

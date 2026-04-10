@@ -1,4 +1,5 @@
 import React from "react";
+import { getAppMode, isRedHarborMode } from "./lib/appMode";
 import {
 	HashRouter,
 	Routes,
@@ -219,6 +220,7 @@ function Shell() {
 			)}
 
 			<Routes>
+            <Route path="/red-harbor" element={<RedHarborLanding />} />
 				{/* PUBLIC */}
 				<Route path="/p/:slug" element={<PublicPage />} />
 				<Route path="/p/*" element={<PublicPage />} />
@@ -283,6 +285,13 @@ function Shell() {
 
 /* ---------------------------------- App ---------------------------------- */
 export default function App() {
+  const appMode = getAppMode();
+  const redHarborMode = isRedHarborMode();
+
+  React.useEffect(() => {
+    document.body.dataset.app = appMode;
+    document.title = redHarborMode ? "IWW Red Harbor" : "Bondfire";
+  }, [appMode, redHarborMode]);
 	return (
 		<HashRouter>
 			<ErrorBoundary>

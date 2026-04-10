@@ -18,7 +18,7 @@ export const STARTER_PACKS = [
     id: "union-branch",
     label: "Union Branch / Red Harbor",
     description: "People, meetings, drive, settings, with public union-facing defaults. No chat.",
-    modules: ["overview", "people", "meetings", "drive", "settings", "public"],
+    modules: ["overview", "people", "meetings", "drive", "comms", "settings", "public"],
     publicConfig: {
       enabled: true,
       newsletter_enabled: true,

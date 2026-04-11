@@ -48,6 +48,7 @@ function readOrgNameFromStorage(orgId) {
 
 const Brand = ({ orgId, logoSrc }) => {
   const inferredOrgId = orgId || useOrgIdFromPath();
+  const location = useLocation();
   const dpg = isDpgVariant();
   const brand = getAppBrand();
   const [orgName, setOrgName] = React.useState(() => readOrgNameFromStorage(inferredOrgId));

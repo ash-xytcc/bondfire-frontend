@@ -61,18 +61,167 @@ export function isDpgVariant() {
 
 export function applyAppVariantToDocument() {
   try {
-    const brand = getAppBrand();
     const dpg = isDpgVariant();
 
     document.documentElement.dataset.app = dpg ? "dpg" : "bondfire";
     document.body.dataset.app = dpg ? "dpg" : "bondfire";
 
-    if (dpg) {
-      document.documentElement.style.setProperty("--app-primary", brand.primary || "#264636");
-      document.documentElement.style.setProperty("--app-accent", brand.accent || "#e3a7a5");
-      document.documentElement.style.setProperty("--app-bg", brand.background || "#264636");
-      document.documentElement.style.setProperty("--app-text", brand.text || "#ffffff");
+    const styleId = "dpg-global-theme";
+    let styleEl = document.getElementById(styleId);
+
+    if (!dpg) {
+      if (styleEl) styleEl.remove();
+      return;
     }
+
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+
+    styleEl.textContent = `
+      :root[data-app="dpg"],
+      body[data-app="dpg"] {
+        --dpg-bg: #f4f1ea;
+        --dpg-surface: #fbf8f2;
+        --dpg-surface-2: #efe9dc;
+        --dpg-text: #1f2f28;
+        --dpg-muted: #5e6d65;
+        --dpg-line: #d8cfbe;
+        --dpg-primary: #264636;
+        --dpg-accent: #e3a7a5;
+        --dpg-accent-deep: #b46b6a;
+        --dpg-font: "Inter", "Avenir Next", "Segoe UI", sans-serif;
+      }
+
+      html[data-app="dpg"],
+      body[data-app="dpg"] {
+        background: var(--dpg-bg) !important;
+        color: var(--dpg-text) !important;
+        font-family: var(--dpg-font) !important;
+      }
+
+      body[data-app="dpg"] #root,
+      body[data-app="dpg"] .app-shell,
+      body[data-app="dpg"] .page,
+      body[data-app="dpg"] main {
+        background: var(--dpg-bg) !important;
+        color: var(--dpg-text) !important;
+      }
+
+      body[data-app="dpg"] header,
+      body[data-app="dpg"] nav,
+      body[data-app="dpg"] .topbar,
+      body[data-app="dpg"] .app-header {
+        background: #1b3127 !important;
+        color: #f7f2e8 !important;
+        border-color: #3b5b4a !important;
+      }
+
+      body[data-app="dpg"] button,
+      body[data-app="dpg"] .btn,
+      body[data-app="dpg"] a[role="button"] {
+        border-radius: 14px !important;
+      }
+
+      body[data-app="dpg"] button:not(.danger):not(.destructive),
+      body[data-app="dpg"] .btn:not(.danger):not(.destructive),
+      body[data-app="dpg"] .tab,
+      body[data-app="dpg"] .nav-pill,
+      body[data-app="dpg"] .chip {
+        background: #20382d !important;
+        color: #f7f2e8 !important;
+        border: 1px solid #4b6859 !important;
+        box-shadow: none !important;
+      }
+
+      body[data-app="dpg"] button:hover,
+      body[data-app="dpg"] .btn:hover,
+      body[data-app="dpg"] .tab:hover,
+      body[data-app="dpg"] .nav-pill:hover {
+        background: #2a4a3b !important;
+      }
+
+      body[data-app="dpg"] .active,
+      body[data-app="dpg"] .is-active,
+      body[data-app="dpg"] [aria-current="page"],
+      body[data-app="dpg"] .selected {
+        background: var(--dpg-accent-deep) !important;
+        color: #fff8f4 !important;
+        border-color: var(--dpg-accent) !important;
+      }
+
+      body[data-app="dpg"] input,
+      body[data-app="dpg"] textarea,
+      body[data-app="dpg"] select,
+      body[data-app="dpg"] .search,
+      body[data-app="dpg"] .searchbar {
+        background: #fffdf9 !important;
+        color: var(--dpg-text) !important;
+        border: 1px solid var(--dpg-line) !important;
+      }
+
+      body[data-app="dpg"] .card,
+      body[data-app="dpg"] .panel,
+      body[data-app="dpg"] .tile,
+      body[data-app="dpg"] .section,
+      body[data-app="dpg"] .modal,
+      body[data-app="dpg"] .sheet {
+        background: var(--dpg-surface) !important;
+        color: var(--dpg-text) !important;
+        border-color: var(--dpg-line) !important;
+      }
+
+      body[data-app="dpg"] [class*="drive"],
+      body[data-app="dpg"] [class*="Drive"],
+      body[data-app="dpg"] [class*="editor"],
+      body[data-app="dpg"] [class*="Editor"],
+      body[data-app="dpg"] [class*="preview"],
+      body[data-app="dpg"] [class*="Preview"] {
+        color: var(--dpg-text) !important;
+      }
+
+      body[data-app="dpg"] .ql-toolbar,
+      body[data-app="dpg"] .ql-container,
+      body[data-app="dpg"] .cm-editor,
+      body[data-app="dpg"] .cm-scroller,
+      body[data-app="dpg"] .cm-content,
+      body[data-app="dpg"] .ProseMirror,
+      body[data-app="dpg"] .tiptap,
+      body[data-app="dpg"] .markdown-body,
+      body[data-app="dpg"] [contenteditable="true"] {
+        background: #fffdf9 !important;
+        color: var(--dpg-text) !important;
+        border-color: var(--dpg-line) !important;
+        filter: none !important;
+      }
+
+      body[data-app="dpg"] .ql-toolbar,
+      body[data-app="dpg"] .editor-toolbar,
+      body[data-app="dpg"] .toolbar {
+        background: #20382d !important;
+        color: #f7f2e8 !important;
+      }
+
+      body[data-app="dpg"] .sidebar,
+      body[data-app="dpg"] .leftbar,
+      body[data-app="dpg"] .explorer {
+        background: var(--dpg-surface-2) !important;
+        color: var(--dpg-text) !important;
+        border-color: var(--dpg-line) !important;
+      }
+
+      body[data-app="dpg"] h1,
+      body[data-app="dpg"] h2,
+      body[data-app="dpg"] h3,
+      body[data-app="dpg"] h4,
+      body[data-app="dpg"] h5,
+      body[data-app="dpg"] h6 {
+        color: #173126 !important;
+        font-family: var(--dpg-font) !important;
+      }
+    `;
   } catch {}
 }
 

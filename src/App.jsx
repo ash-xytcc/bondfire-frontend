@@ -37,6 +37,8 @@ import DemoSpotlightTour from "./demo/DemoSpotlightTour.jsx";
 import DemoBoot from "./pages/DemoBoot.jsx";
 import { isDemoMode, disableDemoMode } from "./demo/demoMode.js";
 import { getAdminBasePath, getAppVariant, isDpgVariant } from "./lib/appVariant.js";
+import PublicHome from "./pages/dpg/PublicHome.jsx";
+import AdminHome from "./pages/dpg/AdminHome.jsx";
 
 /* -------------------------------- Error Boundary ------------------------------- */
 class ErrorBoundary extends React.Component {
@@ -245,7 +247,8 @@ function Shell() {
 				<Route path="/demo" element={<DemoBoot />} />
 
 				{/* Landing */}
-				<Route path="/" element={<HomeRoute />} />
+				<Route path="/" element={<PublicHome />} />
+                                <Route path="/app" element={<AdminHome />} />
 
 				{/* Orgs list */}
 				<Route

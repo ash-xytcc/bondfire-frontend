@@ -224,8 +224,7 @@ function Shell() {
 		logout,
 	}), [state, refresh, logout]);
 
-	const HomeRoute = () =>
-		state.authed ? <Navigate to="/orgs" replace /> : <Navigate to="/signin" replace />;
+	const HomeRoute = () => <PublicHome />;
 
 	// Hide the header on public routes
 	const hideHeader = path === "/" || path.startsWith("/p/") || path === "/signin" || path === "/demo";

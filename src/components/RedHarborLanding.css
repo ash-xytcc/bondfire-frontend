@@ -31,38 +31,9 @@ html {
   margin: 0 auto;
 }
 
-.rh-topbar {
-  position: relative;
-  z-index: 2;
-  padding: 1rem 0 0;
-}
 
-.rh-topbar-inner {
-  display: flex;
-  justify-content: flex-end;
-}
 
-.rh-signin-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  padding: 0.7rem 1rem;
-  border-radius: 999px;
-  border: 1px solid rgba(239, 230, 210, 0.22);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--rh-cream);
-  text-decoration: none;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
-}
 
-.rh-signin-link:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(239, 230, 210, 0.36);
-}
 
 .rh-hero {
   position: relative;

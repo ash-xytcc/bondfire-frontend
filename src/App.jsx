@@ -8,7 +8,7 @@ import {
 	useLocation,
 } from "react-router-dom";
 import { getAppMode, isRedHarborMode } from "./lib/appMode";
-import RedHarborLanding from "./components/RedHarborLanding";
+import RedHarborLanding from "./pages/redharbor/RedHarborLanding.jsx";
 import CommsPage from "./pages/CommsPage.jsx";
 
 // PAGES
@@ -291,5 +291,18 @@ function Shell() {
 
 /* ---------------------------------- App ---------------------------------- */
 export default function App() {
-  return <RedHarborLanding />;
+  const appMode = getAppMode();
+  const redHarborMode = isRedHarborMode();
+
+  React.useEffect(() => {
+    document.body.dataset.app = appMode;
+    document.title = redHarborMode ? "IWW Red Harbor" : "Bondfire";
+  }, [appMode, redHarborMode]);
+	return (
+		<HashRouter>
+			<ErrorBoundary>
+				<Shell />
+			</ErrorBoundary>
+		</HashRouter>
+	);
 }

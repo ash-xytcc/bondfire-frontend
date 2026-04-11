@@ -128,6 +128,7 @@ function RequireAuth({ children }) {
 function Shell() {
 	const loc = useLocation();
 	const path = loc.pathname || "/";
+	const redHarborMode = isRedHarborMode();
 
 	const [state, setState] = React.useState({
 		authed: false,

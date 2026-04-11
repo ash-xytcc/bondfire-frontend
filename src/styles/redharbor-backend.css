@@ -1,0 +1,247 @@
+/* Red Harbor backend theme
+   Scoped to app mode only so DPG and normal Bondfire stay untouched.
+*/
+
+body[data-app="red-harbor"] {
+  --rhb-bg: #121c21;
+  --rhb-bg-2: #1b2930;
+  --rhb-panel: #23343c;
+  --rhb-panel-2: #2b3d46;
+  --rhb-paper: #d7cfbf;
+  --rhb-paper-2: #c9beaa;
+  --rhb-ink: #1e1d1a;
+  --rhb-text: #e4ebed;
+  --rhb-muted: rgba(228, 235, 237, 0.72);
+  --rhb-line: rgba(255,255,255,0.11);
+  --rhb-line-strong: rgba(255,255,255,0.22);
+  --rhb-red: #9a433a;
+  --rhb-red-2: #7f352e;
+  --rhb-shadow: 0 18px 44px rgba(0,0,0,0.28);
+
+  background:
+    radial-gradient(circle at 12% 0%, rgba(154,67,58,0.08), transparent 24%),
+    radial-gradient(circle at 88% 10%, rgba(116,140,150,0.12), transparent 28%),
+    linear-gradient(180deg, var(--rhb-bg) 0%, var(--rhb-bg-2) 100%);
+  color: var(--rhb-text);
+}
+
+/* App header and nav */
+body[data-app="red-harbor"] .bf-appHeader {
+  background: rgba(16, 24, 28, 0.92);
+  border-bottom: 1px solid var(--rhb-line);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+}
+
+body[data-app="red-harbor"] .bf-brand,
+body[data-app="red-harbor"] .bf-brand-org,
+body[data-app="red-harbor"] .bf-org-name {
+  color: var(--rhb-text);
+}
+
+body[data-app="red-harbor"] .bf-brand {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.08rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+body[data-app="red-harbor"] .bf-appnav-link,
+body[data-app="red-harbor"] .bf-logout,
+body[data-app="red-harbor"] .bf-hamburger,
+body[data-app="red-harbor"] .bf-drawer-close {
+  border-radius: 8px;
+  border: 1px solid var(--rhb-line);
+  background: rgba(255,255,255,0.03);
+  color: var(--rhb-text);
+  box-shadow: none;
+}
+
+body[data-app="red-harbor"] .bf-appnav-link:hover,
+body[data-app="red-harbor"] .bf-logout:hover,
+body[data-app="red-harbor"] .bf-hamburger:hover,
+body[data-app="red-harbor"] .bf-drawer-close:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: var(--rhb-line-strong);
+}
+
+body[data-app="red-harbor"] .bf-appnav-link.is-active {
+  background: rgba(154,67,58,0.16);
+  border-color: rgba(154,67,58,0.48);
+  color: #f1e1df;
+}
+
+body[data-app="red-harbor"] .bf-drawer-panel {
+  background: #142027;
+  border-left: 1px solid var(--rhb-line);
+}
+
+/* Shared layout shells */
+body[data-app="red-harbor"] .main,
+body[data-app="red-harbor"] .page-shell {
+  color: var(--rhb-text);
+}
+
+/* Cards and panel surfaces */
+body[data-app="red-harbor"] .card,
+body[data-app="red-harbor"] .kpi,
+body[data-app="red-harbor"] .bf-rowcard,
+body[data-app="red-harbor"] .bf-modal-shell {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02)),
+    linear-gradient(180deg, var(--rhb-panel) 0%, var(--rhb-panel-2) 100%);
+  border: 1px solid var(--rhb-line);
+  border-radius: 12px;
+  box-shadow: var(--rhb-shadow);
+  color: var(--rhb-text);
+}
+
+/* Typography */
+body[data-app="red-harbor"] h1,
+body[data-app="red-harbor"] h2,
+body[data-app="red-harbor"] h3,
+body[data-app="red-harbor"] .kpi .value,
+body[data-app="red-harbor"] .bf-stat-value {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.02em;
+  color: var(--rhb-text);
+}
+
+body[data-app="red-harbor"] .helper,
+body[data-app="red-harbor"] .bf-field-label,
+body[data-app="red-harbor"] .bf-stat-label,
+body[data-app="red-harbor"] .bf-note,
+body[data-app="red-harbor"] .bf-empty {
+  color: var(--rhb-muted);
+}
+
+/* Buttons */
+body[data-app="red-harbor"] .btn,
+body[data-app="red-harbor"] a.btn,
+body[data-app="red-harbor"] button.btn,
+body[data-app="red-harbor"] .linkbtn {
+  border-radius: 8px;
+  border: 1px solid var(--rhb-line);
+  background: rgba(255,255,255,0.03);
+  color: var(--rhb-text);
+  font-weight: 700;
+}
+
+body[data-app="red-harbor"] .btn:hover,
+body[data-app="red-harbor"] a.btn:hover,
+body[data-app="red-harbor"] button.btn:hover,
+body[data-app="red-harbor"] .linkbtn:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: var(--rhb-line-strong);
+}
+
+body[data-app="red-harbor"] .btn-red,
+body[data-app="red-harbor"] a.btn-red,
+body[data-app="red-harbor"] button.btn-red,
+body[data-app="red-harbor"] .primary,
+body[data-app="red-harbor"] .badge {
+  background: linear-gradient(180deg, var(--rhb-red) 0%, var(--rhb-red-2) 100%);
+  border: 1px solid rgba(154,67,58,0.8);
+  color: #fff;
+  border-radius: 8px;
+}
+
+body[data-app="red-harbor"] .btn-red:hover,
+body[data-app="red-harbor"] a.btn-red:hover,
+body[data-app="red-harbor"] button.btn-red:hover,
+body[data-app="red-harbor"] .primary:hover {
+  filter: none;
+  background: linear-gradient(180deg, #b04d44 0%, #8a3931 100%);
+}
+
+/* Inputs and form controls */
+body[data-app="red-harbor"] input,
+body[data-app="red-harbor"] select,
+body[data-app="red-harbor"] textarea,
+body[data-app="red-harbor"] .input,
+body[data-app="red-harbor"] .bf-input,
+body[data-app="red-harbor"] .bf-textarea {
+  background: rgba(241, 238, 231, 0.96);
+  color: var(--rhb-ink);
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+}
+
+body[data-app="red-harbor"] input::placeholder,
+body[data-app="red-harbor"] textarea::placeholder,
+body[data-app="red-harbor"] .input::placeholder,
+body[data-app="red-harbor"] .bf-input::placeholder,
+body[data-app="red-harbor"] .bf-textarea::placeholder {
+  color: rgba(30,29,26,0.48);
+}
+
+body[data-app="red-harbor"] input:focus,
+body[data-app="red-harbor"] select:focus,
+body[data-app="red-harbor"] textarea:focus,
+body[data-app="red-harbor"] .input:focus,
+body[data-app="red-harbor"] .bf-input:focus,
+body[data-app="red-harbor"] .bf-textarea:focus {
+  outline: none;
+  border-color: rgba(154,67,58,0.72);
+  box-shadow: 0 0 0 3px rgba(154,67,58,0.12);
+}
+
+/* Tables */
+body[data-app="red-harbor"] .table,
+body[data-app="red-harbor"] .pledges-table {
+  color: var(--rhb-text);
+}
+
+body[data-app="red-harbor"] .table th,
+body[data-app="red-harbor"] .table td,
+body[data-app="red-harbor"] .pledges-table th,
+body[data-app="red-harbor"] .pledges-table td {
+  border-bottom: 1px solid var(--rhb-line);
+}
+
+body[data-app="red-harbor"] .table th,
+body[data-app="red-harbor"] .pledges-table th {
+  color: var(--rhb-fog, #d9d4c8);
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+}
+
+/* Pills, tags, secondary markers */
+body[data-app="red-harbor"] .tag,
+body[data-app="red-harbor"] .bf-badge,
+body[data-app="red-harbor"] .bf-orgPill,
+body[data-app="red-harbor"] .orgpill {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--rhb-line);
+  color: var(--rhb-text);
+  border-radius: 999px;
+}
+
+/* Modal polish */
+body[data-app="red-harbor"] .bf-modal-backdrop {
+  background: rgba(7, 12, 15, 0.66);
+}
+
+body[data-app="red-harbor"] .bf-modal-header,
+body[data-app="red-harbor"] .bf-modal-footer {
+  background: transparent;
+}
+
+/* Mobile cards */
+body[data-app="red-harbor"] .bf-rowcard-title {
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--rhb-text);
+}
+
+/* Links */
+body[data-app="red-harbor"] a {
+  color: inherit;
+}
+
+/* Tiny bit of brand color where it matters */
+body[data-app="red-harbor"] .error,
+body[data-app="red-harbor"] [style*="crimson"] {
+  color: #ffb5ae !important;
+}

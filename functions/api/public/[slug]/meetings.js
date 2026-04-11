@@ -2,6 +2,11 @@
 import { getDB } from "../../_bf.js";
 import { getPublicCfg, getOrgIdBySlug } from "../../_lib/publicPageStore.js";
 
+
+async function ensureMeetingsAgendaColumn(db) {
+  try { await db.prepare("ALTER TABLE meetings ADD COLUMN agenda TEXT NOT NULL DEFAULT ''").run(); } catch {}
+}
+
 export async function onRequestGet({ env, params }) {
   const slug = params.slug;
   const db = getDB(env);

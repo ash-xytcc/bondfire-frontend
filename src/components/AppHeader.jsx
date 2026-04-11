@@ -197,7 +197,7 @@ function OrgNav({ variant = "desktop" }) {
                 }
               : undefined
           }
-          className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`} style={{ padding: "6px 10px", fontSize: 13, whiteSpace: "nowrap" }}
+          className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
           title="All workspaces"
         >
           All Orgs
@@ -217,7 +217,7 @@ function OrgNav({ variant = "desktop" }) {
                 }
               : undefined
           }
-          className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`} style={{ padding: "6px 10px", fontSize: 13, whiteSpace: "nowrap" }}
+          className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
           data-tour={tourId}
         >
           {label}
@@ -303,7 +303,7 @@ export default function AppHeader({ onLogout, showLogout }) {
         </div>
 
         <div className="bf-appHeader-right">
-          <div className="bf-nav-desktop" style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden", flexWrap: "nowrap" }} style={{ display: "flex", flexWrap: "wrap", gap: 8, minWidth: 0 }}>
+          <div className="bf-nav-desktop" style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden", flexWrap: "nowrap", minWidth: 0 }}>
             <OrgNav variant="desktop" />
           </div>
 

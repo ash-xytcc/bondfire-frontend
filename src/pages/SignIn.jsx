@@ -1,6 +1,6 @@
 // src/pages/SignIn.jsx
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { applyAppVariantToDocument, getAppBrand, isDpgVariant } from "../lib/appVariant.js";
 
 function fireAuthChanged() {

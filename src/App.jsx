@@ -124,15 +124,24 @@ async function fetchMe() {
 }
 
 function RequireAuth({ children }) {
-	const { authed, loading } = React.useContext(AuthCtx);
-	if (loading && !authed) {
-		return <div style={{ padding: 16 }} className="helper">Checking session…</div>;
-	}
-	if (!authed) return <Navigate to="/signin" replace />;
-	return children;
+        const { authed, loading } = React.useContext(AuthCtx);
+        const loc = useLocation();
+
+        if (loading) {
+                return <div style={{ padding: 16 }}>Loading…</div>;
+        }
+
+        return authed
+                ? children
+                : (
+                        <Navigate
+                                to="/signin"
+                                replace
+                                state={{ from: `${loc.pathname}${loc.search}${loc.hash}` }}
+                        />
+                );
 }
 
-/* ---------------------------------- Shell ---------------------------------- */
 function getDpgDefaultOrgPath() {
 	try {
 		const orgs = JSON.parse(localStorage.getItem("bf_orgs") || "[]");

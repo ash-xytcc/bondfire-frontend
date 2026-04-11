@@ -78,3 +78,20 @@ export async function ensureSchema(env) {
 
   `);
 }
+
+
+CREATE TABLE IF NOT EXISTS pledges (
+  id TEXT PRIMARY KEY,
+  org_id TEXT NOT NULL,
+  title TEXT NOT NULL DEFAULT '',
+  qty INTEGER NOT NULL DEFAULT 0,
+  unit TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  encrypted_blob TEXT,
+  key_version INTEGER,
+  FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_pledges_org ON pledges(org_id);
+

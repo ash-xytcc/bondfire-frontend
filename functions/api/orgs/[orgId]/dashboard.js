@@ -49,7 +49,31 @@ async function ensureInventoryTable(db) {
   try { await db.prepare("ALTER TABLE inventory ADD COLUMN key_version INTEGER").run(); } catch {}
 }
 
+
+async function ensurePledgesTable(db) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS pledges (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT '',
+      qty INTEGER NOT NULL DEFAULT 0,
+      unit TEXT NOT NULL DEFAULT '',
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      encrypted_blob TEXT,
+      key_version INTEGER,
+      FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
+    )
+  `).run();
+
+  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_pledges_org ON pledges(org_id)`).run();
+
+  try { await db.prepare("ALTER TABLE pledges ADD COLUMN encrypted_blob TEXT").run(); } catch {}
+  try { await db.prepare("ALTER TABLE pledges ADD COLUMN key_version INTEGER").run(); } catch {}
+}
+
 export async function onRequestGet({ env, request, params }) {
+  await ensurePledgesTable(env.BF_DB);
   await ensureInventoryTable(env.BF_DB);
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "viewer" });

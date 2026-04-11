@@ -208,7 +208,9 @@ function Shell() {
 	}), [state, refresh, logout]);
 
 	const HomeRoute = () =>
-		state.authed ? <Navigate to="/orgs" replace /> : <Navigate to="/signin" replace />;
+		redHarborMode
+			? <Navigate to="/red-harbor" replace />
+			: (state.authed ? <Navigate to="/orgs" replace /> : <Navigate to="/signin" replace />);
 
 	// Hide the header on public routes
 	const hideHeader = path === "/" || path.startsWith("/p/") || path === "/signin" || path === "/demo";

@@ -3,6 +3,16 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { applyAppVariantToDocument, getAppBrand, isDpgVariant } from "../lib/appVariant.js";
 
+function isDpgContextPath(path = "") {
+  return typeof path === "string" && (path.startsWith("/dpg/") || path.startsWith("/org/dpg/"));
+}
+
+function getPostSignInPath(location) {
+  const from = location?.state?.from;
+  if (typeof from === "string" && from.trim()) return from;
+  return "/dpg/app";
+}
+
 function fireAuthChanged() {
 	try {
 		window.dispatchEvent(new Event("bf-auth-changed"));
@@ -19,8 +29,9 @@ function startDemo(navigate) {
 
 export default function SignIn() {
 	const navigate = useNavigate();
-  const dpg = isDpgVariant();
-  const brand = getAppBrand();
+  const location = useLocation();
+  const dpg = isDpgVariant() || isDpgContextPath(location.pathname) || isDpgContextPath(location.state?.from);
+  const brand = dpg ? { ...getAppBrand(), name: "DPG", shortName: "DPG" } : getAppBrand();
 
 	const [mode, setMode] = useState("login");
 	const [email, setEmail] = useState("");
@@ -115,7 +126,7 @@ export default function SignIn() {
 			} catch {}
 
 			fireAuthChanged();
-			navigate("/orgs", { replace: true });
+			navigate(getPostSignInPath(location), { replace: true });
 		} catch (e2) {
 			setErr(typeof e2 === "string" ? e2 : e2?.message || "Auth failed");
 		} finally {
@@ -155,7 +166,7 @@ export default function SignIn() {
 			setMfaCode("");
 			setMfaRecovery("");
 			fireAuthChanged();
-			navigate("/orgs", { replace: true });
+			navigate(getPostSignInPath(location), { replace: true });
 		} catch (e2) {
 			setErr(typeof e2 === "string" ? e2 : e2?.message || "MFA failed");
 		} finally {

@@ -69,7 +69,7 @@ export async function requireMemberRole(db, orgId, userId, minRole) {
   // You likely already have this table. If your columns differ, edit this query.
   const row = await db
     .prepare(
-      `SELECT role FROM org_members WHERE org_id = ? AND user_id = ? LIMIT 1`
+      `SELECT role FROM org_memberships WHERE org_id = ? AND user_id = ? LIMIT 1`
     )
     .bind(orgId, userId)
     .first();

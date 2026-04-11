@@ -68,6 +68,12 @@ class ErrorBoundary extends React.Component {
 }
 
 /* ------------------------------ Auth Context ------------------------------ */
+const DPG_ORG_ID = "dpg";
+
+function DpgAppRedirect({ to = "overview" }) {
+        return <Navigate to={`/org/${DPG_ORG_ID}/${to}`} replace />;
+}
+
 const AuthCtx = React.createContext({
 	authed: false,
 	loading: true,
@@ -248,7 +254,16 @@ function Shell() {
 				{/* Landing */}
 				<Route path="/" element={<HomeRoute />} />
                                 <Route path="/dpg" element={<PublicHome />} />
-                                <Route path="/dpg/app" element={<AdminHome />} />
+                                <Route path="/dpg/app" element={<DpgAppRedirect to="overview" />} />
+                                <Route path="/dpg/app/overview" element={<DpgAppRedirect to="overview" />} />
+                                <Route path="/dpg/app/attendees" element={<DpgAppRedirect to="attendees" />} />
+                                <Route path="/dpg/app/inventory" element={<DpgAppRedirect to="inventory" />} />
+                                <Route path="/dpg/app/needs" element={<DpgAppRedirect to="needs" />} />
+                                <Route path="/dpg/app/meetings" element={<DpgAppRedirect to="meetings" />} />
+                                <Route path="/dpg/app/settings" element={<DpgAppRedirect to="settings" />} />
+                                <Route path="/dpg/app/drive" element={<DpgAppRedirect to="drive" />} />
+                                <Route path="/dpg/app/studio" element={<DpgAppRedirect to="studio" />} />
+                                <Route path="/dpg/app/sessions" element={<DpgAppRedirect to="sessions" />} />
 
 				{/* Orgs list */}
 				<Route

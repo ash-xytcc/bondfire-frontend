@@ -102,6 +102,12 @@ export function applyAppVariantToDocument() {
         font-family: var(--dpg-font) !important;
       }
 
+      body[data-app="dpg"],
+      body[data-app="dpg"],
+      body[data-app="dpg"] *:not(svg):not(path):not(code):not(pre) {
+        font-family: var(--dpg-font) !important;
+      }
+
       body[data-app="dpg"] #root,
       body[data-app="dpg"] .app-shell,
       body[data-app="dpg"] .page,

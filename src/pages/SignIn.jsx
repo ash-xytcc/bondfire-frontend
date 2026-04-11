@@ -32,7 +32,31 @@ export default function SignIn() {
   const location = useLocation();
   const dpg = isDpgVariant() || isDpgContextPath(location.pathname) || isDpgContextPath(location.state?.from);
   const brand = dpg ? { ...getAppBrand(), name: "DPG", shortName: "DPG" } : getAppBrand();
+	const pageStyle = dpg
+	? {
+		minHeight: "100vh",
+		background: "#f4f1ea",
+		color: "#1f2f28",
+		fontFamily: '"Inter", "Avenir Next", "Segoe UI", sans-serif',
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		padding: 24,
+		}
+	: {};
 
+	const cardStyle = dpg
+	? {
+		width: "100%",
+		maxWidth: 440,
+		background: "#fbf8f2",
+		border: "1px solid #d8cfbe",
+		borderRadius: 20,
+		boxShadow: "0 10px 30px rgba(38,70,54,0.08)",
+		padding: 24,
+		color: "#1f2f28",
+		}
+	: {};	
 	const [mode, setMode] = useState("login");
 	const [email, setEmail] = useState("");
 	const [pass, setPass] = useState("");
@@ -175,8 +199,11 @@ export default function SignIn() {
 	}
 
 	return (
-		<div className={`bf-auth-page${dpg ? " is-dpg" : ""}`}>
-      <div className="bf-auth-shell">
+		<div
+			className={`bf-auth-page${dpg ? " is-dpg" : ""}`}
+			style={pageStyle}
+		>
+      <div className="bf-auth-shell" style={cardStyle}>
         <div className="bf-auth-kicker">{dpg ? "Dual Power West organizer space" : "Bondfire"}</div>
 			<h1 style={{ marginBottom: 6 }}>{dpg ? "Welcome to Dual Power West" : "Welcome to Bondfire"}</h1>
 			<p className="helper" style={{ marginTop: 0 }}>
@@ -189,8 +216,8 @@ export default function SignIn() {
               : "Create your account and your first org."}
 			</p>
 
-			<div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-				<button
+			<div>
+					<button
 					type="button"
 					className={mode === "login" ? "btn-red" : "btn"}
 					onClick={() => {

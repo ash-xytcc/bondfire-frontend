@@ -41,7 +41,22 @@ export function getAppVariant() {
 }
 
 export function isDpgVariant() {
-  return getAppVariant() === "dpg";
+  try {
+    const h = window.location.hash || "";
+    const p = window.location.pathname || "";
+
+    // support BOTH legacy ?app=dpg AND new real routes
+    if (h.includes("/dpg/") || h.includes("/org/dpg/")) return true;
+    if (p.includes("/dpg/") || p.includes("/org/dpg/")) return true;
+
+    // legacy support
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("app") === "dpg") return true;
+
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 export function applyAppVariantToDocument() {

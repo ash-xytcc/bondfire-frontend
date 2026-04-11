@@ -116,6 +116,17 @@ export default function SignIn() {
       } catch {}
 
       fireAuthChanged();
+
+      // Red Harbor: skip org picker, go straight into first branch
+      try {
+        const orgsRes = await fetch("/api/orgs", { credentials: "include" });
+        const orgsData = await orgsRes.json().catch(() => ({}));
+        if (orgsRes.ok && orgsData?.ok && Array.isArray(orgsData.orgs) && orgsData.orgs.length > 0) {
+          navigate(`/org/${orgsData.orgs[0].id}`, { replace: true });
+          return;
+        }
+      } catch {}
+
       navigate("/orgs", { replace: true });
     } catch (e2) {
       setErr(typeof e2 === "string" ? e2 : e2?.message || "Auth failed");

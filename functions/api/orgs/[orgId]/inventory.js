@@ -32,7 +32,34 @@ async function ensureInventoryParsTable(db) {
 // encrypted_notes, encrypted_blob, key_version,
 // is_public, created_at, updated_at
 
+
+async function ensureInventoryTable(db) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS inventory (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      quantity INTEGER NOT NULL DEFAULT 0,
+      unit TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL DEFAULT '',
+      encrypted_blob TEXT,
+      key_version INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
+    )
+  `).run();
+
+  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_inventory_org ON inventory(org_id)`).run();
+  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_inventory_org_category ON inventory(org_id, category)`).run();
+
+  try { await db.prepare("ALTER TABLE inventory ADD COLUMN encrypted_blob TEXT").run(); } catch {}
+  try { await db.prepare("ALTER TABLE inventory ADD COLUMN key_version INTEGER").run(); } catch {}
+}
+
 export async function onRequestGet({ env, request, params }) {
+  await ensureInventoryTable(env.BF_DB);
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!a.ok) return a.resp;

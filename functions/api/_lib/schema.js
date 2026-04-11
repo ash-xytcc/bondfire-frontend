@@ -40,6 +40,7 @@ export async function ensureSchema(env) {
       org_id TEXT NOT NULL,
       title TEXT NOT NULL DEFAULT '',
       description TEXT NOT NULL DEFAULT '',
+  agenda TEXT NOT NULL DEFAULT '',
       location TEXT NOT NULL DEFAULT '',
       starts_at INTEGER,
       ends_at INTEGER,

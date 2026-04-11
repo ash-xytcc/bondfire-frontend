@@ -68,7 +68,13 @@ async function getRsvpCounts(db, orgId, meetingId) {
   };
 }
 
+
+async function ensureMeetingsAgendaColumn(db) {
+  try { await db.prepare("ALTER TABLE meetings ADD COLUMN agenda TEXT NOT NULL DEFAULT ''").run(); } catch {}
+}
+
 export async function onRequestGet({ env, request, params }) {
+  await ensureMeetingsAgendaColumn(env.BF_DB);
   const orgId = params.orgId;
   const meetingId = params.meetingId;
 

@@ -1,178 +1,155 @@
-import { getDB } from "../../../_bf.js";
-
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8" },
+const json = (data, init = 200) =>
+  new Response(JSON.stringify(data), {
+    status: init,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "access-control-allow-origin": "*",
+      "access-control-allow-methods": "GET,POST,OPTIONS",
+      "access-control-allow-headers": "content-type",
+    },
   });
-}
 
-async function ensureTable(db) {
+async function ensurePublicInbox(env) {
+  const db = env.BF_DB;
+
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS public_inbox (
       id TEXT PRIMARY KEY,
       org_id TEXT NOT NULL,
-      type TEXT NOT NULL DEFAULT 'intake',
-      source_kind TEXT,
+      kind TEXT NOT NULL DEFAULT 'message',
       name TEXT,
+      email TEXT,
+      phone TEXT,
       contact TEXT,
       details TEXT,
-      extra TEXT,
-      review_status TEXT NOT NULL DEFAULT 'new',
-      admin_note TEXT,
+      status TEXT NOT NULL DEFAULT 'new',
+      source TEXT,
+      event_slug TEXT,
+      attendee_count INTEGER,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     )
   `).run();
 
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_public_inbox_org_created
-    ON public_inbox(org_id, created_at DESC)
-  `).run();
+  try {
+    await db.prepare(`CREATE INDEX IF NOT EXISTS idx_public_inbox_org_created ON public_inbox(org_id, created_at DESC)`).run();
+  } catch {}
+  try {
+    await db.prepare(`CREATE INDEX IF NOT EXISTS idx_public_inbox_org_status ON public_inbox(org_id, status)`).run();
+  } catch {}
 
-  const info = await db.prepare(`PRAGMA table_info(public_inbox)`).all();
-  const cols = new Set((info?.results || []).map((r) => String(r.name || "").toLowerCase()));
+  const cols = await db.prepare(`PRAGMA table_info(public_inbox)`).all();
+  const names = new Set((cols.results || []).map(c => c.name));
 
-  const addCol = async (sql) => {
-    try {
-      await db.prepare(sql).run();
-    } catch {
-      // ignore if already added or unsupported duplicate
+  const missing = [
+    ["kind", "ALTER TABLE public_inbox ADD COLUMN kind TEXT NOT NULL DEFAULT 'message'"],
+    ["name", "ALTER TABLE public_inbox ADD COLUMN name TEXT"],
+    ["email", "ALTER TABLE public_inbox ADD COLUMN email TEXT"],
+    ["phone", "ALTER TABLE public_inbox ADD COLUMN phone TEXT"],
+    ["contact", "ALTER TABLE public_inbox ADD COLUMN contact TEXT"],
+    ["details", "ALTER TABLE public_inbox ADD COLUMN details TEXT"],
+    ["status", "ALTER TABLE public_inbox ADD COLUMN status TEXT NOT NULL DEFAULT 'new'"],
+    ["source", "ALTER TABLE public_inbox ADD COLUMN source TEXT"],
+    ["event_slug", "ALTER TABLE public_inbox ADD COLUMN event_slug TEXT"],
+    ["attendee_count", "ALTER TABLE public_inbox ADD COLUMN attendee_count INTEGER"],
+    ["updated_at", "ALTER TABLE public_inbox ADD COLUMN updated_at INTEGER"],
+  ];
+
+  for (const [name, sql] of missing) {
+    if (!names.has(name)) {
+      try { await db.prepare(sql).run(); } catch {}
     }
-  };
-
-  if (!cols.has("type")) {
-    await addCol(`ALTER TABLE public_inbox ADD COLUMN type TEXT NOT NULL DEFAULT 'intake'`);
-  }
-  if (!cols.has("source_kind")) {
-    await addCol(`ALTER TABLE public_inbox ADD COLUMN source_kind TEXT`);
-  }
-  if (!cols.has("review_status")) {
-    await addCol(`ALTER TABLE public_inbox ADD COLUMN review_status TEXT NOT NULL DEFAULT 'new'`);
-  }
-  if (!cols.has("admin_note")) {
-    await addCol(`ALTER TABLE public_inbox ADD COLUMN admin_note TEXT`);
-  }
-  if (!cols.has("updated_at")) {
-    await addCol(`ALTER TABLE public_inbox ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0`);
   }
 }
 
-function mapInboxItem(row) {
-  const sourceKind = String(row?.source_kind || "").trim().toLowerCase();
-  const type = String(row?.type || "intake").trim().toLowerCase();
+function now() {
+  return Date.now();
+}
 
-  let title = "Public intake";
-  if (sourceKind === "get_help") title = "Get Help";
-  else if (sourceKind === "volunteer") title = "Volunteer";
-  else if (sourceKind === "offer_resources") title = "Offer Resources";
-  else if (sourceKind === "inventory_request") title = "Inventory Request";
-  else if (type === "rsvp") title = "Meeting RSVP";
+function makeId() {
+  return crypto.randomUUID();
+}
 
-  let details = String(row?.details || "").trim();
-  let extra = String(row?.extra || "").trim();
-
-  if (sourceKind === "inventory_request" && extra) {
-    try {
-      const parsed = JSON.parse(extra);
-      if (parsed?.note) extra = String(parsed.note || "").trim();
-      if (Array.isArray(parsed?.items) && parsed.items.length) {
-        details = parsed.items
-          .map(
-            (item) =>
-              `${String(item?.name || "item").trim()} x ${Math.max(
-                1,
-                Math.floor(Number(item?.qty_requested || 1) || 1)
-              )}${item?.unit ? ` ${String(item.unit).trim()}` : ""}`
-          )
-          .join("\n");
-      }
-    } catch {
-      // keep raw values
-    }
-  }
-
-  return { ...row, title, details, extra };
+export async function onRequestOptions() {
+  return json({ ok: true });
 }
 
 export async function onRequestGet(context) {
   const { env, params } = context;
-  try {
-    const orgId = String(params?.orgId || "").trim();
-    if (!orgId) return json({ ok: false, error: "BAD_ORG" }, 400);
+  const orgId = params.orgId;
 
-    const db = getDB(env);
-    if (!db) return json({ ok: false, error: "DB_NOT_CONFIGURED" }, 500);
+  if (!orgId) return json({ ok: false, error: "ORG_REQUIRED" }, 400);
 
-    await ensureTable(db);
+  await ensurePublicInbox(env);
 
-    const rows = await db
-      .prepare(`
-        SELECT id, org_id, type, source_kind, name, contact, details, extra, review_status, admin_note, created_at, updated_at
-        FROM public_inbox
-        WHERE org_id = ?
-        ORDER BY COALESCE(updated_at, created_at) DESC, created_at DESC
-      `)
-      .bind(orgId)
-      .all();
+  const r = await env.BF_DB.prepare(`
+    SELECT id, org_id, kind, name, email, phone, contact, details, status, source, event_slug, attendee_count, created_at, updated_at
+    FROM public_inbox
+    WHERE org_id = ?
+    ORDER BY created_at DESC
+    LIMIT 200
+  `).bind(orgId).all();
 
-    return json({
-      ok: true,
-      items: (Array.isArray(rows?.results) ? rows.results : []).map(mapInboxItem),
-    });
-  } catch (err) {
-    return json(
-      { ok: false, error: "INTERNAL", detail: String(err?.message || err || "") },
-      500
-    );
-  }
+  return json({ ok: true, items: r.results || [] });
 }
 
-export async function onRequestPut(context) {
-  const { env, params, request } = context;
+export async function onRequestPost(context) {
+  const { request, env, params } = context;
+  const orgId = params.orgId;
+
+  if (!orgId) return json({ ok: false, error: "ORG_REQUIRED" }, 400);
+
+  await ensurePublicInbox(env);
+
+  let body;
   try {
-    const orgId = String(params?.orgId || "").trim();
-    if (!orgId) return json({ ok: false, error: "BAD_ORG" }, 400);
-
-    const body = await request.json().catch(() => ({}));
-    const id = body?.id != null ? String(body.id) : "";
-    if (!id) return json({ ok: false, error: "BAD_ID" }, 400);
-
-    const status = String(body?.review_status || "new").trim().toLowerCase();
-    const adminNote = String(body?.admin_note || "");
-
-    const db = getDB(env);
-    if (!db) return json({ ok: false, error: "DB_NOT_CONFIGURED" }, 500);
-
-    await ensureTable(db);
-
-    await db
-      .prepare(`
-        UPDATE public_inbox
-        SET review_status = ?, admin_note = ?, updated_at = unixepoch('now') * 1000
-        WHERE org_id = ? AND id = ?
-      `)
-      .bind(status, adminNote, orgId, id)
-      .run();
-
-    const rows = await db
-      .prepare(`
-        SELECT id, org_id, type, source_kind, name, contact, details, extra, review_status, admin_note, created_at, updated_at
-        FROM public_inbox
-        WHERE org_id = ?
-        ORDER BY COALESCE(updated_at, created_at) DESC, created_at DESC
-      `)
-      .bind(orgId)
-      .all();
-
-    return json({
-      ok: true,
-      items: (Array.isArray(rows?.results) ? rows.results : []).map(mapInboxItem),
-    });
-  } catch (err) {
-    return json(
-      { ok: false, error: "INTERNAL", detail: String(err?.message || err || "") },
-      500
-    );
+    body = await request.json();
+  } catch {
+    return json({ ok: false, error: "BAD_JSON" }, 400);
   }
+
+  const t = now();
+  const item = {
+    id: makeId(),
+    org_id: orgId,
+    kind: String(body.kind || "message").trim() || "message",
+    name: body.name == null ? "" : String(body.name),
+    email: body.email == null ? "" : String(body.email),
+    phone: body.phone == null ? "" : String(body.phone),
+    contact: body.contact == null ? "" : String(body.contact),
+    details: body.details == null ? "" : String(body.details),
+    status: String(body.status || "new").trim() || "new",
+    source: body.source == null ? "" : String(body.source),
+    event_slug: body.event_slug == null ? "" : String(body.event_slug),
+    attendee_count: Number(body.attendee_count || 1) || 1,
+    created_at: t,
+    updated_at: t,
+  };
+
+  if (!item.name && !item.email && !item.phone && !item.details) {
+    return json({ ok: false, error: "EMPTY_SUBMISSION" }, 400);
+  }
+
+  await env.BF_DB.prepare(`
+    INSERT INTO public_inbox (
+      id, org_id, kind, name, email, phone, contact, details, status, source, event_slug, attendee_count, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    item.id,
+    item.org_id,
+    item.kind,
+    item.name,
+    item.email,
+    item.phone,
+    item.contact || item.email || item.phone || "",
+    item.details,
+    item.status,
+    item.source,
+    item.event_slug,
+    item.attendee_count,
+    item.created_at,
+    item.updated_at
+  ).run();
+
+  return json({ ok: true, item }, 201);
 }

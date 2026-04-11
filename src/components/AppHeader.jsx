@@ -1,4 +1,3 @@
-// src/components/AppHeader.jsx
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { getOrgModules } from "../lib/orgPacks.js";
@@ -11,7 +10,6 @@ function useOrgIdFromPath() {
   const pathname = loc.pathname || "";
   const hash = loc.hash || "";
 
-  // Support BOTH BrowserRouter (/org/...) and HashRouter (#/org/...)
   const m1 = pathname.match(/\/org\/([^/]+)/i);
   const m2 = hash.match(/#\/org\/([^/]+)/i);
 
@@ -43,7 +41,6 @@ function readOrgLogo(orgId) {
   }
 }
 
-// Older patches referenced this name. Keep it so we don't trip over our own feet again.
 function readOrgNameFromStorage(orgId) {
   return readOrgName(orgId);
 }
@@ -95,7 +92,7 @@ const Brand = ({ orgId, logoSrc }) => {
         <span
           className="bf-brand-org"
           title={label}
-          style={{ display: "inline-flex", alignItems: "center", gap: 10 }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 10, minWidth: 0 }}
         >
           {orgLogo ? (
             <img
@@ -109,12 +106,24 @@ const Brand = ({ orgId, logoSrc }) => {
                 objectFit: "cover",
                 border: "1px solid rgba(255,255,255,0.16)",
                 background: "rgba(255,255,255,0.06)",
+                flex: "0 0 auto",
               }}
               loading="lazy"
               decoding="async"
             />
           ) : null}
-          <span className="bf-org-name">{label}</span>
+          <span
+            className="bf-org-name"
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              display: "inline-block",
+              maxWidth: 220,
+            }}
+          >
+            {label}
+          </span>
         </span>
       ) : null}
     </div>
@@ -123,10 +132,8 @@ const Brand = ({ orgId, logoSrc }) => {
 
 function OrgNav({ variant = "desktop" }) {
   const orgId = useOrgIdFromPath();
-
   const isDrawer = variant === "drawer";
 
-  // Inline styles for drawer so CSS can't hide it.
   const drawerNavStyle = isDrawer
     ? {
         display: "flex",
@@ -134,7 +141,17 @@ function OrgNav({ variant = "desktop" }) {
         gap: 10,
         marginTop: 14,
       }
-    : undefined;
+    : {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        flexWrap: "nowrap",
+        overflowX: "auto",
+        overflowY: "hidden",
+        whiteSpace: "nowrap",
+        minWidth: 0,
+        scrollbarWidth: "thin",
+      };
 
   const drawerLinkStyle = isDrawer
     ? {
@@ -162,8 +179,6 @@ function OrgNav({ variant = "desktop" }) {
         ["meetings", "Meetings", `${base}/meetings`, "nav-meetings"],
         ["drive", "Documents", `${base}/drive`, "nav-drive"],
         ["studio", "Studio", `${base}/studio`, "nav-studio"],
-        ["settings", "Branch Settings", `${base}/settings`, "nav-settings"],
-        ["chat", "Comms", `${base}/chat`, "nav-chat"],
       ]
     : [
         ["overview", "Dashboard", `${base}/overview`, "nav-overview"],
@@ -174,10 +189,8 @@ function OrgNav({ variant = "desktop" }) {
         ["drive", "Drive", `${base}/drive`, "nav-drive"],
         ["studio", "Studio", `${base}/studio`, "nav-studio"],
         ["settings", "Settings", `${base}/settings`, "nav-settings"],
-        ["chat", "Chat", `${base}/chat`, "nav-chat"],
         ["public", "Public Page", `${base}/public`, "nav-public"],
       ];
-  const brandLabel = isRedHarbor ? "IWW Red Harbor" : "Bondfire";
 
   const items = base
     ? defs
@@ -192,23 +205,6 @@ function OrgNav({ variant = "desktop" }) {
       style={drawerNavStyle}
       data-bf-orgnav={isDrawer ? "drawer" : "desktop"}
     >
-      <NavLink
-        to="/orgs"
-        style={({ isActive }) =>
-          isDrawer
-            ? {
-                ...drawerLinkStyle,
-                background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
-                border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
-              }
-            : undefined
-        }
-        className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
-        title={isRedHarbor ? "All branches" : "All orgs"}
-      >
-        {isRedHarbor ? "All Branches" : "All Orgs"}
-      </NavLink>
-
       {items.map(([label, to, tourId]) => (
         <NavLink
           key={to}
@@ -220,10 +216,17 @@ function OrgNav({ variant = "desktop" }) {
                   background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
                   border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
                 }
-              : undefined
+              : {
+                  fontSize: 13,
+                  lineHeight: 1.1,
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  flex: "0 0 auto",
+                }
           }
           className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
           data-tour={tourId}
+          title={label}
         >
           {label}
         </NavLink>
@@ -236,7 +239,6 @@ export default function AppHeader({ onLogout, showLogout }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const loc = useLocation();
 
-  // Debug toggle: add ?debugNav=1 to URL
   const debugNav =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).has("debugNav");
@@ -295,12 +297,22 @@ export default function AppHeader({ onLogout, showLogout }) {
   return (
     <>
       <header className="bf-appHeader">
-        <div className="bf-appHeader-left">
+        <div className="bf-appHeader-left" style={{ minWidth: 0, flex: "0 1 auto" }}>
           <Brand />
         </div>
 
-        <div className="bf-appHeader-right">
-          <div className="bf-nav-desktop">
+        <div
+          className="bf-appHeader-right"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            minWidth: 0,
+            flex: "1 1 auto",
+            justifyContent: "flex-end",
+          }}
+        >
+          <div className="bf-nav-desktop" style={{ minWidth: 0, flex: "1 1 auto" }}>
             <OrgNav variant="desktop" />
           </div>
 
@@ -336,7 +348,10 @@ export default function AppHeader({ onLogout, showLogout }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: 10,
+              gap: 8,
+              overflowX: "auto",
+              whiteSpace: "nowrap",
+              padding: "6px 10px",
             }}
           >
             <div

@@ -12,6 +12,9 @@ function useOrgIdFromPath() {
   const m2 = hash.match(/#\/org\/([^/]+)/i);
 
   const raw = (m1 && m1[1]) || (m2 && m2[1]) || null;
+  React.useEffect(() => {
+    applyAppVariantToDocument();
+  }, [location.pathname, location.search, location.hash]);
   return raw ? decodeURIComponent(raw) : null;
 }
 

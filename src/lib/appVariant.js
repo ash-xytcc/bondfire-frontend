@@ -60,11 +60,20 @@ export function isDpgVariant() {
 }
 
 export function applyAppVariantToDocument() {
-  if (typeof document === "undefined") return;
-  const variant = getAppVariant();
-  document.body.setAttribute("data-app-variant", variant);
-  document.documentElement.setAttribute("data-app-variant", variant);
-  document.title = variant === "dpg" ? "Dual Power West" : "Bondfire";
+  try {
+    const brand = getAppBrand();
+    const dpg = isDpgVariant();
+
+    document.documentElement.dataset.app = dpg ? "dpg" : "bondfire";
+    document.body.dataset.app = dpg ? "dpg" : "bondfire";
+
+    if (dpg) {
+      document.documentElement.style.setProperty("--app-primary", brand.primary || "#264636");
+      document.documentElement.style.setProperty("--app-accent", brand.accent || "#e3a7a5");
+      document.documentElement.style.setProperty("--app-bg", brand.background || "#264636");
+      document.documentElement.style.setProperty("--app-text", brand.text || "#ffffff");
+    }
+  } catch {}
 }
 
 export function getAppBrand() {

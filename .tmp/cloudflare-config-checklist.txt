@@ -1,0 +1,22 @@
+=== LIKELY CLOUDFLARE BINDINGS ===
+BF_DB -> D1 database binding
+
+=== LIKELY TEXT VARS / SECRETS ===
+2 -> text var or secret
+BF_E2EE -> text var or secret
+BF_PUBLIC -> text var or secret
+BF_WRITE_LOCKED -> text var or secret
+DB -> text var or secret
+DYNAMICTOP_PTR -> text var or secret
+JWT_SECRET -> text var or secret
+MFA_ENC_KEY -> text var or secret
+PIXABAY_API_KEY -> text var or secret
+RECOVERY_PEPPER -> text var or secret
+STACKTOP -> text var or secret
+STACK_MAX -> text var or secret
+TOTP_ISSUER -> text var or secret
+VITE_API_BASE_URL -> text var or secret
+VITE_PIXABAY_API_KEY -> text var or secret
+_ -> text var or secret
+__ -> text var or secret
+___ -> text var or secret

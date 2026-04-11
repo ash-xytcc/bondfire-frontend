@@ -35,5 +35,44 @@ export async function ensureSchema(env) {
       created_at INTEGER,
       created_by TEXT
     );
+    CREATE TABLE IF NOT EXISTS meetings (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
+      location TEXT NOT NULL DEFAULT '',
+      starts_at INTEGER,
+      ends_at INTEGER,
+      is_public INTEGER NOT NULL DEFAULT 0,
+      encrypted_notes TEXT,
+      encrypted_blob TEXT,
+      key_version INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_meetings_org ON meetings(org_id);
+    CREATE INDEX IF NOT EXISTS idx_meetings_org_start ON meetings(org_id, starts_at);
+    CREATE INDEX IF NOT EXISTS idx_meetings_public ON meetings(is_public);
+
+    CREATE TABLE IF NOT EXISTS inventory (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      quantity INTEGER NOT NULL DEFAULT 0,
+      unit TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL DEFAULT '',
+      encrypted_blob TEXT,
+      key_version INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_inventory_org ON inventory(org_id);
+    CREATE INDEX IF NOT EXISTS idx_inventory_org_category ON inventory(org_id, category);
+
   `);
 }

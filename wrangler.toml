@@ -1,0 +1,8 @@
+name = "redharbor"
+compatibility_date = "2026-04-11"
+
+[[d1_databases]]
+binding = "BF_DB"
+database_name = "redharbordb" 
+database_id = "6524680b-b632-4650-a6b3-3d8a9fd85c6d"
+migrations_dir = "migrations"

@@ -14,6 +14,31 @@ async function getOrgCryptoKeyVersion(db, orgId) {
 	}
 }
 
+async function ensureMeetingsTable(db) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS meetings (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
+      location TEXT NOT NULL DEFAULT '',
+      starts_at INTEGER,
+      ends_at INTEGER,
+      is_public INTEGER NOT NULL DEFAULT 0,
+      encrypted_notes TEXT,
+      encrypted_blob TEXT,
+      key_version INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
+    )
+  `).run();
+
+  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_meetings_org ON meetings(org_id)`).run();
+  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_meetings_org_start ON meetings(org_id, starts_at)`).run();
+  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_meetings_public ON meetings(is_public)`).run();
+}
+
 async function ensureMeetingsZkColumns(db) {
 	try { await db.prepare("ALTER TABLE meetings ADD COLUMN encrypted_notes TEXT").run(); } catch {}
 	try { await db.prepare("ALTER TABLE meetings ADD COLUMN encrypted_blob TEXT").run(); } catch {}
@@ -39,6 +64,7 @@ export async function onRequestGet({ env, request, params }) {
   const a = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!a.ok) return a.resp;
 
+  await ensureMeetingsTable(env.BF_DB);
   await ensureMeetingsPublicColumn(env.BF_DB);
 	await ensureMeetingsZkColumns(env.BF_DB);
 
@@ -68,6 +94,7 @@ export async function onRequestPost({ env, request, params }) {
   const startsAt = Number.isFinite(Number(body.starts_at)) ? Number(body.starts_at) : t;
   const endsAt = Number.isFinite(Number(body.ends_at)) ? Number(body.ends_at) : startsAt;
 
+  await ensureMeetingsTable(env.BF_DB);
   await ensureMeetingsPublicColumn(env.BF_DB);
 	await ensureMeetingsZkColumns(env.BF_DB);
 
@@ -122,6 +149,8 @@ export async function onRequestPut({ env, request, params }) {
   const id = String(body.id || "");
   if (!id) return bad(400, "MISSING_ID");
 
+ 
+  await ensureMeetingsTable(env.BF_DB);
   await ensureMeetingsPublicColumn(env.BF_DB);
 	await ensureMeetingsZkColumns(env.BF_DB);
 

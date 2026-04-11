@@ -73,7 +73,13 @@ async function ensureMeetingsAgendaColumn(db) {
   try { await db.prepare("ALTER TABLE meetings ADD COLUMN agenda TEXT NOT NULL DEFAULT ''").run(); } catch {}
 }
 
+
+async function ensureMeetingsNotesColumn(db) {
+  try { await db.prepare("ALTER TABLE meetings ADD COLUMN notes TEXT NOT NULL DEFAULT ''").run(); } catch {}
+}
+
 export async function onRequestGet({ env, request, params }) {
+  await ensureMeetingsNotesColumn(env.BF_DB);
   await ensureMeetingsAgendaColumn(env.BF_DB);
   const orgId = params.orgId;
   const meetingId = params.meetingId;

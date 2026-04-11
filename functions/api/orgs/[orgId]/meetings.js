@@ -39,6 +39,7 @@ async function ensureMeetingsTable(db) {
   await db.prepare(`CREATE INDEX IF NOT EXISTS idx_meetings_public ON meetings(is_public)`).run();
 
   try { await db.prepare("ALTER TABLE meetings ADD COLUMN agenda TEXT NOT NULL DEFAULT ''").run(); } catch {}
+  try { await db.prepare("ALTER TABLE meetings ADD COLUMN notes TEXT NOT NULL DEFAULT ''").run(); } catch {}
 }
 
 async function ensureMeetingsZkColumns(db) {

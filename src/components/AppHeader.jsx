@@ -166,7 +166,7 @@ function OrgNav({ variant = "desktop" }) {
             ]
           : [
               ["Dashboard", `${base}/overview`, "nav-overview"],
-              ["People", `${base}/people`, "nav-people"],
+              ["Attendees", `${base}/people`, "nav-people"],
               ["Inventory", `${base}/inventory`, "nav-inventory"],
               ["Needs", `${base}/needs`, "nav-needs"],
               ["Meetings", `${base}/meetings`, "nav-meetings"],

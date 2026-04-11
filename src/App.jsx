@@ -306,7 +306,7 @@ function Shell() {
 					<Route index element={<Overview />} />
 					<Route path="overview" element={<Overview />} />
 					<Route path="attendees" element={<Attendees />} />
-					<Route path="people" element={isDpgVariant() ? <Navigate to="../overview" replace /> : <People />} />
+					<Route path="people" element={<People />} />
 					<Route path="inventory" element={<Inventory />} />
 					<Route path="needs" element={<Needs />} />
 					<Route path="meetings" element={<Meetings />} />

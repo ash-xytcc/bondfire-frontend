@@ -5,6 +5,20 @@ export default function RedHarborLanding() {
   return (
     <main className="rh-page">
       <section className="rh-hero">
+        <div className="rh-topbar">
+          <div className="rh-container rh-topbar-inner">
+            <a className="rh-signin-link" href="/app/#/signin">
+              Sign In
+            </a>
+          </div>
+        </div>
+        <div className="rh-topbar">
+          <div className="rh-container rh-topbar-inner">
+            <a className="rh-signin-link" href="/app/#/signin">
+              Sign In
+            </a>
+          </div>
+        </div>
         <div className="rh-overlay" />
         <div className="rh-container rh-hero-inner">
           <div className="rh-kicker">Industrial Workers of the World</div>

@@ -247,8 +247,9 @@ function Shell() {
 				<Route path="/demo" element={<DemoBoot />} />
 
 				{/* Landing */}
-				<Route path="/" element={<PublicHome />} />
-                                <Route path="/app" element={<AdminHome />} />
+				<Route path="/" element={<HomeRoute />} />
+                                <Route path="/dpg" element={<PublicHome />} />
+                                <Route path="/dpg/app" element={<AdminHome />} />
 
 				{/* Orgs list */}
 				<Route

@@ -1811,3 +1811,52 @@ body[data-app="dpg"] .bf-auth-page.is-dpg textarea::placeholder,
 body[data-app="dpg"] .bf-auth-page.is-dpg .input::placeholder{
   color: #6f7d76 !important;
 }
+
+
+/* ===== HARD OVERRIDE: DPG sign-in buttons + inputs ===== */
+html[data-app="dpg"] body .bf-auth-page.is-dpg button,
+html[data-app="dpg"] body .bf-auth-page.is-dpg .btn,
+html[data-app="dpg"] body .bf-auth-page.is-dpg .btn-red,
+html[data-app="dpg"] body .bf-auth-page.is-dpg a.btn,
+html[data-app="dpg"] body .bf-auth-page.is-dpg a.btn-red {
+  background: #264636 !important;
+  border: 1px solid #3f5f4d !important;
+  color: #f7f2e8 !important;
+}
+
+/* hover */
+html[data-app="dpg"] body .bf-auth-page.is-dpg button:hover,
+html[data-app="dpg"] body .bf-auth-page.is-dpg .btn:hover,
+html[data-app="dpg"] body .bf-auth-page.is-dpg .btn-red:hover {
+  background: #2f5644 !important;
+  border-color: #567a66 !important;
+}
+
+/* primary submit (make it slightly accented) */
+html[data-app="dpg"] body .bf-auth-page.is-dpg button[type="submit"],
+html[data-app="dpg"] body .bf-auth-page.is-dpg .btn-red {
+  background: #c98888 !important;
+  border-color: #e3a7a5 !important;
+  color: #fff8f4 !important;
+}
+
+/* inputs */
+html[data-app="dpg"] body .bf-auth-page.is-dpg input,
+html[data-app="dpg"] body .bf-auth-page.is-dpg textarea,
+html[data-app="dpg"] body .bf-auth-page.is-dpg select,
+html[data-app="dpg"] body .bf-auth-page.is-dpg .input {
+  background: #fffdf9 !important;
+  border: 1px solid #d8cfbe !important;
+  color: #1f2f28 !important;
+}
+
+/* placeholders */
+html[data-app="dpg"] body .bf-auth-page.is-dpg input::placeholder,
+html[data-app="dpg"] body .bf-auth-page.is-dpg textarea::placeholder {
+  color: #6f7d76 !important;
+}
+
+/* kill ANY black backgrounds sneaking in */
+html[data-app="dpg"] body .bf-auth-page.is-dpg * {
+  box-shadow: none !important;
+}

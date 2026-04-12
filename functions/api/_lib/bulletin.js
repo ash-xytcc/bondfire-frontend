@@ -17,22 +17,22 @@ export async function ensureBulletinTable(db) {
       published_at TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
+    )
   `);
 
   await db.exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_bulletin_posts_org_slug
-    ON bulletin_posts(org_id, slug);
+    ON bulletin_posts(org_id, slug)
   `);
 
   await db.exec(`
     CREATE INDEX IF NOT EXISTS idx_bulletin_posts_org_status_published
-    ON bulletin_posts(org_id, status, published_at DESC);
+    ON bulletin_posts(org_id, status, published_at DESC)
   `);
 
   await db.exec(`
     CREATE INDEX IF NOT EXISTS idx_bulletin_posts_org_updated
-    ON bulletin_posts(org_id, updated_at DESC);
+    ON bulletin_posts(org_id, updated_at DESC)
   `);
 }
 

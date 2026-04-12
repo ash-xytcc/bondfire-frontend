@@ -31,18 +31,7 @@ export function ThemeProvider({ children }) {
   const [theme, setThemeState] = React.useState(getInitialTheme);
 
   React.useEffect(() => {
-    const root = document.documentElement;
-    const body = document.body;
-
-    root.setAttribute("data-theme", theme);
-    body.setAttribute("data-theme", theme);
-
-    root.classList.remove("theme-light", "theme-dark");
-    body.classList.remove("theme-light", "theme-dark");
-
-    root.classList.add(theme === "dark" ? "theme-dark" : "theme-light");
-    body.classList.add(theme === "dark" ? "theme-dark" : "theme-light");
-
+    document.documentElement.setAttribute("data-theme", theme);
     try {
       localStorage.setItem(STORAGE_KEY, theme);
     } catch {}

@@ -2059,28 +2059,3 @@ body[data-app="dpg"] .bf-appHeader-right{
   min-width:auto !important;
   margin-left:0 !important;
 }
-
-
-/* BF_MINIMAL_THEME_TOGGLE */
-html.theme-dark,
-body.theme-dark,
-body.theme-dark #root {
-  background: #121715 !important;
-  color: #f3efe8 !important;
-}
-
-body.theme-dark input,
-body.theme-dark textarea,
-body.theme-dark select {
-  background: #202825 !important;
-  color: #f3efe8 !important;
-  border-color: rgba(255,255,255,0.16) !important;
-}
-
-body.theme-dark button {
-  border-color: rgba(255,255,255,0.16);
-}
-
-body.theme-dark a {
-  color: #c7e6d2 !important;
-}

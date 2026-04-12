@@ -1,6 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
-import BulletinArticle from "../components/BulletinArticle";
+import BulletinFeedList from "../components/BulletinFeedList";
 
 async function fetchJson(url, options) {
   const safeOptions = options || {};
@@ -22,9 +21,8 @@ async function fetchJson(url, options) {
   return res.json();
 }
 
-export default function BulletinArticlePage() {
-  const { slug } = useParams();
-  const [post, setPost] = React.useState(null);
+export default function BulletinPublicPage() {
+  const [posts, setPosts] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
 
@@ -35,10 +33,10 @@ export default function BulletinArticlePage() {
       try {
         setLoading(true);
         setError("");
-        const data = await fetchJson(`/api/bulletin/${slug}`);
-        if (live) setPost(data);
+        const data = await fetchJson("/api/bulletin");
+        if (live) setPosts(data);
       } catch (err) {
-        if (live) setError(err?.message || "Failed to load article");
+        if (live) setError(err?.message || "Failed to load bulletin");
       } finally {
         if (live) setLoading(false);
       }
@@ -47,10 +45,10 @@ export default function BulletinArticlePage() {
     return () => {
       live = false;
     };
-  }, [slug]);
+  }, []);
 
-  if (loading) return <div className="bulletin-shell">Loading article…</div>;
-  if (error || !post) return <div className="bulletin-shell">Unable to load article. {error}</div>;
+  if (loading) return <div className="bulletin-shell">Loading bulletin…</div>;
+  if (error) return <div className="bulletin-shell">Failed to load bulletin. {error}</div>;
 
-  return <BulletinArticle post={post} />;
+  return <BulletinFeedList posts={posts} />;
 }

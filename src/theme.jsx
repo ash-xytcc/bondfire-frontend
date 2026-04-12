@@ -16,6 +16,7 @@ function getInitialTheme() {
 
   try {
     if (
+      typeof window !== "undefined" &&
       window.matchMedia &&
       window.matchMedia("(prefers-color-scheme: dark)").matches
     ) {

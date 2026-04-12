@@ -118,23 +118,7 @@ body.rh-body {
   overflow: hidden;
 }
 
-.rh-board::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 15%, rgba(255,255,255,0.08), transparent 12%),
-    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06), transparent 14%),
-    repeating-linear-gradient(
-      0deg,
-      transparent 0,
-      transparent 29px,
-      rgba(255,255,255,0.02) 30px
-    );
-  mix-blend-mode: screen;
-  opacity: 0.45;
-  pointer-events: none;
-}
+.rh-board
 
 .rh-board-grid {
   position: relative;
@@ -157,25 +141,11 @@ body.rh-body {
 }
 
 .rh-note::before,
-.rh-note::after {
-  content: "";
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  background: #6d2f2b;
-  box-shadow: 0 0 0 3px rgba(109,47,43,0.10);
-}
+.rh-note
 
-.rh-note::before {
-  top: 12px;
-  left: 12px;
-}
+.rh-note
 
-.rh-note::after {
-  top: 12px;
-  right: 12px;
-}
+.rh-note
 
 .rh-note-brand {
   margin: 0 0 10px;
@@ -267,18 +237,7 @@ body.rh-body {
   overflow: hidden;
 }
 
-.rh-metal::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 8% 8%, rgba(255,255,255,0.12), transparent 5%),
-    radial-gradient(circle at 92% 10%, rgba(255,255,255,0.10), transparent 5%),
-    radial-gradient(circle at 8% 92%, rgba(255,255,255,0.10), transparent 5%),
-    radial-gradient(circle at 92% 92%, rgba(255,255,255,0.10), transparent 5%);
-  pointer-events: none;
-  opacity: 0.6;
-}
+.rh-metal
 
 .rh-metal-header {
   position: relative;

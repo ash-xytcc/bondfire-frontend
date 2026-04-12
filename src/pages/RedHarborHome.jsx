@@ -2,18 +2,20 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "../styles/redharbor-public-pass1.css";
 
-const bulletinSidePosts = [
+const articleList = [
   {
-    title: "What Red Harbor is trying to build",
-    body:
-      "The branch frames its goal as rebuilding wobbly labor organizing on the Harbor while expanding who benefits from that organizing beyond narrow workplace definitions.",
-    sectionId: "join",
+    title: "The Aberdeen IWW Is Back",
+    date: "October 2023",
+    summary:
+      "A public statement marking the return of the branch to the Harbor, outlining its goals, its broader view of who organizing should benefit, and its commitment to learning from past struggles.",
+    sectionId: "bulletin-feature",
   },
   {
-    title: "The Harbor has union memory",
-    body:
-      "The public site roots current organizing in Grays Harbor labor history, including the free speech fight in Aberdeen and major struggles led by Wobblies in timber country.",
-    sectionId: "history",
+    title: "The IWW and The Hobo, A History",
+    date: "October 2023",
+    summary:
+      "A historical reading and reference post connecting local labor memory to broader IWW traditions, migration, and working class struggle.",
+    sectionId: "bulletin-archive",
   },
 ];
 
@@ -158,21 +160,19 @@ export default function RedHarborHome() {
             <div className="rh-card">
               <h3>A place with a real union history</h3>
               <p>
-                Grays Harbor was once one of the most densely unionized regions in
-                the Pacific Northwest. Early IWW organizing here drew strength from
-                lumber workers, immigrant workers, and others excluded or ignored by
-                narrower craft union structures.
+                Grays Harbor was one of the most densely unionized regions in the
+                Pacific Northwest, and IWW organizing on the Harbor grew through
+                conflicts like the Aberdeen Free Speech Fight and timber struggles
+                in the early twentieth century.
               </p>
             </div>
 
             <div className="rh-card">
               <h3>Not starting from nothing</h3>
               <p>
-                The Harbor’s history includes the Aberdeen free speech fight,
-                organizing among timber workers, and major struggles against bosses,
-                vigilantes, and civic repression. Red Harbor is building with that
-                memory intact rather than pretending local labor history began
-                yesterday.
+                Red Harbor is building with that history intact rather than acting
+                like local labor memory has to be invented from scratch every few
+                years by whoever just discovered a serif font.
               </p>
             </div>
           </div>
@@ -221,72 +221,64 @@ export default function RedHarborHome() {
             <h2>Publications and updates</h2>
           </div>
 
-          <div className="rh-bulletin-feature">
-            <article className="rh-card rh-feature-card">
-              <p className="rh-feature-kicker">Featured bulletin</p>
-              <h3>The Aberdeen IWW Is Back</h3>
-              <p>
-                After nearly one hundred years, the branch has returned to the Harbor
-                to reclaim labor organizing that it describes as part of the region’s
-                own tradition. The public statement frames this return not as nostalgia,
-                but as a practical effort to rebuild local worker power. It says the
-                branch wants to organize broadly, study past struggles on the Harbor,
-                and refuse the pattern of being driven out again.
-              </p>
-              <p>
-                The statement also pushes beyond narrow definitions of the worker,
-                arguing that organizing should benefit people with jobs, people without
-                employment, people living on the streets, and others whose lives are
-                shaped by exploitation and class power. It describes agitation,
-                education, and organization as necessary until everyone has what they
-                need.
-              </p>
-              <div className="rh-feature-quote">
-                <p>
-                  “We intend to study and learn from our past struggles on the Harbor
-                  and do not intend to be ran out of town again.”
-                </p>
+          <div className="rh-bulletin-layout">
+            <article id="bulletin-feature" className="rh-article">
+              <div className="rh-article-meta">
+                <span className="rh-article-tag">Featured bulletin</span>
+                <span className="rh-article-date">October 2023</span>
               </div>
+
+              <h3 className="rh-article-title">The Aberdeen IWW Is Back</h3>
+
+              <p>
+                After nearly one hundred years, the branch announced its return to
+                the Harbor to reclaim a local tradition of radical labor organizing.
+                The statement presents that return as practical rather than nostalgic:
+                rebuild worker power here, study prior struggles here, and refuse the
+                cycle of being run out of town again.
+              </p>
+
+              <p>
+                The statement also makes a point that matters. It does not treat the
+                category of “worker” as a sacred little box. It argues that organizing
+                should benefit people with jobs, people without employment, people
+                living on the streets, and others whose lives are shaped by class
+                domination and exploitation.
+              </p>
+
+              <blockquote className="rh-article-quote">
+                We intend to study and learn from our past struggles on the Harbor
+                and do not intend to be ran out of town again.
+              </blockquote>
+
+              <p>
+                The result is a public declaration of intent: remember the Harbor’s
+                labor history, reclaim a place for radical organizing, and keep
+                agitating, educating, and organizing until people have what they need.
+              </p>
             </article>
 
-            <div className="rh-grid-two rh-bulletin-sidegrid">
-              {bulletinSidePosts.map((post) => (
-                <article className="rh-card" key={post.title}>
-                  <h3>{post.title}</h3>
-                  <p>{post.body}</p>
-                  <SectionLink id={post.sectionId} className="rh-inline-link">Read more</SectionLink>
+            <aside className="rh-article-list" id="bulletin-archive">
+              <h3 className="rh-article-list-title">More bulletin posts</h3>
+
+              {articleList.map((post) => (
+                <article className="rh-article-list-item" key={post.title}>
+                  <div className="rh-article-list-meta">{post.date}</div>
+                  <h4>{post.title}</h4>
+                  <p>{post.summary}</p>
+                  <SectionLink id={post.sectionId} className="rh-inline-link">
+                    Read post
+                  </SectionLink>
                 </article>
               ))}
-            </div>
-          </div>
-
-          <div className="rh-grid-two" style={{ marginTop: 18 }}>
-            <article className="rh-card">
-              <h3>From Red Harbor</h3>
-              <p>
-                The historical excerpt on the Aberdeen site describes Grays Harbor as
-                one of the most densely unionized regions in the Pacific Northwest in
-                the early twentieth century, while also noting that the established
-                trade union movement excluded large parts of the working class.
-              </p>
-            </article>
-
-            <article className="rh-card">
-              <h3>Why the history matters</h3>
-              <p>
-                That same history explains why the IWW mattered here. It organized
-                across race, sex, and skill lines, grew through the Aberdeen Free
-                Speech Fight, and faced coordinated repression from employers,
-                chambers of commerce, vigilantes, and police power.
-              </p>
-            </article>
+            </aside>
           </div>
 
           <div className="rh-note-wrap">
             <p className="rh-note">
-              This public bulletin area is the new home for branch statements,
-              updates, event notes, archive material, and adapted historical content
-              currently living on the Aberdeen IWW Noblogs site.
+              This bulletin area is the new home for branch statements, archive
+              material, public updates, and adapted historical writing currently
+              living on the Aberdeen IWW Noblogs site.
             </p>
           </div>
         </section>

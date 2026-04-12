@@ -296,7 +296,7 @@ export default function App() {
 
   React.useEffect(() => {
     document.body.dataset.app = appMode;
-    document.title = redHarborMode ? "IWW Red Harbor" : "Bondfire";
+    document.title = redHarborMode ? "" : "Bondfire";
   }, [appMode, redHarborMode]);
 	return (
 		<HashRouter>

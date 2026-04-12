@@ -267,7 +267,7 @@ export default function OrgDash() {
                 className="input"
                 value={newOrgName}
                 onChange={(e) => setNewOrgName(e.target.value)}
-                placeholder={isRedHarbor ? "e.g. IWW Red Harbor" : "e.g. My Organization"}
+                placeholder={isRedHarbor ? "e.g. " : "e.g. My Organization"}
               />
             </label>
             <label className="grid" style={{ gap: 6 }}>

@@ -1764,3 +1764,50 @@ body[data-app="dpg"] .bf-logout{
     padding: 10px 10px;
   }
 }
+
+
+/* ===== DPG sign-in page final color cleanup ===== */
+body[data-app="dpg"] .bf-auth-page.is-dpg .btn,
+body[data-app="dpg"] .bf-auth-page.is-dpg a.btn{
+  background: #5f94dd !important;
+  border-color: #4e84cf !important;
+  color: #ffffff !important;
+}
+
+body[data-app="dpg"] .bf-auth-page.is-dpg .btn:hover,
+body[data-app="dpg"] .bf-auth-page.is-dpg a.btn:hover{
+  background: #4e84cf !important;
+  border-color: #3f74bf !important;
+  color: #ffffff !important;
+}
+
+body[data-app="dpg"] .bf-auth-page.is-dpg .btn-red,
+body[data-app="dpg"] .bf-auth-page.is-dpg a.btn-red,
+body[data-app="dpg"] .bf-auth-page.is-dpg button.btn-red{
+  background: #385032 !important;
+  border-color: #5f94dd !important;
+  color: #ffffff !important;
+}
+
+body[data-app="dpg"] .bf-auth-page.is-dpg .btn-red:hover,
+body[data-app="dpg"] .bf-auth-page.is-dpg a.btn-red:hover,
+body[data-app="dpg"] .bf-auth-page.is-dpg button.btn-red:hover{
+  background: #456140 !important;
+  border-color: #74a4e4 !important;
+  color: #ffffff !important;
+}
+
+body[data-app="dpg"] .bf-auth-page.is-dpg input,
+body[data-app="dpg"] .bf-auth-page.is-dpg select,
+body[data-app="dpg"] .bf-auth-page.is-dpg textarea,
+body[data-app="dpg"] .bf-auth-page.is-dpg .input{
+  background: #fffdf9 !important;
+  border: 1px solid rgba(56,80,50,.18) !important;
+  color: #182018 !important;
+}
+
+body[data-app="dpg"] .bf-auth-page.is-dpg input::placeholder,
+body[data-app="dpg"] .bf-auth-page.is-dpg textarea::placeholder,
+body[data-app="dpg"] .bf-auth-page.is-dpg .input::placeholder{
+  color: #6f7d76 !important;
+}

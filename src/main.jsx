@@ -7,8 +7,6 @@ import ThemeToggle from "./components/ThemeToggle.jsx";
 
 
 
-
-
 import "./debug/initDebug.js";
 
 // Temporary hard reset of stale PWA/service-worker state.

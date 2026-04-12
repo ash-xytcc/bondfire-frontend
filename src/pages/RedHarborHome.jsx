@@ -2,23 +2,17 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "../styles/redharbor-public-pass1.css";
 
-const bulletinPosts = [
+const bulletinSidePosts = [
   {
-    title: "The branch is back on the harbor",
+    title: "What Red Harbor is trying to build",
     body:
-      "Red Harbor continues the return of IWW organizing to Grays Harbor, rebuilding local worker organization after roughly a century of repression and drift.",
-    sectionId: "about",
-  },
-  {
-    title: "Organizing beyond narrow job categories",
-    body:
-      "The branch’s public framing does not stop at formally employed workers. It extends solidarity to people without stable employment, people living on the streets, and others pushed outside conventional labor structures.",
+      "The branch frames its goal as rebuilding wobbly labor organizing on the Harbor while expanding who benefits from that organizing beyond narrow workplace definitions.",
     sectionId: "join",
   },
   {
-    title: "History matters here",
+    title: "The Harbor has union memory",
     body:
-      "This work is rooted in the Harbor’s own labor history, including early IWW organizing, the free speech fight in Aberdeen, and struggles led by workers in timber and related industries.",
+      "The public site roots current organizing in Grays Harbor labor history, including the free speech fight in Aberdeen and major struggles led by Wobblies in timber country.",
     sectionId: "history",
   },
 ];
@@ -227,14 +221,65 @@ export default function RedHarborHome() {
             <h2>Publications and updates</h2>
           </div>
 
-          <div className="rh-grid-three">
-            {bulletinPosts.map((post) => (
-              <article className="rh-card" key={post.title}>
-                <h3>{post.title}</h3>
-                <p>{post.body}</p>
-                <SectionLink id={post.sectionId} className="rh-inline-link">Read more</SectionLink>
-              </article>
-            ))}
+          <div className="rh-bulletin-feature">
+            <article className="rh-card rh-feature-card">
+              <p className="rh-feature-kicker">Featured bulletin</p>
+              <h3>The Aberdeen IWW Is Back</h3>
+              <p>
+                After nearly one hundred years, the branch has returned to the Harbor
+                to reclaim labor organizing that it describes as part of the region’s
+                own tradition. The public statement frames this return not as nostalgia,
+                but as a practical effort to rebuild local worker power. It says the
+                branch wants to organize broadly, study past struggles on the Harbor,
+                and refuse the pattern of being driven out again.
+              </p>
+              <p>
+                The statement also pushes beyond narrow definitions of the worker,
+                arguing that organizing should benefit people with jobs, people without
+                employment, people living on the streets, and others whose lives are
+                shaped by exploitation and class power. It describes agitation,
+                education, and organization as necessary until everyone has what they
+                need.
+              </p>
+              <div className="rh-feature-quote">
+                <p>
+                  “We intend to study and learn from our past struggles on the Harbor
+                  and do not intend to be ran out of town again.”
+                </p>
+              </div>
+            </article>
+
+            <div className="rh-grid-two rh-bulletin-sidegrid">
+              {bulletinSidePosts.map((post) => (
+                <article className="rh-card" key={post.title}>
+                  <h3>{post.title}</h3>
+                  <p>{post.body}</p>
+                  <SectionLink id={post.sectionId} className="rh-inline-link">Read more</SectionLink>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="rh-grid-two" style={{ marginTop: 18 }}>
+            <article className="rh-card">
+              <h3>From Red Harbor</h3>
+              <p>
+                The historical excerpt on the Aberdeen site describes Grays Harbor as
+                one of the most densely unionized regions in the Pacific Northwest in
+                the early twentieth century, while also noting that the established
+                trade union movement excluded large parts of the working class.
+              </p>
+            </article>
+
+            <article className="rh-card">
+              <h3>Why the history matters</h3>
+              <p>
+                That same history explains why the IWW mattered here. It organized
+                across race, sex, and skill lines, grew through the Aberdeen Free
+                Speech Fight, and faced coordinated repression from employers,
+                chambers of commerce, vigilantes, and police power.
+              </p>
+            </article>
           </div>
 
           <div className="rh-note-wrap">

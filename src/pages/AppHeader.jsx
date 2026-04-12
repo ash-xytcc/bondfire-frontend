@@ -1,13 +1,15 @@
-// src/components/AppHeader.jsx
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { getOrgModules } from "../lib/orgPacks.js";
+import { getAppMode } from "../lib/appMode";
+
+const homeHref = "/orgs";
 
 function useOrgIdFromPath() {
   const loc = useLocation();
   const pathname = loc.pathname || "";
   const hash = loc.hash || "";
 
-  // Support BOTH BrowserRouter (/org/...) and HashRouter (#/org/...)
   const m1 = pathname.match(/\/org\/([^/]+)/i);
   const m2 = hash.match(/#\/org\/([^/]+)/i);
 
@@ -15,35 +17,57 @@ function useOrgIdFromPath() {
   return raw ? decodeURIComponent(raw) : null;
 }
 
-const Brand = ({ logoSrc = "/red-harbor-logo.png" }) => {
-  const orgId = useOrgIdFromPath();
-  const homeHref = orgId ? `/org/${orgId}/overview` : "/orgs";
+function readOrgName(orgId) {
+  if (!orgId) return "";
+  try {
+    const s = JSON.parse(localStorage.getItem(`bf_org_settings_${orgId}`) || "{}");
+    const orgs = JSON.parse(localStorage.getItem("bf_orgs") || "[]");
+    const o = Array.isArray(orgs) ? orgs.find((x) => x?.id === orgId) : null;
+    return String((s?.name || o?.name || "").trim() || "");
+  } catch {
+    return "";
+  }
+}
 
-  const readOrgName = React.useCallback((id) => {
-    if (!id) return "";
-    try {
-      const s = JSON.parse(localStorage.getItem(`bf_org_settings_${id}`) || "{}");
-      const orgs = JSON.parse(localStorage.getItem("bf_orgs") || "[]");
-      const o = Array.isArray(orgs) ? orgs.find((x) => x?.id === id) : null;
-      return String((s?.name || o?.name || "").trim() || "");
-    } catch {
-      return "";
-    }
-  }, []);
+function readOrgLogo(orgId) {
+  if (!orgId) return null;
+  try {
+    const s = JSON.parse(localStorage.getItem(`bf_org_settings_${orgId}`) || "{}");
+    const v = s?.logoDataUrl || s?.logoUrl || s?.logo || null;
+    const str = String(v || "").trim();
+    return str ? str : null;
+  } catch {
+    return null;
+  }
+}
 
-  const [orgName, setOrgName] = React.useState(() => readOrgName(orgId));
+function readOrgNameFromStorage(orgId) {
+  return readOrgName(orgId);
+}
+
+const Brand = ({ orgId, logoSrc }) => {
+  const inferredOrgId = orgId || useOrgIdFromPath();
+  const [orgName, setOrgName] = React.useState(() => readOrgNameFromStorage(inferredOrgId));
+  const [orgLogo, setOrgLogo] = React.useState(() => readOrgLogo(inferredOrgId));
 
   React.useEffect(() => {
-    setOrgName(readOrgName(orgId));
+    setOrgName(readOrgNameFromStorage(inferredOrgId));
+    setOrgLogo(readOrgLogo(inferredOrgId));
 
     const onChange = (e) => {
       const changedId = e?.detail?.orgId;
-      if (!changedId || changedId === orgId) setOrgName(readOrgName(orgId));
+      if (!changedId || changedId === inferredOrgId) {
+        setOrgName(readOrgNameFromStorage(inferredOrgId));
+        setOrgLogo(readOrgLogo(inferredOrgId));
+      }
     };
 
     const onStorage = (e) => {
       const k = e?.key || "";
-      if (k === `bf_org_settings_${orgId}` || k === "bf_orgs") setOrgName(readOrgName(orgId));
+      if (k === `bf_org_settings_${inferredOrgId}` || k === "bf_orgs") {
+        setOrgName(readOrgNameFromStorage(inferredOrgId));
+        setOrgLogo(readOrgLogo(inferredOrgId));
+      }
     };
 
     window.addEventListener("bf:org_settings_changed", onChange);
@@ -52,27 +76,55 @@ const Brand = ({ logoSrc = "/red-harbor-logo.png" }) => {
       window.removeEventListener("bf:org_settings_changed", onChange);
       window.removeEventListener("storage", onStorage);
     };
-  }, [orgId, readOrgName]);
+  }, [inferredOrgId]);
+
+  const label = orgName || "Org";
+  const imgSrc = logoSrc || "/red-harbor-logo.png";
 
   return (
     <div className="bf-brand-wrap">
-      <Link to={homeHref} className="brand">
-        <img
-          src={logoSrc}
-          alt="Bondfire"
-          width={28}
-          height={28}
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-          }}
-        />
-        <span>Bondfire</span>
+      <Link className="bf-brand" to={homeHref}>
+        <img src={imgSrc} alt="Red Harbor logo" className="bf-org-logo" />
+        <span>{label}</span>
       </Link>
 
-      {orgId && orgName ? (
-        <div className="bf-orgPill" title={orgName}>
-          {orgName}
-        </div>
+      {inferredOrgId ? (
+        <span
+          className="bf-brand-org"
+          title={label}
+          style={{ display: "inline-flex", alignItems: "center", gap: 10, minWidth: 0 }}
+        >
+          {orgLogo ? (
+            <img
+              src={orgLogo}
+              alt={`${label} logo`}
+              className="bf-org-logo"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 8,
+                objectFit: "cover",
+                border: "1px solid rgba(255,255,255,0.16)",
+                background: "rgba(255,255,255,0.06)",
+                flex: "0 0 auto",
+              }}
+              loading="lazy"
+              decoding="async"
+            />
+          ) : null}
+          <span
+            className="bf-org-name"
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              display: "inline-block",
+              maxWidth: 220,
+            }}
+          >
+            {label}
+          </span>
+        </span>
       ) : null}
     </div>
   );
@@ -80,10 +132,8 @@ const Brand = ({ logoSrc = "/red-harbor-logo.png" }) => {
 
 function OrgNav({ variant = "desktop" }) {
   const orgId = useOrgIdFromPath();
-
   const isDrawer = variant === "drawer";
 
-  // Inline styles for drawer so CSS can't hide it.
   const drawerNavStyle = isDrawer
     ? {
         display: "flex",
@@ -91,7 +141,17 @@ function OrgNav({ variant = "desktop" }) {
         gap: 10,
         marginTop: 14,
       }
-    : undefined;
+    : {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        flexWrap: "nowrap",
+        overflowX: "auto",
+        overflowY: "hidden",
+        whiteSpace: "nowrap",
+        minWidth: 0,
+        scrollbarWidth: "thin",
+      };
 
   const drawerLinkStyle = isDrawer
     ? {
@@ -106,19 +166,38 @@ function OrgNav({ variant = "desktop" }) {
       }
     : undefined;
 
+  const appMode = getAppMode();
+  const isRedHarbor = appMode === "red-harbor";
   const base = orgId ? `/org/${orgId}` : null;
-  const items = base
+  const enabled = orgId ? getOrgModules(orgId) : [];
+
+  const defs = isRedHarbor
     ? [
-        ["Dashboard", `${base}/overview`],
-        ["People", `${base}/people`],
-        ["Inventory", `${base}/inventory`],
-        ["Needs", `${base}/needs`],
-        ["Meetings", `${base}/meetings`],
-        ["Drive", `${base}/drive`],
-        ["Studio", `${base}/studio`],
-        ["Settings", `${base}/settings`],
-        ["Chat", `${base}/chat`],
+        ["overview", "Branch Board", `${base}/overview`, "nav-branch-board"],
+        ["people", "Members", `${base}/people`, "nav-members"],
+        ["inventory", "Supplies", `${base}/inventory`, "nav-supplies"],
+        ["needs", "Requests", `${base}/needs`, "nav-requests"],
+        ["meetings", "Meetings", `${base}/meetings`, "nav-meetings"],
+        ["drive", "Documents", `${base}/drive`, "nav-documents"],
+        ["studio", "Studio", `${base}/studio`, "nav-studio"],
+        ["settings", "Settings", `${base}/settings`, "nav-settings"],
       ]
+    : [
+        ["overview", "Dashboard", `${base}/overview`, "nav-overview"],
+        ["people", "People", `${base}/people`, "nav-people"],
+        ["inventory", "Inventory", `${base}/inventory`, "nav-inventory"],
+        ["needs", "Needs", `${base}/needs`, "nav-needs"],
+        ["meetings", "Meetings", `${base}/meetings`, "nav-meetings"],
+        ["drive", "Drive", `${base}/drive`, "nav-drive"],
+        ["studio", "Studio", `${base}/studio`, "nav-studio"],
+        ["settings", "Settings", `${base}/settings`, "nav-settings"],
+        ["public", "Public Page", `${base}/public`, "nav-public"],
+      ];
+
+  const items = base
+    ? defs
+        .filter(([key]) => enabled.includes(key))
+        .map(([, label, to, tourId]) => [label, to, tourId])
     : [];
 
   return (
@@ -128,24 +207,7 @@ function OrgNav({ variant = "desktop" }) {
       style={drawerNavStyle}
       data-bf-orgnav={isDrawer ? "drawer" : "desktop"}
     >
-      <NavLink
-        to="/orgs"
-        style={({ isActive }) =>
-          isDrawer
-            ? {
-                ...drawerLinkStyle,
-                background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
-                border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
-              }
-            : undefined
-        }
-        className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
-        title="All orgs"
-      >
-        All Orgs
-      </NavLink>
-
-      {items.map(([label, to]) => (
+      {items.map(([label, to, tourId]) => (
         <NavLink
           key={to}
           to={to}
@@ -156,9 +218,17 @@ function OrgNav({ variant = "desktop" }) {
                   background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
                   border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
                 }
-              : undefined
+              : {
+                  fontSize: 13,
+                  lineHeight: 1.1,
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  flex: "0 0 auto",
+                }
           }
           className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
+          data-tour={tourId}
+          title={label}
         >
           {label}
         </NavLink>
@@ -171,7 +241,6 @@ export default function AppHeader({ onLogout, showLogout }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const loc = useLocation();
 
-  // Debug toggle: add ?debugNav=1 to URL
   const debugNav =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).has("debugNav");
@@ -230,17 +299,32 @@ export default function AppHeader({ onLogout, showLogout }) {
   return (
     <>
       <header className="bf-appHeader">
-        <div className="bf-appHeader-left">
+        <div className="bf-appHeader-left" style={{ minWidth: 0, flex: "0 1 auto" }}>
           <Brand />
         </div>
 
-        <div className="bf-appHeader-right">
-          <div className="bf-nav-desktop">
+        <div
+          className="bf-appHeader-right"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            minWidth: 0,
+            flex: "1 1 auto",
+            justifyContent: "flex-end",
+          }}
+        >
+          <div className="bf-nav-desktop" style={{ minWidth: 0, flex: "1 1 auto" }}>
             <OrgNav variant="desktop" />
           </div>
 
           {showLogout ? (
-            <button className="bf-logout" type="button" onClick={onLogout} title="Logout">
+            <button
+              className="bf-logout"
+              type="button"
+              onClick={onLogout}
+              title="Logout"
+            >
               Logout
             </button>
           ) : null}
@@ -262,9 +346,20 @@ export default function AppHeader({ onLogout, showLogout }) {
         <div className="bf-drawer-panel" style={panelStyle}>
           <div
             className="bf-drawer-top"
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 8,
+              overflowX: "auto",
+              whiteSpace: "nowrap",
+              padding: "6px 10px",
+            }}
           >
-            <div className="bf-drawer-title" style={{ fontWeight: 800, letterSpacing: ".3px" }}>
+            <div
+              className="bf-drawer-title"
+              style={{ fontWeight: 800, letterSpacing: ".3px" }}
+            >
               Menu
             </div>
             <button
@@ -300,7 +395,11 @@ export default function AppHeader({ onLogout, showLogout }) {
         </div>
       </div>
 
-      {debugNav ? <pre style={debugOverlayStyle}>{JSON.stringify({ pathname: loc.pathname, hash: loc.hash }, null, 2)}</pre> : null}
+      {debugNav ? (
+        <pre style={debugOverlayStyle}>
+          {JSON.stringify({ pathname: loc.pathname, hash: loc.hash }, null, 2)}
+        </pre>
+      ) : null}
     </>
   );
 }

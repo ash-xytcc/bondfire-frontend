@@ -1,230 +1,313 @@
-import React from "react";
-import "../styles/redharbor-public-pass1.css";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { isDpgVariant } from "../../lib/appVariant.js";
 
-const bulletinPosts = [
-  {
-    title: "Branch Bulletin",
-    body: "Read statements, updates, event notes, and organizing news from the Red Harbor branch.",
-    href: "#bulletin",
-  },
-  {
-    title: "Workplace Organizing",
-    body: "Learn how to start organizing on the job, talk with co workers, and build a campaign with structure.",
-    href: "#join",
-  },
-  {
-    title: "Get Involved",
-    body: "Join the branch, attend events, or reach out if you want to help build worker power on the harbor.",
-    href: "#contact",
-  },
-];
-
-const events = [
-  "Branch meetings and public events will be posted here.",
-  "Workplace organizing support and one to one follow up available.",
-  "Bulletin updates and announcements published on a regular basis.",
-];
-
-export default function RedHarborHome() {
+function MenuButton({ label, onClick, danger = false }) {
   return (
-    <div className="rh-public">
-      <header className="rh-public-header">
-        <div className="rh-public-brand">
-          <img
-            src="/red-harbor-logo.png"
-            alt="Red Harbor logo"
-            className="rh-public-logo"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
+    <button
+      className="btn"
+      type="button"
+      onClick={onClick}
+      style={{
+        textAlign: "left",
+        justifyContent: "flex-start",
+        padding: "7px 10px",
+        color: danger ? "#ff8f8f" : undefined,
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function PopMenu({ trigger, items, align = "right" }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const onDown = (e) => {
+      if (!ref.current?.contains(e.target)) setOpen(false);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button className="btn" type="button" onClick={() => setOpen((v) => !v)} style={{ padding: "5px 8px", minWidth: 30, borderRadius: 10 }}>
+        {trigger}
+      </button>
+      {open ? (
+        <div style={{ position: "absolute", top: "calc(100% + 6px)", ...(align === "left" ? { left: 0 } : { right: 0 }), minWidth: 190, background: dpg ? "#fff" : "rgba(16,16,20,0.98)", border: dpg ? "1px solid rgba(56,80,50,0.12)" : "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: 4, boxShadow: "0 14px 32px rgba(0,0,0,0.42)", zIndex: 120, display: "grid", gap: 4 }}>
+          {items.map((item, idx) => (
+            <MenuButton key={`${item.label}-${idx}`} label={item.label} danger={item.danger} onClick={() => { item.onClick?.(); setOpen(false); }} />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TreeRow({ depth = 0, active = false, icon, label, hint, onClick, menuItems }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 4, alignItems: "center", marginTop: 3 }}>
+      <button
+        type="button"
+        onClick={onClick}
+        title={label}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          width: "100%",
+          minWidth: 0,
+          padding: "6px 8px",
+          paddingLeft: 8 + depth * 12,
+          background: active ? (dpg ? "rgba(95,148,221,0.14)" : "rgba(255,255,255,0.08)") : "transparent",
+          color: buttonText,
+          border: dpg ? "1px solid rgba(56,80,50,0.10)" : "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 10,
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <span style={{ opacity: 0.9, width: 12, textAlign: "center", flex: "0 0 12px" }}>{icon}</span>
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: active ? 700 : 500 }}>{label}</span>
+        {hint ? <span className="helper" style={{ marginLeft: "auto", flex: "0 0 auto" }}>{hint}</span> : null}
+      </button>
+      {menuItems?.length ? <PopMenu trigger="⋯" items={menuItems} /> : null}
+    </div>
+  );
+}
+
+export default function DriveSidebar({
+  folders = [],
+  notes = [],
+  files = [],
+  currentFolder,
+  selectedId,
+  selectedKind,
+  search,
+  setSearch,
+  onSelectFolder,
+  onSelectNote,
+  onSelectFile,
+  onNewNote,
+  onNewFolder,
+  onNewSpreadsheet,
+  onNewForm,
+  onOpenCreatePicker,
+  onUploadFile,
+  onUploadFolder,
+  onRenameFolder,
+  onDeleteFolder,
+  onRenameNote,
+  onMoveNote,
+  onDeleteNote,
+  onRenameFile,
+  onMoveFile,
+  onDeleteFile,
+  onDownloadFile,
+  onOpenFileInBrowser,
+  templates = [],
+  onApplyTemplate,
+  onNewFromTemplate,
+  onDeleteTemplate,
+  onEditTemplate,
+}) {
+  const [activePane, setActivePane] = useState("explorer");
+  const [collapsedFolders, setCollapsedFolders] = useState({});
+  const dpg = isDpgVariant();
+  const panelBg = dpg ? "#f9f7f1" : "transparent";
+  const panelBorder = dpg ? "rgba(56,80,50,0.12)" : "#1b1b1b";
+  const buttonText = dpg ? "#182018" : "#fff";
+
+  const rootItems = useMemo(() => {
+    const q = String(search || "").trim().toLowerCase();
+    const noteMatches = (note) => !q || String(note.title || "").toLowerCase().includes(q) || String(note.body || "").toLowerCase().includes(q);
+    const fileMatches = (file) => !q || String(file.name || "").toLowerCase().includes(q);
+    const folderMatches = (folder) => !q || String(folder.name || "").toLowerCase().includes(q);
+
+    const folderMap = new Map();
+    folders.forEach((folder) => folderMap.set(folder.id, folder));
+
+    const visibleFolderIds = new Set();
+    folders.forEach((folder) => {
+      if (!q || folderMatches(folder)) {
+        let cursor = folder;
+        while (cursor) {
+          visibleFolderIds.add(cursor.id);
+          cursor = cursor.parentId ? folderMap.get(cursor.parentId) : null;
+        }
+      }
+    });
+
+    notes.forEach((note) => {
+      if (!noteMatches(note)) return;
+      let cursor = note.parentId ? folderMap.get(note.parentId) : null;
+      while (cursor) {
+        visibleFolderIds.add(cursor.id);
+        cursor = cursor.parentId ? folderMap.get(cursor.parentId) : null;
+      }
+    });
+
+    files.forEach((file) => {
+      if (!fileMatches(file)) return;
+      let cursor = file.parentId ? folderMap.get(file.parentId) : null;
+      while (cursor) {
+        visibleFolderIds.add(cursor.id);
+        cursor = cursor.parentId ? folderMap.get(cursor.parentId) : null;
+      }
+    });
+
+    function renderBranch(parentId = null, depth = 0) {
+      const folderChildren = folders
+        .filter((folder) => (folder.parentId || null) === parentId)
+        .filter((folder) => !q || visibleFolderIds.has(folder.id) || folderMatches(folder))
+        .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+
+      const noteChildren = notes
+        .filter((note) => (note.parentId || null) === parentId)
+        .filter(noteMatches)
+        .sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
+
+      const fileChildren = files
+        .filter((file) => (file.parentId || null) === parentId)
+        .filter(fileMatches)
+        .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+
+      const rows = [];
+
+      folderChildren.forEach((folder) => {
+        const isCollapsed = !!collapsedFolders[folder.id];
+        rows.push(
+          <TreeRow
+            key={folder.id}
+            depth={depth}
+            active={currentFolder === folder.id}
+            icon={isCollapsed ? "▸" : "▾"}
+            label={folder.name}
+            onClick={() => {
+              onSelectFolder?.(folder.id);
+              setCollapsedFolders((prev) => ({ ...prev, [folder.id]: !prev[folder.id] }));
             }}
-          />
-          <div className="rh-public-brandtext">
-            <div className="rh-public-kicker">Industrial Workers of the World</div>
-            <div className="rh-public-title">Red Harbor</div>
-          </div>
+            menuItems={[
+              { label: "Open", onClick: () => onSelectFolder?.(folder.id) },
+              { label: isCollapsed ? "Expand" : "Collapse", onClick: () => setCollapsedFolders((prev) => ({ ...prev, [folder.id]: !prev[folder.id] })) },
+              { label: "Rename", onClick: () => onRenameFolder?.(folder.id) },
+              { label: "Delete", danger: true, onClick: () => onDeleteFolder?.(folder.id) },
+            ]}
+          />,
+        );
+        if (!isCollapsed) rows.push(...renderBranch(folder.id, depth + 1));
+      });
+
+      noteChildren.forEach((note) => {
+        rows.push(
+          <TreeRow
+            key={note.id}
+            depth={depth}
+            active={selectedKind === "note" && selectedId === note.id}
+            icon="•"
+            label={note.title || "untitled"}
+            onClick={() => onSelectNote?.(note.id)}
+            menuItems={[
+              { label: "Open", onClick: () => onSelectNote?.(note.id) },
+              { label: "Rename", onClick: () => onRenameNote?.(note.id) },
+              { label: "Move", onClick: () => onMoveNote?.(note.id) },
+              { label: "Delete", danger: true, onClick: () => onDeleteNote?.(note.id) },
+            ]}
+          />,
+        );
+      });
+
+      fileChildren.forEach((file) => {
+        rows.push(
+          <TreeRow
+            key={file.id}
+            depth={depth}
+            active={selectedKind === "file" && selectedId === file.id}
+            icon={String(file.mime || "").includes("bondfire.sheet") || /\.bfsheet$/i.test(String(file.name || "")) ? "▦" : String(file.mime || "").includes("bondfire.form") || /\.bfform$/i.test(String(file.name || "")) ? "☑" : "↗"}
+            label={file.name}
+            onClick={() => onSelectFile?.(file)}
+            menuItems={[
+              { label: "Open", onClick: () => onSelectFile?.(file) },
+              { label: "Open in browser", onClick: () => onOpenFileInBrowser?.(file) },
+              { label: "Download", onClick: () => onDownloadFile?.(file) },
+              { label: "Rename", onClick: () => onRenameFile?.(file.id) },
+              { label: "Move", onClick: () => onMoveFile?.(file.id) },
+              { label: "Delete", danger: true, onClick: () => onDeleteFile?.(file.id) },
+            ]}
+          />,
+        );
+      });
+
+      return rows;
+    }
+
+    return renderBranch();
+  }, [folders, notes, files, currentFolder, selectedId, selectedKind, search, collapsedFolders, onSelectFolder, onSelectNote, onSelectFile, onRenameFolder, onDeleteFolder, onRenameNote, onMoveNote, onDeleteNote, onRenameFile, onMoveFile, onDeleteFile, onDownloadFile, onOpenFileInBrowser]);
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "44px minmax(0,1fr)", height: "100%", position: "relative", zIndex: 0, background: panelBg }}>
+      <div style={{ borderRight: `1px solid ${panelBorder}`, padding: 8, display: "grid", alignContent: "start", gap: 6, position: "relative", zIndex: 1 }}>
+        <button className="btn" type="button" title="Explorer" onClick={() => setActivePane("explorer")} style={{ padding: "8px 0", fontWeight: activePane === "explorer" ? 800 : 500 }}>⌂</button>
+        <button className="btn" type="button" title="Templates" onClick={() => setActivePane("templates")} style={{ padding: "8px 0", fontWeight: activePane === "templates" ? 800 : 500 }}>T</button>
+      </div>
+
+      <div style={{ minWidth: 0, overflow: "auto", padding: 10, position: "relative", zIndex: 2 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+          <button className="btn" type="button" onClick={() => onOpenCreatePicker?.()} style={{ padding: "6px 12px", minWidth: 36 }}>＋</button>
+          {activePane === "templates" ? (
+            <PopMenu
+              trigger="⋯"
+              align="left"
+              items={[
+                { label: "New note", onClick: onNewNote },
+                { label: "New folder", onClick: onNewFolder },
+                { label: "Upload file", onClick: onUploadFile },
+                { label: "Upload folder", onClick: onUploadFolder },
+              ]}
+            />
+          ) : null}
+          <input className="input" placeholder={activePane === "explorer" ? "search..." : "search templates..."} value={search} onChange={(e) => setSearch(e.target.value)} style={{ minWidth: 0, flex: 1, padding: "9px 10px" }} />
         </div>
 
-        <nav className="rh-public-nav" aria-label="Primary">
-          <a href="#about">About</a>
-          <a href="#join">Join</a>
-          <a href="#bulletin">Bulletin</a>
-          <a href="#events">Events</a>
-          <a href="#contact">Contact</a>
-          <a href="/signin" className="rh-signin-link">Member Sign In</a>
-        </nav>
-      </header>
-
-      <main>
-        <section className="rh-hero">
-          <div className="rh-hero-copy">
-            <p className="rh-eyebrow">Red Harbor Branch</p>
-            <h1>Building worker power on the harbor and beyond.</h1>
-            <p className="rh-lead">
-              Red Harbor is a branch of the Industrial Workers of the World.
-              We organize across workplaces, support workers in struggle, publish branch updates,
-              and build solidarity rooted in direct action and rank and file power.
-            </p>
-            <div className="rh-hero-actions">
-              <a href="#join" className="rh-btn rh-btn-primary">Join Us</a>
-              <a href="#bulletin" className="rh-btn rh-btn-secondary">Read the Bulletin</a>
-              <a href="/signin" className="rh-btn rh-btn-ghost">Member Area</a>
+        {activePane === "explorer" ? (
+          <>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 6 }}>
+              <div className="helper" style={{ letterSpacing: "0.08em", textTransform: "uppercase" }}>Explorer</div>
+              <button className="btn" type="button" onClick={() => onSelectFolder?.(null)} style={{ padding: "5px 8px", fontSize: 12 }}>Root</button>
             </div>
-          </div>
-
-          <aside className="rh-hero-card">
-            <h2>What this site is for</h2>
-            <ul>
-              <li>Learn what the branch is and what it does</li>
-              <li>Find organizing and membership information</li>
-              <li>Read public updates and branch publications</li>
-              <li>Access the private member board through sign in</li>
-            </ul>
-          </aside>
-        </section>
-
-        <section id="about" className="rh-section">
-          <div className="rh-section-head">
-            <p className="rh-section-kicker">About</p>
-            <h2>About Red Harbor</h2>
-          </div>
-          <div className="rh-grid-two">
-            <div className="rh-card">
-              <h3>Who we are</h3>
-              <p>
-                Red Harbor is the local IWW branch building organization, education, and solidarity
-                among workers in Aberdeen, Hoquiam, Grays Harbor, and the surrounding region.
-              </p>
+            <div style={{ display: "grid", gap: 2 }}>
+              {rootItems.length ? rootItems : <div className="helper" style={{ padding: "8px 4px" }}>Nothing here.</div>}
             </div>
-            <div className="rh-card">
-              <h3>What we believe</h3>
-              <p>
-                We believe workers should organize collectively, act directly, and build power
-                at the point of struggle instead of waiting for institutions to rescue us.
-              </p>
+          </>
+        ) : (
+          <>
+            <div className="helper" style={{ letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Templates</div>
+            <div style={{ display: "grid", gap: 4 }}>
+              {templates
+                .filter((tpl) => !String(search || "").trim() || String(tpl.name || "").toLowerCase().includes(String(search || "").trim().toLowerCase()) || String(tpl.body || "").toLowerCase().includes(String(search || "").trim().toLowerCase()))
+                .map((tpl) => (
+                  <TreeRow
+                    key={tpl.id}
+                    icon="✦"
+                    label={tpl.name}
+                    active={false}
+                    onClick={() => onApplyTemplate?.(tpl)}
+                    menuItems={[
+                      { label: "Insert into current note", onClick: () => onApplyTemplate?.(tpl) },
+                      { label: "New note from template", onClick: () => onNewFromTemplate?.(tpl) },
+                      { label: "Edit template", onClick: () => onEditTemplate?.(tpl.id) },
+                      { label: "Delete template", danger: true, onClick: () => onDeleteTemplate?.(tpl.id) },
+                    ]}
+                  />
+                ))}
+              {!templates.length ? <div className="helper" style={{ padding: "8px 4px" }}>No templates yet.</div> : null}
             </div>
-            <div className="rh-card">
-              <h3>Our mission</h3>
-              <p>
-                We support workplace organizing, mutual aid, labor education, and branch activity
-                that strengthens working class power in public and private life.
-              </p>
-            </div>
-            <div className="rh-card">
-              <h3>Branch history</h3>
-              <p>
-                This section is ready for the Aberdeen IWW and Red Harbor history material you want
-                to port over from the current public site.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section id="join" className="rh-section rh-section-band">
-          <div className="rh-section-head">
-            <p className="rh-section-kicker">Join</p>
-            <h2>Organize with us</h2>
-          </div>
-          <div className="rh-grid-three">
-            <article className="rh-card">
-              <h3>Join the branch</h3>
-              <p>
-                Become part of the Red Harbor branch and plug into meetings, campaigns,
-                education, and organizing support.
-              </p>
-              <a href="#contact" className="rh-inline-link">Contact the branch</a>
-            </article>
-            <article className="rh-card">
-              <h3>Organize your workplace</h3>
-              <p>
-                If you want help organizing on the job, reach out. We can help you start carefully,
-                map relationships, and build toward collective action.
-              </p>
-              <a href="#contact" className="rh-inline-link">Get organizing support</a>
-            </article>
-            <article className="rh-card">
-              <h3>Support broader struggle</h3>
-              <p>
-                Workers, tenants, precarious workers, and unemployed workers all deserve organization,
-                dignity, and solidarity. There is room to build.
-              </p>
-              <a href="#contact" className="rh-inline-link">Get involved</a>
-            </article>
-          </div>
-        </section>
-
-        <section id="bulletin" className="rh-section">
-          <div className="rh-section-head">
-            <p className="rh-section-kicker">Bulletin</p>
-            <h2>Publications and updates</h2>
-          </div>
-          <div className="rh-grid-three">
-            {bulletinPosts.map((post) => (
-              <article className="rh-card" key={post.title}>
-                <h3>{post.title}</h3>
-                <p>{post.body}</p>
-                <a href={post.href} className="rh-inline-link">Read more</a>
-              </article>
-            ))}
-          </div>
-          <p className="rh-note">
-            This section is where we will port over bulletin material, statements, archive posts,
-            and publication links from the current Noblogs site.
-          </p>
-        </section>
-
-        <section id="events" className="rh-section rh-section-band">
-          <div className="rh-section-head">
-            <p className="rh-section-kicker">Events</p>
-            <h2>Meetings and public activity</h2>
-          </div>
-          <div className="rh-card">
-            <ul className="rh-event-list">
-              {events.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        <section id="contact" className="rh-section">
-          <div className="rh-section-head">
-            <p className="rh-section-kicker">Contact</p>
-            <h2>Get in touch</h2>
-          </div>
-          <div className="rh-grid-two">
-            <div className="rh-card">
-              <h3>Branch contact</h3>
-              <p>
-                Use this section for your public email, intake form, or branch contact instructions.
-                We can wire the real contact flow next.
-              </p>
-            </div>
-            <div className="rh-card">
-              <h3>Member access</h3>
-              <p>
-                Existing members can use the private branch board for internal updates,
-                documents, meetings, and announcements.
-              </p>
-              <a href="/signin" className="rh-btn rh-btn-primary">Go to Member Sign In</a>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="rh-public-footer">
-        <div>
-          <strong>Red Harbor</strong>
-          <p>Industrial Workers of the World</p>
-        </div>
-        <div className="rh-footer-links">
-          <a href="#about">About</a>
-          <a href="#join">Join</a>
-          <a href="#bulletin">Bulletin</a>
-          <a href="#events">Events</a>
-          <a href="#contact">Contact</a>
-          <a href="/signin">Member Sign In</a>
-        </div>
-      </footer>
+          </>
+        )}
+      </div>
     </div>
   );
 }

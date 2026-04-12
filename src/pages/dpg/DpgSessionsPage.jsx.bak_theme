@@ -193,7 +193,7 @@ function SessionCard({
               borderRadius: 12,
               padding: 12,
               background: "rgba(255,255,255,0.55)",
-              border: "1px solid var(--border)",
+              border: "1px solid rgba(0,0,0,0.08)",
             }}
           >
             <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 4 }}>
@@ -207,66 +207,17 @@ function SessionCard({
             </div>
           </div>
         ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const name = leadName.trim();
-              if (!name) return;
-              onClaimLead(name);
-              setLeadName("");
-            }}
+          <div
             style={{
-              display: "grid",
+              display: "flex",
+              flexWrap: "wrap",
               gap: 8,
+              alignItems: "center",
             }}
           >
-            <label
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: "var(--accent)",
-                textTransform: "uppercase",
-                letterSpacing: "0.04em",
-              }}
-            >
-              Name
-            </label>
-
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-              }}
-            >
-              <input
-                value={leadName}
-                onChange={(e) => setLeadName(e.target.value)}
-                placeholder="enter your name"
-                style={{
-                  flex: 1,
-                  borderRadius: 12,
-                  border: "1px solid var(--border)",
-                  padding: "10px 12px",
-                  fontSize: 15,
-                  color: "var(--input-text)",
-                  background: "var(--input-bg)",
-                }}
-              />
-              <button
-                type="submit"
-                disabled={!leadName.trim()}
-                style={{
-                  ...buttonStyle(true),
-                  opacity: leadName.trim() ? 1 : 0.55,
-                  cursor: leadName.trim() ? "pointer" : "not-allowed",
-                }}
-              >
-                i can lead this
-              </button>
-            </div>
-          </form>
-        )}
+            <input
+              value={leadName}
+              onChange={(e) => setLeadName(e.target.value)}
               placeholder="your name"
               style={{
                 flex: "1 1 180px",

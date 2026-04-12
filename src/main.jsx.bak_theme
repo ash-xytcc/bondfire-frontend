@@ -2,7 +2,6 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
-import { ThemeProvider } from "./theme";
 import "./debug/initDebug.js";
 
 // Temporary hard reset of stale PWA/service-worker state.
@@ -31,8 +30,6 @@ try {
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
+    <App />
   </React.StrictMode>
 );

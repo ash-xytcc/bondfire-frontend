@@ -173,6 +173,19 @@ function Shell() {
 	}, []);
 
 	React.useEffect(() => {
+// FORCE ORG LOAD INTO LOCAL STORAGE
+fetch("/api/orgs", { credentials: "include" })
+  .then(r => r.json())
+  .then(data => {
+    if (data?.orgs?.length) {
+      const org = data.orgs[0];
+      try {
+        localStorage.setItem("bf_org", JSON.stringify(org));
+      } catch {}
+    }
+  })
+  .catch(() => {});
+
 		refresh();
 		const onAuthChanged = () => refresh();
 		window.addEventListener("bf-auth-changed", onAuthChanged);
@@ -181,6 +194,19 @@ function Shell() {
 
 	// Keep the session alive while the app is open without flashing auth UI.
 	React.useEffect(() => {
+// FORCE ORG LOAD INTO LOCAL STORAGE
+fetch("/api/orgs", { credentials: "include" })
+  .then(r => r.json())
+  .then(data => {
+    if (data?.orgs?.length) {
+      const org = data.orgs[0];
+      try {
+        localStorage.setItem("bf_org", JSON.stringify(org));
+      } catch {}
+    }
+  })
+  .catch(() => {});
+
 		if (!state.authed) return;
 
 		const ping = async () => {
@@ -295,6 +321,19 @@ export default function App() {
   const redHarborMode = isRedHarborMode();
 
   React.useEffect(() => {
+// FORCE ORG LOAD INTO LOCAL STORAGE
+fetch("/api/orgs", { credentials: "include" })
+  .then(r => r.json())
+  .then(data => {
+    if (data?.orgs?.length) {
+      const org = data.orgs[0];
+      try {
+        localStorage.setItem("bf_org", JSON.stringify(org));
+      } catch {}
+    }
+  })
+  .catch(() => {});
+
     document.body.dataset.app = appMode;
     document.title = redHarborMode ? "" : "Bondfire";
   }, [appMode, redHarborMode]);

@@ -30,7 +30,7 @@ export const STARTER_PACKS = [
       show_get_involved: true,
       show_newsletter_card: true,
       show_website_button: false,
-      title: "IWW Red Harbor",
+ //   title: "IWW Red Harbor",
       location: "Grays Harbor, Washington",
       about:
         "A small but growing industrial union branch rooted on the harbor. We are building a practical local union presence for workers, neighbors, and anyone who wants to organize seriously.",

@@ -7,19 +7,147 @@ const ThemeCtx = React.createContext({
 });
 
 const STORAGE_KEY = "bf_theme";
+const STYLE_ID = "bf-runtime-theme-style";
 
 function getInitialTheme() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "light" || saved === "dark") return saved;
   } catch {}
-
   return "light";
+}
+
+function ensureRuntimeStyle() {
+  let style = document.getElementById(STYLE_ID);
+  if (!style) {
+    style = document.createElement("style");
+    style.id = STYLE_ID;
+    document.head.appendChild(style);
+  }
+  return style;
+}
+
+function buildThemeCss(theme) {
+  const dark = theme === "dark";
+
+  const bg = dark ? "#121715" : "#f3efe8";
+  const elev = dark ? "#1a211e" : "#faf7f2";
+  const text = dark ? "#f3efe8" : "#111111";
+  const muted = dark ? "#b8c1cc" : "#4e647d";
+  const border = dark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)";
+  const inputBg = dark ? "#202825" : "#fffdf9";
+  const inputText = dark ? "#f3efe8" : "#111111";
+  const accent = dark ? "#c7e6d2" : "#173f35";
+
+  return `
+    :root {
+      --bg: ${bg};
+      --bg-elev: ${elev};
+      --text: ${text};
+      --muted: ${muted};
+      --border: ${border};
+      --accent: ${accent};
+      --input-bg: ${inputBg};
+      --input-text: ${inputText};
+    }
+
+    html, body, #root {
+      background: ${bg} !important;
+      color: ${text} !important;
+      min-height: 100% !important;
+    }
+
+    body {
+      margin: 0 !important;
+    }
+
+    /* auth */
+    .bf-auth-page,
+    .bf-auth-page.is-dpg {
+      background: ${dark ? bg : "#f4f1ea"} !important;
+      color: ${text} !important;
+    }
+
+    .bf-auth-shell {
+      background: ${dark ? elev : "#fbf8f2"} !important;
+      color: ${text} !important;
+      border-color: ${border} !important;
+    }
+
+    /* logged in app shell */
+    .bf-page,
+    .bf-main,
+    .bf-shell,
+    .bf-content,
+    .bf-workspace,
+    .bf-dashboard,
+    .bf-orgShell,
+    .bf-orgPage,
+    main,
+    section,
+    article {
+      background: ${dark ? bg : "transparent"} !important;
+      color: ${text} !important;
+    }
+
+    /* header/nav */
+    .bf-appHeader,
+    .bf-appHeader.is-dpg,
+    .bf-appnav,
+    .bf-appnav.is-drawer {
+      color: ${dark ? "#f3efe8" : ""} !important;
+    }
+
+    .bf-appnav-link {
+      color: ${dark ? "#f3efe8" : ""} !important;
+    }
+
+    .bf-appnav-link.is-active {
+      color: ${dark ? "#1a1714" : ""} !important;
+    }
+
+    .bf-logout,
+    .bf-hamburger,
+    .bf-drawer-close {
+      border-color: ${border} !important;
+      color: ${dark ? "#f3efe8" : ""} !important;
+    }
+
+    .bf-drawer-panel {
+      background: ${dark ? "#171411" : ""} !important;
+      color: ${text} !important;
+    }
+
+    /* cards / panels */
+    .card,
+    [class*="card"],
+    [class*="panel"],
+    [class*="surface"],
+    [class*="sidebar"] {
+      border-color: ${border} !important;
+      color: ${text} !important;
+    }
+
+    /* forms */
+    input,
+    textarea,
+    select {
+      background: ${inputBg} !important;
+      color: ${inputText} !important;
+      border-color: ${border} !important;
+    }
+
+    a {
+      color: ${dark ? "#c7e6d2" : ""} !important;
+    }
+  `;
 }
 
 function applyTheme(theme) {
   const root = document.documentElement;
   const body = document.body;
+  const appRoot = document.getElementById("root");
+  const style = ensureRuntimeStyle();
 
   root.setAttribute("data-theme", theme);
   body.setAttribute("data-theme", theme);
@@ -29,45 +157,19 @@ function applyTheme(theme) {
   root.classList.add(theme === "dark" ? "theme-dark" : "theme-light");
   body.classList.add(theme === "dark" ? "theme-dark" : "theme-light");
 
-  const vars = theme === "dark"
-    ? {
-        "--bg": "#121715",
-        "--bg-elev": "#1a211e",
-        "--text": "#f3efe8",
-        "--muted": "#b8c1cc",
-        "--border": "rgba(255,255,255,0.14)",
-        "--accent": "#c7e6d2",
-        "--input-bg": "#202825",
-        "--input-text": "#f3efe8",
-      }
-    : {
-        "--bg": "#f3efe8",
-        "--bg-elev": "#faf7f2",
-        "--text": "#111111",
-        "--muted": "#4e647d",
-        "--border": "rgba(0,0,0,0.12)",
-        "--accent": "#173f35",
-        "--input-bg": "#fffdf9",
-        "--input-text": "#111111",
-      };
+  style.textContent = buildThemeCss(theme);
 
-  Object.entries(vars).forEach(([k, v]) => {
-    root.style.setProperty(k, v);
-  });
-
-  root.style.backgroundColor = vars["--bg"];
-  root.style.color = vars["--text"];
-  body.style.backgroundColor = vars["--bg"];
-  body.style.color = vars["--text"];
-  body.style.transition = "background-color 160ms ease, color 160ms ease";
-  root.style.transition = "background-color 160ms ease, color 160ms ease";
+  if (appRoot) {
+    appRoot.style.background = theme === "dark" ? "#121715" : "#f3efe8";
+    appRoot.style.color = theme === "dark" ? "#f3efe8" : "#111111";
+    appRoot.style.minHeight = "100vh";
+  }
 }
 
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = React.useState(getInitialTheme);
 
   React.useEffect(() => {
-    console.log("[theme] effect fired, theme =", theme);
     applyTheme(theme);
     try {
       localStorage.setItem(STORAGE_KEY, theme);
@@ -79,12 +181,7 @@ export function ThemeProvider({ children }) {
   }, []);
 
   const toggleTheme = React.useCallback(() => {
-    console.log("[theme] toggleTheme called");
-    setThemeState((prev) => {
-      const next = prev === "dark" ? "light" : "dark";
-      console.log("[theme] state changing", prev, "->", next);
-      return next;
-    });
+    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
   }, []);
 
   const value = React.useMemo(

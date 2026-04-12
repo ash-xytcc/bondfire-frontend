@@ -7,7 +7,7 @@ export default function ThemeToggle() {
   return (
     <button
       type="button"
-      onClick={toggleTheme}
+      onClick={() => { console.log("[toggle] button clicked"); toggleTheme(); }}
       aria-label="Toggle dark mode"
       title="Toggle dark mode"
       style={{

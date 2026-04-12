@@ -67,6 +67,7 @@ export function ThemeProvider({ children }) {
   const [theme, setThemeState] = React.useState(getInitialTheme);
 
   React.useEffect(() => {
+    console.log("[theme] effect fired, theme =", theme);
     applyTheme(theme);
     try {
       localStorage.setItem(STORAGE_KEY, theme);
@@ -78,7 +79,12 @@ export function ThemeProvider({ children }) {
   }, []);
 
   const toggleTheme = React.useCallback(() => {
-    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
+    console.log("[theme] toggleTheme called");
+    setThemeState((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      console.log("[theme] state changing", prev, "->", next);
+      return next;
+    });
   }, []);
 
   const value = React.useMemo(

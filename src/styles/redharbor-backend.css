@@ -247,3 +247,15 @@ body[data-app="red-harbor"] [style*="crimson"] {
 }
 
 body[data-app="red-harbor"] .bf-brand-org { display: none !important; }
+
+
+body[data-app="red-harbor"] .bf-org-logo {
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: contain !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  margin-right: 10px !important;
+  border-radius: 0 !important;
+}
+

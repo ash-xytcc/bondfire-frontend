@@ -37,6 +37,7 @@ import DemoBanner from "./demo/DemoBanner.jsx";
 import DemoSpotlightTour from "./demo/DemoSpotlightTour.jsx";
 import DemoBoot from "./pages/DemoBoot.jsx";
 import { isDemoMode, disableDemoMode } from "./demo/demoMode.js";
+import RedHarborHome from "./pages/RedHarborHome";
 
 /* -------------------------------- Error Boundary ------------------------------- */
 class ErrorBoundary extends React.Component {
@@ -260,7 +261,7 @@ fetch("/api/orgs", { credentials: "include" })
 				<Route path="/demo" element={<DemoBoot />} />
 
 				{/* Landing */}
-				<Route path="/" element={<HomeRoute />} />
+				<Route path="/" element={<RedHarborHome />} />
 
 				{/* Orgs list */}
 				<Route

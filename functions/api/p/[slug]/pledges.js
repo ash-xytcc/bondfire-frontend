@@ -35,6 +35,7 @@ async function ensurePledgesTable(db) {
     "ALTER TABLE pledges ADD COLUMN amount REAL",
     "ALTER TABLE pledges ADD COLUMN note TEXT",
     "ALTER TABLE pledges ADD COLUMN status TEXT DEFAULT 'offered'",
+    "ALTER TABLE pledges ADD COLUMN need_id TEXT",
   ];
 
   for (const sql of adds) {

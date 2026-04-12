@@ -1,4 +1,5 @@
 import React from "react";
+import ThemeToggle from "../../components/ThemeToggle";
 
 const STORAGE_KEY = "dpg_sessions_v1";
 
@@ -124,24 +125,18 @@ function cardStyle(bg) {
 
 function buttonStyle(active = false) {
   return {
-    border: "1px solid rgba(0,0,0,0.12)",
+    border: "1px solid var(--border)",
     borderRadius: 999,
     padding: "8px 12px",
     cursor: "pointer",
-    background: active ? "#173f35" : "#f7f4ee",
-    color: active ? "#fff" : "#173f35",
+    background: active ? "var(--accent)" : "var(--bg-elev)",
+    color: active ? "#fff" : "var(--accent)",
     fontWeight: 700,
     fontSize: 14,
   };
 }
 
-function SessionCard({
-  item,
-  color,
-  onVote,
-  onClaimLead,
-  onClearLead,
-}) {
+function SessionCard({ item, color, onVote, onClaimLead, onClearLead }) {
   const [leadName, setLeadName] = React.useState("");
 
   return (
@@ -153,19 +148,19 @@ function SessionCard({
             fontSize: 28,
             lineHeight: 1,
             fontWeight: 800,
-            color: "#111",
+            color: "var(--text)",
             textTransform: "lowercase",
           }}
         >
           {item.title}
         </h3>
 
-        <button onClick={onVote} style={buttonStyle(false)}>
+        <button type="button" onClick={onVote} style={buttonStyle(false)}>
           ↑ {item.votes}
         </button>
       </div>
 
-      <div style={{ fontSize: 18, color: "#111", lineHeight: 1.35 }}>
+      <div style={{ fontSize: 18, color: "var(--text)", lineHeight: 1.35 }}>
         {item.description}
       </div>
 
@@ -201,7 +196,7 @@ function SessionCard({
             </div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>{item.lead}</div>
             <div style={{ marginTop: 10 }}>
-              <button onClick={onClearLead} style={buttonStyle(false)}>
+              <button type="button" onClick={onClearLead} style={buttonStyle(false)}>
                 clear lead
               </button>
             </div>
@@ -235,6 +230,7 @@ function SessionCard({
             <div
               style={{
                 display: "flex",
+                flexWrap: "wrap",
                 gap: 8,
                 alignItems: "center",
               }}
@@ -243,8 +239,10 @@ function SessionCard({
                 value={leadName}
                 onChange={(e) => setLeadName(e.target.value)}
                 placeholder="enter your name"
+                aria-label="Name"
                 style={{
-                  flex: 1,
+                  flex: "1 1 180px",
+                  minWidth: 0,
                   borderRadius: 12,
                   border: "1px solid var(--border)",
                   padding: "10px 12px",
@@ -266,30 +264,6 @@ function SessionCard({
               </button>
             </div>
           </form>
-        )}
-              placeholder="your name"
-              style={{
-                flex: "1 1 180px",
-                minWidth: 0,
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.12)",
-                padding: "10px 12px",
-                fontSize: 15,
-                background: "rgba(255,255,255,0.72)",
-              }}
-            />
-            <button
-              onClick={() => {
-                const name = leadName.trim();
-                if (!name) return;
-                onClaimLead(name);
-                setLeadName("");
-              }}
-              style={buttonStyle(true)}
-            >
-              i can lead this
-            </button>
-          </div>
         )}
       </div>
     </div>
@@ -313,13 +287,13 @@ function Column({
             margin: 0,
             fontSize: 36,
             lineHeight: 1,
-            color: "#173f35",
+            color: "var(--accent)",
             textTransform: "lowercase",
           }}
         >
           {title}
         </h2>
-        <div style={{ marginTop: 8, fontSize: 16, color: "#4e647d" }}>
+        <div style={{ marginTop: 8, fontSize: 16, color: "var(--muted)" }}>
           {subtitle}
         </div>
       </div>
@@ -338,7 +312,7 @@ function Column({
           ))
         ) : (
           <div style={cardStyle(color)}>
-            <div style={{ fontSize: 18 }}>nothing here yet</div>
+            <div style={{ fontSize: 18, color: "var(--text)" }}>nothing here yet</div>
           </div>
         )}
       </div>
@@ -463,45 +437,58 @@ export default function DpgSessionsPage() {
     <div
       style={{
         padding: 24,
-        background: "#f3efe8",
+        background: "var(--bg)",
         minHeight: "100%",
-        color: "#111",
+        color: "var(--text)",
       }}
     >
       <div
         style={{
-          border: "1px solid rgba(0,0,0,0.12)",
+          border: "1px solid var(--border)",
           borderRadius: 28,
           padding: 22,
-          background: "#faf7f2",
+          background: "var(--bg-elev)",
           marginBottom: 20,
         }}
       >
-        <h1
+        <div
           style={{
-            margin: 0,
-            fontSize: 56,
-            lineHeight: 0.95,
-            color: "#173f35",
-            textTransform: "lowercase",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 16,
           }}
         >
-          sessions
-        </h1>
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 56,
+                lineHeight: 0.95,
+                color: "var(--accent)",
+                textTransform: "lowercase",
+              }}
+            >
+              sessions
+            </h1>
 
-        <p
-          style={{
-            margin: "16px 0 0",
-            fontSize: 20,
-            lineHeight: 1.45,
-            color: "#4e647d",
-            maxWidth: 1200,
-          }}
-        >
-          This is the future home of the DPG session commons: ideas, upvotes,
-          pre scheduled anchors, and “I can lead this” flows, all shaped around
-          the actual whiteboard process used at the event.
-        </p>
+            <p
+              style={{
+                margin: "16px 0 0",
+                fontSize: 20,
+                lineHeight: 1.45,
+                color: "var(--muted)",
+                maxWidth: 1200,
+              }}
+            >
+              This is the future home of the DPG session commons: ideas, upvotes,
+              pre scheduled anchors, and “I can lead this” flows, all shaped around
+              the actual whiteboard process used at the event.
+            </p>
+          </div>
+
+          <ThemeToggle />
+        </div>
       </div>
 
       <div
@@ -515,8 +502,8 @@ export default function DpgSessionsPage() {
         <form
           onSubmit={addIdea}
           style={{
-            background: "#faf7f2",
-            border: "1px solid rgba(0,0,0,0.12)",
+            background: "var(--bg-elev)",
+            border: "1px solid var(--border)",
             borderRadius: 24,
             padding: 18,
             display: "grid",
@@ -527,7 +514,7 @@ export default function DpgSessionsPage() {
             style={{
               fontSize: 28,
               fontWeight: 800,
-              color: "#173f35",
+              color: "var(--accent)",
               textTransform: "lowercase",
             }}
           >
@@ -542,10 +529,11 @@ export default function DpgSessionsPage() {
             placeholder="title"
             style={{
               borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.12)",
+              border: "1px solid var(--border)",
               padding: "12px 14px",
               fontSize: 16,
-              background: "#fffdf9",
+              background: "var(--input-bg)",
+              color: "var(--input-text)",
             }}
           />
 
@@ -558,11 +546,12 @@ export default function DpgSessionsPage() {
             rows={4}
             style={{
               borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.12)",
+              border: "1px solid var(--border)",
               padding: "12px 14px",
               fontSize: 16,
               resize: "vertical",
-              background: "#fffdf9",
+              background: "var(--input-bg)",
+              color: "var(--input-text)",
             }}
           />
 
@@ -580,10 +569,11 @@ export default function DpgSessionsPage() {
               }
               style={{
                 borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.12)",
+                border: "1px solid var(--border)",
                 padding: "12px 14px",
                 fontSize: 16,
-                background: "#fffdf9",
+                background: "var(--input-bg)",
+                color: "var(--input-text)",
               }}
             >
               <option value="interestPool">interest pool</option>
@@ -600,10 +590,11 @@ export default function DpgSessionsPage() {
               placeholder="tags, comma, separated"
               style={{
                 borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.12)",
+                border: "1px solid var(--border)",
                 padding: "12px 14px",
                 fontSize: 16,
-                background: "#fffdf9",
+                background: "var(--input-bg)",
+                color: "var(--input-text)",
               }}
             />
           </div>
@@ -617,8 +608,8 @@ export default function DpgSessionsPage() {
 
         <div
           style={{
-            background: "#faf7f2",
-            border: "1px solid rgba(0,0,0,0.12)",
+            background: "var(--bg-elev)",
+            border: "1px solid var(--border)",
             borderRadius: 24,
             padding: 18,
             display: "grid",
@@ -629,7 +620,7 @@ export default function DpgSessionsPage() {
             style={{
               fontSize: 28,
               fontWeight: 800,
-              color: "#173f35",
+              color: "var(--accent)",
               textTransform: "lowercase",
             }}
           >
@@ -642,14 +633,15 @@ export default function DpgSessionsPage() {
             placeholder="search titles, descriptions, tags, or leads"
             style={{
               borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.12)",
+              border: "1px solid var(--border)",
               padding: "12px 14px",
               fontSize: 16,
-              background: "#fffdf9",
+              background: "var(--input-bg)",
+              color: "var(--input-text)",
             }}
           />
 
-          <div style={{ fontSize: 15, color: "#4e647d", lineHeight: 1.45 }}>
+          <div style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.45 }}>
             This is intentionally halfway between a suggestion board and a real
             scheduling tool. The point is to support the live whiteboard, not
             replace it with software because humans can never resist overbuilding
@@ -661,9 +653,10 @@ export default function DpgSessionsPage() {
               marginTop: "auto",
               padding: 14,
               borderRadius: 14,
-              background: "#fffdf9",
-              border: "1px solid rgba(0,0,0,0.08)",
+              background: "var(--input-bg)",
+              border: "1px solid var(--border)",
               fontSize: 17,
+              color: "var(--text)",
             }}
           >
             <strong>Current org:</strong> Dual Power West

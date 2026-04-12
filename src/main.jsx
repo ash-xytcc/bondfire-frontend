@@ -2,7 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
-import { ThemeProvider } from "./theme";
+import { ThemeProvider } from "./theme.jsx";
 import "./debug/initDebug.js";
 
 // Temporary hard reset of stale PWA/service-worker state.

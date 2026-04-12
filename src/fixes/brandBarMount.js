@@ -1,1 +1,1 @@
-// disabled
+// disabled — this file was injecting a ghost UI layer

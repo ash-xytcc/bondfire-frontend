@@ -2,23 +2,59 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+async function hasColumn(db, tableName, columnName) {
+  const rows = await db.prepare(`PRAGMA table_info(${tableName})`).all();
+  const cols = Array.isArray(rows?.results) ? rows.results : [];
+  return cols.some((c) => String(c.name) === String(columnName));
+}
+
 export async function ensureBulletinTable(db) {
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS bulletin_posts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      org_id TEXT NOT NULL,
-      title TEXT NOT NULL DEFAULT '',
-      slug TEXT NOT NULL DEFAULT '',
-      excerpt TEXT NOT NULL DEFAULT '',
-      body TEXT NOT NULL DEFAULT '',
-      status TEXT NOT NULL DEFAULT 'draft',
-      author_id TEXT,
-      author_name TEXT,
-      published_at TEXT,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      org_id TEXT NOT NULL
     )
   `).run();
+
+  if (!(await hasColumn(db, "bulletin_posts", "title"))) {
+    await db.prepare(`ALTER TABLE bulletin_posts ADD COLUMN title TEXT NOT NULL DEFAULT ''`).run();
+  }
+
+  if (!(await hasColumn(db, "bulletin_posts", "slug"))) {
+    await db.prepare(`ALTER TABLE bulletin_posts ADD COLUMN slug TEXT NOT NULL DEFAULT ''`).run();
+  }
+
+  if (!(await hasColumn(db, "bulletin_posts", "excerpt"))) {
+    await db.prepare(`ALTER TABLE bulletin_posts ADD COLUMN excerpt TEXT NOT NULL DEFAULT ''`).run();
+  }
+
+  if (!(await hasColumn(db, "bulletin_posts", "body"))) {
+    await db.prepare(`ALTER TABLE bulletin_posts ADD COLUMN body TEXT NOT NULL DEFAULT ''`).run();
+  }
+
+  if (!(await hasColumn(db, "bulletin_posts", "status"))) {
+    await db.prepare(`ALTER TABLE bulletin_posts ADD COLUMN status TEXT NOT NULL DEFAULT 'draft'`).run();
+  }
+
+  if (!(await hasColumn(db, "bulletin_posts", "author_id"))) {
+    await db.prepare(`ALTER TABLE bulletin_posts ADD COLUMN author_id TEXT`).run();
+  }
+
+  if (!(await hasColumn(db, "bulletin_posts", "author_name"))) {
+    await db.prepare(`ALTER TABLE bulletin_posts ADD COLUMN author_name TEXT`).run();
+  }
+
+  if (!(await hasColumn(db, "bulletin_posts", "published_at"))) {
+    await db.prepare(`ALTER TABLE bulletin_posts ADD COLUMN published_at TEXT`).run();
+  }
+
+  if (!(await hasColumn(db, "bulletin_posts", "created_at"))) {
+    await db.prepare(`ALTER TABLE bulletin_posts ADD COLUMN created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP`).run();
+  }
+
+  if (!(await hasColumn(db, "bulletin_posts", "updated_at"))) {
+    await db.prepare(`ALTER TABLE bulletin_posts ADD COLUMN updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP`).run();
+  }
 
   await db.prepare(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_bulletin_posts_org_slug

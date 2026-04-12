@@ -3,7 +3,7 @@ function nowIso() {
 }
 
 export async function ensureBulletinTable(db) {
-  await db.exec(`
+  await db.prepare(`
     CREATE TABLE IF NOT EXISTS bulletin_posts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       org_id TEXT NOT NULL,
@@ -17,23 +17,23 @@ export async function ensureBulletinTable(db) {
       published_at TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
+    )
+  `).run();
 
-  await db.exec(`
+  await db.prepare(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_bulletin_posts_org_slug
-    ON bulletin_posts(org_id, slug);
-  `);
+    ON bulletin_posts(org_id, slug)
+  `).run();
 
-  await db.exec(`
+  await db.prepare(`
     CREATE INDEX IF NOT EXISTS idx_bulletin_posts_org_status_published
-    ON bulletin_posts(org_id, status, published_at DESC);
-  `);
+    ON bulletin_posts(org_id, status, published_at DESC)
+  `).run();
 
-  await db.exec(`
+  await db.prepare(`
     CREATE INDEX IF NOT EXISTS idx_bulletin_posts_org_updated
-    ON bulletin_posts(org_id, updated_at DESC);
-  `);
+    ON bulletin_posts(org_id, updated_at DESC)
+  `).run();
 }
 
 export function slugify(input) {

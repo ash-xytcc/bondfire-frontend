@@ -15,35 +15,33 @@ function useOrgIdFromPath() {
   return raw ? decodeURIComponent(raw) : null;
 }
 
-const Brand = ({ logoSrc = "/logo-bondfire.png" }) => {
-  const orgId = useOrgIdFromPath();
-  const homeHref = orgId ? `/org/${orgId}/overview` : "/orgs";
-
-  const readOrgName = React.useCallback((id) => {
-    if (!id) return "";
-    try {
-      const s = JSON.parse(localStorage.getItem(`bf_org_settings_${id}`) || "{}");
-      const orgs = JSON.parse(localStorage.getItem("bf_orgs") || "[]");
-      const o = Array.isArray(orgs) ? orgs.find((x) => x?.id === id) : null;
-      return String((s?.name || o?.name || "").trim() || "");
-    } catch {
-      return "";
-    }
-  }, []);
-
-  const [orgName, setOrgName] = React.useState(() => readOrgName(orgId));
+const Brand = ({ orgId, logoSrc }) => {
+  const inferredOrgId = orgId || useOrgIdFromPath();
+  const location = useLocation();
+  const dpg = isDpgVariant();
+  const brand = getAppBrand();
+  const [orgName, setOrgName] = React.useState(() => readOrgNameFromStorage(inferredOrgId));
+  const [orgLogo, setOrgLogo] = React.useState(() => readOrgLogo(inferredOrgId));
 
   React.useEffect(() => {
-    setOrgName(readOrgName(orgId));
+    applyAppVariantToDocument();
+    setOrgName(readOrgNameFromStorage(inferredOrgId));
+    setOrgLogo(readOrgLogo(inferredOrgId));
 
     const onChange = (e) => {
       const changedId = e?.detail?.orgId;
-      if (!changedId || changedId === orgId) setOrgName(readOrgName(orgId));
+      if (!changedId || changedId === inferredOrgId) {
+        setOrgName(readOrgNameFromStorage(inferredOrgId));
+        setOrgLogo(readOrgLogo(inferredOrgId));
+      }
     };
 
     const onStorage = (e) => {
       const k = e?.key || "";
-      if (k === `bf_org_settings_${orgId}` || k === "bf_orgs") setOrgName(readOrgName(orgId));
+      if (k === `bf_org_settings_${inferredOrgId}` || k === "bf_orgs") {
+        setOrgName(readOrgNameFromStorage(inferredOrgId));
+        setOrgLogo(readOrgLogo(inferredOrgId));
+      }
     };
 
     window.addEventListener("bf:org_settings_changed", onChange);
@@ -52,27 +50,44 @@ const Brand = ({ logoSrc = "/logo-bondfire.png" }) => {
       window.removeEventListener("bf:org_settings_changed", onChange);
       window.removeEventListener("storage", onStorage);
     };
-  }, [orgId, readOrgName]);
+  }, [inferredOrgId]);
+
+  const label = orgName || (dpg ? "Organizer workspace" : "Org");
+  const imgSrc = logoSrc || brand.logoSrc;
+  const homeHref = inferredOrgId && dpg ? `/org/${encodeURIComponent(inferredOrgId)}/overview` : brand.homeHref;
 
   return (
     <div className="bf-brand-wrap">
-      <Link to={homeHref} className="brand">
-        <img
-          src={logoSrc}
-          alt="Bondfire"
-          width={28}
-          height={28}
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-          }}
-        />
-        <span>Bondfire</span>
+      <Link className="bf-brand" to={homeHref}>
+        <img src={imgSrc} alt={brand.logoAlt} />
+        <span>{brand.name}</span>
       </Link>
 
-      {orgId && orgName ? (
-        <div className="bf-orgPill" title={orgName}>
-          {orgName}
-        </div>
+      {!dpg && inferredOrgId ? (
+        <span
+          className="bf-brand-org"
+          title={label}
+          style={{ display: "inline-flex", alignItems: "center", gap: 10 }}
+        >
+          {orgLogo ? (
+            <img
+              src={orgLogo}
+              alt={`${label} logo`}
+              className="bf-org-logo"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 8,
+                objectFit: "cover",
+                border: "1px solid rgba(255,255,255,0.16)",
+                background: "rgba(255,255,255,0.06)",
+              }}
+              loading="lazy"
+              decoding="async"
+            />
+          ) : null}
+          <span className="bf-org-name">{label}</span>
+        </span>
       ) : null}
     </div>
   );

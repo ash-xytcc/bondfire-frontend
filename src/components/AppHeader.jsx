@@ -94,7 +94,7 @@ const Brand = ({ orgId, logoSrc }) => {
         <span>{brand.name}</span>
       </Link>
 
-      {inferredOrgId ? (
+      {inferredOrgId && !dpg ? (
         <span
           className="bf-brand-org"
           title={label}
@@ -119,9 +119,7 @@ const Brand = ({ orgId, logoSrc }) => {
           ) : null}
           <span className="bf-org-name">{label}</span>
         </span>
-      ) : dpg ? (
-        <span className="bf-brand-subtle">{brand.adminLabel}</span>
-      ) : null}
+      ) : dpg ? null : null}
     </div>
   );
 };

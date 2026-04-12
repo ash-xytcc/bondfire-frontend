@@ -32,14 +32,15 @@ async function ensurePledgesTable(db) {
   // Newer fields that Settings.jsx expects.
   // D1 doesn't support IF NOT EXISTS on ADD COLUMN, so ignore "duplicate column" errors.
   const adds = [
-    "ALTER TABLE pledges ADD COLUMN need_id TEXT",
+  "ALTER TABLE pledges ADD COLUMN description TEXT",
+"ALTER TABLE pledges ADD COLUMN need_id TEXT",
     "ALTER TABLE pledges ADD COLUMN pledger_name TEXT",
     "ALTER TABLE pledges ADD COLUMN pledger_email TEXT",
     "ALTER TABLE pledges ADD COLUMN type TEXT",
     "ALTER TABLE pledges ADD COLUMN amount REAL",
     "ALTER TABLE pledges ADD COLUMN note TEXT",
     "ALTER TABLE pledges ADD COLUMN status TEXT DEFAULT 'offered'",
-  ];
+];
 
   for (const sql of adds) {
     try {

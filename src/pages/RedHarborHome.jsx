@@ -185,10 +185,13 @@ export default function RedHarborHome() {
               </article>
             ))}
           </div>
-          <p className="rh-note">
-            This section is where we will port over bulletin material, statements, archive posts,
-            and publication links from the current Noblogs site.
-          </p>
+
+          <div className="rh-note-wrap">
+            <p className="rh-note">
+              This section is where we will port over bulletin material, statements, archive posts,
+              and publication links from the current Noblogs site.
+            </p>
+          </div>
         </section>
 
         <section id="events" className="rh-section rh-section-band">

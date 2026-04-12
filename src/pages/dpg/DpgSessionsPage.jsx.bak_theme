@@ -10,7 +10,7 @@ const seed = {
       description:
         "A lightweight opening slot to explain the process, norms, and how proposals become real sessions on site.",
       votes: 4,
-      lead: "",
+      leads: [],
       tags: ["orientation", "anchor"],
     },
     {
@@ -19,7 +19,7 @@ const seed = {
       description:
         "Pre-scheduled container for people to cluster by region before the board fills out organically.",
       votes: 6,
-      lead: "",
+      leads: [],
       tags: ["regional", "anchor"],
     },
   ],
@@ -30,7 +30,7 @@ const seed = {
       description:
         "Practical discussion around feeding people at scale, volunteer structure, sanitation, and menu logistics.",
       votes: 11,
-      lead: "",
+      leads: [],
       tags: ["food", "mutual-aid"],
     },
     {
@@ -39,7 +39,7 @@ const seed = {
       description:
         "Basic infrastructure, radio usage, low tech redundancy, and how groups actually stay in touch when signal dies.",
       votes: 9,
-      lead: "",
+      leads: [],
       tags: ["comms", "defense"],
     },
     {
@@ -48,7 +48,7 @@ const seed = {
       description:
         "How people handle rupture, repair, and difficult conversations without reproducing bullshit.",
       votes: 14,
-      lead: "",
+      leads: [],
       tags: ["facilitation", "care"],
     },
   ],
@@ -59,7 +59,7 @@ const seed = {
       description:
         "Needs someone willing to facilitate a practical intro level session.",
       votes: 7,
-      lead: "",
+      leads: [],
       tags: ["safety", "facilitation"],
     },
     {
@@ -68,7 +68,7 @@ const seed = {
       description:
         "Space for people ready to shape child friendly offerings and support structure.",
       votes: 5,
-      lead: "",
+      leads: [],
       tags: ["childcare", "care"],
     },
   ],
@@ -79,7 +79,7 @@ const seed = {
       description:
         "Most real programming should still emerge from the live whiteboard process during the event.",
       votes: 0,
-      lead: "",
+      leads: [],
       tags: ["onsite"],
     },
   ],
@@ -332,7 +332,7 @@ export default function DpgSessionsPage() {
 
   function clearLead(bucketName, id) {
     updateBucket(bucketName, (item) =>
-      item.id === id ? { ...item, lead: "" } : item
+      item.id === id ? { ...item, leads: [] } : item
     );
   }
 
@@ -347,7 +347,7 @@ export default function DpgSessionsPage() {
       title: title.toLowerCase(),
       description,
       votes: 0,
-      lead: "",
+      leads: [],
       tags: newItem.tags
         .split(",")
         .map((x) => x.trim().toLowerCase())

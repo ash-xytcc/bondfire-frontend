@@ -25,7 +25,7 @@ import Security from "./pages/Security.jsx";
 import Drive from "./pages/Drive.jsx";
 import Studio from "./pages/Studio.jsx";
 import Attendees from "./pages/Attendees.jsx";
-import Sessions from "./pages/Sessions.jsx";
+import DpgSessionsPage from "./pages/dpg/DpgSessionsPage";
 import DpgPublicHome from "./pages/DpgPublicHome.jsx";
 
 // COMPONENTS
@@ -314,7 +314,7 @@ function Shell() {
 					<Route path="settings" element={<Settings />} />
 					<Route path="drive" element={<Drive />} />
 					<Route path="studio" element={<Studio />} />
-					<Route path="sessions" element={<Sessions />} />
+					<Route path="/dpg/app/sessions" element={<DpgSessionsPage />} />
 					<Route path="public" element={<OrgPublicPreview />} />
 					<Route path="chat" element={isDpgVariant() ? <Navigate to="../overview" replace /> : <BondfireChat />} />
 					<Route path="guard/*" element={<OrgSecretGuard />} />

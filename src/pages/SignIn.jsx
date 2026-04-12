@@ -55,6 +55,7 @@ export default function SignIn() {
 		boxShadow: "0 10px 30px rgba(38,70,54,0.08)",
 		padding: 24,
 		color: "#1f2f28",
+		fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif',
 		}
 	: {};	
 	const [mode, setMode] = useState("login");
@@ -70,8 +71,12 @@ export default function SignIn() {
 	const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    try {
+      document.documentElement.dataset.app = dpg ? "dpg" : "bondfire";
+      document.body.dataset.app = dpg ? "dpg" : "bondfire";
+    } catch {}
     applyAppVariantToDocument();
-  }, []);
+  }, [dpg]);
 
 	async function postJson(url, body) {
 		const res = await fetch(url, {
@@ -205,7 +210,7 @@ export default function SignIn() {
 		>
       <div className="bf-auth-shell" style={cardStyle}>
         <div className="bf-auth-kicker">{dpg ? "Dual Power West organizer space" : "Bondfire"}</div>
-			<h1 style={{ marginBottom: 6 }}>{dpg ? "Welcome to Dual Power West" : "Welcome to Bondfire"}</h1>
+			<h1 style={dpg ? { marginBottom: 6, fontFamily: '"Fancy Shadow", Georgia, serif', letterSpacing: ".01em" } : { marginBottom: 6 }}>{dpg ? "Welcome to Dual Power West" : "Welcome to Bondfire"}</h1>
 			<p className="helper" style={{ marginTop: 0 }}>
 				{mode === "login"
             ? dpg
@@ -219,7 +224,7 @@ export default function SignIn() {
 			<div>
 					<button
 					type="button"
-					className={mode === "login" ? "btn-red" : "btn"}
+					className={mode === "login" ? "btn-red" : "btn"} style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined}
 					onClick={() => {
 						setErr("");
 						setMode("login");
@@ -230,7 +235,7 @@ export default function SignIn() {
 				</button>
 				<button
 					type="button"
-					className={mode === "register" ? "btn-red" : "btn"}
+					className={mode === "register" ? "btn-red" : "btn"} style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined}
 					onClick={() => {
 						setErr("");
 						setMode("register");
@@ -242,7 +247,7 @@ export default function SignIn() {
 			</div>
 
 			<div style={{ marginTop: 12 }}>
-				<button type="button" className="btn" onClick={() => startDemo(navigate)} disabled={busy}>
+				<button type="button" className="btn" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} onClick={() => startDemo(navigate)} disabled={busy}>
 					Try Demo (no account required)
 				</button>
 			</div>
@@ -259,11 +264,11 @@ export default function SignIn() {
 						MFA required for <b>{mfaStep.email}</b>. Enter your authenticator code or a recovery code.
 					</div>
 
-					<input className="input" type="text" placeholder="Authenticator code (6 digits)" value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} autoFocus />
-					<input className="input" type="text" placeholder="Recovery code (optional)" value={mfaRecovery} onChange={(e) => setMfaRecovery(e.target.value)} />
+					<input className="input" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} type="text" placeholder="Authenticator code (6 digits)" value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} autoFocus />
+					<input className="input" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} type="text" placeholder="Recovery code (optional)" value={mfaRecovery} onChange={(e) => setMfaRecovery(e.target.value)} />
 
-					<button className="btn-red" disabled={busy}>{busy ? "Verifying…" : "Verify"}</button>
-					<button type="button" className="btn" disabled={busy} onClick={() => { setMfaStep(null); setMfaCode(""); setMfaRecovery(""); }}>
+					<button className="btn-red" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} disabled={busy}>{busy ? "Verifying…" : "Verify"}</button>
+					<button type="button" className="btn" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} disabled={busy} onClick={() => { setMfaStep(null); setMfaCode(""); setMfaRecovery(""); }}>
 						Back
 					</button>
 				</form>
@@ -271,19 +276,19 @@ export default function SignIn() {
 				<form onSubmit={handleSubmit} className="grid" style={{ gap: 10, marginTop: 12 }}>
 					{mode === "register" && (
 						<>
-							<input className="input" type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-							{!dpg ? <input className="input" type="text" placeholder="Org name" value={orgName} onChange={(e) => setOrgName(e.target.value)} /> : null}
+							<input className="input" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+							{!dpg ? <input className="input" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} type="text" placeholder="Org name" value={orgName} onChange={(e) => setOrgName(e.target.value)} /> : null}
 						</>
 					)}
 
-					<input className="input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
-					<input className="input" type="password" placeholder="Password" value={pass} onChange={(e) => setPass(e.target.value)} />
+					<input className="input" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
+					<input className="input" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} type="password" placeholder="Password" value={pass} onChange={(e) => setPass(e.target.value)} />
 
 					{mode === "login" && (
-						<input className="input" type="text" placeholder={dpg ? "Invite code if you have one" : "Invite code (optional)"} value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
+						<input className="input" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} type="text" placeholder={dpg ? "Invite code if you have one" : "Invite code (optional)"} value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
 					)}
 
-					<button className="btn-red" disabled={busy}>
+					<button className="btn-red" style={dpg ? { fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif' } : undefined} disabled={busy}>
 						{busy ? "Working…" : mode === "register" ? "Create account" : "Sign in"}
 					</button>
 				</form>

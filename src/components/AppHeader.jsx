@@ -79,7 +79,7 @@ const Brand = ({ orgId, logoSrc }) => {
   }, [inferredOrgId]);
 
   const label = orgName || "Org";
-  const imgSrc = logoSrc || "/logo-bondfire.png";
+  const imgSrc = logoSrc || "/red-harbor-logo.png";
 
   return (
     <div className="bf-brand-wrap">

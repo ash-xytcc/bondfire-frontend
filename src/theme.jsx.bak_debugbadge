@@ -2,6 +2,7 @@ import React from "react";
 
 const ThemeCtx = React.createContext({
   theme: "light",
+  setTheme: () => {},
   toggleTheme: () => {},
 });
 
@@ -21,34 +22,32 @@ function applyTheme(theme) {
   const app = document.getElementById("root");
 
   const dark = theme === "dark";
+
   const bg = dark ? "#121715" : "#f3efe8";
   const text = dark ? "#f3efe8" : "#111111";
 
+  // set attributes (for future CSS if needed)
   rootEl.setAttribute("data-theme", theme);
   body.setAttribute("data-theme", theme);
 
+  // FORCE background at every layer
   rootEl.style.backgroundColor = bg;
-  rootEl.style.color = text;
-
   body.style.backgroundColor = bg;
-  body.style.color = text;
 
   if (app) {
     app.style.backgroundColor = bg;
-    app.style.color = text;
     app.style.minHeight = "100vh";
   }
 
-  window.__BF_THEME_DEBUG__ = {
-    theme,
-    rootBg: app ? getComputedStyle(app).backgroundColor : null,
-    bodyBg: getComputedStyle(body).backgroundColor,
-    htmlBg: getComputedStyle(rootEl).backgroundColor,
-  };
+  rootEl.style.color = text;
+  body.style.color = text;
+
+  // DEBUG so we know it's firing
+  console.log("[theme applied]", theme, bg);
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = React.useState(getInitialTheme);
+  const [theme, setThemeState] = React.useState(getInitialTheme);
 
   React.useEffect(() => {
     applyTheme(theme);
@@ -58,7 +57,7 @@ export function ThemeProvider({ children }) {
   }, [theme]);
 
   const toggleTheme = React.useCallback(() => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    setThemeState(prev => (prev === "dark" ? "light" : "dark"));
   }, []);
 
   return (

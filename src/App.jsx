@@ -314,7 +314,7 @@ function Shell() {
 					<Route path="settings" element={<Settings />} />
 					<Route path="drive" element={<Drive />} />
 					<Route path="studio" element={<Studio />} />
-					<Route path="/dpg/app/sessions" element={<DpgSessionsPage />} />
+					<Route path="sessions" element={<DpgSessionsPage />} />
 					<Route path="public" element={<OrgPublicPreview />} />
 					<Route path="chat" element={isDpgVariant() ? <Navigate to="../overview" replace /> : <BondfireChat />} />
 					<Route path="guard/*" element={<OrgSecretGuard />} />

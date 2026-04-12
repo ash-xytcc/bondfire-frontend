@@ -172,13 +172,15 @@ function OrgNav({ variant = "desktop" }) {
   const enabled = orgId ? getOrgModules(orgId) : [];
   const defs = isRedHarbor
     ? [
-        ["overview", "Branch Overview", `${base}/overview`, "nav-overview"],
-        ["people", "Members", `${base}/people`, "nav-people"],
-        ["inventory", "Supplies", `${base}/inventory`, "nav-inventory"],
-        ["needs", "Requests", `${base}/needs`, "nav-needs"],
+        ["overview", "Branch Board", `${base}/overview`, "nav-branch-board"],
+        ["bulletin", "Bulletin", `${base}/bulletin`, "nav-bulletin"],
+        ["people", "Members", `${base}/people`, "nav-members"],
+        ["inventory", "Supplies", `${base}/inventory`, "nav-supplies"],
+        ["needs", "Requests", `${base}/needs`, "nav-requests"],
         ["meetings", "Meetings", `${base}/meetings`, "nav-meetings"],
-        ["drive", "Documents", `${base}/drive`, "nav-drive"],
+        ["drive", "Documents", `${base}/drive`, "nav-documents"],
         ["studio", "Studio", `${base}/studio`, "nav-studio"],
+        ["settings", "Settings", `${base}/settings`, "nav-settings"],
       ]
     : [
         ["overview", "Dashboard", `${base}/overview`, "nav-overview"],
@@ -194,7 +196,7 @@ function OrgNav({ variant = "desktop" }) {
 
   const items = base
     ? defs
-        .filter(([key]) => enabled.includes(key))
+        .filter(([key]) => isRedHarbor ? (key === "bulletin" || enabled.includes(key)) : enabled.includes(key))
         .map(([, label, to, tourId]) => [label, to, tourId])
     : [];
 

@@ -1,24 +1,39 @@
 import { ensureBulletinTable, normalizePost } from "../../_lib/bulletin.js";
 
+async function hasColumn(db, tableName, columnName) {
+  const rows = await db.prepare(`PRAGMA table_info(${tableName})`).all();
+  const cols = Array.isArray(rows?.results) ? rows.results : [];
+  return cols.some((c) => String(c.name) === String(columnName));
+}
+
+async function resolveOrg(db, requestedSlug) {
+  const orgsHaveSlug = await hasColumn(db, "orgs", "slug");
+  const orgsHaveName = await hasColumn(db, "orgs", "name");
+
+  if (orgsHaveSlug && requestedSlug) {
+    const row = await db.prepare(
+      `SELECT id, slug, ${orgsHaveName ? "name" : "NULL as name"} FROM orgs WHERE slug = ? LIMIT 1`
+    )
+      .bind(String(requestedSlug))
+      .first();
+    if (row) return row;
+  }
+
+  const fallback = await db.prepare(
+    `SELECT id, ${orgsHaveSlug ? "slug" : "NULL as slug"}, ${orgsHaveName ? "name" : "NULL as name"} FROM orgs ORDER BY id ASC LIMIT 1`
+  ).first();
+
+  return fallback || null;
+}
+
 export const onRequestGet = async ({ env, request, params }) => {
   try {
     await ensureBulletinTable(env.BF_DB);
 
     const url = new URL(request.url);
-    const orgSlug = String(url.searchParams.get("org") || "").trim();
+    const requestedSlug = String(url.searchParams.get("org") || "").trim();
 
-    if (!orgSlug) {
-      return Response.json(
-        { ok: false, error: "VALIDATION", message: "org query param required" },
-        { status: 400 }
-      );
-    }
-
-    const org = await env.BF_DB.prepare(
-      `SELECT id, slug, name FROM orgs WHERE slug = ? LIMIT 1`
-    )
-      .bind(orgSlug)
-      .first();
+    const org = await resolveOrg(env.BF_DB, requestedSlug);
 
     if (!org) {
       return Response.json(
@@ -45,7 +60,11 @@ export const onRequestGet = async ({ env, request, params }) => {
 
     return Response.json({
       ok: true,
-      org: { id: String(org.id), slug: org.slug, name: org.name },
+      org: {
+        id: String(org.id),
+        slug: org.slug || requestedSlug || "",
+        name: org.name || "",
+      },
       post: normalizePost(row),
     });
   } catch (err) {

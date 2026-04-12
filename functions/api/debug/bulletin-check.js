@@ -1,6 +1,13 @@
+async function hasColumn(db, tableName, columnName) {
+  const rows = await db.prepare(`PRAGMA table_info(${tableName})`).all();
+  const cols = Array.isArray(rows?.results) ? rows.results : [];
+  return cols.some((c) => String(c.name) === String(columnName));
+}
+
 export const onRequestGet = async ({ env }) => {
   try {
     const tableInfo = await env.BF_DB.prepare("PRAGMA table_info(bulletin_posts)").all();
+    const orgsInfo = await env.BF_DB.prepare("PRAGMA table_info(orgs)").all();
 
     let sampleResults = [];
     let sampleError = null;
@@ -18,9 +25,11 @@ export const onRequestGet = async ({ env }) => {
     let orgsError = null;
 
     try {
-      const orgs = await env.BF_DB.prepare(
-        "SELECT id, slug, name FROM orgs LIMIT 10"
-      ).all();
+      const orgsHaveSlug = await hasColumn(env.BF_DB, "orgs", "slug");
+      const orgsHaveName = await hasColumn(env.BF_DB, "orgs", "name");
+
+      const q = `SELECT id, ${orgsHaveSlug ? "slug" : "NULL as slug"}, ${orgsHaveName ? "name" : "NULL as name"} FROM orgs LIMIT 10`;
+      const orgs = await env.BF_DB.prepare(q).all();
       orgsResults = orgs?.results || [];
     } catch (err) {
       orgsError = String(err?.message || err);
@@ -30,6 +39,7 @@ export const onRequestGet = async ({ env }) => {
       ok: true,
       bindingPresent: !!env.BF_DB,
       tableInfo: tableInfo?.results || [],
+      orgsInfo: orgsInfo?.results || [],
       sampleResults,
       sampleError,
       orgsResults,

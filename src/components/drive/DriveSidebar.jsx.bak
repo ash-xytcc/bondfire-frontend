@@ -19,7 +19,7 @@ function MenuButton({ label, onClick, danger = false }) {
   );
 }
 
-function PopMenu({ trigger, items, align = "right" }) {  const dpg = isDpgVariant();
+function PopMenu({ trigger, items, align = "right" }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -47,9 +47,7 @@ function PopMenu({ trigger, items, align = "right" }) {  const dpg = isDpgVarian
   );
 }
 
-function TreeRow({ depth = 0, active = false, icon, label, hint, onClick, menuItems,
-  textColor,
-}) {
+function TreeRow({ depth = 0, active = false, icon, label, hint, onClick, menuItems }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 4, alignItems: "center", marginTop: 3 }}>
       <button
@@ -65,7 +63,7 @@ function TreeRow({ depth = 0, active = false, icon, label, hint, onClick, menuIt
           padding: "6px 8px",
           paddingLeft: 8 + depth * 12,
           background: active ? (dpg ? "rgba(95,148,221,0.14)" : "rgba(255,255,255,0.08)") : "transparent",
-          color: textColor,
+          color: buttonText,
           border: dpg ? "1px solid rgba(56,80,50,0.10)" : "1px solid rgba(255,255,255,0.07)",
           borderRadius: 10,
           cursor: "pointer",
@@ -198,9 +196,7 @@ export default function DriveSidebar({
               { label: "Rename", onClick: () => onRenameFolder?.(folder.id) },
               { label: "Delete", danger: true, onClick: () => onDeleteFolder?.(folder.id) },
             ]}
-          
-        textColor={buttonText}
-      />,
+          />,
         );
         if (!isCollapsed) rows.push(...renderBranch(folder.id, depth + 1));
       });
@@ -220,9 +216,7 @@ export default function DriveSidebar({
               { label: "Move", onClick: () => onMoveNote?.(note.id) },
               { label: "Delete", danger: true, onClick: () => onDeleteNote?.(note.id) },
             ]}
-          
-        textColor={buttonText}
-      />,
+          />,
         );
       });
 
@@ -243,9 +237,7 @@ export default function DriveSidebar({
               { label: "Move", onClick: () => onMoveFile?.(file.id) },
               { label: "Delete", danger: true, onClick: () => onDeleteFile?.(file.id) },
             ]}
-          
-        textColor={buttonText}
-      />,
+          />,
         );
       });
 
@@ -309,9 +301,7 @@ export default function DriveSidebar({
                       { label: "Edit template", onClick: () => onEditTemplate?.(tpl.id) },
                       { label: "Delete template", danger: true, onClick: () => onDeleteTemplate?.(tpl.id) },
                     ]}
-                  
-        textColor={buttonText}
-      />
+                  />
                 ))}
               {!templates.length ? <div className="helper" style={{ padding: "8px 4px" }}>No templates yet.</div> : null}
             </div>

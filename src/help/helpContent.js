@@ -38,7 +38,7 @@ export const HELP_TOPICS = [
       {
         "h": "How to learn fast",
         "p": [
-          "Start on the dashboard, then open Needs, Meetings, Inventory, and Settings.",
+          "Start on the branch board, then open Needs, Meetings, Inventory, and Settings.",
           "Use the Demo banner to reset the sandbox or restart the guided tour at any time."
         ]
       }
@@ -47,9 +47,9 @@ export const HELP_TOPICS = [
   {
     "id": "getting-started",
     "title": "Getting Started",
-    "blurb": "How Bondfire is structured, what to do first, and how to make the dashboard yours.",
+    "blurb": "How Bondfire is structured, what to do first, and how to make the branch board yours.",
     "keywords": [
-      "dashboard",
+      "branch board",
       "org",
       "cards",
       "drag",
@@ -61,7 +61,7 @@ export const HELP_TOPICS = [
         "h": "How Bondfire is organized",
         "p": [
           "Bondfire is built around private org spaces. Once you join or create an org, everything meaningful happens inside that org.",
-          "The dashboard is a snapshot of your org: members, inventory, open needs, meetings, pledges, and newsletter growth."
+          "The branch board is your internal snapshot: members, inventory, open needs, meetings, support, and newsletter movement."
         ]
       },
       {
@@ -72,7 +72,7 @@ export const HELP_TOPICS = [
         ]
       },
       {
-        "h": "Customize your dashboard",
+        "h": "Customize your branch board",
         "p": [
           "You can drag and drop the top metric cards (People, Inventory, Needs, etc.) to reorder them.",
           "Your layout is saved per organization."
@@ -345,7 +345,7 @@ export const HELP_TOPICS = [
   {
     "id": "inventory",
     "title": "Managing Inventory",
-    "blurb": "Track what you have, set par levels for critical items, and let the dashboard warn you early.",
+    "blurb": "Track what you have, set par levels for critical items, and let the branch board warn you early.",
     "keywords": [
       "inventory",
       "par",
@@ -358,7 +358,7 @@ export const HELP_TOPICS = [
         "h": "Par levels",
         "p": [
           "Par is the minimum amount you want to keep on hand. It is not a maximum.",
-          "If par is set, the dashboard can flag items when stock drops below that threshold."
+          "If par is set, the branch board can flag items when stock drops below that threshold."
         ]
       },
       {
@@ -395,7 +395,7 @@ export const HELP_TOPICS = [
         "h": "Priority",
         "p": [
           "Higher priority rises to the top. Use it to reflect urgency, not moral importance.",
-          "Close needs when fulfilled. Leaving old needs open makes the dashboard useless."
+          "Close needs when fulfilled. Leaving old needs open makes the branch board useless."
         ]
       }
     ]
@@ -443,7 +443,7 @@ export const HELP_TOPICS = [
         "h": "Newsletter subscribers",
         "p": [
           "Bondfire tracks subscribers tied to your org. You can view recent signups and export subscribers as CSV for your email tool.",
-          "The dashboard trend shows subscription movement over the last 14 days."
+          "The branch board trend shows subscription movement over the last 14 days."
         ]
       },
       {

@@ -38,6 +38,7 @@ import DemoSpotlightTour from "./demo/DemoSpotlightTour.jsx";
 import DemoBoot from "./pages/DemoBoot.jsx";
 import { isDemoMode, disableDemoMode } from "./demo/demoMode.js";
 import RedHarborHome from "./pages/RedHarborHome";
+import BranchBoard from "./pages/BranchBoard";
 
 /* -------------------------------- Error Boundary ------------------------------- */
 class ErrorBoundary extends React.Component {
@@ -292,7 +293,7 @@ fetch("/api/orgs", { credentials: "include" })
 						</RequireAuth>
 					}
 				>
-					<Route index element={<Overview />} />
+					<Route index element={<BranchBoard />} />
 					<Route path="overview" element={<Overview />} />
 					<Route path="people" element={<People />} />
 					<Route path="inventory" element={<Inventory />} />

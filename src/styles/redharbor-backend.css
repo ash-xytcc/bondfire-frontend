@@ -245,3 +245,5 @@ body[data-app="red-harbor"] .error,
 body[data-app="red-harbor"] [style*="crimson"] {
   color: #ffb5ae !important;
 }
+
+body[data-app="red-harbor"] .bf-brand-org { display: none !important; }

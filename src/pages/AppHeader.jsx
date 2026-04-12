@@ -15,7 +15,7 @@ function useOrgIdFromPath() {
   return raw ? decodeURIComponent(raw) : null;
 }
 
-const Brand = ({ logoSrc = null }) => {
+const Brand = ({ logoSrc = "/red-harbor-logo.png" }) => {
   const orgId = useOrgIdFromPath();
   const homeHref = orgId ? `/org/${orgId}/overview` : "/orgs";
 

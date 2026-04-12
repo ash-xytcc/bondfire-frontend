@@ -1706,12 +1706,9 @@ body[data-app="dpg"] .bf-appHeader-left{
 }
 
 body[data-app="dpg"] .bf-nav-desktop{
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: none;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
+  min-width:0 !important;
+  width:100% !important;
+  overflow:hidden !important;
 }
 
 body[data-app="dpg"] .bf-appHeader-right{
@@ -1757,8 +1754,12 @@ body[data-app="dpg"] .bf-logout{
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
   body[data-app="dpg"] .bf-appnav{
-    gap: 8px;
-  }
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  gap:6px !important;
+  width:100% !important;
+  justify-content:flex-start !important;
+}
   body[data-app="dpg"] .bf-appnav-link,
   body[data-app="dpg"] .bf-logout{
     padding: 10px 10px;
@@ -1887,24 +1888,25 @@ body[data-app="dpg"] .bf-brand{
 }
 
 body[data-app="dpg"] .bf-nav-desktop{
-  min-width: 0 !important;
-  width: 100% !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  scrollbar-width: thin !important;
+  min-width:0 !important;
+  width:100% !important;
+  overflow:hidden !important;
 }
 
 body[data-app="dpg"] .bf-appnav{
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  gap: 8px !important;
-  min-width: max-content !important;
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  gap:6px !important;
+  width:100% !important;
+  justify-content:flex-start !important;
 }
 
 body[data-app="dpg"] .bf-appnav-link{
-  flex: 0 0 auto !important;
-  white-space: nowrap !important;
-  padding: 10px 12px !important;
+  flex:0 1 auto !important;
+  white-space:nowrap !important;
+  padding:8px 10px !important;
+  font-size:13px !important;
+  letter-spacing:.2px !important;
 }
 
 body[data-app="dpg"] .bf-appHeader-right{
@@ -1914,8 +1916,12 @@ body[data-app="dpg"] .bf-appHeader-right{
 
 @media (max-width: 1320px){
   body[data-app="dpg"] .bf-appnav-link{
-    padding: 10px 10px !important;
-  }
+  flex:0 1 auto !important;
+  white-space:nowrap !important;
+  padding:8px 10px !important;
+  font-size:13px !important;
+  letter-spacing:.2px !important;
+}
 }
 
 @media (max-width: 1180px){
@@ -1954,24 +1960,25 @@ body[data-app="dpg"] .bf-brand{
 }
 
 body[data-app="dpg"] .bf-nav-desktop{
-  min-width: 0 !important;
-  width: 100% !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  scrollbar-width: thin !important;
+  min-width:0 !important;
+  width:100% !important;
+  overflow:hidden !important;
 }
 
 body[data-app="dpg"] .bf-appnav{
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  gap: 8px !important;
-  min-width: max-content !important;
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  gap:6px !important;
+  width:100% !important;
+  justify-content:flex-start !important;
 }
 
 body[data-app="dpg"] .bf-appnav-link{
-  flex: 0 0 auto !important;
-  white-space: nowrap !important;
-  padding: 10px 12px !important;
+  flex:0 1 auto !important;
+  white-space:nowrap !important;
+  padding:8px 10px !important;
+  font-size:13px !important;
+  letter-spacing:.2px !important;
 }
 
 body[data-app="dpg"] .bf-appHeader-right{
@@ -1982,8 +1989,12 @@ body[data-app="dpg"] .bf-appHeader-right{
 
 @media (max-width: 1320px){
   body[data-app="dpg"] .bf-appnav-link{
-    padding: 10px 10px !important;
-  }
+  flex:0 1 auto !important;
+  white-space:nowrap !important;
+  padding:8px 10px !important;
+  font-size:13px !important;
+  letter-spacing:.2px !important;
+}
 }
 
 @media (max-width: 1180px){
@@ -2024,22 +2035,23 @@ body[data-app="dpg"] .bf-brand{
 body[data-app="dpg"] .bf-nav-desktop{
   min-width:0 !important;
   width:100% !important;
-  overflow-x:auto !important;
-  overflow-y:hidden !important;
-  scrollbar-width:thin !important;
+  overflow:hidden !important;
 }
 
 body[data-app="dpg"] .bf-appnav{
   display:flex !important;
   flex-wrap:nowrap !important;
-  gap:8px !important;
-  min-width:max-content !important;
+  gap:6px !important;
+  width:100% !important;
+  justify-content:flex-start !important;
 }
 
 body[data-app="dpg"] .bf-appnav-link{
-  flex:0 0 auto !important;
+  flex:0 1 auto !important;
   white-space:nowrap !important;
-  padding:10px 12px !important;
+  padding:8px 10px !important;
+  font-size:13px !important;
+  letter-spacing:.2px !important;
 }
 
 body[data-app="dpg"] .bf-appHeader-right{

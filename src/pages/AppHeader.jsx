@@ -15,7 +15,7 @@ function useOrgIdFromPath() {
   return raw ? decodeURIComponent(raw) : null;
 }
 
-const Brand = ({ logoSrc = "/logo-bondfire.png" }) => {
+const Brand = ({ logoSrc = null }) => {
   const orgId = useOrgIdFromPath();
   const homeHref = orgId ? `/org/${orgId}/overview` : "/orgs";
 

@@ -84,7 +84,7 @@ const Brand = ({ orgId, logoSrc }) => {
   return (
     <div className="bf-brand-wrap">
       <Link className="bf-brand" to={homeHref}>
-        <img src={imgSrc} alt="Bondfire logo" />
+        {imgSrc ? <img src={imgSrc} alt="Org logo" onError={(e)=>{ e.currentTarget.style.display = "none"; }} /> : null}
         <span>{label}</span>
       </Link>
 

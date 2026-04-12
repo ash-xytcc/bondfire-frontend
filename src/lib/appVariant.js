@@ -66,6 +66,32 @@ export function applyAppVariantToDocument() {
     document.documentElement.dataset.app = dpg ? "dpg" : "bondfire";
     document.body.dataset.app = dpg ? "dpg" : "bondfire";
 
+    const fontIds = ["dpg-font-formulario", "dpg-font-fancy-shadow"];
+    fontIds.forEach((id) => {
+      const existing = document.getElementById(id);
+      if (existing && !dpg) existing.remove();
+    });
+
+    if (dpg) {
+      const fontLinks = [
+        { id: "dpg-font-formulario", href: "/fonts/Formulario-1312.ttf" },
+        { id: "dpg-font-fancy-shadow", href: "/fonts/FancyShadow.ttf" },
+      ];
+
+      for (const f of fontLinks) {
+        if (!document.getElementById(f.id)) {
+          const link = document.createElement("link");
+          link.id = f.id;
+          link.rel = "preload";
+          link.as = "font";
+          link.type = "font/ttf";
+          link.href = f.href;
+          link.crossOrigin = "anonymous";
+          document.head.appendChild(link);
+        }
+      }
+    }
+
     const styleId = "dpg-global-theme";
     let styleEl = document.getElementById(styleId);
 
@@ -81,6 +107,22 @@ export function applyAppVariantToDocument() {
     }
 
     styleEl.textContent = `
+      @font-face {
+        font-family: "Fancy Shadow";
+        src: url("/fonts/FancyShadow.ttf") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: "Formulario 1312";
+        src: url("/fonts/Formulario-1312.ttf") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+
       :root[data-app="dpg"],
       body[data-app="dpg"] {
         --dpg-bg: #f4f1ea;
@@ -92,7 +134,8 @@ export function applyAppVariantToDocument() {
         --dpg-primary: #264636;
         --dpg-accent: #e3a7a5;
         --dpg-accent-deep: #b46b6a;
-        --dpg-font: "Inter", "Avenir Next", "Segoe UI", sans-serif;
+        --dpg-font: "Formulario 1312", Inter, system-ui, "Segoe UI", Arial, sans-serif;
+        --dpg-display-font: "Fancy Shadow", Georgia, serif;
       }
 
       html[data-app="dpg"],
@@ -223,9 +266,12 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] h3,
       body[data-app="dpg"] h4,
       body[data-app="dpg"] h5,
-      body[data-app="dpg"] h6 {
+      body[data-app="dpg"] h6,
+      body[data-app="dpg"] .bf-auth-shell h1,
+      body[data-app="dpg"] .dpg-display-font {
         color: #173126 !important;
-        font-family: var(--dpg-font) !important;
+        font-family: var(--dpg-display-font) !important;
+        letter-spacing: .01em !important;
       }
     `;
   } catch {}

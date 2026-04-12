@@ -30,12 +30,12 @@
 *{box-sizing:border-box}
 html,body,#root{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
-body[data-app-variant="dpg"]{font-family:"Formulario 1312", Inter, system-ui, Arial, sans-serif;}
-body[data-app-variant="dpg"] h1,
-body[data-app-variant="dpg"] h2,
-body[data-app-variant="dpg"] h3,
-body[data-app-variant="dpg"] .bf-auth-shell h1,
-body[data-app-variant="dpg"] .dpg-display-font{font-family:"Fancy Shadow", Georgia, serif; letter-spacing:.01em;}
+body[data-app="dpg"]{font-family:"Formulario 1312", Inter, system-ui, Arial, sans-serif;}
+body[data-app="dpg"] h1,
+body[data-app="dpg"] h2,
+body[data-app="dpg"] h3,
+body[data-app="dpg"] .bf-auth-shell h1,
+body[data-app="dpg"] .dpg-display-font{font-family:"Fancy Shadow", Georgia, serif; letter-spacing:.01em;}
 a{text-decoration:none;color:inherit}
 button{background:var(--red);border:1px solid var(--red-2);color:#fff;padding:10px 14px;border-radius:10px;cursor:pointer}
 button:hover{filter:brightness(1.1)}
@@ -1535,7 +1535,7 @@ html, body {
 /* ===============================
    Variant-aware DPG admin reskin
    =============================== */
-body[data-app-variant="dpg"]{
+body[data-app="dpg"]{
   --bg:#eef1ec;
   --panel:#f7f8f4;
   --muted:#587086;
@@ -1546,80 +1546,80 @@ body[data-app-variant="dpg"]{
 }
 
 
-html[data-app-variant="dpg"] .helper,
-body[data-app-variant="dpg"] .helper{ color: var(--muted); }
-body[data-app-variant="dpg"] .bf-appHeader{
+html[data-app="dpg"] .helper,
+body[data-app="dpg"] .helper{ color: var(--muted); }
+body[data-app="dpg"] .bf-appHeader{
   background: rgba(247,248,244,.96);
   border-bottom-color: rgba(56,80,50,.14);
 }
-body[data-app-variant="dpg"] .bf-appHeader.is-dpg{
+body[data-app="dpg"] .bf-appHeader.is-dpg{
   box-shadow: 0 10px 30px rgba(0,0,0,.18);
 }
-body[data-app-variant="dpg"] .bf-brand{
+body[data-app="dpg"] .bf-brand{
   color: #182018;
 }
-body[data-app-variant="dpg"] .bf-brand img{
+body[data-app="dpg"] .bf-brand img{
   filter: saturate(.6) brightness(.95);
 }
-body[data-app-variant="dpg"] .bf-brand-subtle{
+body[data-app="dpg"] .bf-brand-subtle{
   font-size: 12px;
   letter-spacing: .08em;
   text-transform: uppercase;
   color: #587086;
 }
-body[data-app-variant="dpg"] .bf-appnav-link,
-body[data-app-variant="dpg"] .bf-logout,
-body[data-app-variant="dpg"] .bf-hamburger{
+body[data-app="dpg"] .bf-appnav-link,
+body[data-app="dpg"] .bf-logout,
+body[data-app="dpg"] .bf-hamburger{
   background: rgba(255,255,255,0.035);
   border-color: rgba(217,196,170,.14);
   color: #182018;
 }
-body[data-app-variant="dpg"] .bf-appnav-link.is-active{
+body[data-app="dpg"] .bf-appnav-link.is-active{
   background: rgba(95,148,221,.16);
   border-color: rgba(95,148,221,.34);
 }
-body[data-app-variant="dpg"] .btn,
-body[data-app-variant="dpg"] a.btn{
+body[data-app="dpg"] .btn,
+body[data-app="dpg"] a.btn{
   background: rgba(95,148,221,.12);
   border-color: rgba(56,80,50,.18);
   color: #1f3550;
 }
-body[data-app-variant="dpg"] .btn:hover,
-body[data-app-variant="dpg"] a.btn:hover{
+body[data-app="dpg"] .btn:hover,
+body[data-app="dpg"] a.btn:hover{
   background: rgba(95,148,221,.18);
 }
-body[data-app-variant="dpg"] .btn-red,
-body[data-app-variant="dpg"] a.btn-red,
-body[data-app-variant="dpg"] button{
+body[data-app="dpg"] .btn-red,
+body[data-app="dpg"] a.btn-red,
+body[data-app="dpg"] button{
   background: var(--red);
   border-color: var(--red-2);
   color: #ffffff;
 }
-body[data-app-variant="dpg"] .btn:disabled,
-body[data-app-variant="dpg"] .btn-red:disabled,
-body[data-app-variant="dpg"] button:disabled{
+body[data-app="dpg"] .btn:disabled,
+body[data-app="dpg"] .btn-red:disabled,
+body[data-app="dpg"] button:disabled{
   opacity: 1;
   color: #4b657f;
   background: rgba(95,148,221,.12);
   border-color: rgba(95,148,221,.22);
   cursor: not-allowed;
 }
-body[data-app-variant="dpg"] input,
-body[data-app-variant="dpg"] select,
-body[data-app-variant="dpg"] textarea{
+body[data-app="dpg"] input,
+body[data-app="dpg"] select,
+body[data-app="dpg"] textarea{
   background: #120f0e;
   border-color: rgba(56,80,50,.18);
   color: #f8faf8;
 }
-body[data-app-variant="dpg"] input::placeholder,
-body[data-app-variant="dpg"] textarea::placeholder{
+body[data-app="dpg"] input::placeholder,
+body[data-app="dpg"] textarea::placeholder{
   color: rgba(248,250,248,.6);
 }
-body[data-app-variant="dpg"] .card,
-body[data-app-variant="dpg"] .kpi,
-body[data-app-variant="dpg"] .orgpill,
-body[data-app-variant="dpg"] .linkbtn,
-body[data-app-variant="dpg"] .tag{
+body[data-app="dpg"] .card,
+body[data-app="dpg"] .kpi,
+body[data-app="dpg"] .orgpill,
+body[data-app="dpg"] .linkbtn,
+body[data-app="dpg"] .tag{
   background: #ffffff;
   border-color: rgba(56,80,50,.12);
 }
@@ -1655,34 +1655,34 @@ body[data-app-variant="dpg"] .tag{
   font-size: 12px;
   color: var(--muted);
 }
-body[data-app-variant="dpg"] .bf-auth-page.is-dpg{
+body[data-app="dpg"] .bf-auth-page.is-dpg{
   background:
     radial-gradient(circle at top left, rgba(95,148,221,.14), transparent 38%),
     radial-gradient(circle at top right, rgba(56,80,50,.10), transparent 28%),
     linear-gradient(180deg, #eef1ec 0%, #e5ece3 100%);
 }
-body[data-app-variant="dpg"] .bf-auth-shell{
+body[data-app="dpg"] .bf-auth-shell{
   background: rgba(255,255,255,.84);
   border: 1px solid rgba(56,80,50,.12);
   border-radius: 22px;
   padding: 28px;
   box-shadow: 0 24px 60px rgba(0,0,0,.25);
 }
-body[data-app-variant="dpg"] .bf-auth-shell h1{
+body[data-app="dpg"] .bf-auth-shell h1{
   color: #182018;
   font-family: "Fancy Shadow", Georgia, serif;
 }
 
-body[data-app-variant="dpg"] .bf-drive-root,
-body[data-app-variant="dpg"] .bf-drive-root .helper{
+body[data-app="dpg"] .bf-drive-root,
+body[data-app="dpg"] .bf-drive-root .helper{
   color:#3e5871;
 }
-body[data-app-variant="dpg"] .bf-drive-root .card{
+body[data-app="dpg"] .bf-drive-root .card{
   background:#fff;
   border-color:rgba(56,80,50,.12);
 }
-body[data-app-variant="dpg"] .bf-drive-root textarea,
-body[data-app-variant="dpg"] .bf-drive-root input,
-body[data-app-variant="dpg"] .bf-drive-root select{
+body[data-app="dpg"] .bf-drive-root textarea,
+body[data-app="dpg"] .bf-drive-root input,
+body[data-app="dpg"] .bf-drive-root select{
   font-family:"Formulario 1312", serif;
 }

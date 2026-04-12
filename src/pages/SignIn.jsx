@@ -30,7 +30,7 @@ export default function SignIn() {
   const [mfaCode, setMfaCode] = useState("");
   const [mfaRecovery, setMfaRecovery] = useState("");
   const [name, setName] = useState("");
-  const [orgName, setOrgName] = useState(redHarborMode ? "IWW Red Harbor" : "Bondfire");
+  const [orgName, setOrgName] = useState(redHarborMode ? "" : "Bondfire");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -194,7 +194,7 @@ export default function SignIn() {
             <div className="rh-board-grid">
               <div>
                 <div className="rh-note">
-                  <div className="rh-note-brand">IWW Red Harbor</div>
+                  
                   <div className="rh-note-sub">Members Access</div>
                   <h1 className="rh-note-title">Enter the Backend</h1>
                   <p className="rh-note-copy">

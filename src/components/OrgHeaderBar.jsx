@@ -20,7 +20,7 @@ export default function OrgHeaderBar() {
     <div className="row" style={{ alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #ddd' }}>
       {/* Bondfire logo + link back to Org Dashboard */}
       <Link to="/app/#/orgs" className="row" style={{ alignItems: 'center', textDecoration: 'none', marginRight: 16 }}>
-        <img src="/logo192.png" alt="Bondfire" style={{ width: 28, height: 28, marginRight: 8 }} />
+        
         <strong style={{ color: 'black' }}>Bondfire</strong>
       </Link>
 

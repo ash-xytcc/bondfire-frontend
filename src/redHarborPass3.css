@@ -1,0 +1,94 @@
+/* guarded pass 3 only; no global layout rewrites */
+
+body.rh-pass3-app {
+  --rh3-text: #f4ede2;
+  --rh3-dim: rgba(244, 237, 226, 0.72);
+  --rh3-border: rgba(218, 233, 242, 0.16);
+  --rh3-border-strong: rgba(218, 233, 242, 0.24);
+  --rh3-panel: linear-gradient(180deg, rgba(17,28,39,0.90), rgba(11,20,29,0.94));
+  --rh3-panel-soft: rgba(255,255,255,0.03);
+  --rh3-shadow: 0 14px 36px rgba(0,0,0,0.24);
+  --rh3-radius: 20px;
+}
+
+/* top nav only inside app shell */
+body.rh-pass3-app header nav,
+body.rh-pass3-app .top-nav,
+body.rh-pass3-app .app-nav,
+body.rh-pass3-app [data-top-nav],
+body.rh-pass3-app [role="navigation"] {
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+}
+
+body.rh-pass3-app header nav::-webkit-scrollbar,
+body.rh-pass3-app .top-nav::-webkit-scrollbar,
+body.rh-pass3-app .app-nav::-webkit-scrollbar,
+body.rh-pass3-app [data-top-nav]::-webkit-scrollbar,
+body.rh-pass3-app [role="navigation"]::-webkit-scrollbar {
+  display: none !important;
+}
+
+body.rh-pass3-app header nav a,
+body.rh-pass3-app header nav button,
+body.rh-pass3-app .top-nav a,
+body.rh-pass3-app .top-nav button,
+body.rh-pass3-app .app-nav a,
+body.rh-pass3-app .app-nav button,
+body.rh-pass3-app [data-top-nav] a,
+body.rh-pass3-app [data-top-nav] button,
+body.rh-pass3-app [role="navigation"] a,
+body.rh-pass3-app [role="navigation"] button {
+  font-size: clamp(11px, 0.92vw, 15px) !important;
+  padding: 8px 10px !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* bulletin editor only */
+body.rh-pass3-bulletin-editor h1,
+body.rh-pass3-bulletin-editor h2 {
+  letter-spacing: -0.02em;
+}
+
+body.rh-pass3-bulletin-editor input[type="text"],
+body.rh-pass3-bulletin-editor textarea,
+body.rh-pass3-bulletin-editor select {
+  border-radius: 16px !important;
+  padding: 14px 16px !important;
+}
+
+body.rh-pass3-bulletin-editor textarea {
+  min-height: 340px !important;
+  line-height: 1.58 !important;
+}
+
+body.rh-pass3-bulletin-editor section,
+body.rh-pass3-bulletin-editor article,
+body.rh-pass3-bulletin-editor .panel,
+body.rh-pass3-bulletin-editor .card {
+  border-radius: var(--rh3-radius);
+}
+
+/* public bulletin page mild polish only */
+body.rh-pass3-bulletin-public h1,
+body.rh-pass3-bulletin-public h2 {
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 1200px) {
+  body.rh-pass3-app header nav a,
+  body.rh-pass3-app header nav button,
+  body.rh-pass3-app .top-nav a,
+  body.rh-pass3-app .top-nav button,
+  body.rh-pass3-app .app-nav a,
+  body.rh-pass3-app .app-nav button,
+  body.rh-pass3-app [data-top-nav] a,
+  body.rh-pass3-app [data-top-nav] button,
+  body.rh-pass3-app [role="navigation"] a,
+  body.rh-pass3-app [role="navigation"] button {
+    font-size: 11px !important;
+    padding: 7px 8px !important;
+  }
+}

@@ -2188,112 +2188,112 @@ button[title*="theme" i],
   display: none !important;
 }
 
-/* === bondfire authenticated dark foundation === */
+/* === bondfire authenticated readability override === */
+
+/* authenticated/private shell variables */
 :root {
-  color-scheme: dark;
+  --bf-auth-bg: #121715;
+  --bf-auth-bg-elev: #1a211e;
+  --bf-auth-input: #202825;
+  --bf-auth-text: #f3efe8;
+  --bf-auth-muted: #b8c1cc;
+  --bf-auth-border: rgba(255,255,255,0.14);
+  --bf-auth-accent: #c7e6d2;
 }
 
-html,
-body,
-#root {
-  background: #121715;
-  color: #f3efe8;
+/* private shell only, leave public marketing pages alone */
+.header,
+.bottomnav,
+.layout,
+.bf-app-shell,
+.bf-appnav,
+.bf-drawer-panel,
+.orgpill {
+  background: var(--bf-auth-bg-elev) !important;
+  color: var(--bf-auth-text) !important;
+  border-color: var(--bf-auth-border) !important;
 }
 
+.layout,
 body {
-  background: #121715;
-  color: #f3efe8;
+  background: var(--bf-auth-bg) !important;
+  color: var(--bf-auth-text) !important;
 }
 
-/* authenticated shell readability */
-header,
-nav,
-main,
-aside,
-section,
-article,
-[class*="appShell"],
-[class*="AppShell"],
-[class*="pageShell"],
-[class*="PageShell"],
-[class*="orgShell"],
-[class*="OrgShell"],
-[class*="topbar"],
-[class*="Topbar"],
-[class*="header"],
-[class*="Header"],
-[class*="layout"],
-[class*="Layout"] {
-  color: #f3efe8;
+.bf-appnav-link,
+.bf-appnav a,
+.header a,
+.bottomnav a,
+.layout a {
+  color: var(--bf-auth-accent) !important;
 }
 
-/* links */
-a {
-  color: #c7e6d2;
-}
-a:hover,
-a:focus-visible {
-  color: #f3efe8;
-}
-
-/* shared card primitive */
-.card {
-  background: #1a211e;
-  color: #f3efe8;
-  border: 1px solid rgba(255,255,255,0.14);
+/* shared authenticated primitives */
+.card,
+.kpi,
+.linkbtn,
+.toast,
+.bf-rowcard,
+.bf-stat-card,
+.bf-modal-shell,
+.bf-public-panel {
+  background: var(--bf-auth-bg-elev) !important;
+  color: var(--bf-auth-text) !important;
+  border-color: var(--bf-auth-border) !important;
 }
 
-/* shared controls */
 button,
 .btn,
 input,
 select,
 textarea {
-  background: #202825;
-  color: #f3efe8;
-  border: 1px solid rgba(255,255,255,0.14);
+  color: var(--bf-auth-text) !important;
+  border-color: var(--bf-auth-border) !important;
+}
+
+input,
+select,
+textarea {
+  background: var(--bf-auth-input) !important;
 }
 
 input::placeholder,
-textarea::placeholder {
-  color: #b8c1cc;
-}
-
-/* muted text */
+textarea::placeholder,
 small,
 .muted,
 .text-muted,
 [class*="muted"] {
-  color: #b8c1cc;
+  color: var(--bf-auth-muted) !important;
 }
 
-/* tables */
-table,
-thead,
-tbody,
-tr,
-td,
-th {
-  color: inherit;
-  border-color: rgba(255,255,255,0.14);
+/* dashboard */
+.card.bfDashCard,
+.bfDashCard,
+.card.bfDashPanel,
+.bfDashPanel,
+.card.bfDashMeetingsPanel,
+.bfDashMeetingsPanel,
+.card.bfDashNeedsPanel,
+.bfDashNeedsPanel,
+.card.bfDashMobileRowCard,
+.bfDashMobileRowCard {
+  background: var(--bf-auth-bg-elev) !important;
+  color: var(--bf-auth-text) !important;
+  border: 1px solid var(--bf-auth-border) !important;
+  box-shadow: none !important;
 }
 
-/* focus visibility */
-button:focus-visible,
-.btn:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-a:focus-visible {
-  outline: 2px solid rgba(199,230,210,0.55);
-  outline-offset: 2px;
+.card.bfDashCard:hover,
+.bfDashCard:hover {
+  background: var(--bf-auth-bg-elev) !important;
+  color: var(--bf-auth-text) !important;
 }
 
-/* === bondfire authenticated toggle removal === */
-button[aria-label*="dark" i],
-button[title*="dark" i],
+/* kill authenticated theme toggle remnants */
 button[aria-label*="theme" i],
 button[title*="theme" i],
+button[aria-label*="dark" i],
+button[title*="dark" i],
 [class*="theme-toggle" i],
 [class*="dark-toggle" i],
 [class*="darkMode" i],

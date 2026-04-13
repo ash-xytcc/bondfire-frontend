@@ -180,7 +180,7 @@ function SessionCard({ item, color, onVote, onClaimLead, onClearLeads, onRemoveL
               fontSize: 13,
               padding: "4px 8px",
               borderRadius: 999,
-              background: "rgba(255,255,255,0.55)",
+              background: "rgba(255,255,255,0.08)",
               border: "1px solid rgba(0,0,0,0.08)",
             }}
           >
@@ -195,7 +195,7 @@ function SessionCard({ item, color, onVote, onClaimLead, onClearLeads, onRemoveL
             style={{
               borderRadius: 12,
               padding: 12,
-              background: "rgba(255,255,255,0.55)",
+              background: "rgba(255,255,255,0.08)",
               border: "1px solid var(--border)",
               display: "grid",
               gap: 10,

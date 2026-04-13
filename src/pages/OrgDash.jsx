@@ -99,15 +99,6 @@ async function authFetch(path, opts = {}) {
 }
 
 export default function OrgDash() {
-  const BF_DARK = {
-    bg: "#121715",
-    bgElev: "#1a211e",
-    text: "#f3efe8",
-    muted: "#b8c1cc",
-    border: "rgba(255,255,255,0.14)",
-    accent: "#c7e6d2",
-    inputBg: "#202825",
-  };
   const nav = useNavigate();
   const demoMode = isDemoMode();
   const isMobile = useIsMobile(720);
@@ -219,7 +210,7 @@ export default function OrgDash() {
       <p className="helper">Choose an organization to enter its workspace, or create or join one.</p>
 
       {demoMode ? (
-        <div className="card" style={{ padding: 12, marginBottom: 16, background: "rgba(255,255,255,0.03)", background: BF_DARK.bgElev, color: BF_DARK.text, border: `1px solid ${BF_DARK.border}`}}>
+        <div className="card" style={{ padding: 12, marginBottom: 16, background: "rgba(255,255,255,0.03)"}}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <div style={{ fontWeight: 800, flex: 1 }}>Demo Mode is active. Changes are saved only in this browser.</div>
             <button className="btn" type="button" onClick={() => { resetDemoState(); ensureDemoOrgList(); load(); setMsg("Demo reset."); try { window.dispatchEvent(new Event("bf-demo-tour-open")); } catch {} }}>
@@ -236,7 +227,7 @@ export default function OrgDash() {
           gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
         }}
       >
-        <div className="card" style={{ padding: 16, background: BF_DARK.bgElev, color: BF_DARK.text, border: `1px solid ${BF_DARK.border}`}}>
+        <div className="card" style={{ padding: 16}}>
           <h2 style={{ marginTop: 0 }}>Create a new org</h2>
           <form onSubmit={createOrg} className="grid" style={{ gap: 10 }}>
             <label className="grid" style={{ gap: 6 }}>
@@ -254,7 +245,7 @@ export default function OrgDash() {
           </form>
         </div>
 
-        <div className="card" style={{ padding: 16, background: BF_DARK.bgElev, color: BF_DARK.text, border: `1px solid ${BF_DARK.border}`}}>
+        <div className="card" style={{ padding: 16}}>
           <h2 style={{ marginTop: 0 }}>Join with an invite code</h2>
           <form onSubmit={joinWithInvite} className="grid" style={{ gap: 10 }}>
             <label className="grid" style={{ gap: 6 }}>
@@ -275,7 +266,7 @@ export default function OrgDash() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 16, marginTop: 16, background: BF_DARK.bgElev, color: BF_DARK.text, border: `1px solid ${BF_DARK.border}`}}>
+      <div className="card" style={{ padding: 16, marginTop: 16}}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <h2 style={{ margin: 0, flex: 1, minWidth: 140 }}>Your orgs</h2>
           <button className="btn" style={{ whiteSpace: "nowrap" }} onClick={load} disabled={busy}>

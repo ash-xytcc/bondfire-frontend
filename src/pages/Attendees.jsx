@@ -189,7 +189,7 @@ export default function Attendees() {
                   onClick={() => setSelectedId(person.id)}
                   style={{
                     textAlign: 'left',
-                    background: active ? 'rgba(95,148,221,.12)' : '#fff',
+                    background: active ? 'rgba(95,148,221,.18)' : 'rgba(255,255,255,0.04)',
                     color: '#182018',
                     border: 'none',
                     borderBottom: '1px solid var(--border)',

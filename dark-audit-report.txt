@@ -1,0 +1,655 @@
+src/index.css
+  18:   --panel:#141414;
+  21:   --border:#222;
+  40: button{background:var(--red);border:1px solid var(--red-2);color:#fff;padding:10px 14px;border-radius:10px;cursor:pointer}
+  42: input,select,textarea{background:#0e0e0e;border:1px solid var(--border);color:var(--text);padding:10px;border-radius:10px}
+  53:   background:#111;
+  55:   color:#fff;
+  72:   color:#fff;
+  92: .header{position:sticky;top:0;background:rgba(10,10,10,.9);backdrop-filter:blur(6px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:8px 12px}
+  102:   background:rgba(255,255,255,0.06);
+  103:   border:1px solid rgba(255,255,255,0.14);
+  104:   color:#fff;
+  115: .bottomnav{position:fixed;left:0;right:0;bottom:0;background:rgba(10,10,10,.95);border-top:1px solid var(--border);display:flex;gap:8px;justify-content:space-around;padding:10px}
+  123: .tag{display:inline-block;background:#191919;border:1px solid var(--border);padding:2px 8px;border-radius:999px;color:var(--muted);font-size:12px}
+  134: .linkbtn{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:#111}
+  137: .toast{position:fixed;right:16px;bottom:80px;background:#111;border:1px solid var(--border);padding:10px 12px;border-radius:12px}
+  152:   background: rgba(10,10,10,.92);
+  203:   border: 1px solid rgba(255,255,255,0.10);
+  204:   background: rgba(255,255,255,0.03);
+  205:   color: rgba(255,255,255,0.92);
+  214:   border-color: rgba(255,0,0,0.28);
+  215:   background: rgba(255,0,0,0.14);
+  224:   border: 1px solid rgba(255,255,255,0.14);
+  225:   background: rgba(255,255,255,0.04);
+  226:   color: #fff;
+  239:   border: 1px solid rgba(255,255,255,0.14);
+  240:   background: rgba(255,255,255,0.04);
+  241:   color: #fff;
+  266:     background: rgba(0,0,0,0.65);
+  278:     background: #0b0b0b; /* opaque, because reading is good actually */
+  279:     border-left: 1px solid rgba(255,255,255,0.12);
+  304:     border: 1px solid rgba(255,255,255,0.14);
+  305:     background: rgba(255,255,255,0.04);
+  306:     color: #fff;
+  318:     background: rgba(255,255,255,0.06);
+  329:   background: #7a0e0e;
+  330:   color: #fff;
+  331:   border: 1px solid #7a0e0e;
+  347:   color:#fff !important;
+  355:   color: #fff;
+  488:   border: 1px solid rgba(255,255,255,0.06);
+  508:   border: 1px solid rgba(255,255,255,0.10);
+  519:   color: rgba(255,255,255,0.72);
+  539:   border: 1px solid rgba(255,255,255,0.06);
+  540:   background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+  558:   color: rgba(255,255,255,0.80);
+  564:   color: rgba(255,255,255,0.58);
+  578:   border: 1px solid rgba(255,255,255,0.06);
+  579:   background: rgba(0,0,0,0.20);
+  604:   border: 1px solid rgba(255,255,255,0.10);
+  605:   color: rgba(255,255,255,0.72);
+  606:   background: rgba(255,255,255,0.04);
+  611:   color: rgba(255,255,255,0.62);
+  618:   background: rgba(255,255,255,0.06);
+  635:   border: 1px solid rgba(255,255,255,0.10);
+  636:   background: rgba(255,255,255,0.04);
+  637:   color: rgba(255,255,255,0.88);
+  644:   background: rgba(255,255,255,0.06);
+  645:   border-color: rgba(255,255,255,0.16);
+  653:   border-color: rgba(255, 60, 80, 0.35);
+  654:   background: linear-gradient(180deg, rgba(255, 50, 80, 0.20), rgba(255, 50, 80, 0.10));
+  658:   background: linear-gradient(180deg, rgba(255, 50, 80, 0.24), rgba(255, 50, 80, 0.12));
+  659:   border-color: rgba(255, 60, 80, 0.45);
+  665:   border: 1px solid rgba(255,255,255,0.10);
+  666:   background: rgba(0,0,0,0.22);
+  667:   color: rgba(255,255,255,0.92);
+  673:   color: rgba(255,255,255,0.45);
+  694:   color: rgba(255,255,255,0.62);
+  705:   border-color: rgba(255,255,255,0.10);
+  706:   background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02));
+  986:   border: 1px solid #222;
+  987:   background: rgba(255,255,255,0.02);
+  1029:   border: 1px solid rgba(255,255,255,0.08);
+  1030:   background: rgba(255,255,255,0.03);
+  1060:   color: rgba(255,255,255,0.72);
+  1329:   background: rgba(8, 10, 18, 0.58);
+  1397:   background:rgba(0,0,0,0.58);
+  1450:   background:rgba(255,255,255,0.12);
+  1464:   background:rgba(255,255,255,0.02);
+  1540:   --panel:#f7f8f4;
+  1543:   --border:rgba(56,80,50,.18);
+  1552:   background: rgba(247,248,244,.96);
+  1553:   border-bottom-color: rgba(56,80,50,.14);
+  1559:   color: #182018;
+  1568:   color: #587086;
+  1573:   background: rgba(255,255,255,0.035);
+  1574:   border-color: rgba(217,196,170,.14);
+  1575:   color: #182018;
+  1578:   background: rgba(95,148,221,.16);
+  1579:   border-color: rgba(95,148,221,.34);
+  1583:   background: rgba(95,148,221,.12);
+  1584:   border-color: rgba(56,80,50,.18);
+  1585:   color: #1f3550;
+  1589:   background: rgba(95,148,221,.18);
+  1596:   color: #ffffff;
+  1602:   color: #4b657f;
+  1603:   background: rgba(95,148,221,.12);
+  1604:   border-color: rgba(95,148,221,.22);
+  1610:   background: #120f0e;
+  1611:   border-color: rgba(56,80,50,.18);
+  1612:   color: #f8faf8;
+  1616:   color: rgba(248,250,248,.6);
+  1623:   background: #ffffff;
+  1624:   border-color: rgba(56,80,50,.12);
+  1629:   border-top: 1px solid rgba(56,80,50,.10);
+  1665:   background: rgba(255,255,255,.84);
+  1666:   border: 1px solid rgba(56,80,50,.12);
+  1672:   color: #182018;
+  1678:   color:#3e5871;
+  1681:   background:#fff;
+  1682:   border-color:rgba(56,80,50,.12);
+  1697:   background: #1b3127 !important;
+  1698:   border-bottom: 1px solid #3b5b4a !important;
+  1722:   color: #f7f2e8 !important;
+  1728:   background: rgba(255,255,255,0.04) !important;
+  1729:   border-color: rgba(247,242,232,0.18) !important;
+  1730:   color: #f7f2e8 !important;
+  1736:   background: rgba(255,255,255,0.08) !important;
+  1741:   background: #c98888 !important;
+  1742:   border-color: #e3a7a5 !important;
+  1743:   color: #fff8f4 !important;
+  1773:   background: #5f94dd !important;
+  1774:   border-color: #4e84cf !important;
+  1775:   color: #ffffff !important;
+  1780:   background: #4e84cf !important;
+  1781:   border-color: #3f74bf !important;
+  1782:   color: #ffffff !important;
+  1788:   background: #385032 !important;
+  1789:   border-color: #5f94dd !important;
+  1790:   color: #ffffff !important;
+  1796:   background: #456140 !important;
+  1797:   border-color: #74a4e4 !important;
+  1798:   color: #ffffff !important;
+  1805:   background: #fffdf9 !important;
+  1806:   border: 1px solid rgba(56,80,50,.18) !important;
+  1807:   color: #182018 !important;
+  1813:   color: #6f7d76 !important;
+  1823:   background: #264636 !important;
+  1824:   border: 1px solid #3f5f4d !important;
+  1825:   color: #f7f2e8 !important;
+  1832:   background: #2f5644 !important;
+  1833:   border-color: #567a66 !important;
+  1839:   background: #c98888 !important;
+  1840:   border-color: #e3a7a5 !important;
+  1841:   color: #fff8f4 !important;
+  1849:   background: #fffdf9 !important;
+  1850:   border: 1px solid #d8cfbe !important;
+  1851:   color: #1f2f28 !important;
+  1857:   color: #6f7d76 !important;
+  2068:   background: #121715 !important;
+  2069:   color: #f3efe8 !important;
+  2075:   background: #202825 !important;
+  2076:   color: #f3efe8 !important;
+  2077:   border-color: rgba(255,255,255,0.16) !important;
+  2081:   border-color: rgba(255,255,255,0.16);
+  2085:   color: #c7e6d2 !important;
+  2096:   background: #121715;
+  2097:   color: #f3efe8;
+  2101:   background: #121715;
+  2102:   color: #f3efe8;
+  2124:   color: #f3efe8;
+  2129:   color: #c7e6d2;
+  2134:   color: #f3efe8;
+  2139:   background: #1a211e;
+  2140:   color: #f3efe8;
+  2141:   border: 1px solid rgba(255,255,255,0.14);
+  2150:   background: #202825;
+  2151:   color: #f3efe8;
+  2152:   border: 1px solid rgba(255,255,255,0.14);
+  2157:   color: #b8c1cc;
+  2165:   color: #b8c1cc;
+  2175:   color: #f3efe8;
+  2176:   border-color: rgba(255,255,255,0.14);
+  2199:   background: #121715;
+  2200:   color: #f3efe8;
+  2204:   background: #121715;
+  2205:   color: #f3efe8;
+  2227:   color: #f3efe8;
+  2232:   color: #c7e6d2;
+  2236:   color: #f3efe8;
+  2241:   background: #1a211e;
+  2242:   color: #f3efe8;
+  2243:   border: 1px solid rgba(255,255,255,0.14);
+  2252:   background: #202825;
+  2253:   color: #f3efe8;
+  2254:   border: 1px solid rgba(255,255,255,0.14);
+  2259:   color: #b8c1cc;
+  2267:   color: #b8c1cc;
+  2278:   border-color: rgba(255,255,255,0.14);
+
+src/studio-mobile.css
+  18:   background: #111;
+
+src/components/debugWidget.css
+  9:   border:1px solid rgba(255,255,255,0.16);
+  10:   background:rgba(0,0,0,0.78);
+  11:   color:#fff;
+  28:   border:1px solid rgba(255,255,255,0.14);
+  29:   background:rgba(10,10,10,0.92);
+  30:   color:#fff;
+  42:   border-bottom:1px solid rgba(255,255,255,0.10);
+  43:   background:rgba(10,10,10,0.95);
+  54:   border:1px solid rgba(255,255,255,0.14);
+  55:   background:rgba(255,255,255,0.06);
+  56:   color:#fff;
+  61: .bf-debug-btn.danger{border-color:rgba(255,0,0,0.30); background:rgba(255,0,0,0.10);}
+  71:   border:1px solid rgba(255,255,255,0.12);
+  74:   background:rgba(255,255,255,0.03);
+  93:   border:1px solid rgba(255,255,255,0.12);
+  94:   background:rgba(0,0,0,0.25);
+
+src/components/appHeaderBrand.css
+  38:   background: rgba(255, 255, 255, 0.06);
+  39:   border: 1px solid rgba(255, 255, 255, 0.12);
+  40:   color: rgba(255, 255, 255, 0.9);
+
+src/help/help.css
+  12:   border: 1px solid rgba(255, 255, 255, 0.14);
+  13:   background: linear-gradient(180deg, rgba(66, 66, 70, 0.96), rgba(38, 38, 42, 0.96));
+  14:   color: #f1f1f1;
+  27:   border-color: rgba(255, 255, 255, 0.25);
+  28:   background: linear-gradient(180deg, rgba(86, 86, 92, 0.98), rgba(46, 46, 52, 0.98));
+  41:   background: rgba(22, 22, 24, 0.96);
+  42:   border: 1px solid rgba(255, 255, 255, 0.1);
+  43:   color: #d7d7dc;
+  59:   background: rgba(0, 0, 0, 0.48);
+  71:   background: #0f0f11;
+  72:   color: #f4f4f5;
+  73:   border: 1px solid rgba(255, 255, 255, 0.08);
+  85:   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  97:   border: 1px solid rgba(255, 255, 255, 0.12);
+  98:   background: rgba(255, 255, 255, 0.04);
+  99:   color: #fff;
+  117:   border-right: 1px solid rgba(255, 255, 255, 0.08);
+  125:   border: 1px solid rgba(255, 255, 255, 0.1);
+  126:   background: rgba(255, 255, 255, 0.03);
+  127:   color: #fff;
+  135:   border: 1px solid rgba(255, 255, 255, 0.06);
+  136:   background: rgba(255, 255, 255, 0.02);
+  137:   color: #f1f1f1;
+  145:   border-color: rgba(220, 60, 60, 0.45);
+  146:   background: rgba(140, 22, 22, 0.18);
+  155:   color: #b7b7be;
+  173:   color: #c3c3ca;
+  188:   color: #d7d7dc;
+  216:     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+src/demo/demo.css
+  1: .bf-demo-banner{position:fixed;top:86px;right:16px;z-index:9500;display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:16px;border:1px solid rgba(255,255,255,0.14);background:rgba(18,18,18,0.96);box-shadow:0 14px 36px rgba(0,0,0,0.45);max-width:min(720px,calc(100vw - 32px));}
+  3: .bf-demo-tour-backdrop{position:fixed;inset:0;z-index:9800;background:rgba(0,0,0,0.42);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px}
+  4: .bf-demo-tour-card{width:min(560px,calc(100vw - 32px));border-radius:18px;border:1px solid rgba(255,255,255,0.14);background:rgba(16,16,16,0.97);box-shadow:0 18px 50px rgba(0,0,0,0.6);padding:18px}
+  8: .bf-demo-spotlight-root{position:fixed;inset:0;z-index:9850;pointer-events:none}.bf-demo-spotlight-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.58)}.bf-demo-spotlight-ring{position:fixed;border-radius:16px;border:2px solid rgba(255,255,255,0.92);box-shadow:0 0 0 9999px rgba(0,0,0,0.58),0 0 0 6px rgba(255,255,255,0.1),0 12px 28px rgba(0,0,0,0.45);pointer-events:none}.bf-demo-spotlight-card{position:fixed;z-index:9851;border-radius:18px;border:1px solid rgba(255,255,255,0.14);background:rgba(16,16,16,0.98);box-shadow:0 18px 50px rgba(0,0,0,0.6);padding:18px;pointer-events:auto}.bf-demo-spotlight-card h3{margin:0 0 8px 0}.bf-demo-spotlight-card p{margin:0;line-height:1.5;opacity:.92}@media (max-width: 820px){.bf-demo-spotlight-card{width:min(360px,calc(100vw - 20px)) !important;left:10px !important;right:10px !important}}
+
+src/pages/Overview.css
+  23:   background: #1a211e;
+  24:   color: #f3efe8;
+  25:   border: 1px solid rgba(255,255,255,0.14);
+  39:   background: rgba(255,255,255,0.06);
+  49:   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+  81:   background: #1a211e;
+  82:   color: #f3efe8;
+  83:   border: 1px solid rgba(255,255,255,0.14);
+  89:   background: #1a211e;
+  90:   color: #f3efe8;
+  91:   border: 1px solid rgba(255,255,255,0.14);
+  99:   background: #1a211e;
+  100:   color: #f3efe8;
+  101:   border: 1px solid rgba(255,255,255,0.14);
+  118:   background: rgba(255, 0, 80, 0.12);
+  119:   border: 1px dashed rgba(255, 0, 80, 0.35);
+  139:   background: #1a211e;
+  140:   color: #f3efe8;
+  141:   border: 1px solid rgba(255,255,255,0.14);
+  170:   background: #1a211e !important;
+  171:   color: #f3efe8 !important;
+  172:   border: 1px solid rgba(255,255,255,0.14) !important;
+  178:   background: #202825 !important;
+  179:   color: #f3efe8 !important;
+  180:   border-color: rgba(255,255,255,0.18) !important;
+  193:   background: #1a211e !important;
+  194:   color: #f3efe8 !important;
+  195:   border: 1px solid rgba(255,255,255,0.14) !important;
+  212:   color: #c7e6d2 !important;
+  219:   background: #202825 !important;
+  220:   color: #f3efe8 !important;
+  221:   border: 1px solid rgba(255,255,255,0.14) !important;
+  227:   background: #1a211e !important;
+  228:   color: #f3efe8 !important;
+  229:   border: 1px solid rgba(255,255,255,0.14) !important;
+  235:   background: #202825 !important;
+  236:   color: #f3efe8 !important;
+  237:   border-color: rgba(255,255,255,0.18) !important;
+  250:   background: #1a211e !important;
+  251:   color: #f3efe8 !important;
+  252:   border: 1px solid rgba(255,255,255,0.14) !important;
+  269:   color: #c7e6d2 !important;
+  276:   background: #202825 !important;
+  277:   color: #f3efe8 !important;
+  278:   border: 1px solid rgba(255,255,255,0.14) !important;
+  290:   color: #b8c1cc !important;
+
+src/theme.jsx
+  36:         "--text": "#f3efe8",
+  38:         "--border": "rgba(255,255,255,0.14)",
+  41:         "--input-text": "#f3efe8",
+  44:         "--bg": "#f3efe8",
+  45:         "--bg-elev": "#faf7f2",
+  48:         "--border": "rgba(0,0,0,0.12)",
+  50:         "--input-bg": "#fffdf9",
+
+src/components/AppHeader.jsx
+  113:                 border: "1px solid rgba(255,255,255,0.16)",
+  114:                 background: "rgba(255,255,255,0.06)",
+  147:         background: "rgba(255,255,255,0.06)",
+  148:         border: "1px solid rgba(255,255,255,0.12)",
+  149:         color: "#fff",
+  197:                   background: isActive ? "rgba(255,255,255,0.12)" : drawerLinkStyle.background,
+  198:                   border: isActive ? "1px solid rgba(255,255,255,0.20)" : drawerLinkStyle.border,
+  217:                   background: isActive ? "rgba(255,255,255,0.12)" : drawerLinkStyle.background,
+  218:                   border: isActive ? "1px solid rgba(255,255,255,0.20)" : drawerLinkStyle.border,
+  261:     background: "rgba(0,0,0,0.65)",
+  272:     background: dpg ? "#171411" : "#0b0b0b",
+  273:     borderLeft: "1px solid rgba(255,255,255,0.12)",
+  278:     color: "#fff",
+  291:     border: "1px solid rgba(255,255,255,0.18)",
+  292:     background: "rgba(0,0,0,0.85)",
+  293:     color: "#fff",
+  363:                 border: "1px solid rgba(255,255,255,0.14)",
+  364:                 background: "rgba(255,255,255,0.04)",
+  365:                 color: "#fff",
+
+src/components/OrgKeyBackupNudge.jsx
+  70:         border: "1px solid rgba(255,255,255,0.14)",
+  71:         background: "rgba(255,255,255,0.04)",
+
+src/components/OrgHeaderBar.jsx
+  20:     <div className="row" style={{ alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #ddd' }}>
+
+src/components/UploadPreview.jsx
+  7:   if (type==='application/pdf') return <iframe title={name} src={dataUrl} style={{width:'100%', height:400, border:'1px solid #222', borderRadius:10}}/>
+
+src/pages/DpgPublicHome.jsx
+  5:   border: '1px solid rgba(17,17,17,0.12)',
+  8:   background: 'rgba(255,255,255,0.88)',
+  12: function Sticky({ title, text, rotate = '-1deg', tone = '#fff7a8' }) {
+  21:       border: '1px solid rgba(0,0,0,0.08)',
+  34:     <div style={{ minHeight: '100vh', background: colors.paper || '#f7f3ea', color: '#171717' }}>
+  47:             background: colors.green || '#171717', color: '#fff', fontWeight: 800,
+  61:           <Sticky title="Sessions" text="Suggest ideas, upvote them, and volunteer to lead without flattening the real at-event whiteboard process." rotate="1.5deg" tone={colors.mist || '#c7f2ff'} />
+  82:             <a href={brand.adminSignInHref} style={{ color: '#171717', fontWeight: 800 }}>Go to admin sign-in</a>
+
+src/pages/Attendees.jsx
+  67:   form_started: { label: 'Form started', tone: '#fff0b7', text: '#5e4d14' },
+  192:                     background: active ? 'rgba(95,148,221,.12)' : '#fff',
+  193:                     color: '#182018',
+
+src/pages/Settings.jsx
+  565:     setAccentColor(String(pub.accent_color || "#6d5efc"));
+  651:         accent_color: (accentColor || "#6d5efc").trim(),
+  1108:                   <div key={inv.code} className="card" style={{ padding: 12, border: "1px solid #222" }}>
+  1312:                 <div className="card" style={{ padding: 12, background: "rgba(255,255,255,0.02)" }}>
+  1345:               <div className="card" style={{ padding: 12, marginTop: 12, background: "rgba(255,255,255,0.02)" }}>
+  1385:                   <div key={`primary-action-${index}`} className="card" style={{ padding: 12, border: "1px solid #222" }}>
+  1427:                   <div key={`involved-action-${index}`} className="card" style={{ padding: 12, border: "1px solid #222" }}>
+  1504:                   <div key={`${item.type}:${item.id}`} className="card" style={{ padding: 12, border: "1px solid #222" }}>
+  1644:             <div className="card" style={{ padding: 12, border: "1px solid #222" }}>
+  1889:           <div className="card" style={{ padding: 12, border: "1px solid #222", marginTop: 14 }}>
+
+src/pages/OrgDash.jsx
+  105:     text: "#f3efe8",
+  107:     border: "rgba(255,255,255,0.14)",
+  222:         <div className="card" style={{ padding: 12, marginBottom: 16, background: "rgba(255,255,255,0.03)", background: BF_DARK.bgElev, color: BF_DARK.text, border: `1px solid ${BF_DARK.border}`}}>
+  304:                   borderTop: "1px solid #222",
+
+src/pages/AppHeader.jsx
+  82:                 border: "1px solid rgba(255,255,255,0.16)",
+  83:                 background: "rgba(255,255,255,0.06)",
+  117:         background: "rgba(255,255,255,0.06)",
+  118:         border: "1px solid rgba(255,255,255,0.12)",
+  119:         color: "#fff",
+  152:                 background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
+  153:                 border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
+  171:                   background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
+  172:                   border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
+  206:     background: "rgba(0,0,0,0.65)",
+  217:     background: "#0b0b0b",
+  218:     borderLeft: "1px solid rgba(255,255,255,0.12)",
+  223:     color: "#fff",
+  236:     border: "1px solid rgba(255,255,255,0.18)",
+  237:     background: "rgba(0,0,0,0.85)",
+  238:     color: "#fff",
+  294:                 border: "1px solid rgba(255,255,255,0.14)",
+  295:                 background: "rgba(255,255,255,0.04)",
+  296:                 color: "#fff",
+
+src/pages/Overview.jsx
+  189:         background: "linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0.06) 90%)",
+  646:           <div style={{ marginTop: 8, borderRadius: 8, padding: "4px 6px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", width: "100%", boxSizing: "border-box" }} title={`${title.toLowerCase()} trend`}>
+  738:               <div style={{ height: 10, borderRadius: 999, background: "rgba(255,255,255,0.10)", overflow: "hidden" }}>
+  739:                 <div style={{ height: "100%", width: `${pct * 100}%`, background: pct <= 0.25 ? "#ff4d4d" : pct <= 0.5 ? "#ff9a3c" : "#39d98a" }} />
+  752:                     <div style={{ height: 6, background: "#2a2a2a", borderRadius: 4, overflow: "hidden", marginTop: 4 }}>
+  753:                       <div style={{ width: `${Math.min(100, (item.qty / item.par) * 100)}%`, background: item.qty <= item.par * 0.25 ? "#e11d48" : item.qty <= item.par * 0.5 ? "#f97316" : "#22c55e", height: "100%" }} />
+
+src/pages/Inventory.jsx
+  493:                       <div style={{ height: 10, borderRadius: 999, background: "rgba(255,255,255,0.10)", overflow: "hidden", marginTop: 6 }}>
+  571:                           <div style={{ height: 10, borderRadius: 999, background: "rgba(255,255,255,0.10)", overflow: "hidden" }}>
+  572:                             <div style={{ height: "100%", width: `${pct * 100}%`, background: pct <= 0.25 ? "#ff4d4d" : pct <= 0.5 ? "#ff9a3c" : "#39d98a" }} />
+
+src/pages/Studio.jsx
+  29: 				makeTextElement({ text: "{{org.name}}", x: 90, y: 110, width: 900, height: 60, fontSize: 28, fontWeight: 700, color: "#fca5a5", name: "Org Name" }),
+  30: 				makeTextElement({ text: "{{meeting.title}}", x: 90, y: 200, width: 900, height: 180, fontSize: 86, fontWeight: 800, lineHeight: 0.95, color: "#000000", name: "Title" }),
+  31: 				makeTextElement({ text: "{{meeting.date}}\n{{meeting.location}}", x: 90, y: 420, width: 420, height: 200, fontSize: 34, fontWeight: 600, lineHeight: 1.2, color: "#e5e7eb", name: "Date + Location" }),
+  33: 				makeTextElement({ text: "{{org.contact}}", x: 90, y: 1175, width: 920, height: 34, fontSize: 22, fontWeight: 500, color: "#d1d5db", name: "Contact" }),
+  44: 				makeTextElement({ text: "{{org.name}} needs", x: 80, y: 90, width: 920, height: 90, fontSize: 42, fontWeight: 700, color: "#fca5a5", name: "Heading" }),
+  45: 				makeTextElement({ text: "{{need.title}}", x: 80, y: 220, width: 920, height: 170, fontSize: 82, fontWeight: 800, lineHeight: 0.95, color: "#ffffff", name: "Need Title" }),
+  46: 				makeTextElement({ text: "{{need.description}}", x: 80, y: 450, width: 920, height: 250, fontSize: 30, fontWeight: 500, lineHeight: 1.25, color: "#e5e7eb", name: "Need Description" }),
+  47: 				makeTextElement({ text: "{{org.contact}}", x: 80, y: 930, width: 920, height: 50, fontSize: 24, fontWeight: 500, color: "#d1d5db", name: "Contact" }),
+  58: 				makeTextElement({ text: "{{org.name}}", x: 80, y: 120, width: 920, height: 70, fontSize: 34, fontWeight: 700, letterSpacing: 2, color: "#fca5a5", name: "Org Name" }),
+  59: 				makeTextElement({ text: "{{meeting.title}}", x: 80, y: 260, width: 920, height: 260, fontSize: 98, fontWeight: 800, lineHeight: 0.92, color: "#ffffff", name: "Meeting Title" }),
+  60: 				makeTextElement({ text: "{{meeting.date}}", x: 80, y: 630, width: 920, height: 80, fontSize: 38, fontWeight: 700, color: "#e5e7eb", name: "Meeting Date" }),
+  61: 				makeTextElement({ text: "{{meeting.location}}", x: 80, y: 730, width: 920, height: 160, fontSize: 42, fontWeight: 600, lineHeight: 1.15, color: "#f9fafb", name: "Meeting Location" }),
+  72: 				makeTextElement({ text: "{{org.name}}", x: 100, y: 110, width: 1320, height: 50, fontSize: 28, fontWeight: 700, letterSpacing: 1.5, color: "#fca5a5", name: "Org Name" }),
+  73: 				makeTextElement({ text: "volunteers needed", x: 100, y: 200, width: 840, height: 180, fontSize: 96, fontWeight: 800, lineHeight: 0.95, color: "#ffffff", name: "Heading" }),
+  74: 				makeTextElement({ text: "{{need.title}}", x: 100, y: 430, width: 860, height: 120, fontSize: 42, fontWeight: 600, lineHeight: 1.1, color: "#e5e7eb", name: "Need Title" }),
+  75: 				makeTextElement({ text: "{{org.contact}}", x: 100, y: 720, width: 860, height: 50, fontSize: 24, fontWeight: 500, color: "#d1d5db", name: "Contact" }),
+  120: 		background: "#ffffff",
+  137: 				background: page?.background || doc.background || "#ffffff",
+  143: 			background: firstPage.background || doc.background || "#ffffff",
+  151: 		background: doc.background || "#ffffff",
+  206: 		color: "#000000",
+  225: 		stroke: "#ffffff",
+  358: 		text: String(settings?.brandText || settings?.textColor || "#ffffff"),
+  464: 		border: active ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.08)",
+  465: 		background: active ? "rgba(239,68,68,0.14)" : "rgba(255,255,255,0.04)",
+  479: 		border: active ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.08)",
+  480: 		background: active ? "rgba(239,68,68,0.16)" : "rgba(255,255,255,0.04)",
+  739: 	ctx.fillStyle = doc.background || "#ffffff";
+  783: 			ctx.fillStyle = el.color || "#fff";
+  1467: 			qrBg: "#ffffff",
+  2403: 		doc.write(`<!doctype html><html><head><title>${currentDoc.name || "Design"}</title><style>html,body{margin:0;padding:0;background:#fff;} .page-break{break-after:page;page-break-after:always;} img{display:block;width:100%;height:auto;} @page{size:auto;margin:0;}</style></head><body>${pageDataUrls.map((item, index) => `<div class="${index < pageDataUrls.length - 1 ? "page-break" : ""}"><img src="${item.url}" alt="" /></div>`).join("")}</body></html>`);
+  2566: 					background: rgba(59,130,246,0.9);
+  2575: 					border: 2px solid rgba(17,24,39,0.95);
+  2582: 					background: rgba(59,130,246,0.9);
+  2589: 					border: 2px solid rgba(17,24,39,0.95);
+  2598: 					<button style={{ padding: "6px 8px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.96)", color: "white" }} onClick={(e) => { e.stopPropagation(); setFileMenuOpen((v) => !v); setExportMenuOpen(false); setLeftPanel(null); }}>☰</button>
+  2600: 						<div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 40, right: 360, width: 220, zIndex: 40, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 10, boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+  2602: 							<input type="color" value={currentPage?.background || currentDoc.background || "#ffffff"} onChange={(e) => updateDoc({ background: e.target.value })} style={{ width: "100%", height: 36, marginBottom: 10 }} />
+  2604: 								{["#ffffff", brandKit.primary, brandKit.secondary, brandKit.accent].map((color) => (
+  2605: 									<button key={color} onClick={() => updateDoc({ background: color })} style={{ height: 30, borderRadius: 8, border: "1px solid rgba(255,255,255,0.12)", background: color }} />
+  2611: 						<div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 36, left: 0, width: 200, zIndex: 40, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 8, boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+  2626: 					<input value={currentDoc?.name || ""} onChange={(e) => updateDoc({ name: e.target.value })} placeholder="Untitled design" disabled={!currentDoc} style={{ minWidth: 0, flex: 1, padding: "7px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)", background: "#111827", color: "white" }} />
+  2634: 					<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={undo} disabled={!history.length}>↶</button>
+  2635: 					<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={redo} disabled={!future.length}>↷</button>
+  2636: 					<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={() => setZoom((z) => clamp(z * 0.9, 0.1, 3))} disabled={!currentDoc}>−</button>
+  2637: 					<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={() => fitCanvas(currentDoc)} disabled={!currentDoc}>Fit</button>
+  2638: 					<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={() => { setZoom(1); setPan({ x: 80, y: 80 }); }} disabled={!currentDoc}>100</button>
+  2639: 					<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={() => setZoom((z) => clamp(z * 1.1, 0.1, 3))} disabled={!currentDoc}>+</button>
+  2641: 					<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={(e) => { e.stopPropagation(); setExportMenuOpen((v) => !v); setFileMenuOpen(false); }}>⇩</button>
+  2643: 						<div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 42, right: 0, width: 170, zIndex: 40, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 8, boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+  2654: 				<div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", borderRadius: 14, background: "rgba(127,29,29,0.22)", border: "1px solid rgba(248,113,113,0.45)" }}>
+  2660: 				<div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", borderRadius: 14, background: "rgba(17,24,39,0.92)", border: "1px solid rgba(255,255,255,0.12)" }}>
+  2667: 			<div style={{ position: "relative", minHeight: "calc(100vh - 170px)", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden" }}>
+  2707: 					<div style={{ position: "absolute", top: showRulers ? 40 : 12, left: showRulers ? (RULER_SIZE + 56) : 60, bottom: 12, width: 300, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, overflow: "auto", boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+  2710: 							<button style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(17,24,39,0.92)", color: "white" }} onClick={() => setLeftPanel(null)}>✕</button>
+  2759: 											<button key={asset.id} draggable onDragStart={(e) => { const payload = { ...asset, kind: "svg" }; dragPayloadRef.current = payload; e.dataTransfer.setData("application/x-bondfire-svg", JSON.stringify(payload)); e.dataTransfer.setData("text/plain", JSON.stringify(payload)); e.dataTransfer.effectAllowed = "copy"; setAssetDragImage(e); }} onDragEnd={clearDragPayload} onClick={() => addSvgAsset(asset)} style={{ padding: 8, borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", textAlign: "left", cursor: "grab" }}>
+  2760: 												<div style={{ aspectRatio: "1 / 1", display: "grid", placeItems: "center", marginBottom: 8, borderRadius: 8, background: "rgba(255,255,255,0.05)", color: brandKit.primary }}>
+  2772: 										{pixabayError ? <div style={{ color: "#fca5a5", fontSize: 12 }}>{pixabayError}</div> : null}
+  2785: 													style={{ padding: 8, borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", cursor: "grab" }}
+  2787: 													<div style={{ aspectRatio: "4 / 3", background: "rgba(255,255,255,0.05)", borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+  2808: 										{driveError ? <div style={{ color: "#fca5a5", fontSize: 12 }}>{driveError}</div> : null}
+  2811: 												<div key={file.id} draggable onDragStart={(e) => { const payload = { kind: "image", src: file.previewUrl, name: file.name }; dragPayloadRef.current = payload; e.dataTransfer.setData("application/x-bondfire-image", JSON.stringify(payload)); e.dataTransfer.setData("text/plain", JSON.stringify(payload)); e.dataTransfer.effectAllowed = "copy"; setAssetDragImage(e); }} onDragEnd={clearDragPayload} style={{ padding: 8, borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", cursor: "grab" }}>
+  2812: 													<div style={{ aspectRatio: "4 / 3", background: "rgba(255,255,255,0.05)", borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+  2831: 									<div key={key} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 8 }}>
+  2832: 										<div style={{ fontSize: 12, color: "#fca5a5" }}>{`{{${key}}}`}</div>
+  2850: 									<div key={doc.id} style={{ border: doc.id === currentId ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.08)", background: doc.id === currentId ? "rgba(239,68,68,0.14)" : "rgba(255,255,255,0.04)", borderRadius: 12, padding: 10 }}>
+  2881: 							background: "rgba(17,24,39,0.97)",
+  2882: 							border: "1px solid rgba(255,255,255,0.12)",
+  2902: 								{["#111827", "#ffffff", brandKit.primary, brandKit.secondary, brandKit.accent, "#ef4444", "#22c55e", "#3b82f6"].map((swatch) => (
+  2903: 									<button type="button" key={swatch} onClick={(e) => { e.stopPropagation(); updateElement(selected.id, selected.type === "text" ? { color: swatch } : { fill: swatch }); }} style={{ width: 18, height: 18, borderRadius: 999, border: "1px solid rgba(255,255,255,0.24)", background: swatch, cursor: "pointer", flex: "0 0 auto" }} />
+  2907: 						{selected?.qrValue ? <button type="button" style={{ ...panelButtonStyle(false), width: "auto", padding: "2px 8px", minHeight: 26 }} onClick={(e) => { e.stopPropagation(); const nextValue = window.prompt("Edit QR value", selected.qrValue || ""); if (nextValue) updateElement(selected.id, { qrValue: nextValue, src: buildQrCodeUrl(nextValue, { fg: selected.qrFg || "#000000", bg: selected.qrBg || "#ffffff" }) }); }}>Edit QR</button> : null}
+  2933: 									<div style={{ position: "absolute", left: RULER_SIZE, top: 0, right: 0, height: RULER_SIZE, background: "rgba(17,24,39,0.95)", borderBottom: "1px solid rgba(255,255,255,0.08)", zIndex: 20 }}>
+  2937: 											return <div key={mark} style={{ position: "absolute", left: pan.x + mark * zoom, top: 0, width: 1, height: major ? 14 : 8, background: "rgba(255,255,255,0.25)" }}>{major ? <div style={{ position: "absolute", top: 2, left: 4, fontSize: 9, color: "rgba(255,255,255,0.58)" }}>{mark}</div> : null}</div>;
+  2940: 									<div style={{ position: "absolute", top: RULER_SIZE, left: 0, bottom: 0, width: RULER_SIZE, background: "rgba(17,24,39,0.95)", borderRight: "1px solid rgba(255,255,255,0.08)", zIndex: 20 }}>
+  2944: 											return <div key={mark} style={{ position: "absolute", top: pan.y + mark * zoom, left: 0, height: 1, width: major ? 18 : 10, background: "rgba(255,255,255,0.25)" }}>{major ? <div style={{ position: "absolute", left: 2, top: 4, fontSize: 9, color: "rgba(255,255,255,0.58)" }}>{mark}</div> : null}</div>;
+  2947: 									<div style={{ position: "absolute", top: 0, left: 0, width: RULER_SIZE, height: RULER_SIZE, background: "rgba(17,24,39,0.95)", borderRight: "1px solid rgba(255,255,255,0.08)", borderBottom: "1px solid rgba(255,255,255,0.08)", zIndex: 21 }} />
+  2957: 										<div style={{ position: "absolute", left: layout.left, top: layout.top - 32, width: layout.width, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, color: "rgba(255,255,255,0.96)", fontSize: 13, fontWeight: 800, zIndex: 16 }}>
+  2962: 													style={{ padding: "4px 9px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.16)", background: "rgba(17,24,39,0.92)", color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+  2969: 													style={{ padding: "4px 9px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.16)", background: currentPages.length <= 1 ? "rgba(107,114,128,0.4)" : "rgba(17,24,39,0.92)", color: "white", fontSize: 12, fontWeight: 700, cursor: currentPages.length <= 1 ? "not-allowed" : "pointer", opacity: currentPages.length <= 1 ? 0.65 : 1 }}
+  2987: 												background: page.background || "#ffffff",
+  2995: 											<div onDrop={onWorkspaceDrop} onDragOver={onWorkspaceDragOver} style={{ position: "absolute", inset: 0, width: page.width, height: page.height, transform: `scale(${zoom})`, transformOrigin: "top left", background: page.background || "#ffffff", overflow: "hidden", borderRadius: 18 / Math.max(zoom, 1) }}>
+  2999: 															<div key={guide.id} onMouseDown={(e) => { e.stopPropagation(); setSelectedGuideId(guide.id); setGuideDrag({ id: guide.id, orientation: guide.orientation }); }} onClick={(e) => { e.stopPropagation(); setSelectedGuideId(guide.id); }} onDoubleClick={() => removeGuide(guide.id)} style={{ position: "absolute", left: guide.position, top: 0, bottom: 0, width: 8, marginLeft: -4, background: guide.id === selectedGuideId ? "rgba(239,68,68,0.22)" : "transparent", borderLeft: `1px solid ${GUIDE_COLORS.vertical}`, cursor: "ew-resize", zIndex: 9 }} />
+  3001: 															<div key={guide.id} onMouseDown={(e) => { e.stopPropagation(); setSelectedGuideId(guide.id); setGuideDrag({ id: guide.id, orientation: guide.orientation }); }} onClick={(e) => { e.stopPropagation(); setSelectedGuideId(guide.id); }} onDoubleClick={() => removeGuide(guide.id)} style={{ position: "absolute", top: guide.position, left: 0, right: 0, height: 8, marginTop: -4, background: guide.id === selectedGuideId ? "rgba(96,165,250,0.22)" : "transparent", borderTop: `1px solid ${GUIDE_COLORS.horizontal}`, cursor: "ns-resize", zIndex: 9 }} />
+  3008: 													const common = { position: "absolute", left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height, opacity: el.opacity ?? 1, transform: getElementTransform(el), boxSizing: "border-box", outline: isSelected ? "2px solid #ef4444" : "none", outlineOffset: 2, userSelect: "none", cursor: el.locked ? "not-allowed" : (tool === "hand" ? "grab" : "move"), pointerEvents: isCanvasBackground ? "none" : "auto", touchAction: "none" };
+  3023: 														{selectionBounds ? <div style={{ position: "absolute", left: selectionBounds.left, top: selectionBounds.top, width: selectionBounds.width, height: selectionBounds.height, border: "1px dashed rgba(255,255,255,0.75)", pointerEvents: "none", zIndex: 8 }} /> : null}
+  3037: 															return <div key={handle.key} onMouseDown={(e) => startResize(e, handle.key)} onTouchStart={(e) => startResize(e, handle.key)} style={{ position: "absolute", left: handle.left, top: handle.top, width, height, borderRadius: isCorner ? 999 : 999, background: "#ef4444", border: "2px solid white", cursor: handle.cursor, zIndex: 10, touchAction: "none", boxShadow: isMobileViewport ? "0 0 0 8px rgba(239,68,68,0.18)" : "none" }} />;
+  3039: 														{marquee ? <div style={{ position: "absolute", left: marquee.left, top: marquee.top, width: marquee.width, height: marquee.height, border: "1px dashed rgba(255,255,255,0.8)", background: "rgba(239,68,68,0.12)", pointerEvents: "none", zIndex: 12 }} /> : null}
+  3058: 								<button onClick={(e) => { e.stopPropagation(); addPage(); }} style={{ position: "absolute", left: (pageLayouts[pageLayouts.length - 1]?.left || 0) + ((pageLayouts[pageLayouts.length - 1]?.width || 0) / 2) - 76, top: (pageLayouts[pageLayouts.length - 1]?.top || 0) + (pageLayouts[pageLayouts.length - 1]?.height || 0) + 24, width: 152, padding: "10px 14px", borderRadius: 999, border: "1px dashed rgba(255,255,255,0.24)", background: "rgba(17,24,39,0.96)", color: "white", fontWeight: 700, zIndex: 18, cursor: "pointer" }}>
+  3067: 					<div onClick={(e) => e.stopPropagation()} style={{ position: "fixed", left: Math.min(contextMenu.x, window.innerWidth - 210), top: Math.min(contextMenu.y, window.innerHeight - 220), width: 190, zIndex: 80, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 8, boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+  3098: 					<div style={{ position: "absolute", top: 12, right: 12, bottom: 12, width: 340, zIndex: 26, background: "rgba(17,24,39,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14, overflow: "auto", boxShadow: "0 18px 60px rgba(0,0,0,0.35)" }}>
+  3160: 									<label>Text color<input type="color" value={selected.color || "#000000"} onChange={(e) => updateElement(selected.id, { color: e.target.value })} style={{ width: "100%" }} /></label>
+  3163: 									<label>Fill<input type="color" value={selected.fill || "#ef4444"} onChange={(e) => updateElement(selected.id, { fill: e.target.value })} style={{ width: "100%" }} /></label>
+  3164: 									<label>Stroke<input type="color" value={selected.stroke || "#ffffff"} onChange={(e) => updateElement(selected.id, { stroke: e.target.value })} style={{ width: "100%" }} /></label>
+  3175: 												<label>QR value<textarea value={selected.qrValue || ""} onChange={(e) => updateElement(selected.id, { qrValue: e.target.value, src: buildQrCodeUrl(e.target.value, { fg: selected.qrFg || "#000000", bg: selected.qrBg || "#ffffff" }) })} rows={4} style={{ width: "100%" }} /></label>
+  3177: 													<label>QR foreground<input type="color" value={selected.qrFg || "#000000"} onChange={(e) => updateElement(selected.id, { qrFg: e.target.value, src: buildQrCodeUrl(selected.qrValue || "", { fg: e.target.value, bg: selected.qrBg || "#ffffff" }) })} style={{ width: "100%" }} /></label>
+  3178: 													<label>QR background<input type="color" value={selected.qrBg || "#ffffff"} onChange={(e) => updateElement(selected.id, { qrBg: e.target.value, src: buildQrCodeUrl(selected.qrValue || "", { fg: selected.qrFg || "#000000", bg: e.target.value }) })} style={{ width: "100%" }} /></label>
+  3180: 												<button type="button" onClick={() => updateElement(selected.id, { src: buildQrCodeUrl(selected.qrValue || "", { fg: selected.qrFg || "#000000", bg: selected.qrBg || "#ffffff" }) })}>Regenerate QR</button>
+  3187: 							<label>Canvas background<input type="color" value={currentDoc?.background || "#ffffff"} onChange={(e) => currentDoc && updateDoc({ background: e.target.value })} style={{ width: "100%" }} /></label>
+  3194: 									<button key={el.id} onClick={(e) => selectElement(el, e.shiftKey || e.ctrlKey || e.metaKey)} style={{ textAlign: "left", border: selectedIds.includes(el.id) ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.08)", background: selectedIds.includes(el.id) ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)", borderRadius: 10, padding: 8 }}>
+
+src/pages/Drive.jsx
+  597:         const blob = new Blob([`<!doctype html><html><head><meta charset="utf-8" /><title>${name}</title><style>body{font-family:Inter,system-ui,sans-serif;background:#090909;color:#fff;padding:24px}pre{white-space:pre-wrap;background:#111214;border:1px solid #232427;border-radius:12px;padding:16px}</style></head><body><h1>${name}</h1><pre>${textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></body></html>`], { type: "text/html" });
+  614:         const blob = new Blob([`<!doctype html><html><head><meta charset="utf-8" /><title>${name}</title><style>body{font-family:Inter,system-ui,sans-serif;background:#090909;color:#fff;padding:24px}table{border-collapse:collapse;background:#111214}th,td{border:1px solid #26282c;padding:8px 10px;min-width:120px}th{background:#15171b;position:sticky;top:0}</style></head><body><h1>${name}</h1>${table}</body></html>`], { type: "text/html" });
+  998:   const shellBg = dpg ? "#f4f2eb" : "#0b0b0b";
+  999:   const panelBg = dpg ? "#fff" : "rgba(10,10,12,0.98)";
+  1000:   const panelBorder = dpg ? "1px solid rgba(56,80,50,0.12)" : "1px solid rgba(255,255,255,0.08)";
+  1002:   const titleColor = dpg ? "#182018" : "#fff";
+  1019:               <div style={{ position: "fixed", inset: focusMode ? 0 : "56px 8px 8px", zIndex: 95, background: panelBg, border: panelBorder, borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 48px rgba(0,0,0,0.45)" }}>
+  1020:                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 10px", borderBottom: panelBorder, background: dpg ? "#f6f4ed" : "#101012" }}>
+  1115:             <div onMouseDown={() => beginResize("sidebar")} style={{ cursor: "col-resize", background: dpg ? "rgba(56,80,50,0.08)" : "rgba(255,255,255,0.03)" }} title="Drag to resize explorer" />
+  1179:                 {!isMobile && viewMode === "split" ? <div onMouseDown={() => beginResize("split")} style={{ cursor: "col-resize", background: "rgba(255,255,255,0.03)", minHeight: focusMode ? "84vh" : "72vh" }} title="Drag to resize split" /> : null}
+  1187:                       <pre style={{ whiteSpace: "pre-wrap", margin: 0, background: "rgba(255,255,255,0.02)", border: "1px solid #1f1f1f", borderRadius: 12, padding: 12, minHeight: "72vh", overflow: "auto" }}>{String(content || "")}</pre>
+
+src/pages/SignIn.jsx
+  38: 		background: "#f4f1ea",
+  39: 		color: "#1f2f28",
+  52: 		background: "#fbf8f2",
+  53: 		border: "1px solid #d8cfbe",
+  57: 		color: "#1f2f28",
+  63: 		background: "#fffdf9",
+  64: 		border: "1px solid #d8cfbe",
+  65: 		color: "#1f2f28",
+  73: 		background: "#c98888",
+  74: 		border: "1px solid #e3a7a5",
+  75: 		color: "#fff8f4",
+  83: 		background: "#264636",
+  84: 		border: "1px solid #3f5f4d",
+  85: 		color: "#f7f2e8",
+  286: 				<div className="helper" style={{ color: "#ff8e7f", marginTop: 12 }}>
+
+src/pages/BondfireChat.jsx
+  1050:           borderBottom: "1px solid #222",
+  1281:                 border: "1px solid #222",
+  1313:                             border: "1px solid rgba(255,255,255,0.10)",
+  1324:                             background: "rgba(255,255,255,0.08)",
+  1325:                             border: "1px solid rgba(255,255,255,0.10)",
+  1332:                         <div style={{ fontSize: 12, color: "#6b7280" }}>
+
+src/pages/PublicPage.jsx
+  101:     accent_color: publicCfg?.accent_color || "#6d5efc",
+  187:       "--bfp-border": "rgba(255,255,255,0.08)",
+  197:     "--bfp-surface": "#ffffff",
+  199:     "--bfp-border": "rgba(22,27,45,0.08)",
+  311:           accent_color: pub.accent_color || "#6d5efc",
+  340:   const pageStyle = useMemo(() => themeVars(pubCfg?.theme_mode || "light", pubCfg?.accent_color || "#6d5efc"), [pubCfg]);
+
+src/pages/Security.jsx
+  301:       <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
+  339:       <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
+  354:         <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 8 }}>
+  387:           {recoveryMsg ? <div style={{ marginTop: 10, color: "#8b1d1d" }}>{recoveryMsg}</div> : null}
+  391:       {msg ? <div style={{ marginTop: 12, color: "#f88" }}>{msg}</div> : null}
+
+src/components/drive/DriveCreateModal.jsx
+  8:     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.56)", zIndex: 160, display: "grid", placeItems: "start center", paddingTop: 52 }} onClick={onClose}>
+  23:               style={{ display: "grid", gap: 8, alignContent: "start", minHeight: 104, padding: 12, borderRadius: 12, border: "1px solid rgba(255,255,255,0.14)", background: dpg ? "rgba(95,148,221,0.08)" : "rgba(255,255,255,0.03)", color: dpg ? "#182018" : "#fff", textAlign: "left", cursor: "pointer" }}
+
+src/components/drive/NotePreview.jsx
+  109:     }} style={{ maxWidth: 920, margin: "0 auto", background: dpg ? "#fff" : "rgba(255,255,255,0.02)", border: dpg ? "1px solid rgba(56,80,50,0.12)" : "1px solid #1f1f1f", color: dpg ? "#182018" : "#f5f5f5", borderRadius: 10, padding: focusMode ? 12 : 10, minHeight: focusMode ? "84vh" : "72vh" }}>
+  126:       <style>{`.bf-note-preview{max-width:74ch;margin:0 auto;font-size:14px;line-height:1.62;color:${dpg ? "#182018" : "#f5f5f5"}}.bf-note-preview h1,.bf-note-preview h2,.bf-note-preview h3,.bf-note-preview h4,.bf-note-preview h5,.bf-note-preview h6{margin:0 0 10px 0}.bf-note-preview p{margin:0 0 10px 0}.bf-note-preview ul,.bf-note-preview ol{margin:0 0 10px 0;padding-left:24px}.bf-note-preview li{margin:0 0 4px 0}.bf-note-preview blockquote{margin:0 0 10px 0;padding-left:12px;border-left:3px solid ${dpg ? "#5f94dd" : "#666"};color:${dpg ? "#3e5871" : "#bbb"}}.bf-note-preview a[data-note-title], .bf-note-preview a[href]{color:${dpg ? "#2a5f9f" : "#9ed0ff"};text-decoration:underline;cursor:pointer}.bf-note-preview code{background:${dpg ? "rgba(95,148,221,0.10)" : "rgba(255,255,255,0.08)"};padding:1px 4px;border-radius:4px}.bf-note-preview pre{background:${dpg ? "rgba(95,148,221,0.06)" : "rgba(255,255,255,0.05)"};padding:12px;border-radius:8px;overflow:auto;margin:0 0 10px 0}.bf-note-preview pre code{background:transparent;padding:0}.bf-note-preview hr{border:none;border-top:1px solid ${dpg ? "rgba(56,80,50,0.15)" : "rgba(255,255,255,0.15)"};margin:14px 0}.bf-note-preview .task-list-item{list-style:none;margin-left:-22px}.bf-note-preview .task-list-item input{margin-right:8px}`}</style>
+
+src/components/drive/NoteInspector.jsx
+  5:     <div className="card" style={{ padding: 8, background: "rgba(11,11,11,0.96)", backdropFilter: "blur(8px)" }}>
+
+src/components/drive/DriveFilePreview.jsx
+  211:   if (error) return <div className="card" style={{ padding: 16, color: "#ff9a9a", whiteSpace: "pre-wrap" }}>{error}</div>;
+  216:     return <div style={{ display: "flex", justifyContent: "center" }}><img src={src} alt={file.name} style={{ maxWidth: "100%", maxHeight: "78vh", borderRadius: 12, border: "1px solid #1f1f1f" }} /></div>;
+  219:     return <iframe key={src} title={file.name} src={src} style={{ width: "100%", height: "78vh", border: "1px solid #1f1f1f", borderRadius: 12, background: "#111" }} />;
+  222:   if (String(file.mime || "").startsWith("video/") && src) return <video key={src} controls playsInline preload="metadata" src={src} style={{ width: "100%", borderRadius: 12, border: "1px solid #1f1f1f", background: "#111" }} />;
+  225:       <div style={{ maxWidth: 920, margin: "0 auto", background: "rgba(255,255,255,0.02)", border: "1px solid #1f1f1f", borderRadius: 10, padding: 14, minHeight: "72vh" }}>
+  226:         <style>{`.bf-drive-file-markdown{max-width:74ch;margin:0 auto;font-size:14px;line-height:1.62}.bf-drive-file-markdown h1,.bf-drive-file-markdown h2,.bf-drive-file-markdown h3,.bf-drive-file-markdown h4,.bf-drive-file-markdown h5,.bf-drive-file-markdown h6{margin:0 0 10px 0}.bf-drive-file-markdown p{margin:0 0 10px 0}.bf-drive-file-markdown ul,.bf-drive-file-markdown ol{margin:0 0 10px 0;padding-left:24px}.bf-drive-file-markdown li{margin:0 0 4px 0}.bf-drive-file-markdown blockquote{margin:0 0 10px 0;padding-left:12px;border-left:3px solid #666;color:#bbb}.bf-drive-file-markdown a[href]{color:#9ed0ff;text-decoration:underline;cursor:pointer}.bf-drive-file-markdown code{background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:4px}.bf-drive-file-markdown pre{background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;overflow:auto;margin:0 0 10px 0}.bf-drive-file-markdown pre code{background:transparent;padding:0}.bf-drive-file-markdown hr{border:none;border-top:1px solid rgba(255,255,255,0.15);margin:14px 0}.bf-drive-file-markdown .task-list-item{list-style:none;margin-left:-22px}.bf-drive-file-markdown .task-list-item input{margin-right:8px}`}</style>
+
+src/components/drive/SpreadsheetFileView.jsx
+  11:   border: "1px solid #1f1f1f",
+  12:   panelBg: "rgba(255,255,255,0.015)",
+  282:         color: "#fff",
+  471:               <div style={{ position: "absolute", left: 0, top: "calc(100% + 6px)", width: 320, maxHeight: 340, overflow: "auto", background: "rgba(16,16,20,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: 8, boxShadow: "0 14px 32px rgba(0,0,0,0.42)", zIndex: 120, display: "grid", gap: 8 }}>
+  523:           <div style={{ position: "sticky", left: 0, top: 0, zIndex: 4, borderBottom: "1px solid #222", borderRight: "1px solid #222", background: "#0f1012", minHeight: isMobile ? 34 : 36 }} />
+  535:                 borderBottom: "1px solid #222",
+  536:                 borderRight: "1px solid #222",
+  537:                 background: selectedRef.col === colIndex ? "rgba(24,129,242,0.18)" : "#0f1012",
+  538:                 color: "#fff",
+  562:                   borderBottom: "1px solid #1d1d1d",
+  563:                   borderRight: "1px solid #222",
+  564:                   background: selectedRef.row === rowIndex ? "rgba(24,129,242,0.18)" : "#0f1012",
+  565:                   color: "#fff",
+  584:                     borderBottom: "1px solid #1d1d1d",
+  585:                     borderRight: "1px solid #1d1d1d",
+  588:                     background: selected ? "rgba(24,129,242,0.08)" : "transparent",
+  625:                         border: selected ? "1px solid #1881f2" : "1px solid transparent",
+  685:                     background: active ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.02)",
+  686:                     borderColor: active ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.08)",
+
+src/components/drive/NoteEditor.jsx
+  7:     <div style={{ maxWidth: 920, margin: "0 auto", background: dpg ? "#fff" : "rgba(255,255,255,0.02)", border: dpg ? "1px solid rgba(56,80,50,0.12)" : "1px solid #1f1f1f", borderRadius: 10, padding: focusMode ? 10 : 8 }}>
+  8:       <textarea ref={editorRef} value={value} onChange={(e) => onChange(e.target.value)} spellCheck={false} style={{ width: "100%", minHeight: focusMode ? "84vh" : "72vh", background: "transparent", border: "none", outline: "none", color: dpg ? "#182018" : "#f5f5f5", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13, lineHeight: 1.55, resize: "none" }} />
+
+src/components/drive/DriveSidebar.jsx
+  14:         color: danger ? "#ff8f8f" : undefined,
+  40:         <div style={{ position: "absolute", top: "calc(100% + 6px)", ...(align === "left" ? { left: 0 } : { right: 0 }), minWidth: 190, background: dpg ? "#fff" : "rgba(16,16,20,0.98)", border: dpg ? "1px solid rgba(56,80,50,0.12)" : "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: 4, boxShadow: "0 14px 32px rgba(0,0,0,0.42)", zIndex: 120, display: "grid", gap: 4 }}>
+  68:           background: active ? (dpg ? "rgba(95,148,221,0.14)" : "rgba(255,255,255,0.08)") : "transparent",
+  70:           border: dpg ? "1px solid rgba(56,80,50,0.10)" : "1px solid rgba(255,255,255,0.07)",
+  123:   const panelBg = dpg ? "#f9f7f1" : "transparent";
+  124:   const panelBorder = dpg ? "rgba(56,80,50,0.12)" : "#1b1b1b";
+  125:   const buttonText = dpg ? "#182018" : "#fff";
+
+src/components/drive/RichTextToolbar.jsx
+  27:       {menuOpen ? <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", minWidth: 220, background: "rgba(16,16,20,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: 6, boxShadow: "0 14px 36px rgba(0,0,0,0.45)", zIndex: 130, display: "grid", gap: 4 }}>
+
+src/components/drive/DriveList.jsx
+  14:       {open ? <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", minWidth: 170, background: "rgba(16,16,20,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: 6, boxShadow: "0 14px 32px rgba(0,0,0,0.42)", zIndex: 50, display: "grid", gap: 4 }}>
+  26:       {notes.length ? notes.map((n) => <div key={n.id} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, padding: 8, borderBottom: "1px solid #222", background: selectedKind === "note" && selectedId === n.id ? "rgba(255,255,255,0.06)" : "transparent" }}>
+  34:       {files.length ? files.map((f) => <div key={f.id} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, padding: 8, borderBottom: "1px solid #222", background: selectedKind === "file" && selectedId === f.id ? "rgba(255,255,255,0.06)" : "transparent" }}>
+
+src/components/drive/HelpFab.jsx
+  11:     <button type="button" onClick={onToggle} title="Help" style={{ position: "fixed", right: 18, bottom: 18, width: 58, height: 58, borderRadius: 999, border: "1px solid rgba(255,255,255,0.12)", background: "linear-gradient(180deg, rgba(120,60,220,0.95), rgba(70,25,150,0.95))", color: "#fff", fontSize: 28, fontWeight: 800, boxShadow: "0 10px 30px rgba(0,0,0,0.45)", zIndex: 120, cursor: "pointer", animation: pulse ? "bfHelpPulse 1.2s ease 2" : "none", opacity: 0.96 }}>?</button>
+  12:     {isOpen ? <div style={{ position: "fixed", right: 18, bottom: 86, width: 360, maxHeight: "70vh", overflow: "auto", background: "rgba(16,16,20,0.98)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 18, padding: 14, boxShadow: "0 14px 40px rgba(0,0,0,0.45)", zIndex: 121 }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}><strong>{contentTitle}</strong><button className="btn" type="button" onClick={onToggle}>Close</button></div>{children}</div> : null}
+
+src/components/drive/FormFileView.jsx
+  216:       <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #1f1f1f", borderRadius: 10, padding: 12 }}>
+  231:         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #1f1f1f", borderRadius: 10, padding: 12, display: "grid", gap: 10 }}>
+  253:         <div key={field.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #1f1f1f", borderRadius: 10, padding: 12 }}>
+  256:               <div style={{ fontWeight: 700 }}>{idx + 1}. {field.label} {field.required ? <span style={{ color: "#ff9a9a" }}>*</span> : null}</div>
+  274:                 <button className="btn" type="button" onClick={() => removeField(field.id)} style={{ color: "#ff9a9a" }}>Delete</button>
+  297:         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #1f1f1f", borderRadius: 10, padding: 12 }}>
+  301:               <div key={response.id} style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,0.02)" }}>
+
+src/pages/dpg/AdminHome.jsx
+  33:     <div style={{ minHeight: "100vh", background: "#0b0b0b", color: "#f5f5f5" }}>
+  58:                 border: "1px solid rgba(255,255,255,0.12)",
+  60:                 background: "rgba(255,255,255,0.04)",
+
+src/pages/dpg/PublicHome.jsx
+  10:     <div style={{ minHeight: "100vh", background: "#111", color: "#f5f5f5" }}>
+  70:   border: "1px solid rgba(255,255,255,0.12)",
+  72:   background: "rgba(255,255,255,0.04)",
+
+src/pages/dpg/DpgSessionsPage.jsx
+  141:     color: active ? "#fff" : "var(--accent)",
+  183:               background: "rgba(255,255,255,0.55)",
+  184:               border: "1px solid rgba(0,0,0,0.08)",
+  198:               background: "rgba(255,255,255,0.55)",
+  462:       color: "#efe29a",
+  468:       color: "#c5e8f2",
+  474:       color: "#ebcade",
+  480:       color: "#cceeb9",

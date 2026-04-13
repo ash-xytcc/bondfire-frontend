@@ -12,8 +12,8 @@ import OrgPublicPreview from "./pages/OrgPublicPreview.jsx";
 import PublicPage from "./pages/PublicPage.jsx";
 import Overview from "./pages/Overview.jsx";
 import OrgDash from "./pages/OrgDash.jsx";
-import People from "./pages/People.jsx";
 import InnerSanctum from "./pages/InnerSanctum.jsx";
+import People from "./pages/People.jsx";
 import Inventory from "./pages/Inventory.jsx";
 import Meetings from "./pages/Meetings.jsx";
 import MeetingDetail from "./pages/MeetingDetail.jsx";
@@ -299,7 +299,7 @@ function Shell() {
 					path="/org/:orgId/*"
 					element={
 						<RequireAuth>
-
+							<InnerSanctum />
 						</RequireAuth>
 					}
 				>

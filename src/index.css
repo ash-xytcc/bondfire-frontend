@@ -14,11 +14,11 @@
 }
 
 :root{
-  --bg:#0b0b0b;
-  --panel:#141414;
-  --muted:#999;
-  --text:#e8e8e8;
-  --border:#222;
+  --bg:#121715;
+  --panel:#1a211e;
+  --muted:#b8c1cc;
+  --text:#f3efe8;
+  --border:rgba(255,255,255,0.14);
   --red:#8a1111;
   --red-2:#b01515;
   --dpg-green:#385032;
@@ -1536,10 +1536,10 @@ html, body {
    Variant-aware DPG admin reskin
    =============================== */
 body[data-app="dpg"]{
-  --bg:#eef1ec;
+  --bg:#121715;
   --panel:#1a211e;
-  --muted:#587086;
-  --text:#182018;
+  --muted:#b8c1cc;
+  --text:#f3efe8;
   --border:rgba(255,255,255,0.14);
   --red:#385032;
   --red-2:#5f94dd;
@@ -1581,7 +1581,7 @@ body[data-app="dpg"] .bf-appnav-link.is-active{
 body[data-app="dpg"] .btn,
 body[data-app="dpg"] a.btn{
   background: rgba(95,148,221,.12);
-  border-color: rgba(56,80,50,.18);
+  border-color: rgba(255,255,255,.14);
   color: #c7e6d2;
 }
 body[data-app="dpg"] .btn:hover,
@@ -1608,7 +1608,7 @@ body[data-app="dpg"] input,
 body[data-app="dpg"] select,
 body[data-app="dpg"] textarea{
   background: #120f0e;
-  border-color: rgba(56,80,50,.18);
+  border-color: rgba(255,255,255,.14);
   color: #f8faf8;
 }
 body[data-app="dpg"] input::placeholder,
@@ -1621,7 +1621,7 @@ body[data-app="dpg"] .orgpill,
 body[data-app="dpg"] .linkbtn,
 body[data-app="dpg"] .tag{
   background: #1a211e;
-  border-color: rgba(56,80,50,.12);
+  border-color: rgba(255,255,255,.14);
 }
 .bf-powered-by{
   margin-top: 18px;
@@ -1663,7 +1663,7 @@ body[data-app="dpg"] .bf-auth-page.is-dpg{
 }
 body[data-app="dpg"] .bf-auth-shell{
   background: rgba(26,33,30,.92);
-  border: 1px solid rgba(56,80,50,.12);
+  border: 1px solid rgba(255,255,255,.14);
   border-radius: 22px;
   padding: 28px;
   box-shadow: 0 24px 60px rgba(0,0,0,.25);
@@ -1675,11 +1675,11 @@ body[data-app="dpg"] .bf-auth-shell h1{
 
 body[data-app="dpg"] .bf-drive-root,
 body[data-app="dpg"] .bf-drive-root .helper{
-  color:#3e5871;
+  color:#b8c1cc;
 }
 body[data-app="dpg"] .bf-drive-root .card{
   background:#1a211e;
-  border-color:rgba(56,80,50,.12);
+  border-color:rgba(255,255,255,.14);
 }
 body[data-app="dpg"] .bf-drive-root textarea,
 body[data-app="dpg"] .bf-drive-root input,
@@ -2339,4 +2339,62 @@ button[title*="dark" i],
 
 .layout a {
   color: #c7e6d2 !important;
+}
+
+/* === bondfire global palette swap === */
+body,
+.layout,
+.header,
+.bottomnav,
+.bf-appnav,
+.bf-drawer-panel,
+.orgpill {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+.card,
+.kpi,
+.tag,
+.linkbtn,
+.toast,
+.bf-rowcard,
+.bf-stat-card,
+.bf-modal-shell,
+.bfDashCard,
+.bfDashPanel,
+.bfDashMeetingsPanel,
+.bfDashNeedsPanel,
+.bfDashMobileRowCard {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+button,
+.btn,
+input,
+select,
+textarea {
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+input,
+select,
+textarea {
+  background: var(--input-bg) !important;
+}
+
+a,
+.bf-appnav-link {
+  color: var(--accent) !important;
+}
+
+small,
+.muted,
+.text-muted,
+[class*="muted"] {
+  color: var(--muted) !important;
 }

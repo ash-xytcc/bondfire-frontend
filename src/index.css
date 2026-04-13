@@ -1537,10 +1537,10 @@ html, body {
    =============================== */
 body[data-app="dpg"]{
   --bg:#eef1ec;
-  --panel:#f7f8f4;
+  --panel:#1a211e;
   --muted:#587086;
   --text:#182018;
-  --border:rgba(56,80,50,.18);
+  --border:rgba(255,255,255,0.14);
   --red:#385032;
   --red-2:#5f94dd;
 }
@@ -1549,14 +1549,14 @@ body[data-app="dpg"]{
 html[data-app="dpg"] .helper,
 body[data-app="dpg"] .helper{ color: var(--muted); }
 body[data-app="dpg"] .bf-appHeader{
-  background: rgba(247,248,244,.96);
-  border-bottom-color: rgba(56,80,50,.14);
+  background: rgba(26,33,30,.96);
+  border-bottom-color: rgba(255,255,255,.14);
 }
 body[data-app="dpg"] .bf-appHeader.is-dpg{
   box-shadow: 0 10px 30px rgba(0,0,0,.18);
 }
 body[data-app="dpg"] .bf-brand{
-  color: #182018;
+  color: #f3efe8;
 }
 body[data-app="dpg"] .bf-brand img{
   filter: saturate(.6) brightness(.95);
@@ -1565,14 +1565,14 @@ body[data-app="dpg"] .bf-brand-subtle{
   font-size: 12px;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: #587086;
+  color: #b8c1cc;
 }
 body[data-app="dpg"] .bf-appnav-link,
 body[data-app="dpg"] .bf-logout,
 body[data-app="dpg"] .bf-hamburger{
-  background: rgba(255,255,255,0.035);
-  border-color: rgba(217,196,170,.14);
-  color: #182018;
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,.14);
+  color: #f3efe8;
 }
 body[data-app="dpg"] .bf-appnav-link.is-active{
   background: rgba(95,148,221,.16);
@@ -1582,7 +1582,7 @@ body[data-app="dpg"] .btn,
 body[data-app="dpg"] a.btn{
   background: rgba(95,148,221,.12);
   border-color: rgba(56,80,50,.18);
-  color: #1f3550;
+  color: #c7e6d2;
 }
 body[data-app="dpg"] .btn:hover,
 body[data-app="dpg"] a.btn:hover{
@@ -1599,7 +1599,7 @@ body[data-app="dpg"] .btn:disabled,
 body[data-app="dpg"] .btn-red:disabled,
 body[data-app="dpg"] button:disabled{
   opacity: 1;
-  color: #4b657f;
+  color: #b8c1cc;
   background: rgba(95,148,221,.12);
   border-color: rgba(95,148,221,.22);
   cursor: not-allowed;
@@ -1620,7 +1620,7 @@ body[data-app="dpg"] .kpi,
 body[data-app="dpg"] .orgpill,
 body[data-app="dpg"] .linkbtn,
 body[data-app="dpg"] .tag{
-  background: #ffffff;
+  background: #1a211e;
   border-color: rgba(56,80,50,.12);
 }
 .bf-powered-by{
@@ -1662,14 +1662,14 @@ body[data-app="dpg"] .bf-auth-page.is-dpg{
     linear-gradient(180deg, #eef1ec 0%, #e5ece3 100%);
 }
 body[data-app="dpg"] .bf-auth-shell{
-  background: rgba(255,255,255,.84);
+  background: rgba(26,33,30,.92);
   border: 1px solid rgba(56,80,50,.12);
   border-radius: 22px;
   padding: 28px;
   box-shadow: 0 24px 60px rgba(0,0,0,.25);
 }
 body[data-app="dpg"] .bf-auth-shell h1{
-  color: #182018;
+  color: #f3efe8;
   font-family: "Fancy Shadow", Georgia, serif;
 }
 
@@ -1678,7 +1678,7 @@ body[data-app="dpg"] .bf-drive-root .helper{
   color:#3e5871;
 }
 body[data-app="dpg"] .bf-drive-root .card{
-  background:#fff;
+  background:#1a211e;
   border-color:rgba(56,80,50,.12);
 }
 body[data-app="dpg"] .bf-drive-root textarea,
@@ -1695,7 +1695,7 @@ body[data-app="dpg"] .bf-appHeader{
   align-items: center;
   gap: 12px;
   background: #1b3127 !important;
-  border-bottom: 1px solid #3b5b4a !important;
+  border-bottom: 1px solid rgba(255,255,255,0.14) !important;
 }
 
 body[data-app="dpg"] .bf-appHeader-left{
@@ -1719,7 +1719,7 @@ body[data-app="dpg"] .bf-appHeader-right{
 body[data-app="dpg"] .bf-brand,
 body[data-app="dpg"] .bf-brand-subtle,
 body[data-app="dpg"] .bf-orgPill{
-  color: #f7f2e8 !important;
+  color: #f3efe8 !important;
 }
 
 body[data-app="dpg"] .bf-appnav-link,
@@ -1727,7 +1727,7 @@ body[data-app="dpg"] .bf-logout,
 body[data-app="dpg"] .bf-hamburger{
   background: rgba(255,255,255,0.04) !important;
   border-color: rgba(247,242,232,0.18) !important;
-  color: #f7f2e8 !important;
+  color: #f3efe8 !important;
 }
 
 body[data-app="dpg"] .bf-appnav-link:hover,
@@ -1802,15 +1802,15 @@ body[data-app="dpg"] .bf-auth-page.is-dpg input,
 body[data-app="dpg"] .bf-auth-page.is-dpg select,
 body[data-app="dpg"] .bf-auth-page.is-dpg textarea,
 body[data-app="dpg"] .bf-auth-page.is-dpg .input{
-  background: #fffdf9 !important;
-  border: 1px solid rgba(56,80,50,.18) !important;
+  background: #1a211e !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
   color: #182018 !important;
 }
 
 body[data-app="dpg"] .bf-auth-page.is-dpg input::placeholder,
 body[data-app="dpg"] .bf-auth-page.is-dpg textarea::placeholder,
 body[data-app="dpg"] .bf-auth-page.is-dpg .input::placeholder{
-  color: #6f7d76 !important;
+  color: #b8c1cc !important;
 }
 
 
@@ -1822,7 +1822,7 @@ html[data-app="dpg"] body .bf-auth-page.is-dpg a.btn,
 html[data-app="dpg"] body .bf-auth-page.is-dpg a.btn-red {
   background: #264636 !important;
   border: 1px solid #3f5f4d !important;
-  color: #f7f2e8 !important;
+  color: #f3efe8 !important;
 }
 
 /* hover */
@@ -1846,15 +1846,15 @@ html[data-app="dpg"] body .bf-auth-page.is-dpg input,
 html[data-app="dpg"] body .bf-auth-page.is-dpg textarea,
 html[data-app="dpg"] body .bf-auth-page.is-dpg select,
 html[data-app="dpg"] body .bf-auth-page.is-dpg .input {
-  background: #fffdf9 !important;
-  border: 1px solid #d8cfbe !important;
-  color: #1f2f28 !important;
+  background: #1a211e !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #f3efe8 !important;
 }
 
 /* placeholders */
 html[data-app="dpg"] body .bf-auth-page.is-dpg input::placeholder,
 html[data-app="dpg"] body .bf-auth-page.is-dpg textarea::placeholder {
-  color: #6f7d76 !important;
+  color: #b8c1cc !important;
 }
 
 /* kill ANY black backgrounds sneaking in */
@@ -2299,4 +2299,44 @@ button[title*="dark" i],
 [class*="darkMode" i],
 [class*="dark-mode" i] {
   display: none !important;
+}
+
+/* === bondfire authenticated card floor === */
+.layout,
+.layout .card,
+.layout .kpi,
+.layout .bf-rowcard,
+.layout .bf-stat-card,
+.layout .bf-modal-shell,
+.layout .bfDashCard,
+.layout .bfDashPanel,
+.layout .bfDashMeetingsPanel,
+.layout .bfDashNeedsPanel,
+.layout .bfDashMobileRowCard {
+  color: #f3efe8 !important;
+  border-color: rgba(255,255,255,0.14) !important;
+}
+
+.layout .card,
+.layout .kpi,
+.layout .bf-rowcard,
+.layout .bf-stat-card,
+.layout .bf-modal-shell,
+.layout .bfDashCard,
+.layout .bfDashPanel,
+.layout .bfDashMeetingsPanel,
+.layout .bfDashNeedsPanel,
+.layout .bfDashMobileRowCard {
+  background: #1a211e !important;
+}
+
+.layout small,
+.layout .muted,
+.layout .text-muted,
+.layout [class*="muted"] {
+  color: #b8c1cc !important;
+}
+
+.layout a {
+  color: #c7e6d2 !important;
 }

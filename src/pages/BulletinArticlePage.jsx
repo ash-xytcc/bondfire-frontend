@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import BulletinArticle from "../components/BulletinArticle";
 
 async function fetchJson(url, options) {
+  options = options || {};
   const safeOptions = options || {};
   const safeHeaders = (safeOptions?.headers) || {};
 

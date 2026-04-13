@@ -1,3 +1,30 @@
+if (typeof window !== "undefined" && !window.__BF_HEADERS_TRAP__) {
+  window.__BF_HEADERS_TRAP__ = true;
+
+  const originalError = console.error;
+  console.error = function (...args) {
+    try {
+      const text = args.map((x) => {
+        try { return typeof x === "string" ? x : JSON.stringify(x); }
+        catch { return String(x); }
+      }).join(" ");
+      if (text.includes("reading 'headers'") || text.includes('reading "headers"')) {
+        originalError.call(console, "BF_HEADERS_TRAP stack:", new Error("headers trap").stack);
+      }
+    } catch {}
+    return originalError.apply(console, args);
+  };
+
+  window.addEventListener("error", (event) => {
+    try {
+      const msg = String(event?.message || "");
+      if (msg.includes("reading 'headers'") || msg.includes('reading "headers"')) {
+        console.error("BF_HEADERS_TRAP event", event?.error?.stack || event);
+      }
+    } catch {}
+  });
+}
+
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";

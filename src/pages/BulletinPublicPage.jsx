@@ -2,6 +2,7 @@ import React from "react";
 import BulletinFeedList from "../components/BulletinFeedList";
 
 async function fetchJson(url, options) {
+  options = options || {};
   const safeOptions = options || {};
   const safeHeaders = (safeOptions?.headers) || {};
 

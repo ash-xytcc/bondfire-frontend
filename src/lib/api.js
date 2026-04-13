@@ -121,6 +121,7 @@ export async function apiFetch(path, opts = {}) {
 }
 
 export async function apiJSON(path, opts) {
+  opts = opts || {};
   const res = await apiFetch(path, opts);
 
   const data = await readJsonMaybe(res);

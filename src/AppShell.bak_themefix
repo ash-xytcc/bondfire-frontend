@@ -1,17 +1,13 @@
-import React
-import { useTheme } from "./theme.jsx" from "react";
+import React from "react";
 import { OrgProvider } from "./context/OrgContext";
 import { AuthProvider } from "./context/AuthContext";
 import AppHeader from "./components/AppHeader";
 
 export default function AppShell({ children }) {
-  const { theme } = useTheme();
-const bg = theme === "dark" ? "#121715" : "#f3efe8";
-
-return (
+  return (
     <AuthProvider>
       <OrgProvider>
-        <div style={{ background: bg, minHeight: "100vh" }} className="min-h-screen">
+        <div className="min-h-screen">
           <AppHeader />
           <main className="max-w-7xl mx-auto pt-24 pb-16 px-4">
             {children}

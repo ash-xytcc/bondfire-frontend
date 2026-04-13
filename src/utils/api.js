@@ -82,7 +82,7 @@ export async function api(path, opts = {}) {
     return [`${API_BASE}${rel}`];
   })();
 
-  const headers = new Headers(opts.headers || {});
+  const headers = new Headers((opts?.headers) || {});
   const body = opts.body;
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
   const isBlob = typeof Blob !== "undefined" && body instanceof Blob;
@@ -135,7 +135,7 @@ export async function api(path, opts = {}) {
   }
 
   const token2 = pickToken();
-  const headers2 = new Headers(opts.headers || {});
+  const headers2 = new Headers((opts?.headers) || {});
   const retryBody = opts.body;
   const retryIsFormData = typeof FormData !== "undefined" && retryBody instanceof FormData;
   const retryIsBlob = typeof Blob !== "undefined" && retryBody instanceof Blob;

@@ -41,7 +41,7 @@ export async function apiFetch(path, opts = {}) {
     credentials: "include",
     ...opts,
     headers: {
-      ...(opts.headers || {}),
+      ...((opts?.headers) || {}),
     },
   };
 

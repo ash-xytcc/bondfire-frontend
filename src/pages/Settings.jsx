@@ -45,7 +45,7 @@ async function authFetch(path, opts = {}) {
 
   const headers = {
     "Content-Type": "application/json",
-    ...(opts.headers || {}),
+    ...((opts?.headers) || {}),
   };
 
   const doReq = async (u) => {

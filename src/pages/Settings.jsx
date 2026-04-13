@@ -26,6 +26,7 @@ function humanizeError(msg) {
 
 
 async function authFetch(path, opts = {}) {
+  opts = opts || {};
   const relative = path.startsWith("/") ? path : `/${path}`;
 
   if (isDemoMode()) {

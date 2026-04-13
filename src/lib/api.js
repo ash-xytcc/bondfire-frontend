@@ -21,6 +21,7 @@ async function readJsonMaybe(res) {
 }
 
 export async function apiFetch(path, opts = {}) {
+  opts = opts || {};
   const startedAt = Date.now();
 
   const rel = path.startsWith("/") ? path : `/${path}`;

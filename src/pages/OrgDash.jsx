@@ -46,6 +46,7 @@ function readCookie(name) {
 }
 
 async function authFetch(path, opts = {}) {
+  opts = opts || {};
   const token = getToken();
   const relative = path.startsWith("/") ? path : `/${path}`;
   const isAbs = path.startsWith("http");

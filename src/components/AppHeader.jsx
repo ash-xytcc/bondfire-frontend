@@ -299,7 +299,7 @@ export default function AppHeader({ onLogout, showLogout }) {
   return (
     <>
       <header className="bf-appHeader">
-        <div className="bf-appHeader-left" style={{ minWidth: 0, flex: "0 1 auto" }}>
+        <div className="bf-appHeader-left" style={{ minWidth: 0, flex: "0 0 auto" }}>
           <Brand />
         </div>
 
@@ -312,6 +312,7 @@ export default function AppHeader({ onLogout, showLogout }) {
             minWidth: 0,
             flex: "1 1 auto",
             justifyContent: "flex-end",
+            overflow: "hidden",
           }}
         >
           <div className="bf-nav-desktop" style={{ minWidth: 0, flex: "1 1 auto" }}>

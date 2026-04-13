@@ -2084,3 +2084,106 @@ body.theme-dark button {
 body.theme-dark a {
   color: #c7e6d2 !important;
 }
+
+/* === bondfire permanent dark foundation === */
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  background: #121715;
+  color: #f3efe8;
+}
+
+body {
+  background: #121715;
+  color: #f3efe8;
+}
+
+/* shared app shell surfaces */
+header,
+nav,
+main,
+aside,
+section,
+article,
+[class*="appShell"],
+[class*="app-shell"],
+[class*="pageShell"],
+[class*="page-shell"],
+[class*="orgShell"],
+[class*="org-shell"],
+[class*="topbar"],
+[class*="Topbar"],
+[class*="header"],
+[class*="Header"],
+[class*="layout"],
+[class*="Layout"] {
+  color: #f3efe8;
+}
+
+/* links */
+a {
+  color: #c7e6d2;
+}
+
+a:hover,
+a:focus-visible {
+  color: #f3efe8;
+}
+
+/* shared card primitive */
+.card {
+  background: #1a211e;
+  color: #f3efe8;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+/* shared controls */
+button,
+.btn,
+input,
+select,
+textarea {
+  background: #202825;
+  color: #f3efe8;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #b8c1cc;
+}
+
+/* common muted text patterns */
+small,
+.muted,
+.text-muted,
+[class*="muted"] {
+  color: #b8c1cc;
+}
+
+/* tables and list surfaces */
+table,
+thead,
+tbody,
+tr,
+td,
+th {
+  color: #f3efe8;
+  border-color: rgba(255,255,255,0.14);
+}
+
+/* kill theme toggle ui */
+button[aria-label*="dark" i],
+button[title*="dark" i],
+button[aria-label*="theme" i],
+button[title*="theme" i],
+[class*="theme-toggle" i],
+[class*="dark-toggle" i],
+[class*="darkMode" i],
+[class*="dark-mode" i] {
+  display: none !important;
+}

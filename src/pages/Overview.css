@@ -163,3 +163,60 @@
     gap: 12px;
   }
 }
+
+/* === bondfire permanent dark overview === */
+.card.bfDashCard,
+.bfDashCard {
+  background: #1a211e !important;
+  color: #f3efe8 !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  box-shadow: none !important;
+}
+
+.card.bfDashCard:hover,
+.bfDashCard:hover {
+  background: #202825 !important;
+  color: #f3efe8 !important;
+  border-color: rgba(255,255,255,0.18) !important;
+}
+
+.react-grid-item > .bfDashPanel {
+  height: 100%;
+}
+
+.card.bfDashPanel,
+.bfDashPanel,
+.card.bfDashMeetingsPanel,
+.bfDashMeetingsPanel,
+.card.bfDashNeedsPanel,
+.bfDashNeedsPanel {
+  background: #1a211e !important;
+  color: #f3efe8 !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  box-shadow: none !important;
+}
+
+.card.bfDashPanel *,
+.bfDashPanel *,
+.card.bfDashMeetingsPanel *,
+.bfDashMeetingsPanel *,
+.card.bfDashNeedsPanel *,
+.bfDashNeedsPanel * {
+  color: inherit;
+}
+
+.bfDashCard a,
+.bfDashPanel a,
+.bfDashMeetingsPanel a,
+.bfDashNeedsPanel a {
+  color: #c7e6d2 !important;
+}
+
+.bfDashMeetingsPanel .btn,
+.bfDashNeedsPanel .btn,
+.bfDashPanel .btn,
+.bfDashCard .btn {
+  background: #202825 !important;
+  color: #f3efe8 !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+}

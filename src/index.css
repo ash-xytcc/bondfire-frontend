@@ -2061,48 +2061,10 @@ body[data-app="dpg"] .bf-appHeader-right{
 }
 
 
-/* BF_ALWAYS_DARK */
-html,
-body,
-#root {
-  background: #121715 !important;
-  color: #f3efe8 !important;
-  min-height: 100%;
-}
-
-body.theme-dark .bf-auth-page,
-body.theme-dark .bf-auth-page.is-dpg {
-  background: #121715 !important;
-  color: #f3efe8 !important;
-}
-
-body.theme-dark .bf-auth-shell {
-  background: #1a211e !important;
-  color: #f3efe8 !important;
-  border-color: rgba(255,255,255,0.14) !important;
-  box-shadow: none !important;
-}
-
-body.theme-dark .bf-appHeader,
-body.theme-dark .bf-appHeader.is-dpg,
-body.theme-dark .bf-appnav,
-body.theme-dark .bf-appnav.is-drawer,
-body.theme-dark .bf-drawer-panel {
-  color: #f3efe8 !important;
-}
-
-body.theme-dark .bf-page,
-body.theme-dark .bf-main,
-body.theme-dark .bf-shell,
-body.theme-dark .bf-content,
-body.theme-dark .bf-workspace,
-body.theme-dark .bf-dashboard,
-body.theme-dark .bf-orgShell,
-body.theme-dark .bf-orgPage,
-body.theme-dark .bf-innerSanctum,
-body.theme-dark main,
-body.theme-dark section,
-body.theme-dark article {
+/* BF_MINIMAL_THEME_TOGGLE */
+html.theme-dark,
+body.theme-dark,
+body.theme-dark #root {
   background: #121715 !important;
   color: #f3efe8 !important;
 }
@@ -2115,60 +2077,10 @@ body.theme-dark select {
   border-color: rgba(255,255,255,0.16) !important;
 }
 
-body.theme-dark .input {
-  background: #202825 !important;
-  color: #f3efe8 !important;
-  border-color: rgba(255,255,255,0.16) !important;
-}
-
-body.theme-dark .btn,
-body.theme-dark .bf-logout,
-body.theme-dark .bf-hamburger,
-body.theme-dark .bf-drawer-close {
-  border-color: rgba(255,255,255,0.16) !important;
+body.theme-dark button {
+  border-color: rgba(255,255,255,0.16);
 }
 
 body.theme-dark a {
   color: #c7e6d2 !important;
-}
-
-
-/* BF_DASHBOARD_FORCE_DARK */
-html.theme-dark,
-body.theme-dark,
-html[data-theme="dark"],
-body[data-theme="dark"],
-body.theme-dark #root,
-html.theme-dark #root {
-  background: #121715 !important;
-  color: #f3efe8 !important;
-}
-
-body.theme-dark .card,
-body.theme-dark .bfDashCard,
-body.theme-dark .bfDashPanel,
-body.theme-dark .bfDashMeetingsPanel,
-body.theme-dark .bfDashNeedsPanel {
-  background: #1a211e !important;
-  color: #f3efe8 !important;
-  border-color: rgba(255,255,255,0.14) !important;
-  box-shadow: none !important;
-}
-
-body.theme-dark .card *,
-body.theme-dark .bfDashCard *,
-body.theme-dark .bfDashPanel *,
-body.theme-dark .bfDashMeetingsPanel *,
-body.theme-dark .bfDashNeedsPanel * {
-  color: inherit !important;
-}
-
-body.theme-dark .bfDashCard a,
-body.theme-dark .bfDashPanel a {
-  color: #c7e6d2 !important;
-}
-
-body.theme-dark .bfDashCard button,
-body.theme-dark .bfDashPanel button {
-  border-color: rgba(255,255,255,0.16) !important;
 }

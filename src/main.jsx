@@ -30,8 +30,6 @@ import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
 import "./debug/initDebug.js";
-import "./redHarborPass3";
-
 // Temporary hard reset of stale PWA/service-worker state.
 // The current repo is configured to keep SW updates until the next reload,
 // which can leave you testing an older cached bundle while replacing Studio.jsx.

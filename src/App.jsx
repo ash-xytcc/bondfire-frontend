@@ -42,8 +42,7 @@ import DemoBoot from "./pages/DemoBoot.jsx";
 import { isDemoMode, disableDemoMode } from "./demo/demoMode.js";
 import RedHarborHome from "./pages/RedHarborHome";
 import BranchBoard from "./pages/BranchBoard";
-import BulletinIndexPage from "./pages/BulletinIndexPage.jsx";
-import BulletinAdmin from "./pages/BulletinAdmin.jsx";
+
 
 /* -------------------------------- Error Boundary ------------------------------- */
 class ErrorBoundary extends React.Component {
@@ -263,7 +262,7 @@ fetch("/api/orgs", { credentials: "include" })
 				{/* PUBLIC */}
 				<Route path="/p/:slug" element={<PublicPage />} />
 				<Route path="/p/*" element={<PublicPage />} />
-				<Route path="/bulletin" element={<BulletinIndexPage />} />
+				<Route path="/bulletin" element={<BulletinPublicPage />} />
 				<Route path="/bulletin/:slug" element={<BulletinArticlePage />} />
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/demo" element={<DemoBoot />} />
@@ -301,18 +300,7 @@ fetch("/api/orgs", { credentials: "include" })
 					}
 				>
 					<Route index element={<BranchBoard />} />
-					<Route path="bulletin" element={<BulletinAdmin />} />
-					<Route path="/bulletin" element={<BulletinPublicPage />} />
-					<Route path="/bulletin/:slug" element={<BulletinArticlePage />} />
-
-					<Route
-					path="/org/:orgId/bulletin"
-					element={
-						<RequireAuth>
-						<OrgBulletinPage />
-						</RequireAuth>
-					}
-					/>
+					<Route path="bulletin" element={<OrgBulletinPage />} />
 					<Route path="overview" element={<Overview />} />
 					<Route path="people" element={<People />} />
 					<Route path="inventory" element={<Inventory />} />

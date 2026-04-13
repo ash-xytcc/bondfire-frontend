@@ -1,68 +1,61 @@
 import React from "react";
 
 const ThemeCtx = React.createContext({
-  theme: "light",
+  theme: "dark",
+  setTheme: () => {},
   toggleTheme: () => {},
 });
 
-const STORAGE_KEY = "bf_theme";
-
-function getInitialTheme() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "light" || saved === "dark") return saved;
-  } catch {}
-  return "light";
-}
-
-function applyTheme(theme) {
-  const rootEl = document.documentElement;
+function applyAlwaysDark() {
+  const root = document.documentElement;
   const body = document.body;
   const app = document.getElementById("root");
 
-  const dark = theme === "dark";
-  const bg = dark ? "#121715" : "#f3efe8";
-  const text = dark ? "#f3efe8" : "#111111";
+  const vars = {
+    "--bg": "#121715",
+    "--bg-elev": "#1a211e",
+    "--text": "#f3efe8",
+    "--muted": "#b8c1cc",
+    "--border": "rgba(255,255,255,0.14)",
+    "--accent": "#c7e6d2",
+    "--input-bg": "#202825",
+    "--input-text": "#f3efe8",
+  };
 
-  rootEl.setAttribute("data-theme", theme);
-  body.setAttribute("data-theme", theme);
+  root.setAttribute("data-theme", "dark");
+  body.setAttribute("data-theme", "dark");
+  root.classList.add("theme-dark");
+  body.classList.add("theme-dark");
 
-  rootEl.style.backgroundColor = bg;
-  rootEl.style.color = text;
+  Object.entries(vars).forEach(([k, v]) => {
+    root.style.setProperty(k, v);
+  });
 
-  body.style.backgroundColor = bg;
-  body.style.color = text;
+  root.style.backgroundColor = vars["--bg"];
+  root.style.color = vars["--text"];
+  body.style.backgroundColor = vars["--bg"];
+  body.style.color = vars["--text"];
 
   if (app) {
-    app.style.backgroundColor = bg;
-    app.style.color = text;
+    app.style.backgroundColor = vars["--bg"];
+    app.style.color = vars["--text"];
     app.style.minHeight = "100vh";
   }
-
-  window.__BF_THEME_DEBUG__ = {
-    theme,
-    rootBg: app ? getComputedStyle(app).backgroundColor : null,
-    bodyBg: getComputedStyle(body).backgroundColor,
-    htmlBg: getComputedStyle(rootEl).backgroundColor,
-  };
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = React.useState(getInitialTheme);
-
   React.useEffect(() => {
-    applyTheme(theme);
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch {}
-  }, [theme]);
-
-  const toggleTheme = React.useCallback(() => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    applyAlwaysDark();
   }, []);
 
   return (
-    <ThemeCtx.Provider value={{ theme, toggleTheme }}>
+    <ThemeCtx.Provider
+      value={{
+        theme: "dark",
+        setTheme: () => {},
+        toggleTheme: () => {},
+      }}
+    >
       {children}
     </ThemeCtx.Provider>
   );

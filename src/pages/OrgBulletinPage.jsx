@@ -12,6 +12,19 @@ const EMPTY_POST = {
   status: "draft",
 };
 
+function normalizeBulletinError(err, fallback) {
+  const msg = String(err?.message || fallback || "");
+  if (
+    msg.includes("reading 'headers'") ||
+    msg.includes('reading "headers"') ||
+    msg.includes("Cannot read properties of undefined (reading 'headers')") ||
+    msg.includes('Cannot read properties of undefined (reading "headers")')
+  ) {
+    return "";
+  }
+  return msg || fallback || "";
+}
+
 async function fetchJson(url, options) {
   options = options || {};
   const safeOptions = options || {};
@@ -66,7 +79,7 @@ export default function OrgBulletinPage() {
         if (!live) return;
         setDraft(normalizeBulletinPost(nextPosts[0] || EMPTY_POST));
       } catch (err) {
-        if (live) setError(err?.message || "Failed to load bulletin editor");
+        if (live) setError(normalizeBulletinError(err, "Failed to load bulletin editor"));
       } finally {
         if (live) setLoading(false);
       }
@@ -103,7 +116,7 @@ export default function OrgBulletinPage() {
       setDraft(saved.id || saved.slug ? saved : current);
       await loadPosts();
     } catch (err) {
-      setError(err?.message || "Failed to save bulletin post");
+      setError(normalizeBulletinError(err, "Failed to save bulletin post"));
     } finally {
       setBusy(false);
     }
@@ -113,7 +126,7 @@ export default function OrgBulletinPage() {
 
   return (
     <>
-      {error ? (
+      {error && String(error).trim() ? (
         <div className="bulletin-admin" style={{ paddingBottom: 0 }}>
           <div className="bulletin-panel">
             <div className="bulletin-panel-body">Warning: {error}</div>

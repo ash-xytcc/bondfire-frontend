@@ -1,10 +1,11 @@
 import React from "react";
 import BulletinFeedList from "../components/BulletinFeedList";
 
+const ORG_SLUG = "red-harbor";
+
 async function fetchJson(url, options) {
-  options = options || {};
   const safeOptions = options || {};
-  const safeHeaders = (safeOptions?.headers) || {};
+  const safeHeaders = safeOptions.headers || {};
 
   const res = await fetch(url, {
     credentials: "include",
@@ -15,11 +16,13 @@ async function fetchJson(url, options) {
     },
   });
 
-  if (!res.ok) {
-    throw new Error(`Request failed: ${res.status}`);
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok || (typeof data === "object" && data && data.ok === false)) {
+    throw new Error(data?.message || `Request failed: ${res.status}`);
   }
 
-  return res.json();
+  return data;
 }
 
 export default function BulletinPublicPage() {
@@ -34,8 +37,8 @@ export default function BulletinPublicPage() {
       try {
         setLoading(true);
         setError("");
-        const data = await fetchJson("/api/bulletin");
-        if (live) setPosts(data);
+        const data = await fetchJson(`/api/public/bulletin?org=${ORG_SLUG}&limit=20`);
+        if (live) setPosts(data?.posts || []);
       } catch (err) {
         if (live) setError(err?.message || "Failed to load bulletin");
       } finally {
@@ -51,5 +54,11 @@ export default function BulletinPublicPage() {
   if (loading) return <div className="bulletin-shell">Loading bulletin…</div>;
   if (error) return <div className="bulletin-shell">Failed to load bulletin. {error}</div>;
 
-  return <BulletinFeedList posts={posts} />;
+  return (
+    <BulletinFeedList
+      posts={posts}
+      heading="Bulletin"
+      subtitle="Public statements, branch updates, event notes, and other writing from the branch."
+    />
+  );
 }

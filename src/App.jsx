@@ -31,6 +31,7 @@ import Studio from "./pages/Studio.jsx";
 import BulletinPublicPage from "./pages/BulletinPublicPage";
 import BulletinArticlePage from "./pages/BulletinArticlePage";
 import OrgBulletinPage from "./pages/OrgBulletinPage";
+import BulletinAdmin from "./pages/BulletinAdmin.jsx";
 
 // COMPONENTS
 import AppHeader from "./components/AppHeader.jsx";
@@ -300,7 +301,7 @@ fetch("/api/orgs", { credentials: "include" })
 					}
 				>
 					<Route index element={<BranchBoard />} />
-					<Route path="bulletin" element={<OrgBulletinPage />} />
+					<Route path="bulletin" element={<BulletinAdmin />} />
 					<Route path="overview" element={<Overview />} />
 					<Route path="people" element={<People />} />
 					<Route path="inventory" element={<Inventory />} />

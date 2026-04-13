@@ -4,7 +4,7 @@ import BulletinArticle from "../components/BulletinArticle";
 
 async function fetchJson(url, options) {
   const safeOptions = options || {};
-  const safeHeaders = safeOptions.headers || {};
+  const safeHeaders = (safeOptions?.headers) || {};
 
   const res = await fetch(url, {
     credentials: "include",

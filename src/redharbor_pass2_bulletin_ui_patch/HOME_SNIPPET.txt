@@ -1,5 +1,0 @@
-// In your public homepage component, fetch /api/bulletin and render:
-import BulletinHomeSection from "./components/BulletinHomeSection";
-
-// after loading posts
-<BulletinHomeSection posts={posts} />\n

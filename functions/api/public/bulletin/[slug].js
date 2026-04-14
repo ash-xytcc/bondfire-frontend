@@ -14,7 +14,9 @@ async function resolveOrg(db, requestedSlug) {
   if (orgsHaveSlug && requestedSlug) {
     const row = await db.prepare(
       `SELECT id, slug, ${orgsHaveName ? "name" : "NULL as name"} FROM orgs WHERE slug = ? LIMIT 1`
-    ).bind(String(requestedSlug)).first();
+    )
+      .bind(String(requestedSlug))
+      .first();
     if (row) return row;
   }
 
@@ -66,7 +68,9 @@ export const onRequestGet = async ({ env, request, params }) => {
       FROM bulletin_posts
       WHERE org_id = ? AND slug = ? AND status = 'published'
       LIMIT 1
-    `).bind(String(org.id), String(params.slug)).first();
+    `)
+      .bind(String(org.id), String(params.slug))
+      .first();
 
     if (legacy) {
       return Response.json({
@@ -85,7 +89,9 @@ export const onRequestGet = async ({ env, request, params }) => {
       FROM drive_notes
       WHERE org_id = ? AND bulletin_slug = ? AND bulletin_status = 'published'
       LIMIT 1
-    `).bind(String(org.id), String(params.slug)).first();
+    `)
+      .bind(String(org.id), String(params.slug))
+      .first();
 
     if (!driveNote) {
       return Response.json(

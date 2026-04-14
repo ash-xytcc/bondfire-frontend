@@ -14,7 +14,9 @@ async function resolveOrg(db, requestedSlug) {
   if (orgsHaveSlug && requestedSlug) {
     const row = await db.prepare(
       `SELECT id, slug, ${orgsHaveName ? "name" : "NULL as name"} FROM orgs WHERE slug = ? LIMIT 1`
-    ).bind(String(requestedSlug)).first();
+    )
+      .bind(String(requestedSlug))
+      .first();
     if (row) return row;
   }
 
@@ -66,14 +68,18 @@ export const onRequestGet = async ({ env, request }) => {
         WHERE org_id = ? AND status = 'published'
         ORDER BY published_at DESC, updated_at DESC
         LIMIT ?
-      `).bind(String(org.id), limit).all(),
+      `)
+        .bind(String(org.id), limit)
+        .all(),
       env.BF_DB.prepare(`
         SELECT id, title, content, bulletin_slug, bulletin_excerpt, bulletin_status, bulletin_published_at, created_at, updated_at
         FROM drive_notes
         WHERE org_id = ? AND bulletin_status = 'published' AND COALESCE(bulletin_slug, '') != ''
         ORDER BY bulletin_published_at DESC, updated_at DESC
         LIMIT ?
-      `).bind(String(org.id), limit).all(),
+      `)
+        .bind(String(org.id), limit)
+        .all(),
     ]);
 
     const posts = [

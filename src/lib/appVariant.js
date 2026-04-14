@@ -190,7 +190,7 @@ export function applyAppVariantToDocument() {
         color: #1c241f !important; /* warm readable text */
         border: 1px solid var(--dpg-line) !important;
         box-shadow: none !important;
-        text-shadow: 0 2px 0 rgba(0,0,0,0.78), 0 0 3px rgba(255,255,255,0.18);
+        text-shadow: 0 2px 0 rgba(0,0,0,0.88), 0 0 4px rgba(255,255,255,0.22);
       }
 
       /* hover state */
@@ -213,7 +213,7 @@ export function applyAppVariantToDocument() {
         background: #78a8ea !important;
         color: #1a2230 !important; /* readable blue-safe text */
         border-color: var(--dpg-accent) !important;
-        text-shadow: 0 2px 0 rgba(0,0,0,0.78), 0 0 3px rgba(255,255,255,0.18);
+        text-shadow: 0 2px 0 rgba(0,0,0,0.88), 0 0 4px rgba(255,255,255,0.22);
       }
 
       /* primary buttons (blue ones like Sign in) */
@@ -221,7 +221,7 @@ export function applyAppVariantToDocument() {
         background: var(--dpg-accent-deep) !important;
         color: #1a2230 !important;
         border: 1px solid var(--dpg-accent) !important;
-        text-shadow: 0 2px 0 rgba(0,0,0,0.78), 0 0 3px rgba(255,255,255,0.18);
+        text-shadow: 0 2px 0 rgba(0,0,0,0.88), 0 0 4px rgba(255,255,255,0.22);
       }
 
       body[data-app="dpg"] .bf-appnav-link,
@@ -246,7 +246,7 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .bf-brand-org,
       body[data-app="dpg"] .bf-org-name {
         color: #f3efe8 !important;
-        text-shadow: 0 2px 0 rgba(0,0,0,0.78), 0 0 3px rgba(255,255,255,0.18);
+        text-shadow: 0 2px 0 rgba(0,0,0,0.88), 0 0 4px rgba(255,255,255,0.22);
       }
 
       body[data-app="dpg"] .bf-appnav-link.is-active,
@@ -255,13 +255,13 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .is-active,
       body[data-app="dpg"] [aria-current="page"],
       body[data-app="dpg"] .selected {
-        text-shadow: 0 2px 0 rgba(0,0,0,0.78), 0 0 3px rgba(255,255,255,0.18);
+        text-shadow: 0 2px 0 rgba(0,0,0,0.88), 0 0 4px rgba(255,255,255,0.22);
       }
 
       body[data-app="dpg"] h1,
       body[data-app="dpg"] h2.section-title,
       body[data-app="dpg"] .section-title {
-        text-shadow: 0 2px 0 rgba(0,0,0,0.78), 0 0 3px rgba(255,255,255,0.18);
+        text-shadow: 0 2px 0 rgba(0,0,0,0.88), 0 0 4px rgba(255,255,255,0.22);
       }
 
       body[data-app="dpg"] button:hover,
@@ -379,7 +379,7 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] button,
       body[data-app="dpg"] .btn,
       body[data-app="dpg"] .bf-appnav-link {
-        text-shadow: 0 2px 0 rgba(0,0,0,0.78), 0 0 3px rgba(255,255,255,0.18);
+        text-shadow: 0 2px 0 rgba(0,0,0,0.88), 0 0 4px rgba(255,255,255,0.22);
       }
 
 `;

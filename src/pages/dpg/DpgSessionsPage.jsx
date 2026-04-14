@@ -180,7 +180,7 @@ function SessionCard({ item, color, onVote, onClaimLead, onClearLeads, onRemoveL
               fontSize: 13,
               padding: "4px 8px",
               borderRadius: 999,
-              background: "rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.08)",
               border: "1px solid var(--border)",
             }}
           >
@@ -195,7 +195,7 @@ function SessionCard({ item, color, onVote, onClaimLead, onClearLeads, onRemoveL
             style={{
               borderRadius: 12,
               padding: 12,
-              background: "rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.08)",
               border: "1px solid var(--border)",
               display: "grid",
               gap: 10,
@@ -459,25 +459,25 @@ export default function DpgSessionsPage() {
       key: "anchors",
       title: "anchors",
       subtitle: "A few things pre scheduled ahead of time.",
-      color: "rgba(239,226,154,0.18)",
+      color: "rgba(255,245,120,0.32)",
     },
     {
       key: "interestPool",
       title: "interest pool",
       subtitle: "Ideas people want, with upvotes and demand signals.",
-      color: "rgba(197,232,242,0.18)",
+      color: "rgba(120,235,255,0.30)",
     },
     {
       key: "leadThis",
       title: "lead this",
       subtitle: "Someone can step forward to facilitate or hold the slot.",
-      color: "rgba(235,202,222,0.18)",
+      color: "rgba(255,140,220,0.30)",
     },
     {
       key: "buildOnSite",
       title: "build on site",
       subtitle: "Most of the real programming still comes together in person.",
-      color: "rgba(204,238,185,0.18)",
+      color: "rgba(140,255,140,0.30)",
     },
   ];
 

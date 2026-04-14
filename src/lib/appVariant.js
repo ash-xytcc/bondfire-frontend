@@ -352,7 +352,15 @@ export function applyAppVariantToDocument() {
         font-family: var(--dpg-display-font) !important;
         letter-spacing: .01em !important;
       }
-    `;
+
+      /* global readable text fix */
+      body[data-app="dpg"] button,
+      body[data-app="dpg"] .btn,
+      body[data-app="dpg"] .bf-appnav-link {
+        text-shadow: 0 1px 0 rgba(255,255,255,0.15);
+      }
+
+`;
   } catch {}
 }
 
@@ -407,9 +415,4 @@ export function getAdminBasePath() {
 }
 
 
-      /* global readable text fix */
-      body[data-app="dpg"] button,
-      body[data-app="dpg"] .btn,
-      body[data-app="dpg"] .bf-appnav-link {
-        text-shadow: 0 1px 0 rgba(255,255,255,0.15);
-      }
+      

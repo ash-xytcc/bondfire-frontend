@@ -1739,3 +1739,69 @@ button {
   color: var(--text-strong);
 }
 
+
+/* === DPG NAV + DRIVE TOOLBAR READABILITY FIX === */
+
+/* top nav pills */
+body[data-app="dpg"] .bf-appnav-link,
+body[data-app="dpg"] .bf-logout,
+body[data-app="dpg"] .bf-hamburger,
+body[data-app="dpg"] .topbar a,
+body[data-app="dpg"] nav a {
+  color: #f3efe8 !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.7) !important;
+}
+
+body[data-app="dpg"] .bf-appnav-link.is-active,
+body[data-app="dpg"] .bf-appnav-link[aria-current="page"],
+body[data-app="dpg"] nav a[aria-current="page"],
+body[data-app="dpg"] .active {
+  color: #ffffff !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.85) !important;
+}
+
+/* drive markdown / editor mini toolbar buttons */
+body[data-app="dpg"] .ql-toolbar button,
+body[data-app="dpg"] .editor-toolbar button,
+body[data-app="dpg"] .toolbar button,
+body[data-app="dpg"] [class*="toolbar"] button,
+body[data-app="dpg"] [class*="editor"] button,
+body[data-app="dpg"] .drive-toolbar button,
+body[data-app="dpg"] .note-toolbar button {
+  color: #f3efe8 !important;
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.16) !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.75) !important;
+}
+
+body[data-app="dpg"] .ql-toolbar button:hover,
+body[data-app="dpg"] .editor-toolbar button:hover,
+body[data-app="dpg"] .toolbar button:hover,
+body[data-app="dpg"] [class*="toolbar"] button:hover,
+body[data-app="dpg"] [class*="editor"] button:hover,
+body[data-app="dpg"] .drive-toolbar button:hover,
+body[data-app="dpg"] .note-toolbar button:hover {
+  background: rgba(255,255,255,0.14) !important;
+  border-color: rgba(255,255,255,0.24) !important;
+}
+
+/* if toolbar uses icon glyphs/svg/currentColor */
+body[data-app="dpg"] .ql-toolbar button svg,
+body[data-app="dpg"] .editor-toolbar button svg,
+body[data-app="dpg"] .toolbar button svg,
+body[data-app="dpg"] [class*="toolbar"] button svg,
+body[data-app="dpg"] [class*="editor"] button svg,
+body[data-app="dpg"] .drive-toolbar button svg,
+body[data-app="dpg"] .note-toolbar button svg {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* tiny inline chips in drive toolbar */
+body[data-app="dpg"] .tag,
+body[data-app="dpg"] .chip,
+body[data-app="dpg"] .pill {
+  color: #f3efe8 !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.75) !important;
+}
+

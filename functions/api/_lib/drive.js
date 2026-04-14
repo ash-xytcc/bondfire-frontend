@@ -33,6 +33,43 @@ export async function ensureDriveSchema(env) {
     await db.prepare(sql).run();
   }
 
+  // Backfill columns for older D1 installs that already had these tables
+  // before encrypted Drive fields and publishing metadata existed.
+  const alterStatements = [
+    "ALTER TABLE drive_notes ADD COLUMN encrypted_blob TEXT",
+    "ALTER TABLE drive_files ADD COLUMN encrypted INTEGER DEFAULT 0",
+    "ALTER TABLE drive_files ADD COLUMN encrypted_blob TEXT",
+    "ALTER TABLE drive_templates ADD COLUMN encrypted_blob TEXT",
+  ];
+
+  for (const sql of alterStatements) {
+    try {
+      await db.prepare(sql).run();
+    } catch (err) {
+      const msg = String(err && err.message ? err.message : err || "");
+      if (
+        msg.includes("duplicate column name") ||
+        msg.includes("already exists") ||
+        msg.includes("duplicate")
+      ) {
+        // ignore, column already present
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  // Publishing metadata table for Drive -> public bulletin posts
+  await db.prepare(
+    "CREATE TABLE IF NOT EXISTS drive_note_posts (note_id TEXT PRIMARY KEY, org_id TEXT NOT NULL, slug TEXT NOT NULL, title_override TEXT, excerpt TEXT, status TEXT NOT NULL DEFAULT 'draft', published_at INTEGER, author_name TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)"
+  ).run();
+  await db.prepare(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_drive_note_posts_org_slug ON drive_note_posts(org_id, slug)"
+  ).run();
+  await db.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_drive_note_posts_org_status_date ON drive_note_posts(org_id, status, published_at)"
+  ).run();
+
   env.__bfDriveSchemaReady = true;
 }
 

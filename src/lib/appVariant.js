@@ -125,15 +125,15 @@ export function applyAppVariantToDocument() {
 
       :root[data-app="dpg"],
       body[data-app="dpg"] {
-        --dpg-bg: #f4f1ea;
-        --dpg-surface: #fbf8f2;
-        --dpg-surface-2: #efe9dc;
-        --dpg-text: #1f2f28;
-        --dpg-muted: #5e6d65;
-        --dpg-line: #d8cfbe;
+        --dpg-bg: #121715;
+        --dpg-surface: #1a211e;
+        --dpg-surface-2: #202825;
+        --dpg-text: #f3efe8;
+        --dpg-muted: #b8c1cc;
+        --dpg-line: rgba(255,255,255,0.14);
         --dpg-primary: #264636;
-        --dpg-accent: #e3a7a5;
-        --dpg-accent-deep: #b46b6a;
+        --dpg-accent: #c7e6d2;
+        --dpg-accent-deep: #5f94dd;
         --dpg-font: "Formulario 1312", Inter, system-ui, "Segoe UI", Arial, sans-serif;
         --dpg-display-font: "Fancy Shadow", Georgia, serif;
       }
@@ -146,14 +146,16 @@ export function applyAppVariantToDocument() {
       }
 
       body[data-app="dpg"],
-      body[data-app="dpg"],
+      body[data-app="dpg"] *,
       body[data-app="dpg"] *:not(svg):not(path):not(code):not(pre) {
         font-family: var(--dpg-font) !important;
       }
 
       body[data-app="dpg"] #root,
+      body[data-app="dpg"] .app,
       body[data-app="dpg"] .app-shell,
       body[data-app="dpg"] .page,
+      body[data-app="dpg"] .main,
       body[data-app="dpg"] main {
         background: var(--dpg-bg) !important;
         color: var(--dpg-text) !important;
@@ -162,10 +164,11 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] header,
       body[data-app="dpg"] nav,
       body[data-app="dpg"] .topbar,
-      body[data-app="dpg"] .app-header {
-        background: #1b3127 !important;
-        color: #f7f2e8 !important;
-        border-color: #3b5b4a !important;
+      body[data-app="dpg"] .app-header,
+      body[data-app="dpg"] .bf-appHeader {
+        background: #173126 !important;
+        color: #f3efe8 !important;
+        border-color: var(--dpg-line) !important;
       }
 
       body[data-app="dpg"] button,
@@ -178,17 +181,23 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .btn:not(.danger):not(.destructive),
       body[data-app="dpg"] .tab,
       body[data-app="dpg"] .nav-pill,
-      body[data-app="dpg"] .chip {
+      body[data-app="dpg"] .chip,
+      body[data-app="dpg"] .bf-appnav-link,
+      body[data-app="dpg"] .bf-logout,
+      body[data-app="dpg"] .bf-hamburger {
         background: #20382d !important;
-        color: #f7f2e8 !important;
-        border: 1px solid #4b6859 !important;
+        color: #f3efe8 !important;
+        border: 1px solid var(--dpg-line) !important;
         box-shadow: none !important;
       }
 
       body[data-app="dpg"] button:hover,
       body[data-app="dpg"] .btn:hover,
       body[data-app="dpg"] .tab:hover,
-      body[data-app="dpg"] .nav-pill:hover {
+      body[data-app="dpg"] .nav-pill:hover,
+      body[data-app="dpg"] .bf-appnav-link:hover,
+      body[data-app="dpg"] .bf-logout:hover,
+      body[data-app="dpg"] .bf-hamburger:hover {
         background: #2a4a3b !important;
       }
 
@@ -197,18 +206,25 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] [aria-current="page"],
       body[data-app="dpg"] .selected {
         background: var(--dpg-accent-deep) !important;
-        color: #fff8f4 !important;
+        color: #ffffff !important;
         border-color: var(--dpg-accent) !important;
       }
 
       body[data-app="dpg"] input,
       body[data-app="dpg"] textarea,
       body[data-app="dpg"] select,
+      body[data-app="dpg"] .input,
+      body[data-app="dpg"] .textarea,
       body[data-app="dpg"] .search,
       body[data-app="dpg"] .searchbar {
-        background: #fffdf9 !important;
+        background: #202825 !important;
         color: var(--dpg-text) !important;
         border: 1px solid var(--dpg-line) !important;
+      }
+
+      body[data-app="dpg"] input::placeholder,
+      body[data-app="dpg"] textarea::placeholder {
+        color: var(--dpg-muted) !important;
       }
 
       body[data-app="dpg"] .card,
@@ -216,10 +232,26 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .tile,
       body[data-app="dpg"] .section,
       body[data-app="dpg"] .modal,
-      body[data-app="dpg"] .sheet {
+      body[data-app="dpg"] .sheet,
+      body[data-app="dpg"] .kpi,
+      body[data-app="dpg"] .bf-rowcard,
+      body[data-app="dpg"] .bf-stat-card,
+      body[data-app="dpg"] .bfDashCard,
+      body[data-app="dpg"] .bfDashPanel,
+      body[data-app="dpg"] .bfDashMeetingsPanel,
+      body[data-app="dpg"] .bfDashNeedsPanel,
+      body[data-app="dpg"] .bfDashMobileRowCard {
         background: var(--dpg-surface) !important;
         color: var(--dpg-text) !important;
-        border-color: var(--dpg-line) !important;
+        border: 1px solid var(--dpg-line) !important;
+      }
+
+      body[data-app="dpg"] .helper,
+      body[data-app="dpg"] small,
+      body[data-app="dpg"] .muted,
+      body[data-app="dpg"] .text-muted,
+      body[data-app="dpg"] [class*="muted"] {
+        color: var(--dpg-muted) !important;
       }
 
       body[data-app="dpg"] [class*="drive"],
@@ -240,7 +272,7 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .tiptap,
       body[data-app="dpg"] .markdown-body,
       body[data-app="dpg"] [contenteditable="true"] {
-        background: #fffdf9 !important;
+        background: var(--dpg-surface-2) !important;
         color: var(--dpg-text) !important;
         border-color: var(--dpg-line) !important;
         filter: none !important;
@@ -248,15 +280,11 @@ export function applyAppVariantToDocument() {
 
       body[data-app="dpg"] .ql-toolbar,
       body[data-app="dpg"] .editor-toolbar,
-      body[data-app="dpg"] .toolbar {
-        background: #20382d !important;
-        color: #f7f2e8 !important;
-      }
-
+      body[data-app="dpg"] .toolbar,
       body[data-app="dpg"] .sidebar,
       body[data-app="dpg"] .leftbar,
       body[data-app="dpg"] .explorer {
-        background: var(--dpg-surface-2) !important;
+        background: var(--dpg-surface) !important;
         color: var(--dpg-text) !important;
         border-color: var(--dpg-line) !important;
       }
@@ -269,7 +297,7 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] h6,
       body[data-app="dpg"] .bf-auth-shell h1,
       body[data-app="dpg"] .dpg-display-font {
-        color: #173126 !important;
+        color: #f3efe8 !important;
         font-family: var(--dpg-display-font) !important;
         letter-spacing: .01em !important;
       }

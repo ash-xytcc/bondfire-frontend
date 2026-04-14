@@ -191,6 +191,23 @@ export function applyAppVariantToDocument() {
         box-shadow: none !important;
       }
 
+      body[data-app="dpg"] .bf-appnav-link,
+      body[data-app="dpg"] .bf-logout {
+        padding: 8px 10px !important;
+        font-size: 12px !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+      }
+
+      body[data-app="dpg"] .bf-hamburger {
+        padding: 8px 9px !important;
+      }
+
+      body[data-app="dpg"] .bf-brand {
+        font-size: 0.96rem !important;
+        min-width: 0 !important;
+      }
+
       body[data-app="dpg"] button:hover,
       body[data-app="dpg"] .btn:hover,
       body[data-app="dpg"] .tab:hover,

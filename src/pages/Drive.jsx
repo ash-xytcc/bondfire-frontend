@@ -995,11 +995,11 @@ export default function Drive() {
 
   const dpg = isDpgVariant();
   const driveGridStyle = isMobile ? { display: "block", height: "100%" } : { display: "grid", gridTemplateColumns: `${sidebarWidth}px 6px minmax(0,1fr)`, height: "100%" };
-  const shellBg = dpg ? "#f4f2eb" : "#0b0b0b";
-  const panelBg = dpg ? "#fff" : "rgba(10,10,12,0.98)";
-  const panelBorder = dpg ? "1px solid rgba(56,80,50,0.12)" : "1px solid rgba(255,255,255,0.08)";
-  const divider = dpg ? "rgba(56,80,50,0.12)" : "#1b1b1b";
-  const titleColor = dpg ? "#182018" : "#fff";
+  const shellBg = dpg ? "var(--dpg-bg, #121715)" : "#0b0b0b";
+  const panelBg = dpg ? "var(--dpg-surface, #1a211e)" : "rgba(10,10,12,0.98)";
+  const panelBorder = dpg ? "1px solid var(--dpg-line, rgba(255,255,255,0.14))" : "1px solid rgba(255,255,255,0.08)";
+  const divider = dpg ? "var(--dpg-line, rgba(255,255,255,0.14))" : "#1b1b1b";
+  const titleColor = dpg ? "var(--dpg-text, #f3efe8)" : "#fff";
 
   return (
     <div className={dpg ? "bf-drive-root is-dpg" : "bf-drive-root"} style={{ position: focusMode ? "fixed" : "relative", inset: focusMode ? 0 : "auto", zIndex: focusMode ? 80 : "auto", background: shellBg, height: workspaceHeight }}>
@@ -1017,7 +1017,7 @@ export default function Drive() {
             </div>
             {mobileSidebarOpen ? (
               <div style={{ position: "fixed", inset: focusMode ? 0 : "56px 8px 8px", zIndex: 95, background: panelBg, border: panelBorder, borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 48px rgba(0,0,0,0.45)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 10px", borderBottom: panelBorder, background: dpg ? "#f6f4ed" : "#101012" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 10px", borderBottom: panelBorder, background: dpg ? "var(--dpg-surface-2, #202825)" : "#101012" }}>
                   <div style={{ fontWeight: 800 }}>Drive Explorer</div>
                   <button className="btn" type="button" onClick={() => setMobileSidebarOpen(false)} style={{ padding: "6px 10px" }}>Done</button>
                 </div>
@@ -1112,7 +1112,7 @@ export default function Drive() {
               />
             </div>
 
-            <div onMouseDown={() => beginResize("sidebar")} style={{ cursor: "col-resize", background: dpg ? "rgba(56,80,50,0.08)" : "rgba(255,255,255,0.03)" }} title="Drag to resize explorer" />
+            <div onMouseDown={() => beginResize("sidebar")} style={{ cursor: "col-resize", background: dpg ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)" }} title="Drag to resize explorer" />
           </>
         )}
 

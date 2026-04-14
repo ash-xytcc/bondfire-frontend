@@ -41,33 +41,27 @@ function readOrgLogo(orgId) {
   }
 }
 
-function readOrgNameFromStorage(orgId) {
-  return readOrgName(orgId);
-}
-
 const Brand = ({ orgId, logoSrc }) => {
   const inferredOrgId = orgId || useOrgIdFromPath();
-  const [orgName, setOrgName] = React.useState(() => readOrgNameFromStorage(inferredOrgId));
+  const [orgName, setOrgName] = React.useState(() => readOrgName(inferredOrgId));
   const [orgLogo, setOrgLogo] = React.useState(() => readOrgLogo(inferredOrgId));
 
   React.useEffect(() => {
-    setOrgName(readOrgNameFromStorage(inferredOrgId));
-    setOrgLogo(readOrgLogo(inferredOrgId));
+    const sync = () => {
+      setOrgName(readOrgName(inferredOrgId));
+      setOrgLogo(readOrgLogo(inferredOrgId));
+    };
+
+    sync();
 
     const onChange = (e) => {
       const changedId = e?.detail?.orgId;
-      if (!changedId || changedId === inferredOrgId) {
-        setOrgName(readOrgNameFromStorage(inferredOrgId));
-        setOrgLogo(readOrgLogo(inferredOrgId));
-      }
+      if (!changedId || changedId === inferredOrgId) sync();
     };
 
     const onStorage = (e) => {
       const k = e?.key || "";
-      if (k === `bf_org_settings_${inferredOrgId}` || k === "bf_orgs") {
-        setOrgName(readOrgNameFromStorage(inferredOrgId));
-        setOrgLogo(readOrgLogo(inferredOrgId));
-      }
+      if (k === `bf_org_settings_${inferredOrgId}` || k === "bf_orgs") sync();
     };
 
     window.addEventListener("bf:org_settings_changed", onChange);
@@ -184,7 +178,7 @@ const Brand = ({ orgId, logoSrc }) => {
   );
 };
 
-function OrgNav({ variant = "desktop" }) {
+function OrgNav({ variant = "drawer" }) {
   const orgId = useOrgIdFromPath();
   const isDrawer = variant === "drawer";
 
@@ -208,6 +202,7 @@ function OrgNav({ variant = "desktop" }) {
     border: "1px solid rgba(255,255,255,0.12)",
     color: "#fff",
     fontWeight: 700,
+    textDecoration: "none",
   };
 
   const appMode = getAppMode();
@@ -275,20 +270,52 @@ export default function AppHeader({ onLogout, showLogout }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const loc = useLocation();
 
-  React.useEffect(() => setMobileOpen(false), [loc.pathname, loc.hash]);
+  React.useEffect(() => {
+    setMobileOpen(false);
+  }, [loc.pathname, loc.hash]);
+
+  const openMenu = React.useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setMobileOpen(true);
+  }, []);
+
+  const closeMenu = React.useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setMobileOpen(false);
+  }, []);
+
+  const toggleMenu = React.useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setMobileOpen((v) => !v);
+  }, []);
 
   const drawerStyle = {
     position: "fixed",
     inset: 0,
-    zIndex: 999999,
+    zIndex: 2147483646,
+    display: "block",
+    visibility: mobileOpen ? "visible" : "hidden",
+    opacity: mobileOpen ? 1 : 0,
     pointerEvents: mobileOpen ? "auto" : "none",
   };
 
   const backdropStyle = {
     position: "absolute",
     inset: 0,
+    zIndex: 2147483646,
+    display: "block",
     background: "rgba(0,0,0,0.65)",
     opacity: mobileOpen ? 1 : 0,
+    pointerEvents: mobileOpen ? "auto" : "none",
     transition: "opacity 160ms ease",
   };
 
@@ -296,6 +323,11 @@ export default function AppHeader({ onLogout, showLogout }) {
     position: "absolute",
     top: 0,
     right: 0,
+    zIndex: 2147483647,
+    display: "block",
+    visibility: mobileOpen ? "visible" : "hidden",
+    opacity: mobileOpen ? 1 : 0,
+    pointerEvents: mobileOpen ? "auto" : "none",
     height: "100%",
     width: "min(340px, 90vw)",
     background: "#0b0b0b",
@@ -303,8 +335,9 @@ export default function AppHeader({ onLogout, showLogout }) {
     padding: 14,
     overflowY: "auto",
     transform: mobileOpen ? "translateX(0)" : "translateX(100%)",
-    transition: "transform 180ms ease",
+    transition: "transform 180ms ease, opacity 160ms ease",
     color: "#fff",
+    boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 20px 60px rgba(0,0,0,0.45)",
   };
 
   return (
@@ -338,7 +371,9 @@ export default function AppHeader({ onLogout, showLogout }) {
             type="button"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen ? "true" : "false"}
-            onClick={() => setMobileOpen((v) => !v)}
+            aria-controls="bf-header-drawer"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={toggleMenu}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -350,7 +385,7 @@ export default function AppHeader({ onLogout, showLogout }) {
               padding: "0 14px",
               borderRadius: 12,
               border: "1px solid rgba(255,255,255,0.14)",
-              background: "rgba(255,255,255,0.04)",
+              background: mobileOpen ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
               color: "#fff",
               fontSize: 15,
               fontWeight: 700,
@@ -358,10 +393,13 @@ export default function AppHeader({ onLogout, showLogout }) {
               cursor: "pointer",
               visibility: "visible",
               opacity: 1,
+              pointerEvents: "auto",
+              userSelect: "none",
+              WebkitUserSelect: "none",
             }}
           >
             <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>☰</span>
-            <span>Menu</span>
+            <span>{mobileOpen ? "Close" : "Menu"}</span>
           </button>
 
           {showLogout ? (
@@ -378,8 +416,15 @@ export default function AppHeader({ onLogout, showLogout }) {
         </div>
       </header>
 
-      <div className="bf-drawer" style={drawerStyle} role="dialog" aria-modal="true">
-        <div style={backdropStyle} onClick={() => setMobileOpen(false)} />
+      <div
+        id="bf-header-drawer"
+        className="bf-drawer"
+        style={drawerStyle}
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={mobileOpen ? "false" : "true"}
+      >
+        <div style={backdropStyle} onClick={closeMenu} />
         <div className="bf-drawer-panel" style={panelStyle}>
           <div
             className="bf-drawer-top"
@@ -400,7 +445,7 @@ export default function AppHeader({ onLogout, showLogout }) {
             <button
               className="bf-drawer-close"
               type="button"
-              onClick={() => setMobileOpen(false)}
+              onClick={closeMenu}
               aria-label="Close menu"
               style={{
                 height: 40,
@@ -409,6 +454,7 @@ export default function AppHeader({ onLogout, showLogout }) {
                 border: "1px solid rgba(255,255,255,0.14)",
                 background: "rgba(255,255,255,0.04)",
                 color: "#fff",
+                cursor: "pointer",
               }}
             >
               ✕
@@ -416,6 +462,18 @@ export default function AppHeader({ onLogout, showLogout }) {
           </div>
 
           <OrgNav variant="drawer" />
+
+          <button
+            type="button"
+            onClick={openMenu}
+            style={{
+              display: "none",
+            }}
+            aria-hidden="true"
+            tabIndex={-1}
+          >
+            reopen
+          </button>
 
           {showLogout ? (
             <button

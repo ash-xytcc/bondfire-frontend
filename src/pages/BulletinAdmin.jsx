@@ -167,6 +167,7 @@ export default function BulletinAdmin() {
       background: "rgba(255,255,255,0.03)",
     },
     meta: { fontSize: 12, opacity: 0.72, textTransform: "uppercase", letterSpacing: ".08em" },
+    muted: { opacity: 0.65, fontSize: 14 },
   };
 
   return (
@@ -241,28 +242,37 @@ export default function BulletinAdmin() {
             <div>Loading…</div>
           ) : (
             <div style={styles.list}>
-              {posts.map((post) => (
-                <div key={post.id} style={styles.post}>
-                  <div style={styles.meta}>
-                    {post.status} · {post.publishedAt || post.updatedAt || post.createdAt || ""}
+              {posts.map((post) => {
+                const isPublished = String(post.status || "").toLowerCase() === "published";
+                return (
+                  <div key={post.id} style={styles.post}>
+                    <div style={styles.meta}>
+                      {post.status} · {post.publishedAt || post.updatedAt || post.createdAt || ""}
+                    </div>
+                    <h3 style={{ margin: "6px 0 8px" }}>{post.title}</h3>
+                    <p style={{ marginTop: 0, opacity: 0.86 }}>{post.excerpt}</p>
+                    <div style={styles.row}>
+                      <button type="button" style={styles.btn} onClick={() => editPost(post)}>
+                        Edit
+                      </button>
+
+                      {post.slug && isPublished ? (
+                        <Link to={`/bulletin/${post.slug}`} style={{ opacity: 0.85 }}>
+                          Public page
+                        </Link>
+                      ) : (
+                        <span style={styles.muted}>
+                          Preview unavailable until published
+                        </span>
+                      )}
+
+                      <button type="button" style={styles.danger} onClick={() => removePost(post)}>
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                  <h3 style={{ margin: "6px 0 8px" }}>{post.title}</h3>
-                  <p style={{ marginTop: 0, opacity: 0.86 }}>{post.excerpt}</p>
-                  <div style={styles.row}>
-                    <button type="button" style={styles.btn} onClick={() => editPost(post)}>
-                      Edit
-                    </button>
-                    {post.slug ? (
-                      <Link to={`/bulletin/${post.slug}`} style={{ opacity: 0.85 }}>
-                        Public page
-                      </Link>
-                    ) : null}
-                    <button type="button" style={styles.danger} onClick={() => removePost(post)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {!posts.length ? <div>No posts yet.</div> : null}
             </div>
           )}

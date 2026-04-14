@@ -1,6 +1,5 @@
 import React from "react";
 import BulletinFeedList from "../components/BulletinFeedList";
-import { normalizeBulletinFields, isPublishedBulletin } from "../components/BulletinUtils";
 
 const ORG_SLUG = "red-harbor";
 

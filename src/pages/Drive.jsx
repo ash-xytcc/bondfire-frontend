@@ -12,7 +12,6 @@ import DriveCreateModal from "../components/drive/DriveCreateModal.jsx";
 import SpreadsheetFileView from "../components/drive/SpreadsheetFileView.jsx";
 import FormFileView from "../components/drive/FormFileView.jsx";
 import { renderTemplate } from "../components/drive/templateEngine.js";
-import { normalizeBulletinFields, buildBulletinPayload } from "../components/BulletinUtils";
 
 const LEGACY_STORAGE_KEY = "bf_drive_v14";
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
@@ -291,8 +290,8 @@ export default function Drive() {
       const nextFiles = (Array.isArray(data?.files) ? data.files : []).map((file) => withFileUrls(orgId, file));
       const nextTemplates = Array.isArray(data?.templates) && data.templates.length ? data.templates : STARTER_TEMPLATES;
       setFolders(nextFolders);
-      setNotes(Array.isArray(nextNotes) ? nextNotes.map(normalizeBulletinFields) : nextNotes);
-      setFiles(Array.isArray(nextFiles) ? nextFiles.map(normalizeBulletinFields) : nextFiles);
+      setNotes(nextNotes);
+      setFiles(nextFiles);
       setTemplates(nextTemplates);
       if (preserveSelection && selectedId) {
         if (selectedKind === "note") {

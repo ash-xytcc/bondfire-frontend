@@ -1,6 +1,5 @@
 import React from "react";
 import "../styles/bulletin.css";
-import { normalizeBulletinFields, isPublishedBulletin } from "./BulletinUtils";
 
 function formatBulletinDate(value) {
   if (!value) return "Undated";

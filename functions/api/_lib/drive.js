@@ -20,7 +20,15 @@ export async function ensureDriveSchema(env) {
     "CREATE INDEX IF NOT EXISTS idx_drive_notes_org_parent ON drive_notes(org_id, parent_id, updated_at)",
     "CREATE TABLE IF NOT EXISTS drive_files (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, parent_id TEXT, name TEXT, mime TEXT, size INTEGER, storage_key TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
     "CREATE INDEX IF NOT EXISTS idx_drive_files_org_parent ON drive_files(org_id, parent_id, updated_at)",
+    "CREATE TABLE IF NOT EXISTS drive_templates (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT, title TEXT, content TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
+    "CREATE INDEX IF NOT EXISTS idx_drive_templates_org ON drive_templates(org_id, updated_at)",
+    "CREATE TABLE IF NOT EXISTS drive_file_blobs (file_id TEXT PRIMARY KEY, org_id TEXT NOT NULL, mime TEXT, data_url TEXT, text_content TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
+    "CREATE INDEX IF NOT EXISTS idx_drive_file_blobs_org ON drive_file_blobs(org_id, updated_at)",
   ];
+
+  for (const sql of statements) {
+    await db.prepare(sql).run();
+  }
 
   const driveFileAlterStatements = [
     "ALTER TABLE drive_files ADD COLUMN encrypted INTEGER NOT NULL DEFAULT 0",
@@ -31,32 +39,20 @@ export async function ensureDriveSchema(env) {
     try { await db.prepare(sql).run(); } catch {}
   }
 
-  const statements = [
-    "CREATE TABLE IF NOT EXISTS drive_templates (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT, title TEXT, content TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
-    "CREATE INDEX IF NOT EXISTS idx_drive_templates_org ON drive_templates(org_id, updated_at)",
-    "CREATE TABLE IF NOT EXISTS drive_file_blobs (file_id TEXT PRIMARY KEY, org_id TEXT NOT NULL, mime TEXT, data_url TEXT, text_content TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
-    "CREATE INDEX IF NOT EXISTS idx_drive_file_blobs_org ON drive_file_blobs(org_id, updated_at)",
+  const noteAlterStatements = [
+    "ALTER TABLE drive_notes ADD COLUMN encrypted_blob TEXT",
+    "ALTER TABLE drive_notes ADD COLUMN bulletin_slug TEXT",
+    "ALTER TABLE drive_notes ADD COLUMN bulletin_excerpt TEXT",
+    "ALTER TABLE drive_notes ADD COLUMN bulletin_status TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE drive_notes ADD COLUMN bulletin_published_at TEXT",
   ];
 
-for (const sql of statements) {
-  await db.prepare(sql).run();
+  for (const sql of noteAlterStatements) {
+    try { await db.prepare(sql).run(); } catch {}
+  }
+
+  env.__bfDriveSchemaReady = true;
 }
-
-const noteAlterStatements = [
-  "ALTER TABLE drive_notes ADD COLUMN encrypted_blob TEXT",
-  "ALTER TABLE drive_notes ADD COLUMN bulletin_slug TEXT",
-  "ALTER TABLE drive_notes ADD COLUMN bulletin_excerpt TEXT",
-  "ALTER TABLE drive_notes ADD COLUMN bulletin_status TEXT NOT NULL DEFAULT ''",
-  "ALTER TABLE drive_notes ADD COLUMN bulletin_published_at TEXT",
-];
-
-for (const sql of noteAlterStatements) {
-  try { await db.prepare(sql).run(); } catch {}
-}
-
-env.__bfDriveSchemaReady = true;
-}
-
 
 export function encrypt(data) {
   return data;

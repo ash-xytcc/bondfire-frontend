@@ -47,13 +47,6 @@ export async function onRequestGet({ env, request, params }) {
   await ensureDriveSchema(env);
 
   const res = await getDb(env)
-<<<<<<< HEAD
-    .prepare(`SELECT id, parent_id, title, content, tags, encrypted_blob, bulletin_slug, bulletin_excerpt, bulletin_status, bulletin_published_at, created_at, updated_at FROM drive_notes WHERE org_id = ? ORDER BY updated_at DESC`)
-    .bind(orgId)
-    .all();
-
-  return json({ ok: true, notes: (res.results || []).map(normalizeNote) });
-=======
     .prepare(`
       SELECT id, parent_id, title, content, tags,
              encrypted_blob,
@@ -70,7 +63,6 @@ export async function onRequestGet({ env, request, params }) {
     ok: true,
     notes: (res.results || []).map(normalizeNote),
   });
->>>>>>> a2c3077f (Wire Drive notes directly to public bulletin)
 }
 
 export async function onRequestPost({ env, request, params }) {
@@ -86,12 +78,6 @@ export async function onRequestPost({ env, request, params }) {
 
   const noteTitle = String(body.title || "untitled").trim() || "untitled";
   const encryptedBlob = String(body.encryptedBlob || "");
-<<<<<<< HEAD
-  const bulletinStatus = normalizeBulletinStatus(body.bulletinStatus);
-  const bulletinSlug = bulletinStatus ? cleanBulletinSlug(body.bulletinSlug, noteTitle) : "";
-  const bulletinExcerpt = String(body.bulletinExcerpt || "").trim();
-  const bulletinPublishedAt = bulletinStatus === "published" ? new Date().toISOString() : null;
-=======
 
   const bulletinStatus = normalizeBulletinStatus(body.bulletinStatus);
   const bulletinSlug = bulletinStatus
@@ -100,7 +86,6 @@ export async function onRequestPost({ env, request, params }) {
   const bulletinExcerpt = String(body.bulletinExcerpt || "").trim();
   const bulletinPublishedAt =
     bulletinStatus === "published" ? new Date().toISOString() : null;
->>>>>>> a2c3077f (Wire Drive notes directly to public bulletin)
 
   const note = {
     id,
@@ -118,9 +103,6 @@ export async function onRequestPost({ env, request, params }) {
   };
 
   await getDb(env)
-<<<<<<< HEAD
-    .prepare(`INSERT INTO drive_notes (id, org_id, parent_id, title, content, tags, encrypted_blob, bulletin_slug, bulletin_excerpt, bulletin_status, bulletin_published_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-=======
     .prepare(`
       INSERT INTO drive_notes (
         id, org_id, parent_id,
@@ -131,7 +113,6 @@ export async function onRequestPost({ env, request, params }) {
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
->>>>>>> a2c3077f (Wire Drive notes directly to public bulletin)
     .bind(
       id,
       orgId,

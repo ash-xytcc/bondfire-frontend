@@ -48,9 +48,6 @@ export async function onRequestGet({ env, request, params }) {
   await ensureDriveSchema(env);
 
   const row = await getDb(env)
-<<<<<<< HEAD
-    .prepare(`SELECT id, parent_id, title, content, tags, encrypted_blob, bulletin_slug, bulletin_excerpt, bulletin_status, bulletin_published_at, created_at, updated_at FROM drive_notes WHERE org_id = ? AND id = ?`)
-=======
     .prepare(`
       SELECT id, parent_id, title, content, tags,
              encrypted_blob,
@@ -59,15 +56,10 @@ export async function onRequestGet({ env, request, params }) {
       FROM drive_notes
       WHERE org_id = ? AND id = ?
     `)
->>>>>>> a2c3077f (Wire Drive notes directly to public bulletin)
     .bind(orgId, noteId)
     .first();
 
   if (!row) return bad(404, "NOT_FOUND");
-<<<<<<< HEAD
-=======
-
->>>>>>> a2c3077f (Wire Drive notes directly to public bulletin)
   return json({ ok: true, note: normalizeNote(row) });
 }
 
@@ -90,23 +82,6 @@ export async function onRequestPatch({ env, request, params }) {
 
   if (!existing) return bad(404, "NOT_FOUND");
 
-<<<<<<< HEAD
-  const encryptedBlob = body.encryptedBlob === undefined
-    ? existing.encrypted_blob || null
-    : (String(body.encryptedBlob || "") || null);
-
-  const nextTitle = encryptedBlob
-    ? "encrypted note"
-    : (body.title === undefined ? existing.title : (String(body.title || "untitled").trim() || "untitled"));
-
-  const nextBody = encryptedBlob
-    ? ""
-    : (body.body === undefined && body.content === undefined ? existing.content : String(body.body ?? body.content ?? ""));
-
-  const nextTags = encryptedBlob
-    ? ""
-    : (Object.prototype.hasOwnProperty.call(body, "tags") ? parseTags(body.tags).join(",") : existing.tags);
-=======
   const encryptedBlob =
     body.encryptedBlob === undefined
       ? existing.encrypted_blob || null
@@ -129,7 +104,6 @@ export async function onRequestPatch({ env, request, params }) {
     : (Object.prototype.hasOwnProperty.call(body, "tags")
         ? parseTags(body.tags).join(",")
         : existing.tags);
->>>>>>> a2c3077f (Wire Drive notes directly to public bulletin)
 
   const nextBulletinStatus = Object.prototype.hasOwnProperty.call(body, "bulletinStatus")
     ? normalizeBulletinStatus(body.bulletinStatus)
@@ -148,27 +122,15 @@ export async function onRequestPatch({ env, request, params }) {
     : String(existing.bulletin_excerpt || "");
 
   let nextBulletinPublishedAt = existing.bulletin_published_at || null;
-<<<<<<< HEAD
-  if (!nextBulletinStatus) nextBulletinPublishedAt = null;
-=======
 
   if (!nextBulletinStatus) {
     nextBulletinPublishedAt = null;
   }
 
->>>>>>> a2c3077f (Wire Drive notes directly to public bulletin)
   if (nextBulletinStatus === "published" && !nextBulletinPublishedAt) {
     nextBulletinPublishedAt = new Date().toISOString();
   }
 
-<<<<<<< HEAD
-  await db.prepare(
-    `UPDATE drive_notes
-     SET parent_id = ?, title = ?, content = ?, tags = ?, encrypted_blob = ?, bulletin_slug = ?, bulletin_excerpt = ?, bulletin_status = ?, bulletin_published_at = ?, updated_at = ?
-     WHERE org_id = ? AND id = ?`
-  ).bind(
-    Object.prototype.hasOwnProperty.call(body, "parentId") ? normalizeNullableId(body.parentId) : existing.parent_id || null,
-=======
   await db.prepare(`
     UPDATE drive_notes
     SET parent_id = ?,
@@ -186,7 +148,6 @@ export async function onRequestPatch({ env, request, params }) {
     Object.prototype.hasOwnProperty.call(body, "parentId")
       ? normalizeNullableId(body.parentId)
       : existing.parent_id || null,
->>>>>>> a2c3077f (Wire Drive notes directly to public bulletin)
     nextTitle,
     nextBody,
     nextTags,
@@ -201,9 +162,6 @@ export async function onRequestPatch({ env, request, params }) {
   ).run();
 
   const row = await db
-<<<<<<< HEAD
-    .prepare(`SELECT id, parent_id, title, content, tags, encrypted_blob, bulletin_slug, bulletin_excerpt, bulletin_status, bulletin_published_at, created_at, updated_at FROM drive_notes WHERE org_id = ? AND id = ?`)
-=======
     .prepare(`
       SELECT id, parent_id, title, content, tags,
              encrypted_blob,
@@ -212,7 +170,6 @@ export async function onRequestPatch({ env, request, params }) {
       FROM drive_notes
       WHERE org_id = ? AND id = ?
     `)
->>>>>>> a2c3077f (Wire Drive notes directly to public bulletin)
     .bind(orgId, noteId)
     .first();
 

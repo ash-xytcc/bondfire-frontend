@@ -7,7 +7,7 @@ export default function PublicBulletinIndex() {
     let dead = false;
     (async () => {
       try {
-        const res = await fetch("/api/public/posts?org=dpg&limit=50", { headers: { Accept: "application/json" } });
+        const res = await fetch("/api/public/posts?org=dpg", { headers: { Accept: "application/json" } });
         const data = await res.json().catch(() => ({}));
         if (dead) return;
         if (!res.ok || !data?.ok) throw new Error(data?.error || "Failed to load posts");
@@ -24,32 +24,12 @@ export default function PublicBulletinIndex() {
     <div style={{ minHeight: "100vh", background: "#f7f3ea", color: "#171717" }}>
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 20px 64px" }}>
         <a href="/" style={{ color: "#171717", fontWeight: 800, textDecoration: "none" }}>← Back home</a>
-        <h1 className="dpg-heading" style={{ margin: "16px 0 10px", fontSize: "clamp(2rem, 5vw, 4rem)" }}>
-          Bulletin
-        </h1>
-        <p style={{ margin: "0 0 22px", lineHeight: 1.6, maxWidth: 720 }}>
-          Public announcements and updates published directly from Drive documents.
-        </p>
-
-        {state.loading ? <div>Loading…</div> : null}
-        {state.error ? <div style={{ color: "crimson" }}>{state.error}</div> : null}
-
+        <h1 className="dpg-heading" style={{ margin: "16px 0 10px", fontSize: "clamp(2rem, 5vw, 4rem)" }}>Bulletin</h1>
         <div style={{ display: "grid", gap: 16 }}>
+          {state.loading ? <div>Loading…</div> : null}
+          {state.error ? <div style={{ color: "crimson" }}>{state.error}</div> : null}
           {state.posts.map((post) => (
-            <a
-              key={post.slug}
-              href={`/bulletin/${post.slug}`}
-              style={{
-                display: "block",
-                color: "#171717",
-                textDecoration: "none",
-                border: "1px solid rgba(17,17,17,0.12)",
-                borderRadius: 18,
-                padding: 18,
-                background: "rgba(255,255,255,0.88)",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
-              }}
-            >
+            <a key={post.slug} href={`/bulletin/${post.slug}`} style={{ display: "block", textDecoration: "none", color: "#171717", border: "1px solid rgba(17,17,17,0.12)", borderRadius: 18, padding: 18, background: "rgba(255,255,255,0.88)" }}>
               <div style={{ fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", opacity: 0.68, marginBottom: 8 }}>
                 {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ""}
               </div>

@@ -18,28 +18,11 @@ export async function onRequestGet({ env, request, params }) {
   const slug = String(params.slug || "").trim();
 
   const row = await db.prepare(
-    `SELECT
-        p.note_id,
-        p.slug,
-        p.title_override,
-        p.excerpt,
-        p.status,
-        p.published_at,
-        p.author_name,
-        p.created_at,
-        p.updated_at,
-        n.title,
-        n.content,
-        n.tags
-      FROM drive_note_posts p
-      JOIN drive_notes n
-        ON n.id = p.note_id
-       AND n.org_id = p.org_id
-      WHERE p.org_id = ?
-        AND p.slug = ?
-        AND p.status = 'published'
-        AND (n.encrypted_blob IS NULL OR n.encrypted_blob = '')
-      LIMIT 1`
+    `SELECT p.note_id, p.slug, p.title_override, p.excerpt, p.published_at, p.author_name, n.title, n.content, n.tags
+     FROM drive_note_posts p
+     JOIN drive_notes n ON n.id = p.note_id AND n.org_id = p.org_id
+     WHERE p.org_id = ? AND p.slug = ? AND p.status = 'published' AND (n.encrypted_blob IS NULL OR n.encrypted_blob = '')
+     LIMIT 1`
   ).bind(orgId, slug).first();
 
   if (!row) return bad(404, "POST_NOT_FOUND");
@@ -53,7 +36,7 @@ export async function onRequestGet({ env, request, params }) {
       excerpt: row.excerpt || firstParagraph(row.content || ""),
       body: row.content || "",
       authorName: row.author_name || "",
-      publishedAt: Number(row.published_at || row.updated_at || row.created_at || 0),
+      publishedAt: Number(row.published_at || 0),
       tags: String(row.tags || "").split(",").map((x) => x.trim()).filter(Boolean),
     }
   });

@@ -29,7 +29,6 @@ export async function onRequestGet({ env, request, params }) {
 
   await ensureDriveSchema(env);
   const db = getDb(env);
-
   const row = await db.prepare(
     `SELECT note_id, org_id, slug, title_override, excerpt, status, published_at, author_name, created_at, updated_at
      FROM drive_note_posts
@@ -40,7 +39,6 @@ export async function onRequestGet({ env, request, params }) {
     ok: true,
     post: row ? {
       noteId: row.note_id,
-      orgId: row.org_id,
       slug: row.slug,
       titleOverride: row.title_override || "",
       excerpt: row.excerpt || "",
@@ -73,7 +71,6 @@ export async function onRequestPatch({ env, request, params }) {
 
   const body = await request.json().catch(() => ({}));
   const t = now();
-
   const slug = safeSlug(body.slug || body.titleOverride || note.title || "post");
   if (!slug) return bad(400, "INVALID_SLUG");
 
@@ -105,16 +102,8 @@ export async function onRequestPatch({ env, request, params }) {
        author_name = excluded.author_name,
        updated_at = excluded.updated_at`
   ).bind(
-    noteId,
-    orgId,
-    slug,
-    titleOverride || null,
-    excerpt || null,
-    status,
-    publishedAt,
-    authorName || null,
-    t,
-    t
+    noteId, orgId, slug, titleOverride || null, excerpt || null, status,
+    publishedAt, authorName || null, t, t
   ).run();
 
   const row = await db.prepare(
@@ -127,7 +116,6 @@ export async function onRequestPatch({ env, request, params }) {
     ok: true,
     post: {
       noteId: row.note_id,
-      orgId: row.org_id,
       slug: row.slug,
       titleOverride: row.title_override || "",
       excerpt: row.excerpt || "",
@@ -149,6 +137,5 @@ export async function onRequestDelete({ env, request, params }) {
   await ensureDriveSchema(env);
   const db = getDb(env);
   await db.prepare(`DELETE FROM drive_note_posts WHERE org_id = ? AND note_id = ?`).bind(orgId, noteId).run();
-
   return json({ ok: true, deleted: true, noteId });
 }

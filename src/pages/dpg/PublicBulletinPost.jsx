@@ -1,20 +1,5 @@
 import React from "react";
 
-function simpleMarkdown(md = "") {
-  const escaped = String(md || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
-  return escaped
-    .replace(/^### (.*)$/gm, "<h3>$1</h3>")
-    .replace(/^## (.*)$/gm, "<h2>$1</h2>")
-    .replace(/^# (.*)$/gm, "<h1>$1</h1>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/\n\n+/g, "</p><p>");
-}
-
 export default function PublicBulletinPost() {
   const slug = React.useMemo(() => {
     const parts = String(window.location.pathname || "/").split("/").filter(Boolean);
@@ -42,8 +27,8 @@ export default function PublicBulletinPost() {
 
   if (state.loading) return <div style={{ padding: 24 }}>Loading…</div>;
   if (state.error) return <div style={{ padding: 24, color: "crimson" }}>{state.error}</div>;
-  const post = state.post;
 
+  const post = state.post;
   return (
     <div style={{ minHeight: "100vh", background: "#f7f3ea", color: "#171717" }}>
       <div style={{ maxWidth: 820, margin: "0 auto", padding: "32px 20px 64px" }}>
@@ -51,22 +36,11 @@ export default function PublicBulletinPost() {
         <div style={{ marginTop: 18, fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", opacity: 0.68 }}>
           {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ""}
         </div>
-        <h1 className="dpg-heading" style={{ margin: "10px 0 14px", fontSize: "clamp(2rem, 5vw, 4rem)", lineHeight: 0.98 }}>
-          {post.title}
-        </h1>
+        <h1 className="dpg-heading" style={{ margin: "10px 0 14px", fontSize: "clamp(2rem, 5vw, 4rem)", lineHeight: 0.98 }}>{post.title}</h1>
         {post.excerpt ? <p style={{ margin: "0 0 24px", lineHeight: 1.7, fontSize: 18 }}>{post.excerpt}</p> : null}
-        <article
-          style={{
-            border: "1px solid rgba(17,17,17,0.12)",
-            borderRadius: 18,
-            padding: 22,
-            background: "rgba(255,255,255,0.9)",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
-            lineHeight: 1.75,
-            whiteSpace: "pre-wrap",
-          }}
-          dangerouslySetInnerHTML={{ __html: simpleMarkdown(post.body || "") }}
-        />
+        <article style={{ border: "1px solid rgba(17,17,17,0.12)", borderRadius: 18, padding: 22, background: "rgba(255,255,255,0.9)", lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
+          {post.body}
+        </article>
       </div>
     </div>
   );

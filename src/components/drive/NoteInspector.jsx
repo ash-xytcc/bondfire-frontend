@@ -16,7 +16,7 @@ export default function NoteInspector({ note, backlinks, onOpenNote, onClose, po
           <div style={{ display: "grid", gap: 6 }}>
             <div className="helper">{postMeta.status || "published"} · /bulletin/{postMeta.slug}</div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <button className="btn-red" type="button" onClick={onPublish} disabled={publishBusy}>{publishBusy ? "Saving…" : "Edit publish"}</button>
+              <button className="btn-red" type="button" onClick={onPublish} disabled={publishBusy}>{publishBusy ? "Saving..." : "Edit publish"}</button>
               <button className="btn" type="button" onClick={onUnpublish} disabled={publishBusy}>Unpublish</button>
               <a className="btn" href={`/bulletin/${postMeta.slug}`} target="_blank" rel="noreferrer">Open public</a>
             </div>
@@ -24,7 +24,7 @@ export default function NoteInspector({ note, backlinks, onOpenNote, onClose, po
         ) : (
           <div style={{ display: "grid", gap: 6 }}>
             <div className="helper">This note is not published yet.</div>
-            <button className="btn-red" type="button" onClick={onPublish} disabled={publishBusy}>{publishBusy ? "Saving…" : "Publish as post"}</button>
+            <button className="btn-red" type="button" onClick={onPublish} disabled={publishBusy}>{publishBusy ? "Saving..." : "Publish as post"}</button>
           </div>
         )}
       </div>

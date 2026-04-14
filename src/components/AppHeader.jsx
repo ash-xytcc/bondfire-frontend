@@ -196,29 +196,19 @@ function OrgNav({ variant = "desktop" }) {
         marginTop: 14,
       }
     : {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        gap: 4,
-        flexWrap: "nowrap",
-        overflow: "hidden",
-        whiteSpace: "nowrap",
-        minWidth: 0,
-        width: "100%",
+        display: "none",
       };
 
-  const drawerLinkStyle = isDrawer
-    ? {
-        display: "block",
-        width: "100%",
-        padding: "12px 14px",
-        borderRadius: 12,
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.12)",
-        color: "#fff",
-        fontWeight: 700,
-      }
-    : undefined;
+  const drawerLinkStyle = {
+    display: "block",
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: 12,
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    color: "#fff",
+    fontWeight: 700,
+  };
 
   const appMode = getAppMode();
   const isRedHarbor = appMode === "red-harbor";
@@ -265,26 +255,11 @@ function OrgNav({ variant = "desktop" }) {
         <NavLink
           key={to}
           to={to}
-          style={({ isActive }) =>
-            isDrawer
-              ? {
-                  ...drawerLinkStyle,
-                  background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
-                  border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
-                }
-              : {
-                  fontSize: 12,
-                  lineHeight: 1.1,
-                  padding: "8px 10px",
-                  borderRadius: 10,
-                  flex: "0 1 auto",
-                  minWidth: 0,
-                  maxWidth: 112,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }
-          }
+          style={({ isActive }) => ({
+            ...drawerLinkStyle,
+            background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
+            border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
+          })}
           className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
           data-tour={tourId}
           title={label}
@@ -299,10 +274,6 @@ function OrgNav({ variant = "desktop" }) {
 export default function AppHeader({ onLogout, showLogout }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const loc = useLocation();
-
-  const debugNav =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).has("debugNav");
 
   React.useEffect(() => setMobileOpen(false), [loc.pathname, loc.hash]);
 
@@ -336,25 +307,6 @@ export default function AppHeader({ onLogout, showLogout }) {
     color: "#fff",
   };
 
-  const debugOverlayStyle = {
-    position: "fixed",
-    right: 10,
-    bottom: 10,
-    zIndex: 1000000,
-    width: "min(420px, 92vw)",
-    maxHeight: "40vh",
-    overflow: "auto",
-    padding: 10,
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.18)",
-    background: "rgba(0,0,0,0.85)",
-    color: "#fff",
-    fontSize: 12,
-    lineHeight: 1.35,
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-  };
-
   return (
     <>
       <header className="bf-appHeader">
@@ -374,24 +326,13 @@ export default function AppHeader({ onLogout, showLogout }) {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: 12,
             minWidth: 0,
-            flex: "1 1 0",
+            flex: "0 0 auto",
             justifyContent: "flex-end",
             overflow: "hidden",
           }}
         >
-          <div
-            className="bf-nav-desktop"
-            style={{
-              minWidth: 0,
-              flex: "1 1 auto",
-              overflow: "hidden",
-            }}
-          >
-            <OrgNav variant="desktop" />
-          </div>
-
           {showLogout ? (
             <button
               className="bf-logout"
@@ -410,7 +351,15 @@ export default function AppHeader({ onLogout, showLogout }) {
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen ? "true" : "false"}
             onClick={() => setMobileOpen((v) => !v)}
-            style={{ flex: "0 0 auto" }}
+            style={{
+              flex: "0 0 auto",
+              minWidth: 44,
+              height: 44,
+              padding: "0 14px",
+              borderRadius: 12,
+              fontSize: 20,
+              lineHeight: 1,
+            }}
           >
             <span aria-hidden="true">☰</span>
           </button>
@@ -427,8 +376,6 @@ export default function AppHeader({ onLogout, showLogout }) {
               alignItems: "center",
               justifyContent: "space-between",
               gap: 8,
-              overflowX: "auto",
-              whiteSpace: "nowrap",
               padding: "6px 10px",
             }}
           >
@@ -470,12 +417,6 @@ export default function AppHeader({ onLogout, showLogout }) {
           ) : null}
         </div>
       </div>
-
-      {debugNav ? (
-        <pre style={debugOverlayStyle}>
-          {JSON.stringify({ pathname: loc.pathname, hash: loc.hash }, null, 2)}
-        </pre>
-      ) : null}
     </>
   );
 }

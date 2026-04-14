@@ -3,7 +3,6 @@ import { requireOrgRole } from "../../_lib/auth.js";
 import { logActivity } from "../../_lib/activity.js";
 
 async function getOrgCryptoKeyVersion(db, orgId) {
-	// org_crypto historically used either key_version or version.
 	try {
 		const r = await db.prepare("SELECT key_version FROM org_crypto WHERE org_id = ?").bind(orgId).first();
 		return Number(r?.key_version) || 1;
@@ -26,10 +25,6 @@ async function ensureInventoryParsTable(db) {
     )`
   ).run();
 }
-
-// Inventory items for an org.
-// Frontend expects `qty`, but this branch schema uses `quantity`.
-// Always alias `quantity AS qty` in SELECTs and write to `quantity`.
 
 async function ensureInventoryTable(db) {
   await db.prepare(`
@@ -56,31 +51,65 @@ async function ensureInventoryTable(db) {
   try { await db.prepare("ALTER TABLE inventory ADD COLUMN key_version INTEGER").run(); } catch {}
 }
 
+async function getInventoryColumns(db) {
+  const res = await db.prepare(`PRAGMA table_info(inventory)`).all();
+  const cols = Array.isArray(res?.results) ? res.results.map((r) => String(r.name || "").trim()) : [];
+  return new Set(cols);
+}
+
+function hasCol(cols, name) {
+  return cols.has(name);
+}
+
+function selectExpr(cols, name, fallback = "NULL") {
+  return hasCol(cols, name) ? `i.${name}` : `${fallback}`;
+}
+
+function insertValue(body, name, fallback = null) {
+  return Object.prototype.hasOwnProperty.call(body, name) ? body[name] : fallback;
+}
+
 export async function onRequestGet({ env, request, params }) {
   await ensureInventoryTable(env.BF_DB);
+  await ensureInventoryParsTable(env.BF_DB);
+
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!a.ok) return a.resp;
 
-  await ensureInventoryParsTable(env.BF_DB);
-  const res = await env.BF_DB.prepare(
-    `SELECT i.id, i.name, i.quantity AS qty, i.unit, i.category, i.location, i.notes,
-            i.encrypted_notes, i.encrypted_blob, i.key_version,
-            i.is_public, i.created_at, i.updated_at,
-            ip.par
-     FROM inventory i
-     LEFT JOIN inventory_pars ip
-       ON ip.org_id = i.org_id AND ip.inventory_id = i.id
-     WHERE i.org_id = ?
-     ORDER BY i.created_at DESC`
-  )
-    .bind(orgId)
-    .all();
+  const cols = await getInventoryColumns(env.BF_DB);
 
+  const sql = `
+    SELECT
+      i.id,
+      i.name,
+      i.quantity AS qty,
+      i.unit,
+      i.category,
+      ${selectExpr(cols, "location")} AS location,
+      ${selectExpr(cols, "notes")} AS notes,
+      ${selectExpr(cols, "encrypted_notes")} AS encrypted_notes,
+      i.encrypted_blob,
+      i.key_version,
+      ${selectExpr(cols, "is_public", "0")} AS is_public,
+      i.created_at,
+      i.updated_at,
+      ip.par
+    FROM inventory i
+    LEFT JOIN inventory_pars ip
+      ON ip.org_id = i.org_id AND ip.inventory_id = i.id
+    WHERE i.org_id = ?
+    ORDER BY i.created_at DESC
+  `;
+
+  const res = await env.BF_DB.prepare(sql).bind(orgId).all();
   return json({ ok: true, inventory: res.results || [] });
 }
 
 export async function onRequestPost({ env, request, params }) {
+  await ensureInventoryTable(env.BF_DB);
+  await ensureInventoryParsTable(env.BF_DB);
+
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "member" });
   if (!a.ok) return a.resp;
@@ -89,38 +118,37 @@ export async function onRequestPost({ env, request, params }) {
   const name = String(body.name || "").trim();
   if (!name) return bad(400, "MISSING_NAME");
 
-  await ensureInventoryParsTable(env.BF_DB);
+  const cols = await getInventoryColumns(env.BF_DB);
 
   const id = uuid();
   const t = now();
   const qty = Number.isFinite(Number(body.qty)) ? Number(body.qty) : 0;
-
   const keyVersion = body.encrypted_blob ? await getOrgCryptoKeyVersion(env.BF_DB, orgId) : null;
 
-  await env.BF_DB.prepare(
-    `INSERT INTO inventory (
-        id, org_id, name, quantity, unit, category, location, notes,
-        encrypted_notes, encrypted_blob, key_version,
-        is_public, created_at, updated_at
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-  )
-    .bind(
-      id,
-      orgId,
-      name,
-      qty,
-      String(body.unit || ""),
-      String(body.category || ""),
-      String(body.location || ""),
-      String(body.notes || ""),
-      body.encrypted_notes ?? null,
-      body.encrypted_blob ?? null,
-      keyVersion,
-      body.is_public ? 1 : 0,
-      t,
-      t
-    )
-    .run();
+  const columnNames = ["id", "org_id", "name", "quantity", "unit", "category", "encrypted_blob", "key_version", "created_at", "updated_at"];
+  const values = [id, orgId, name, qty, String(body.unit || ""), String(body.category || ""), body.encrypted_blob ?? null, keyVersion, t, t];
+
+  if (hasCol(cols, "location")) {
+    columnNames.push("location");
+    values.push(String(insertValue(body, "location", "") || ""));
+  }
+  if (hasCol(cols, "notes")) {
+    columnNames.push("notes");
+    values.push(String(insertValue(body, "notes", "") || ""));
+  }
+  if (hasCol(cols, "encrypted_notes")) {
+    columnNames.push("encrypted_notes");
+    values.push(insertValue(body, "encrypted_notes", null) ?? null);
+  }
+  if (hasCol(cols, "is_public")) {
+    columnNames.push("is_public");
+    values.push(body.is_public ? 1 : 0);
+  }
+
+  const placeholders = columnNames.map(() => "?").join(", ");
+  const sql = `INSERT INTO inventory (${columnNames.join(", ")}) VALUES (${placeholders})`;
+
+  await env.BF_DB.prepare(sql).bind(...values).run();
 
   const par = body.par === undefined || body.par === null || body.par === "" ? null : Number(body.par);
   if (Number.isFinite(par) && par > 0) {
@@ -143,21 +171,37 @@ export async function onRequestPost({ env, request, params }) {
     console.error("ACTIVITY_FAIL", e);
   }
 
-  const created = await env.BF_DB.prepare(
-    `SELECT i.id, i.org_id, i.name, i.quantity AS qty, i.unit, i.category, i.location, i.notes,
-            i.encrypted_notes, i.encrypted_blob, i.key_version,
-            i.is_public, i.created_at, i.updated_at,
-            ip.par
-     FROM inventory i
-     LEFT JOIN inventory_pars ip
-       ON ip.org_id = i.org_id AND ip.inventory_id = i.id
-     WHERE i.id = ? AND i.org_id = ?`
-  ).bind(id, orgId).first();
+  const selectSql = `
+    SELECT
+      i.id,
+      i.org_id,
+      i.name,
+      i.quantity AS qty,
+      i.unit,
+      i.category,
+      ${selectExpr(cols, "location")} AS location,
+      ${selectExpr(cols, "notes")} AS notes,
+      ${selectExpr(cols, "encrypted_notes")} AS encrypted_notes,
+      i.encrypted_blob,
+      i.key_version,
+      ${selectExpr(cols, "is_public", "0")} AS is_public,
+      i.created_at,
+      i.updated_at,
+      ip.par
+    FROM inventory i
+    LEFT JOIN inventory_pars ip
+      ON ip.org_id = i.org_id AND ip.inventory_id = i.id
+    WHERE i.id = ? AND i.org_id = ?
+  `;
 
+  const created = await env.BF_DB.prepare(selectSql).bind(id, orgId).first();
   return json({ ok: true, id, item: created || null });
 }
 
 export async function onRequestPut({ env, request, params }) {
+  await ensureInventoryTable(env.BF_DB);
+  await ensureInventoryParsTable(env.BF_DB);
+
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "member" });
   if (!a.ok) return a.resp;
@@ -166,51 +210,69 @@ export async function onRequestPut({ env, request, params }) {
   const id = String(body.id || "");
   if (!id) return bad(400, "MISSING_ID");
 
-  await ensureInventoryParsTable(env.BF_DB);
-
-  const isPublic =
-    typeof body.is_public === "boolean" ? (body.is_public ? 1 : 0) : null;
+  const cols = await getInventoryColumns(env.BF_DB);
 
   const qty =
     body.qty === undefined || body.qty === null
       ? null
       : Number.isFinite(Number(body.qty))
-      ? Number(body.qty)
-      : 0;
+        ? Number(body.qty)
+        : 0;
 
   const keyVersion = body.encrypted_blob ? await getOrgCryptoKeyVersion(env.BF_DB, orgId) : null;
 
+  const sets = [];
+  const values = [];
+
+  if (body.name !== undefined) {
+    sets.push(`name = ?`);
+    values.push(body.name);
+  }
+  if (qty !== null) {
+    sets.push(`quantity = ?`);
+    values.push(qty);
+  }
+  if (body.unit !== undefined) {
+    sets.push(`unit = ?`);
+    values.push(body.unit);
+  }
+  if (body.category !== undefined) {
+    sets.push(`category = ?`);
+    values.push(body.category);
+  }
+  if (hasCol(cols, "location") && body.location !== undefined) {
+    sets.push(`location = ?`);
+    values.push(body.location);
+  }
+  if (hasCol(cols, "notes") && body.notes !== undefined) {
+    sets.push(`notes = ?`);
+    values.push(body.notes);
+  }
+  if (hasCol(cols, "encrypted_notes") && body.encrypted_notes !== undefined) {
+    sets.push(`encrypted_notes = ?`);
+    values.push(body.encrypted_notes);
+  }
+  if (body.encrypted_blob !== undefined) {
+    sets.push(`encrypted_blob = ?`);
+    values.push(body.encrypted_blob);
+  }
+  if (keyVersion !== null) {
+    sets.push(`key_version = ?`);
+    values.push(keyVersion);
+  }
+  if (hasCol(cols, "is_public") && typeof body.is_public === "boolean") {
+    sets.push(`is_public = ?`);
+    values.push(body.is_public ? 1 : 0);
+  }
+
+  sets.push(`updated_at = ?`);
+  values.push(now(), id, orgId);
+
   await env.BF_DB.prepare(
     `UPDATE inventory
-     SET name = COALESCE(?, name),
-         quantity = COALESCE(?, quantity),
-         unit = COALESCE(?, unit),
-         category = COALESCE(?, category),
-         location = COALESCE(?, location),
-         notes = COALESCE(?, notes),
-         encrypted_notes = COALESCE(?, encrypted_notes),
-         encrypted_blob = COALESCE(?, encrypted_blob),
-         key_version = COALESCE(?, key_version),
-         is_public = COALESCE(?, is_public),
-         updated_at = ?
+     SET ${sets.join(", ")}
      WHERE id = ? AND org_id = ?`
-  )
-    .bind(
-      body.name ?? null,
-      qty,
-      body.unit ?? null,
-      body.category ?? null,
-      body.location ?? null,
-      body.notes ?? null,
-      body.encrypted_notes ?? null,
-      body.encrypted_blob ?? null,
-      keyVersion,
-      isPublic,
-      now(),
-      id,
-      orgId
-    )
-    .run();
+  ).bind(...values).run();
 
   if (Object.prototype.hasOwnProperty.call(body, "par")) {
     const parRaw = body.par;
@@ -240,21 +302,36 @@ export async function onRequestPut({ env, request, params }) {
     console.error("ACTIVITY_FAIL", e);
   }
 
-  const item = await env.BF_DB.prepare(
-    `SELECT i.id, i.org_id, i.name, i.quantity AS qty, i.unit, i.category, i.location, i.notes,
-            i.encrypted_notes, i.encrypted_blob, i.key_version,
-            i.is_public, i.created_at, i.updated_at,
-            ip.par
-     FROM inventory i
-     LEFT JOIN inventory_pars ip
-       ON ip.org_id = i.org_id AND ip.inventory_id = i.id
-     WHERE i.id = ? AND i.org_id = ?`
-  ).bind(id, orgId).first();
+  const selectSql = `
+    SELECT
+      i.id,
+      i.org_id,
+      i.name,
+      i.quantity AS qty,
+      i.unit,
+      i.category,
+      ${selectExpr(cols, "location")} AS location,
+      ${selectExpr(cols, "notes")} AS notes,
+      ${selectExpr(cols, "encrypted_notes")} AS encrypted_notes,
+      i.encrypted_blob,
+      i.key_version,
+      ${selectExpr(cols, "is_public", "0")} AS is_public,
+      i.created_at,
+      i.updated_at,
+      ip.par
+    FROM inventory i
+    LEFT JOIN inventory_pars ip
+      ON ip.org_id = i.org_id AND ip.inventory_id = i.id
+    WHERE i.id = ? AND i.org_id = ?
+  `;
 
+  const item = await env.BF_DB.prepare(selectSql).bind(id, orgId).first();
   return json({ ok: true, item: item || null });
 }
 
 export async function onRequestDelete({ env, request, params }) {
+  await ensureInventoryParsTable(env.BF_DB);
+
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "admin" });
   if (!a.ok) return a.resp;
@@ -273,10 +350,10 @@ export async function onRequestDelete({ env, request, params }) {
   const name = String(prev?.name || "").trim();
   const label = name || shortId(id);
 
-  await ensureInventoryParsTable(env.BF_DB);
   await env.BF_DB.prepare("DELETE FROM inventory_pars WHERE org_id = ? AND inventory_id = ?")
     .bind(orgId, id)
     .run();
+
   await env.BF_DB.prepare("DELETE FROM inventory WHERE id = ? AND org_id = ?")
     .bind(id, orgId)
     .run();

@@ -1,6 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import BulletinArticle from "../components/BulletinArticle";
+import { normalizeBulletinFields, isPublishedBulletin } from "../components/BulletinUtils";
 
 const ORG_SLUG = "red-harbor";
 

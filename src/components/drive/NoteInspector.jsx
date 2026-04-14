@@ -1,4 +1,5 @@
 import React from "react";
+import { normalizeBulletinFields, isPublishedBulletin, buildBulletinPayload } from "../BulletinUtils";
 
 export default function NoteInspector({
   note,

@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { formatBulletinDate, getBulletinList } from "./BulletinUtils";
 import "../styles/bulletin.css";
+import { normalizeBulletinFields, isPublishedBulletin } from "./BulletinUtils";
 
 export default function BulletinFeedList({
   posts,

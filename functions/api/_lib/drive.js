@@ -31,6 +31,7 @@ for (const sql of statements) {
 }
 
 const noteAlterStatements = [
+  "ALTER TABLE drive_notes ADD COLUMN encrypted_blob TEXT",
   "ALTER TABLE drive_notes ADD COLUMN bulletin_slug TEXT",
   "ALTER TABLE drive_notes ADD COLUMN bulletin_excerpt TEXT",
   "ALTER TABLE drive_notes ADD COLUMN bulletin_status TEXT NOT NULL DEFAULT ''",

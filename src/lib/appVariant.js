@@ -177,6 +177,7 @@ export function applyAppVariantToDocument() {
         border-radius: 14px !important;
       }
 
+      
       body[data-app="dpg"] button:not(.danger):not(.destructive),
       body[data-app="dpg"] .btn:not(.danger):not(.destructive),
       body[data-app="dpg"] .tab,
@@ -186,10 +187,43 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .bf-logout,
       body[data-app="dpg"] .bf-hamburger {
         background: #20382d !important;
-        color: #f3efe8 !important;
+        color: #0f1a14 !important; /* dark readable text */
         border: 1px solid var(--dpg-line) !important;
         box-shadow: none !important;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.15) !important;
       }
+
+      /* hover state */
+      body[data-app="dpg"] button:hover,
+      body[data-app="dpg"] .btn:hover,
+      body[data-app="dpg"] .tab:hover,
+      body[data-app="dpg"] .nav-pill:hover,
+      body[data-app="dpg"] .bf-appnav-link:hover,
+      body[data-app="dpg"] .bf-logout:hover,
+      body[data-app="dpg"] .bf-hamburger:hover {
+        background: #2a4a3b !important;
+        color: #0f1a14 !important;
+      }
+
+      /* active / selected (blue) */
+      body[data-app="dpg"] .active,
+      body[data-app="dpg"] .is-active,
+      body[data-app="dpg"] [aria-current="page"],
+      body[data-app="dpg"] .selected {
+        background: var(--dpg-accent-deep) !important;
+        color: #0f1a24 !important; /* dark blue-safe text */
+        border-color: var(--dpg-accent) !important;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.15) !important;
+      }
+
+      /* primary buttons (blue ones like Sign in) */
+      body[data-app="dpg"] .btn-red {
+        background: var(--dpg-accent-deep) !important;
+        color: #0f1a24 !important;
+        border: 1px solid var(--dpg-accent) !important;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.15) !important;
+      }
+
 
       body[data-app="dpg"] .bf-appnav-link,
       body[data-app="dpg"] .bf-logout {
@@ -371,3 +405,11 @@ export function getBranding() {
 export function getAdminBasePath() {
   return "";
 }
+
+
+      /* global readable text fix */
+      body[data-app="dpg"] button,
+      body[data-app="dpg"] .btn,
+      body[data-app="dpg"] .bf-appnav-link {
+        text-shadow: 0 1px 0 rgba(255,255,255,0.15);
+      }

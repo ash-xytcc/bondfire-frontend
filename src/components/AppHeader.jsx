@@ -188,7 +188,7 @@ function OrgNav({ variant = "desktop" }) {
   const orgId = useOrgIdFromPath();
   const isDrawer = variant === "drawer";
 
-  const drawerNavStyle = isDrawer
+  const navStyle = isDrawer
     ? {
         display: "flex",
         flexDirection: "column",
@@ -248,7 +248,7 @@ function OrgNav({ variant = "desktop" }) {
     <nav
       className={`bf-appnav${isDrawer ? " is-drawer" : ""}`}
       aria-label="Org navigation"
-      style={drawerNavStyle}
+      style={navStyle}
       data-bf-orgnav={isDrawer ? "drawer" : "desktop"}
     >
       {items.map(([label, to, tourId]) => (
@@ -330,9 +330,40 @@ export default function AppHeader({ onLogout, showLogout }) {
             minWidth: 0,
             flex: "0 0 auto",
             justifyContent: "flex-end",
-            overflow: "hidden",
+            overflow: "visible",
           }}
         >
+          <button
+            className="bf-hamburger"
+            type="button"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen ? "true" : "false"}
+            onClick={() => setMobileOpen((v) => !v)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              flex: "0 0 auto",
+              minWidth: 96,
+              height: 44,
+              padding: "0 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.14)",
+              background: "rgba(255,255,255,0.04)",
+              color: "#fff",
+              fontSize: 15,
+              fontWeight: 700,
+              lineHeight: 1,
+              cursor: "pointer",
+              visibility: "visible",
+              opacity: 1,
+            }}
+          >
+            <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>☰</span>
+            <span>Menu</span>
+          </button>
+
           {showLogout ? (
             <button
               className="bf-logout"
@@ -344,25 +375,6 @@ export default function AppHeader({ onLogout, showLogout }) {
               Logout
             </button>
           ) : null}
-
-          <button
-            className="bf-hamburger"
-            type="button"
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileOpen ? "true" : "false"}
-            onClick={() => setMobileOpen((v) => !v)}
-            style={{
-              flex: "0 0 auto",
-              minWidth: 44,
-              height: 44,
-              padding: "0 14px",
-              borderRadius: 12,
-              fontSize: 20,
-              lineHeight: 1,
-            }}
-          >
-            <span aria-hidden="true">☰</span>
-          </button>
         </div>
       </header>
 

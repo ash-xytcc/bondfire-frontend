@@ -1,6 +1,20 @@
 import React from "react";
 
-export default function NoteInspector({ note, backlinks, onOpenNote, onClose, postMeta, onPublish, onUnpublish, publishBusy }) {
+export default function NoteInspector({
+  note,
+  backlinks,
+  onOpenNote,
+  onClose,
+  onSaveBulletinDraft,
+  onPublishNote,
+  onUnpublishNote,
+  onOpenPublicBulletin,
+}) {
+  const bulletinStatus = String(note?.bulletinStatus || "").trim().toLowerCase();
+  const isPublished = bulletinStatus === "published";
+  const isDraft = bulletinStatus === "draft";
+  const hasPublicSlug = !!String(note?.bulletinSlug || "").trim();
+
   return (
     <div className="card" style={{ padding: 8, background: "rgba(11,11,11,0.96)", backdropFilter: "blur(8px)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", marginBottom: 8 }}>
@@ -11,22 +25,33 @@ export default function NoteInspector({ note, backlinks, onOpenNote, onClose, po
         <div className="helper">updated {note?.updatedAt ? new Date(note.updatedAt).toLocaleString() : ""}</div>
       </div>
       <div style={{ marginBottom: 10 }}>
-        <h4 style={{ marginBottom: 4, fontSize: 12 }}>Public post</h4>
-        {postMeta ? (
-          <div style={{ display: "grid", gap: 6 }}>
-            <div className="helper">{postMeta.status || "published"} · /bulletin/{postMeta.slug}</div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <button className="btn-red" type="button" onClick={onPublish} disabled={publishBusy}>{publishBusy ? "Saving..." : "Edit publish"}</button>
-              <button className="btn" type="button" onClick={onUnpublish} disabled={publishBusy}>Unpublish</button>
-              <a className="btn" href={`/bulletin/${postMeta.slug}`} target="_blank" rel="noreferrer">Open public</a>
-            </div>
+        <h4 style={{ marginBottom: 4, fontSize: 12 }}>Bulletin</h4>
+        <div className="helper" style={{ marginBottom: 8 }}>
+          status: {bulletinStatus || "not published"}
+        </div>
+        {hasPublicSlug ? (
+          <div className="helper" style={{ marginBottom: 8 }}>
+            slug: /bulletin/{note.bulletinSlug}
           </div>
-        ) : (
-          <div style={{ display: "grid", gap: 6 }}>
-            <div className="helper">This note is not published yet.</div>
-            <button className="btn-red" type="button" onClick={onPublish} disabled={publishBusy}>{publishBusy ? "Saving..." : "Publish as post"}</button>
-          </div>
-        )}
+        ) : null}
+        <div style={{ display: "grid", gap: 6 }}>
+          <button className="btn" type="button" onClick={onSaveBulletinDraft}>
+            {isDraft ? "Edit bulletin draft" : "Save as bulletin draft"}
+          </button>
+          <button className="btn" type="button" onClick={onPublishNote}>
+            {isPublished ? "Update published article" : "Publish to bulletin"}
+          </button>
+          {isPublished && hasPublicSlug ? (
+            <button className="btn" type="button" onClick={onOpenPublicBulletin}>
+              Open public article
+            </button>
+          ) : null}
+          {(isPublished || isDraft) ? (
+            <button className="btn" type="button" onClick={onUnpublishNote}>
+              Remove from bulletin
+            </button>
+          ) : null}
+        </div>
       </div>
       <div style={{ marginBottom: 10 }}>
         <h4 style={{ marginBottom: 4, fontSize: 12 }}>Tags</h4>

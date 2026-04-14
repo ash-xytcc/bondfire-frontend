@@ -2,14 +2,32 @@ import React from "react";
 
 function Btn({ children, onClick, title }) {
   if (!onClick) return null;
-  return <button className="btn" type="button" onClick={onClick} title={title} style={{ padding: "3px 7px", fontSize: 11, lineHeight: 1 }}>{children}</button>;
+  return (
+    <button
+      className="btn"
+      type="button"
+      onClick={onClick}
+      title={title}
+      style={{
+        padding: "3px 7px",
+        fontSize: 11,
+        lineHeight: 1,
+        color: "#f4f7f5",
+        background: "rgba(255,255,255,0.12)",
+        border: "1px solid rgba(255,255,255,0.22)",
+        textShadow: "0 1px 1px rgba(0,0,0,0.9)",
+      }}
+    >
+      {children}
+    </button>
+  );
 }
 
 export default function RichTextToolbar({ onBold, onItalic, onH1, onH2, onBullet, onQuote, onCode, onRule, onLink, onWikiLink, menuOpen = false, onToggleMenu, menuItems = [] }) {
   const hasFormatting = !!(onBold || onItalic || onH1 || onH2 || onBullet || onQuote || onCode || onRule || onLink || onWikiLink);
   return (
     <div style={{ position: "relative", marginBottom: 6 }}>
-      <div className="card" style={{ padding: 5, display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
+      <div className="card" style={{ padding: 5, display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.14)" }}>
         {hasFormatting ? <>
           <Btn onClick={onBold} title="Bold">B</Btn>
           <Btn onClick={onItalic} title="Italic"><i>I</i></Btn>
@@ -22,10 +40,10 @@ export default function RichTextToolbar({ onBold, onItalic, onH1, onH2, onBullet
           <Btn onClick={onWikiLink} title="Wiki link">[[ ]]</Btn>
           <Btn onClick={onRule} title="Horizontal rule">—</Btn>
         </> : <div className="helper">Document actions</div>}
-        <button className="btn" type="button" onClick={onToggleMenu} title="View and document menu" style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 14 }}>☰</button>
+        <button className="btn" type="button" onClick={onToggleMenu} title="View and document menu" style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 14, color: "#f4f7f5", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)", textShadow: "0 1px 1px rgba(0,0,0,0.9)" }}>☰</button>
       </div>
-      {menuOpen ? <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", minWidth: 220, background: "rgba(16,16,20,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: 6, boxShadow: "0 14px 36px rgba(0,0,0,0.45)", zIndex: 130, display: "grid", gap: 4 }}>
-        {menuItems.map((item, idx) => <button key={`${item.label}-${idx}`} className="btn" type="button" onClick={item.onClick} style={{ textAlign: "left", justifyContent: "flex-start", padding: "7px 10px" }}>{item.label}</button>)}
+      {menuOpen ? <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", minWidth: 220, background: "rgba(16,16,20,0.98)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 14, padding: 6, boxShadow: "0 14px 36px rgba(0,0,0,0.45)", zIndex: 130, display: "grid", gap: 4 }}>
+        {menuItems.map((item, idx) => <button key={`${item.label}-${idx}`} className="btn" type="button" onClick={item.onClick} style={{ textAlign: "left", justifyContent: "flex-start", padding: "7px 10px", color: "#f4f7f5", background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", textShadow: "0 1px 1px rgba(0,0,0,0.9)" }}>{item.label}</button>)}
       </div> : null}
     </div>
   );

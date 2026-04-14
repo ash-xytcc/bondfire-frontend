@@ -12,7 +12,6 @@ import DriveCreateModal from "../components/drive/DriveCreateModal.jsx";
 import SpreadsheetFileView from "../components/drive/SpreadsheetFileView.jsx";
 import FormFileView from "../components/drive/FormFileView.jsx";
 import { renderTemplate } from "../components/drive/templateEngine.js";
-import { isDpgVariant } from "../lib/appVariant.js";
 
 const LEGACY_STORAGE_KEY = "bf_drive_v14";
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
@@ -44,6 +43,15 @@ function serializeFrontmatter(properties, body) {
   if (!entries.length) return String(body || "");
   const lines = entries.map((p) => `${String(p.key).trim()}: ${String(p.value || "").trim()}`);
   return `---\n${lines.join("\n")}\n---\n\n${String(body || "")}`;
+}
+function slugifyText(input) {
+  return String(input || "")
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 100) || "untitled";
 }
 function getFileExtension(name) {
   const match = String(name || "").toLowerCase().match(/\.([a-z0-9]+)$/);
@@ -222,8 +230,6 @@ export default function Drive() {
   const [loadState, setLoadState] = useState("loading");
   const [loadError, setLoadError] = useState("");
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [postMeta, setPostMeta] = useState(null);
-  const [publishBusy, setPublishBusy] = useState(false);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== "undefined" ? window.innerWidth <= 900 : false));
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -391,62 +397,69 @@ export default function Drive() {
 
   const backlinks = selectedNote ? notes.filter((note) => note.id !== selectedNote.id && parseWikiLinks(note.body).some((link) => link.toLowerCase() === String(selectedNote.title || "").toLowerCase())) : [];
 
-  React.useEffect(() => {
-    let dead = false;
-    if (!orgId || !selectedNote?.id) {
-      setPostMeta(null);
-      return () => { dead = true; };
-    }
-    (async () => {
-      try {
-        const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/posts/${encodeURIComponent(selectedNote.id)}`);
-        if (!dead) setPostMeta(data?.post || null);
-      } catch {
-        if (!dead) setPostMeta(null);
-      }
-    })();
-    return () => { dead = true; };
-  }, [orgId, selectedNote?.id]);
-
-  async function publishSelectedNote() {
-    if (!orgId || !selectedNote?.id) return;
-    const defaultTitle = String(postMeta?.titleOverride || selectedNote.title || "").trim();
-    const titleOverride = window.prompt("Public title override (blank = use note title)", defaultTitle) ?? defaultTitle;
-    const defaultSlugBase = String(postMeta?.slug || titleOverride || selectedNote.title || "post");
-    const defaultSlug = defaultSlugBase.toLowerCase().replace(/['"]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    const slug = window.prompt("Slug", defaultSlug) ?? defaultSlug;
-    if (!String(slug || "").trim()) return;
-    const excerpt = window.prompt("Excerpt (blank = auto)", String(postMeta?.excerpt || "").trim()) ?? String(postMeta?.excerpt || "").trim();
-    setPublishBusy(true);
+  async function updateSelectedNoteBulletin(extra = {}) {
+    if (!selectedNote?.id) return;
     try {
-      const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/posts/${encodeURIComponent(selectedNote.id)}`, {
+      const payload = { ...extra };
+      if (selectedId === selectedNote.id && selectedKind === "note") {
+        payload.title = title;
+        payload.body = content;
+      }
+      const res = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/notes/${encodeURIComponent(selectedNote.id)}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slug,
-          titleOverride,
-          excerpt,
-          status: "published",
-        }),
+        body: JSON.stringify(payload),
       });
-      setPostMeta(data?.post || null);
-    } finally {
-      setPublishBusy(false);
+      if (res?.note) {
+        setNotes((prev) => prev.map((n) => (n.id === res.note.id ? res.note : n)));
+        skipNextSave.current = true;
+        setTitle(res.note.title || "untitled");
+        setContent(res.note.body || "");
+        setStatus("saved");
+      }
+    } catch (e) {
+      console.error("Failed to update bulletin metadata for note", e);
+      setStatus("error");
     }
   }
 
+  async function saveBulletinDraft() {
+    if (!selectedNote) return;
+    const defaultSlug = selectedNote?.bulletinSlug || slugifyText(title || selectedNote.title || "untitled");
+    const slug = window.prompt("Bulletin slug", defaultSlug);
+    if (!slug) return;
+    const excerpt = window.prompt("Bulletin excerpt", selectedNote?.bulletinExcerpt || "");
+    await updateSelectedNoteBulletin({
+      bulletinSlug: slugifyText(slug),
+      bulletinExcerpt: String(excerpt || ""),
+      bulletinStatus: "draft",
+    });
+  }
+
+  async function publishSelectedNote() {
+    if (!selectedNote) return;
+    const defaultSlug = selectedNote?.bulletinSlug || slugifyText(title || selectedNote.title || "untitled");
+    const slug = window.prompt("Public slug", defaultSlug);
+    if (!slug) return;
+    const excerpt = window.prompt("Public excerpt", selectedNote?.bulletinExcerpt || "");
+    await updateSelectedNoteBulletin({
+      bulletinSlug: slugifyText(slug),
+      bulletinExcerpt: String(excerpt || ""),
+      bulletinStatus: "published",
+    });
+  }
+
   async function unpublishSelectedNote() {
-    if (!orgId || !selectedNote?.id) return;
-    if (!window.confirm("Unpublish this public post?")) return;
-    setPublishBusy(true);
-    try {
-      await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/posts/${encodeURIComponent(selectedNote.id)}`, {
-        method: "DELETE",
-      });
-      setPostMeta(null);
-    } finally {
-      setPublishBusy(false);
-    }
+    if (!selectedNote) return;
+    const ok = window.confirm(`Remove "${selectedNote.title || "this note"}" from the public bulletin?`);
+    if (!ok) return;
+    await updateSelectedNoteBulletin({
+      bulletinStatus: "",
+    });
+  }
+
+  function openPublicBulletinPage() {
+    if (!selectedNote?.bulletinSlug) return;
+    window.open(`${window.location.origin}/#/bulletin/${encodeURIComponent(selectedNote.bulletinSlug)}`, "_blank", "noopener,noreferrer");
   }
 
   function beginResize(which) {
@@ -501,7 +514,6 @@ export default function Drive() {
     setTitle(note.title || "untitled");
     setContent(note.body || "");
     setStatus("saved");
-   
     return note;
   }
   async function createNote() {
@@ -530,7 +542,6 @@ export default function Drive() {
     setTitle(file.name || "untitled");
     setContent(file.textContent || textContent);
     setStatus("saved");
-   
     return file;
   }
   async function createSpreadsheet() {
@@ -729,7 +740,6 @@ export default function Drive() {
           setNotes((prev) => prev.map((n) => (n.id === selectedId ? res.note : n)));
         }
         setStatus("saved");
-       
         return;
       }
       if (selectedKind === "file" && fileIsEditable) {
@@ -749,7 +759,6 @@ export default function Drive() {
           setFiles((prev) => prev.map((file) => (file.id === selectedId ? withFileUrls(orgId, { ...file, ...res.file }) : file)));
         }
         setStatus("saved");
-       
       }
     } catch {
       setStatus("error");
@@ -839,7 +848,6 @@ export default function Drive() {
         previewObjectUrl: localPreviewUrl || undefined,
       });
       setFiles((prev) => [nextFile, ...prev.filter((existing) => existing.id !== tempId && existing.id !== nextFile.id)]);
-     
       return nextFile;
     } catch (error) {
       setFiles((prev) => prev.filter((existing) => existing.id !== tempId));
@@ -850,6 +858,7 @@ export default function Drive() {
       throw error;
     }
   }
+
 
   async function onUploadFiles(event) {
     const chosen = Array.from(event.target.files || []);
@@ -1057,16 +1066,10 @@ export default function Drive() {
     { id: "form", label: "Form", hint: "Build an intake form with a live preview.", icon: "☑", onClick: createForm },
   ];
 
-  const dpg = isDpgVariant();
   const driveGridStyle = isMobile ? { display: "block", height: "100%" } : { display: "grid", gridTemplateColumns: `${sidebarWidth}px 6px minmax(0,1fr)`, height: "100%" };
-  const shellBg = dpg ? "var(--dpg-bg, #121715)" : "#0b0b0b";
-  const panelBg = dpg ? "var(--dpg-surface, #1a211e)" : "rgba(10,10,12,0.98)";
-  const panelBorder = dpg ? "1px solid var(--dpg-line, rgba(255,255,255,0.14))" : "1px solid rgba(255,255,255,0.08)";
-  const divider = dpg ? "var(--dpg-line, rgba(255,255,255,0.14))" : "#1b1b1b";
-  const titleColor = dpg ? "var(--dpg-text, #f3efe8)" : "#fff";
 
   return (
-    <div className={dpg ? "bf-drive-root is-dpg" : "bf-drive-root"} style={{ position: focusMode ? "fixed" : "relative", inset: focusMode ? 0 : "auto", zIndex: focusMode ? 80 : "auto", background: shellBg, height: workspaceHeight }}>
+    <div style={{ position: focusMode ? "fixed" : "relative", inset: focusMode ? 0 : "auto", zIndex: focusMode ? 80 : "auto", background: "#0b0b0b", height: workspaceHeight }}>
       <input ref={fileInputRef} type="file" multiple style={{ display: "none" }} onChange={onUploadFiles} />
       <input ref={folderInputRef} type="file" multiple style={{ display: "none" }} onChange={onUploadFolder} />
 
@@ -1080,8 +1083,8 @@ export default function Drive() {
               <div className="helper" style={{ marginLeft: "auto" }}>Mobile Drive</div>
             </div>
             {mobileSidebarOpen ? (
-              <div style={{ position: "fixed", inset: focusMode ? 0 : "56px 8px 8px", zIndex: 95, background: panelBg, border: panelBorder, borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 48px rgba(0,0,0,0.45)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 10px", borderBottom: panelBorder, background: dpg ? "var(--dpg-surface-2, #202825)" : "#101012" }}>
+              <div style={{ position: "fixed", inset: focusMode ? 0 : "56px 8px 8px", zIndex: 95, background: "rgba(10,10,12,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, overflow: "hidden", boxShadow: "0 18px 48px rgba(0,0,0,0.45)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 10px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#101012" }}>
                   <div style={{ fontWeight: 800 }}>Drive Explorer</div>
                   <button className="btn" type="button" onClick={() => setMobileSidebarOpen(false)} style={{ padding: "6px 10px" }}>Done</button>
                 </div>
@@ -1127,7 +1130,7 @@ export default function Drive() {
           </>
         ) : (
           <>
-            <div style={{ borderRight: `1px solid ${divider}`, overflow: "hidden" }}>
+            <div style={{ borderRight: "1px solid #1b1b1b", overflow: "hidden" }}>
               <DriveSidebar
                 folders={folders}
                 notes={notes}
@@ -1176,7 +1179,7 @@ export default function Drive() {
               />
             </div>
 
-            <div onMouseDown={() => beginResize("sidebar")} style={{ cursor: "col-resize", background: dpg ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)" }} title="Drag to resize explorer" />
+            <div onMouseDown={() => beginResize("sidebar")} style={{ cursor: "col-resize", background: "rgba(255,255,255,0.03)" }} title="Drag to resize explorer" />
           </>
         )}
 
@@ -1197,7 +1200,7 @@ export default function Drive() {
           ) : showEditableDocument ? (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
-                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" style={{ flex: 1, minWidth: isMobile ? 120 : 220, fontSize: isMobile ? 18 : 20, fontWeight: 800, background: "transparent", border: "none", outline: "none", color: titleColor, padding: "2px 0" }} />
+                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" style={{ flex: 1, minWidth: isMobile ? 120 : 220, fontSize: isMobile ? 18 : 20, fontWeight: 800, background: "transparent", border: "none", outline: "none", color: "#fff", padding: "2px 0" }} />
                 <span className="helper">{status}</span>
                 {selectedFile && !fileIsEditable ? <span className="helper">read only</span> : null}
               </div>
@@ -1294,7 +1297,17 @@ export default function Drive() {
 
       {inspectorOpen && selectedNote ? (
         <div style={{ position: "fixed", top: isMobile ? "auto" : (focusMode ? 8 : 94), right: isMobile ? 8 : 8, left: isMobile ? 8 : "auto", bottom: isMobile ? 8 : "auto", width: isMobile ? "auto" : 250, maxHeight: isMobile ? "55vh" : (focusMode ? "calc(100vh - 16px)" : "calc(100vh - 102px)"), overflow: "auto", zIndex: 90 }}>
-          <NoteInspector note={selectedNote} backlinks={backlinks} onOpenNote={selectNote} onClose={() => setInspectorOpen(false)} postMeta={postMeta} onPublish={publishSelectedNote} onUnpublish={unpublishSelectedNote} publishBusy={publishBusy} compact />
+          <NoteInspector
+            note={selectedNote}
+            backlinks={backlinks}
+            onOpenNote={selectNote}
+            onClose={() => setInspectorOpen(false)}
+            onSaveBulletinDraft={saveBulletinDraft}
+            onPublishNote={publishSelectedNote}
+            onUnpublishNote={unpublishSelectedNote}
+            onOpenPublicBulletin={openPublicBulletinPage}
+            compact
+          />
         </div>
       ) : null}
     </div>

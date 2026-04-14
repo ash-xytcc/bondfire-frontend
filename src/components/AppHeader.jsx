@@ -148,6 +148,24 @@ function OrgNav({ variant = "desktop" }) {
         border: "1px solid rgba(255,255,255,0.12)",
         color: "#fff",
         fontWeight: 700,
+        textShadow: "0 1px 1px rgba(0,0,0,0.85)",
+      }
+    : undefined;
+
+  const desktopLinkStyle = !isDrawer
+    ? {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "8px 10px",
+        borderRadius: 12,
+        background: "rgba(255,255,255,0.08)",
+        border: "1px solid rgba(255,255,255,0.16)",
+        color: "#f4f7f5",
+        fontWeight: 700,
+        textDecoration: "none",
+        textShadow: "0 1px 1px rgba(0,0,0,0.88)",
+        whiteSpace: "nowrap",
       }
     : undefined;
 
@@ -197,7 +215,15 @@ function OrgNav({ variant = "desktop" }) {
                   background: isActive ? "rgba(255,255,255,0.12)" : drawerLinkStyle.background,
                   border: isActive ? "1px solid rgba(255,255,255,0.20)" : drawerLinkStyle.border,
                 }
-              : undefined
+              : {
+                  ...desktopLinkStyle,
+                  background: isActive ? "#78a8ea" : desktopLinkStyle.background,
+                  border: isActive ? "1px solid rgba(255,255,255,0.34)" : desktopLinkStyle.border,
+                  color: isActive ? "#ffffff" : desktopLinkStyle.color,
+                  textShadow: isActive
+                    ? "0 1px 1px rgba(0,0,0,0.96), 0 0 2px rgba(255,255,255,0.18)"
+                    : desktopLinkStyle.textShadow,
+                }
           }
           className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
           title="All workspaces"
@@ -217,7 +243,15 @@ function OrgNav({ variant = "desktop" }) {
                   background: isActive ? "rgba(255,255,255,0.12)" : drawerLinkStyle.background,
                   border: isActive ? "1px solid rgba(255,255,255,0.20)" : drawerLinkStyle.border,
                 }
-              : undefined
+              : {
+                  ...desktopLinkStyle,
+                  background: isActive ? "#78a8ea" : desktopLinkStyle.background,
+                  border: isActive ? "1px solid rgba(255,255,255,0.34)" : desktopLinkStyle.border,
+                  color: isActive ? "#ffffff" : desktopLinkStyle.color,
+                  textShadow: isActive
+                    ? "0 1px 1px rgba(0,0,0,0.96), 0 0 2px rgba(255,255,255,0.18)"
+                    : desktopLinkStyle.textShadow,
+                }
           }
           className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
           data-tour={tourId}

@@ -461,7 +461,6 @@ async function saveEdit() {
 				</div>
 			</div>
 
-
 			{edit ? (
 				<div
 					className="bf-modal-backdrop"
@@ -540,7 +539,6 @@ async function saveEdit() {
 					</div>
 				</div>
 			) : null}
-
 
 			<div className="card" data-tour="meetings-add-form" style={{ margin: 16, padding: 16 }}>
 				<h3 style={{ marginTop: 0 }}>Add Meeting</h3>

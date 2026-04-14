@@ -312,7 +312,6 @@ export default function Needs() {
 				</div>
 			</div>
 
-
 			{edit ? (
 				<div
 					className="bf-modal-backdrop"
@@ -358,7 +357,6 @@ export default function Needs() {
 					</div>
 				</div>
 			) : null}
-
 
 			<div className="card" data-tour="needs-add-form" style={{ margin: 16, padding: 16 }}>
 				<h3 style={{ marginTop: 0 }}>Add Need</h3>

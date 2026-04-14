@@ -80,7 +80,6 @@ function verifiedKeyFor(userId, deviceId) {
   return `bf_mx_verified_${u}_${d}`;
 }
 
-
 function getStoredOrgMeta(orgId) {
   try {
     const orgs = JSON.parse(localStorage.getItem("bf_orgs") || "[]");

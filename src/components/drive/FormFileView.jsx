@@ -165,7 +165,6 @@ export default function FormFileView({ value, onChange, mode = "edit", fileId = 
     }
   };
 
-
   const openPublicUrl = () => {
     if (!publicUrl) return;
     window.open(publicUrl, "_blank", "noopener,noreferrer");

@@ -15,7 +15,6 @@ function getToken() {
   return localStorage.getItem("bf_auth_token") || sessionStorage.getItem("bf_auth_token") || "";
 }
 
-
 function humanizeError(msg) {
   const s = String(msg || "").trim();
   if (!s) return "";
@@ -23,7 +22,6 @@ function humanizeError(msg) {
   if (s === "INSUFFICIENT_ROLE") return "You do not have permission for that action.";
   return s;
 }
-
 
 async function authFetch(path, opts = {}) {
   const relative = path.startsWith("/") ? path : `/${path}`;
@@ -108,7 +106,6 @@ const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 function safeMailto(s) {
   return encodeURIComponent(String(s || ""));
 }
-
 
 export default function Settings() {
   const { orgId } = useParams();
@@ -622,12 +619,10 @@ React.useEffect(() => {
   }
 }, [tab, loadPublic, loadPublicInbox]);
 
-
 React.useEffect(() => {
   if (!primaryActionItems.length) setPrimaryActionItems(primaryActionDefaults);
   if (!getInvolvedActionItems.length) setGetInvolvedActionItems(getInvolvedDefaults);
 }, [primaryActionDefaults, getInvolvedDefaults, primaryActionItems.length, getInvolvedActionItems.length]);
-
 
   const savePublic = async (e) => {
     e?.preventDefault();
@@ -1633,10 +1628,6 @@ Outreach`} />
               <button className="btn" type="button" onClick={() => exportSubscribersCsv().catch(console.error)} disabled={nlBusy}>
                 Export CSV
               </button>
-
-
-
-
 
               {nlMsg && <span className={nlMsg.toLowerCase().includes("fail") ? "error" : "helper"}>{nlMsg}</span>}
             </div>

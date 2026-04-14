@@ -17,7 +17,6 @@ const PRESETS = {
 
 const FALLBACK_FONT = "Inter";
 
-
 const TEMPLATE_LIBRARY = {
 	eventFlyer: {
 		label: "Event Flyer",
@@ -483,7 +482,6 @@ function iconButtonStyle(active) {
 		lineHeight: 0,
 	};
 }
-
 
 async function loadImageData(src) {
 	return await new Promise((resolve, reject) => {
@@ -1035,7 +1033,6 @@ React.useEffect(() => {
 	};
 }, [orgId, docs, savedBlocks]);
 
-
 React.useEffect(() => {
 	if (!studioLoadedRef.current || !orgId) return;
 	let cancelled = false;
@@ -1146,7 +1143,6 @@ React.useEffect(() => {
 	}, 750);
 	return () => window.clearTimeout(id);
 }, [orgId, dragState, resizeState, marquee, panState, guideDrag, textEditId, docs]);
-
 
 async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply = false, reason = "poll" } = {}) {
 	if (!orgId) return false;
@@ -2335,7 +2331,6 @@ const addImage = () => {
 		};
 	}, [onWorkspaceDrop, currentId, activePageIndex]);
 
-
 	const openContextMenu = (e, el) => {
 		e.preventDefault();
 		e.stopPropagation();
@@ -2728,7 +2723,6 @@ React.useEffect(() => {
 							</div>
 						) : null}
 
-
 						{leftPanel === "templates" ? (
 							<div style={{ display: "grid", gap: 8 }}>
 								{Object.entries(TEMPLATE_LIBRARY).map(([key, item]) => (
@@ -2908,7 +2902,6 @@ React.useEffect(() => {
 						<button type="button" style={{ ...panelButtonStyle(false), width: "auto", padding: "2px 8px", minHeight: 26 }} onClick={(e) => { e.stopPropagation(); setInspectorOpen(true); }}>Inspector</button>
 					</div>
 				) : null}
-
 
 				<div
 					ref={workspaceRef}

@@ -13,7 +13,6 @@ function getOrgDisplayName(orgId) {
   }
 }
 
-
 const MOCK_ATTENDEES = [
   {
     id: 'A-101',

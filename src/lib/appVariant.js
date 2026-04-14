@@ -190,7 +190,7 @@ export function applyAppVariantToDocument() {
         color: #1c241f !important; /* warm readable text */
         border: 1px solid var(--dpg-line) !important;
         box-shadow: none !important;
-        text-shadow: 0 1px 0 rgba(255,255,255,0.15) !important;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.28), 0 0 1px rgba(0,0,0,0.35) !important;
       }
 
       /* hover state */
@@ -213,7 +213,7 @@ export function applyAppVariantToDocument() {
         background: #78a8ea !important;
         color: #1a2230 !important; /* readable blue-safe text */
         border-color: var(--dpg-accent) !important;
-        text-shadow: 0 1px 0 rgba(255,255,255,0.15) !important;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.28), 0 0 1px rgba(0,0,0,0.35) !important;
       }
 
       /* primary buttons (blue ones like Sign in) */
@@ -221,9 +221,8 @@ export function applyAppVariantToDocument() {
         background: var(--dpg-accent-deep) !important;
         color: #1a2230 !important;
         border: 1px solid var(--dpg-accent) !important;
-        text-shadow: 0 1px 0 rgba(255,255,255,0.15) !important;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.28), 0 0 1px rgba(0,0,0,0.35) !important;
       }
-
 
       body[data-app="dpg"] .bf-appnav-link,
       body[data-app="dpg"] .bf-logout {
@@ -240,6 +239,29 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .bf-brand {
         font-size: 0.96rem !important;
         min-width: 0 !important;
+      }
+
+      body[data-app="dpg"] .bf-brand,
+      body[data-app="dpg"] .bf-brand span,
+      body[data-app="dpg"] .bf-brand-org,
+      body[data-app="dpg"] .bf-org-name {
+        color: #f3efe8 !important;
+        text-shadow: 0 1px 0 rgba(0,0,0,0.55), 0 0 1px rgba(255,255,255,0.08) !important;
+      }
+
+      body[data-app="dpg"] .bf-appnav-link.is-active,
+      body[data-app="dpg"] .bf-appnav-link[aria-current="page"],
+      body[data-app="dpg"] .active,
+      body[data-app="dpg"] .is-active,
+      body[data-app="dpg"] [aria-current="page"],
+      body[data-app="dpg"] .selected {
+        text-shadow: 0 1px 0 rgba(255,255,255,0.30), 0 0 1px rgba(0,0,0,0.40) !important;
+      }
+
+      body[data-app="dpg"] h1,
+      body[data-app="dpg"] h2.section-title,
+      body[data-app="dpg"] .section-title {
+        text-shadow: 0 1px 0 rgba(0,0,0,0.55), 0 0 1px rgba(255,255,255,0.08) !important;
       }
 
       body[data-app="dpg"] button:hover,
@@ -426,10 +448,8 @@ export function getBranding() {
   return getAppBrand();
 }
 
-
 export function getAdminBasePath() {
   return "";
 }
-
 
       

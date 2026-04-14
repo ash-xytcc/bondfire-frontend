@@ -19,7 +19,6 @@ function tsPlus(days, hour = 18, minute = 0) {
   return d.getTime();
 }
 
-
 function buildDemoStarterSheet() {
   return JSON.stringify({
     type: "bondfire-sheet",

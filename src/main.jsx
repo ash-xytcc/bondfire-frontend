@@ -5,8 +5,6 @@ import "./index.css";
 import { ThemeProvider } from "./theme.jsx";
 import ThemeToggle from "./components/ThemeToggle.jsx";
 
-
-
 import "./debug/initDebug.js";
 
 // Temporary hard reset of stale PWA/service-worker state.

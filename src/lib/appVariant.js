@@ -202,7 +202,8 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .bf-logout:hover,
       body[data-app="dpg"] .bf-hamburger:hover {
         background: #3a624d !important;
-        color: #1c241f !important;
+        color: #ffffff !important;
+        text-shadow: 0 1px 1px rgba(0,0,0,0.96) !important;
       }
 
       /* active / selected (blue) */

@@ -460,7 +460,7 @@ export default function Drive() {
 
   function openPublicBulletinPage() {
     if (!selectedNote?.bulletinSlug) return;
-    window.open(`${window.location.origin}/#/bulletin/${encodeURIComponent(selectedNote.bulletinSlug)}`, "_blank", "noopener,noreferrer");
+    window.open(`${window.location.origin}/bulletin/${encodeURIComponent(selectedNote.bulletinSlug)}`, "_blank", "noopener,noreferrer");
   }
 
   function beginResize(which) {

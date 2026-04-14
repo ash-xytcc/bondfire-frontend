@@ -12,8 +12,7 @@ function simpleMarkdown(md = "") {
     .replace(/^# (.*)$/gm, "<h1>$1</h1>")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/\n\n+/g, "</p><p>")
-    .replace(/^(?!<h\d>|<\/p>|<p>)([\s\S]*)$/m, "<p>$1");
+    .replace(/\n\n+/g, "</p><p>");
 }
 
 export default function PublicBulletinPost() {
@@ -64,6 +63,7 @@ export default function PublicBulletinPost() {
             background: "rgba(255,255,255,0.9)",
             boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
             lineHeight: 1.75,
+            whiteSpace: "pre-wrap",
           }}
           dangerouslySetInnerHTML={{ __html: simpleMarkdown(post.body || "") }}
         />

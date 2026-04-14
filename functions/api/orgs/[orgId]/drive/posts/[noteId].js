@@ -36,18 +36,21 @@ export async function onRequestGet({ env, request, params }) {
      WHERE org_id = ? AND note_id = ?`
   ).bind(orgId, noteId).first();
 
-  return json({ ok: true, post: row ? {
-    noteId: row.note_id,
-    orgId: row.org_id,
-    slug: row.slug,
-    titleOverride: row.title_override || "",
-    excerpt: row.excerpt || "",
-    status: row.status || "draft",
-    publishedAt: Number(row.published_at || 0),
-    authorName: row.author_name || "",
-    createdAt: Number(row.created_at || 0),
-    updatedAt: Number(row.updated_at || 0),
-  } : null });
+  return json({
+    ok: true,
+    post: row ? {
+      noteId: row.note_id,
+      orgId: row.org_id,
+      slug: row.slug,
+      titleOverride: row.title_override || "",
+      excerpt: row.excerpt || "",
+      status: row.status || "draft",
+      publishedAt: Number(row.published_at || 0),
+      authorName: row.author_name || "",
+      createdAt: Number(row.created_at || 0),
+      updatedAt: Number(row.updated_at || 0),
+    } : null
+  });
 }
 
 export async function onRequestPatch({ env, request, params }) {
@@ -78,9 +81,7 @@ export async function onRequestPatch({ env, request, params }) {
   const excerpt = String(body.excerpt || "").trim() || firstParagraph(note.content || "");
   const status = String(body.status || "published").trim() || "published";
   const authorName = String(body.authorName || "").trim();
-  const publishedAt = status === "published"
-    ? Number(body.publishedAt || t)
-    : null;
+  const publishedAt = status === "published" ? Number(body.publishedAt || t) : null;
 
   const conflict = await db.prepare(
     `SELECT note_id
@@ -122,18 +123,21 @@ export async function onRequestPatch({ env, request, params }) {
      WHERE org_id = ? AND note_id = ?`
   ).bind(orgId, noteId).first();
 
-  return json({ ok: true, post: {
-    noteId: row.note_id,
-    orgId: row.org_id,
-    slug: row.slug,
-    titleOverride: row.title_override || "",
-    excerpt: row.excerpt || "",
-    status: row.status || "draft",
-    publishedAt: Number(row.published_at || 0),
-    authorName: row.author_name || "",
-    createdAt: Number(row.created_at || 0),
-    updatedAt: Number(row.updated_at || 0),
-  }});
+  return json({
+    ok: true,
+    post: {
+      noteId: row.note_id,
+      orgId: row.org_id,
+      slug: row.slug,
+      titleOverride: row.title_override || "",
+      excerpt: row.excerpt || "",
+      status: row.status || "draft",
+      publishedAt: Number(row.published_at || 0),
+      authorName: row.author_name || "",
+      createdAt: Number(row.created_at || 0),
+      updatedAt: Number(row.updated_at || 0),
+    }
+  });
 }
 
 export async function onRequestDelete({ env, request, params }) {
@@ -144,10 +148,7 @@ export async function onRequestDelete({ env, request, params }) {
 
   await ensureDriveSchema(env);
   const db = getDb(env);
-
-  await db.prepare(
-    `DELETE FROM drive_note_posts WHERE org_id = ? AND note_id = ?`
-  ).bind(orgId, noteId).run();
+  await db.prepare(`DELETE FROM drive_note_posts WHERE org_id = ? AND note_id = ?`).bind(orgId, noteId).run();
 
   return json({ ok: true, deleted: true, noteId });
 }

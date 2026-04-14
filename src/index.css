@@ -1696,3 +1696,46 @@ body[data-app="dpg"] .bf-auth-shell{
 body[data-app="dpg"] .bf-auth-shell h1{
   color:var(--text);
 }
+
+/* === READABILITY FIX PASS (DPG) === */
+
+:root {
+  --bg: #0f1512;
+  --panel: #18211d;
+  --text: #e8f0ea;
+  --text-strong: #ffffff;
+}
+
+/* base text */
+body {
+  color: var(--text);
+}
+
+/* headings stronger */
+h1, h2, h3, .dpg-heading {
+  color: var(--text-strong);
+  text-shadow: 0 1px 1px rgba(0,0,0,0.6);
+}
+
+/* normal text readability */
+p, span, div, label {
+  color: var(--text);
+}
+
+/* cards/panels separation */
+.card,
+.bfDashCard,
+.bfDashPanel {
+  background: var(--panel) !important;
+}
+
+/* inputs readable */
+input, textarea, select {
+  color: var(--text-strong);
+}
+
+/* buttons readable */
+button {
+  color: var(--text-strong);
+}
+

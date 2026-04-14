@@ -186,8 +186,8 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .bf-appnav-link,
       body[data-app="dpg"] .bf-logout,
       body[data-app="dpg"] .bf-hamburger {
-        background: #20382d !important;
-        color: #0f1a14 !important; /* dark readable text */
+        background: #315341 !important;
+        color: #1c241f !important; /* warm readable text */
         border: 1px solid var(--dpg-line) !important;
         box-shadow: none !important;
         text-shadow: 0 1px 0 rgba(255,255,255,0.15) !important;
@@ -201,8 +201,8 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .bf-appnav-link:hover,
       body[data-app="dpg"] .bf-logout:hover,
       body[data-app="dpg"] .bf-hamburger:hover {
-        background: #2a4a3b !important;
-        color: #0f1a14 !important;
+        background: #3a624d !important;
+        color: #1c241f !important;
       }
 
       /* active / selected (blue) */
@@ -210,8 +210,8 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .is-active,
       body[data-app="dpg"] [aria-current="page"],
       body[data-app="dpg"] .selected {
-        background: var(--dpg-accent-deep) !important;
-        color: #0f1a24 !important; /* dark blue-safe text */
+        background: #78a8ea !important;
+        color: #1a2230 !important; /* readable blue-safe text */
         border-color: var(--dpg-accent) !important;
         text-shadow: 0 1px 0 rgba(255,255,255,0.15) !important;
       }
@@ -219,7 +219,7 @@ export function applyAppVariantToDocument() {
       /* primary buttons (blue ones like Sign in) */
       body[data-app="dpg"] .btn-red {
         background: var(--dpg-accent-deep) !important;
-        color: #0f1a24 !important;
+        color: #1a2230 !important;
         border: 1px solid var(--dpg-accent) !important;
         text-shadow: 0 1px 0 rgba(255,255,255,0.15) !important;
       }
@@ -249,7 +249,7 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .bf-appnav-link:hover,
       body[data-app="dpg"] .bf-logout:hover,
       body[data-app="dpg"] .bf-hamburger:hover {
-        background: #2a4a3b !important;
+        background: #3a624d !important;
       }
 
       body[data-app="dpg"] .active,
@@ -361,6 +361,23 @@ export function applyAppVariantToDocument() {
       }
 
 `;
+
+    try {
+      const killDarkModeToggle = () => {
+        const nodes = Array.from(document.querySelectorAll("button, a, div"));
+        for (const node of nodes) {
+          const text = String(node.textContent || "").trim().toLowerCase();
+          if (text === "dark mode") {
+            node.style.display = "none";
+            node.setAttribute("aria-hidden", "true");
+          }
+        }
+      };
+      killDarkModeToggle();
+      window.setTimeout(killDarkModeToggle, 50);
+      window.setTimeout(killDarkModeToggle, 250);
+      window.setTimeout(killDarkModeToggle, 1000);
+    } catch {}
   } catch {}
 }
 

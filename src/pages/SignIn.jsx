@@ -36,7 +36,7 @@ export default function SignIn() {
 	? {
 		minHeight: "100vh",
 		background: "var(--dpg-bg, #121715)",
-		color: "var(--dpg-text, #f3efe8)",
+		color: "#1c241f",
 		fontFamily: '"Inter", "Avenir Next", "Segoe UI", sans-serif',
 		display: "flex",
 		alignItems: "center",
@@ -50,39 +50,41 @@ export default function SignIn() {
 		width: "100%",
 		maxWidth: 440,
 		background: "var(--dpg-surface, #1a211e)",
-		border: "1px solid var(--dpg-line, rgba(255,255,255,0.14))",
+		border: "1px solid rgba(255,255,255,0.16)",
 		borderRadius: 20,
 		boxShadow: "0 18px 48px rgba(0,0,0,0.35)",
 		padding: 24,
-		color: "var(--dpg-text, #f3efe8)",
+		color: "#1c241f",
 		fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif',
 		}
 	: {};	
 	const authInputStyle = dpg
 	? {
 		background: "var(--dpg-surface-2, #202825)",
-		border: "1px solid var(--dpg-line, rgba(255,255,255,0.14))",
-		color: "var(--dpg-text, #f3efe8)",
+		border: "1px solid rgba(255,255,255,0.16)",
+		color: "#1c241f",
 		fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif',
 		borderRadius: 14,
+		textShadow: "0 1px 0 rgba(255,255,255,0.18)",
 	}
 	: undefined;
 
 	const authPrimaryButtonStyle = dpg
 	? {
-		background: "#5f94dd",
-		border: "1px solid #7fb2f5",
-		color: "#ffffff",
+		background: "#78a8ea",
+		border: "1px solid #9ac0f2",
+		color: "#1a2230",
 		fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif',
 		borderRadius: 14,
+		textShadow: "0 1px 0 rgba(255,255,255,0.18)",
 	}
 	: undefined;
 
 	const authSecondaryButtonStyle = dpg
 	? {
-		background: "#20382d",
-		border: "1px solid var(--dpg-line, rgba(255,255,255,0.14))",
-		color: "var(--dpg-text, #f3efe8)",
+		background: "#315341",
+		border: "1px solid rgba(255,255,255,0.16)",
+		color: "#1c241f",
 		fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif',
 		borderRadius: 14,
 	}

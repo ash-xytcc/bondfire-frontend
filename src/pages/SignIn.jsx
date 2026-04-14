@@ -35,8 +35,8 @@ export default function SignIn() {
 	const pageStyle = dpg
 	? {
 		minHeight: "100vh",
-		background: "#f4f1ea",
-		color: "#1f2f28",
+		background: "var(--dpg-bg, #121715)",
+		color: "var(--dpg-text, #f3efe8)",
 		fontFamily: '"Inter", "Avenir Next", "Segoe UI", sans-serif',
 		display: "flex",
 		alignItems: "center",
@@ -49,20 +49,20 @@ export default function SignIn() {
 	? {
 		width: "100%",
 		maxWidth: 440,
-		background: "#fbf8f2",
-		border: "1px solid #d8cfbe",
+		background: "var(--dpg-surface, #1a211e)",
+		border: "1px solid var(--dpg-line, rgba(255,255,255,0.14))",
 		borderRadius: 20,
-		boxShadow: "0 10px 30px rgba(38,70,54,0.08)",
+		boxShadow: "0 18px 48px rgba(0,0,0,0.35)",
 		padding: 24,
-		color: "#1f2f28",
+		color: "var(--dpg-text, #f3efe8)",
 		fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif',
 		}
 	: {};	
 	const authInputStyle = dpg
 	? {
-		background: "#fffdf9",
-		border: "1px solid #d8cfbe",
-		color: "#1f2f28",
+		background: "var(--dpg-surface-2, #202825)",
+		border: "1px solid var(--dpg-line, rgba(255,255,255,0.14))",
+		color: "var(--dpg-text, #f3efe8)",
 		fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif',
 		borderRadius: 14,
 	}
@@ -70,9 +70,9 @@ export default function SignIn() {
 
 	const authPrimaryButtonStyle = dpg
 	? {
-		background: "#c98888",
-		border: "1px solid #e3a7a5",
-		color: "#fff8f4",
+		background: "#5f94dd",
+		border: "1px solid #7fb2f5",
+		color: "#ffffff",
 		fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif',
 		borderRadius: 14,
 	}
@@ -80,9 +80,9 @@ export default function SignIn() {
 
 	const authSecondaryButtonStyle = dpg
 	? {
-		background: "#264636",
-		border: "1px solid #3f5f4d",
-		color: "#f7f2e8",
+		background: "#20382d",
+		border: "1px solid var(--dpg-line, rgba(255,255,255,0.14))",
+		color: "var(--dpg-text, #f3efe8)",
 		fontFamily: '"Formulario 1312", Inter, system-ui, Arial, sans-serif',
 		borderRadius: 14,
 	}
@@ -240,8 +240,8 @@ export default function SignIn() {
 		>
       <div className="bf-auth-shell" style={cardStyle}>
         <div className="bf-auth-kicker">{dpg ? "Dual Power West organizer space" : "Bondfire"}</div>
-			<h1 style={dpg ? { marginBottom: 6, fontFamily: '"Fancy Shadow", Georgia, serif', letterSpacing: ".01em" } : { marginBottom: 6 }}>{dpg ? "Welcome to Dual Power West" : "Welcome to Bondfire"}</h1>
-			<p className="helper" style={{ marginTop: 0 }}>
+			<h1 style={dpg ? { marginBottom: 6, fontFamily: '"Fancy Shadow", Georgia, serif', letterSpacing: ".01em", color: "var(--dpg-text, #f3efe8)" } : { marginBottom: 6 }}>{dpg ? "Welcome to Dual Power West" : "Welcome to Bondfire"}</h1>
+			<p className="helper" style={{ marginTop: 0, color: dpg ? "var(--dpg-muted, #b8c1cc)" : undefined }}>
 				{mode === "login"
             ? dpg
               ? "Sign in to the organizer workspace."

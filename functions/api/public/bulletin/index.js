@@ -108,8 +108,4 @@ export const onRequestGet = async ({ env, request }) => {
       { status: 500 }
     );
   }
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> a2c3077f (Wire Drive notes directly to public bulletin)

@@ -187,10 +187,10 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] .bf-logout,
       body[data-app="dpg"] .bf-hamburger {
         background: #315341 !important;
-        color: #1c241f !important; /* warm readable text */
-        border: 1px solid var(--dpg-line) !important;
+        color: #f4f7f5 !important;
+        border: 1px solid rgba(255,255,255,0.18) !important;
         box-shadow: none !important;
-        text-shadow: 0 2px 0 rgba(0,0,0,0.88), 0 0 4px rgba(255,255,255,0.22);
+        text-shadow: 0 1px 1px rgba(0,0,0,0.92) !important;
       }
 
       /* hover state */
@@ -212,9 +212,9 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] [aria-current="page"],
       body[data-app="dpg"] .selected {
         background: #78a8ea !important;
-        color: #1a2230 !important; /* readable blue-safe text */
-        border-color: var(--dpg-accent) !important;
-        text-shadow: 0 2px 0 rgba(0,0,0,0.88), 0 0 4px rgba(255,255,255,0.22);
+        color: #ffffff !important;
+        border-color: rgba(255,255,255,0.35) !important;
+        text-shadow: 0 1px 1px rgba(0,0,0,0.98), 0 0 2px rgba(255,255,255,0.14) !important;
       }
 
       /* primary buttons (blue ones like Sign in) */
@@ -257,6 +257,34 @@ export function applyAppVariantToDocument() {
       body[data-app="dpg"] [aria-current="page"],
       body[data-app="dpg"] .selected {
         text-shadow: 0 2px 0 rgba(0,0,0,0.88), 0 0 4px rgba(255,255,255,0.22);
+      }
+
+
+      body[data-app="dpg"] .bf-appnav-link,
+      body[data-app="dpg"] .bf-logout {
+        color: #f4f7f5 !important;
+        text-shadow: 0 1px 1px rgba(0,0,0,0.92) !important;
+      }
+
+      body[data-app="dpg"] .bf-appnav-link.is-active,
+      body[data-app="dpg"] .bf-appnav-link[aria-current="page"] {
+        color: #ffffff !important;
+        text-shadow: 0 1px 1px rgba(0,0,0,0.98), 0 0 2px rgba(255,255,255,0.14) !important;
+      }
+
+      body[data-app="dpg"] .card button[title],
+      body[data-app="dpg"] .card .btn,
+      body[data-app="dpg"] .card .btn i,
+      body[data-app="dpg"] .card button[title] i,
+      body[data-app="dpg"] .card button[title] span {
+        color: #f4f7f5 !important;
+        text-shadow: 0 1px 1px rgba(0,0,0,0.92) !important;
+      }
+
+      body[data-app="dpg"] .bf-brand,
+      body[data-app="dpg"] .bf-brand span {
+        color: #f4f7f5 !important;
+        text-shadow: 0 1px 1px rgba(0,0,0,0.92) !important;
       }
 
       body[data-app="dpg"] h1,

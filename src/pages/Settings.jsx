@@ -1309,7 +1309,7 @@ React.useEffect(() => {
                   <span className="helper">Accent color</span>
                   <input className="input" type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} />
                 </label>
-                <div className="card" style={{ padding: 12, background: "rgba(255,255,255,0.04)" }}>
+                <div className="card" style={{ padding: 12, background: "var(--panel)" }}>
                   <strong style={{ display: "block", marginBottom: 6 }}>How this works</strong>
                   <div className="helper">1. Turn the public page on.</div>
                   <div className="helper">2. Choose which sections visitors should see.</div>
@@ -1342,7 +1342,7 @@ React.useEffect(() => {
                 <label className="row" style={{ gap: 8, alignItems: "center" }}><input type="checkbox" checked={showGetInvolved} onChange={(e) => setShowGetInvolved(e.target.checked)} /><span>Show the Get Involved buttons</span></label>
               </div>
 
-              <div className="card" style={{ padding: 12, marginTop: 12, background: "rgba(255,255,255,0.04)" }}>
+              <div className="card" style={{ padding: 12, marginTop: 12, background: "var(--panel)" }}>
                 <strong>Stay Connected / Newsletter</strong>
                 <div className="grid" style={{ gap: 8, marginTop: 10 }}>
                   <label className="row" style={{ gap: 8, alignItems: "center" }}>

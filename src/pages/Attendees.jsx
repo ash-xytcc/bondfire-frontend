@@ -190,7 +190,7 @@ export default function Attendees() {
                   style={{
                     textAlign: 'left',
                     background: active ? 'rgba(95,148,221,.18)' : 'rgba(255,255,255,0.04)',
-                    color: '#182018',
+                    color: 'var(--text)',
                     border: 'none',
                     borderBottom: '1px solid var(--border)',
                     borderRadius: 0,

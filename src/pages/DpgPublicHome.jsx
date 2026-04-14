@@ -1,5 +1,7 @@
 import React from 'react';
 import { getBranding } from '../lib/appVariant.js';
+import PublicBulletinIndex from './dpg/PublicBulletinIndex.jsx';
+import PublicBulletinPost from './dpg/PublicBulletinPost.jsx';
 
 const sectionCard = {
   border: '1px solid rgba(17,17,17,0.12)',
@@ -29,6 +31,10 @@ function Sticky({ title, text, rotate = '-1deg', tone = '#fff7a8' }) {
 export default function DpgPublicHome() {
   const brand = getBranding();
   const colors = brand.colors || {};
+  const pathname = typeof window !== "undefined" ? window.location.pathname || "/" : "/";
+
+  if (pathname === "/bulletin" || pathname === "/bulletin/") return <PublicBulletinIndex />;
+  if (/^\/bulletin\/.+/.test(pathname)) return <PublicBulletinPost />;
 
   return (
     <div style={{ minHeight: '100vh', background: colors.paper || '#f7f3ea', color: '#171717' }}>
@@ -79,7 +85,7 @@ export default function DpgPublicHome() {
             <p style={{ marginTop: 0, lineHeight: 1.6 }}>
               Admin is using hash routes for now so we can get moving fast without doing a full routing surgery first.
             </p>
-            <a href={brand.adminSignInHref} style={{ color: '#171717', fontWeight: 800 }}>Go to admin sign-in</a>
+            <div style={{ display: "grid", gap: 10 }}><a href="/bulletin" style={{ color: "#171717", fontWeight: 800 }}>Read public bulletin</a><a href={brand.adminSignInHref} style={{ color: "#171717", fontWeight: 800 }}>Go to admin sign-in</a></div>
           </div>
         </section>
       </div>

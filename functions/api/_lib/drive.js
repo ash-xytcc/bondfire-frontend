@@ -24,6 +24,9 @@ export async function ensureDriveSchema(env) {
     "CREATE INDEX IF NOT EXISTS idx_drive_templates_org ON drive_templates(org_id, updated_at)",
     "CREATE TABLE IF NOT EXISTS drive_file_blobs (file_id TEXT PRIMARY KEY, org_id TEXT NOT NULL, mime TEXT, data_url TEXT, text_content TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
     "CREATE INDEX IF NOT EXISTS idx_drive_file_blobs_org ON drive_file_blobs(org_id, updated_at)",
+    "CREATE TABLE IF NOT EXISTS drive_note_posts (note_id TEXT PRIMARY KEY, org_id TEXT NOT NULL, slug TEXT NOT NULL, title_override TEXT, excerpt TEXT, status TEXT NOT NULL DEFAULT 'draft', published_at INTEGER, author_name TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_drive_note_posts_org_slug ON drive_note_posts(org_id, slug)",
+    "CREATE INDEX IF NOT EXISTS idx_drive_note_posts_org_status_date ON drive_note_posts(org_id, status, published_at)",
   ];
 
   for (const sql of statements) {

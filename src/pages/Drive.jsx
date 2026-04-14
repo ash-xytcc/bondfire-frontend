@@ -222,6 +222,8 @@ export default function Drive() {
   const [loadState, setLoadState] = useState("loading");
   const [loadError, setLoadError] = useState("");
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [postMeta, setPostMeta] = useState(null);
+  const [publishBusy, setPublishBusy] = useState(false);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== "undefined" ? window.innerWidth <= 900 : false));
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -318,6 +320,12 @@ export default function Drive() {
     loadDrive({ preserveSelection: false });
   }, [orgId]);
 
+  function queueDriveRefresh() {
+    window.setTimeout(() => {
+      loadDrive({ preserveSelection: true }).catch(() => {});
+    }, 80);
+  }
+
   useEffect(() => {
     const folderInput = folderInputRef.current;
     if (folderInput) {
@@ -389,6 +397,64 @@ export default function Drive() {
 
   const backlinks = selectedNote ? notes.filter((note) => note.id !== selectedNote.id && parseWikiLinks(note.body).some((link) => link.toLowerCase() === String(selectedNote.title || "").toLowerCase())) : [];
 
+  React.useEffect(() => {
+    let dead = false;
+    if (!orgId || !selectedNote?.id) {
+      setPostMeta(null);
+      return () => { dead = true; };
+    }
+    (async () => {
+      try {
+        const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/posts/${encodeURIComponent(selectedNote.id)}`);
+        if (!dead) setPostMeta(data?.post || null);
+      } catch {
+        if (!dead) setPostMeta(null);
+      }
+    })();
+    return () => { dead = true; };
+  }, [orgId, selectedNote?.id]);
+
+  async function publishSelectedNote() {
+    if (!orgId || !selectedNote?.id) return;
+    const defaultTitle = String(postMeta?.titleOverride || selectedNote.title || "").trim();
+    const titleOverride = window.prompt("Public title override (blank = use note title)", defaultTitle) ?? defaultTitle;
+    const defaultSlugBase = String(postMeta?.slug || titleOverride || selectedNote.title || "post");
+    const defaultSlug = defaultSlugBase.toLowerCase().replace(/['"]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    const slug = window.prompt("Slug", defaultSlug) ?? defaultSlug;
+    if (!String(slug || "").trim()) return;
+    const excerpt = window.prompt("Excerpt (blank = auto)", String(postMeta?.excerpt || "").trim()) ?? String(postMeta?.excerpt || "").trim();
+    setPublishBusy(true);
+    try {
+      const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/posts/${encodeURIComponent(selectedNote.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          titleOverride,
+          excerpt,
+          status: "published",
+        }),
+      });
+      setPostMeta(data?.post || null);
+    } finally {
+      setPublishBusy(false);
+    }
+  }
+
+  async function unpublishSelectedNote() {
+    if (!orgId || !selectedNote?.id) return;
+    if (!window.confirm("Unpublish this public post?")) return;
+    setPublishBusy(true);
+    try {
+      await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/posts/${encodeURIComponent(selectedNote.id)}`, {
+        method: "DELETE",
+      });
+      setPostMeta(null);
+    } finally {
+      setPublishBusy(false);
+    }
+  }
+
   function beginResize(which) {
     resizeMode.current = which;
     document.body.style.userSelect = "none";
@@ -441,6 +507,7 @@ export default function Drive() {
     setTitle(note.title || "untitled");
     setContent(note.body || "");
     setStatus("saved");
+    queueDriveRefresh();
     return note;
   }
   async function createNote() {
@@ -469,6 +536,7 @@ export default function Drive() {
     setTitle(file.name || "untitled");
     setContent(file.textContent || textContent);
     setStatus("saved");
+    queueDriveRefresh();
     return file;
   }
   async function createSpreadsheet() {
@@ -667,6 +735,7 @@ export default function Drive() {
           setNotes((prev) => prev.map((n) => (n.id === selectedId ? res.note : n)));
         }
         setStatus("saved");
+        queueDriveRefresh();
         return;
       }
       if (selectedKind === "file" && fileIsEditable) {
@@ -686,6 +755,7 @@ export default function Drive() {
           setFiles((prev) => prev.map((file) => (file.id === selectedId ? withFileUrls(orgId, { ...file, ...res.file }) : file)));
         }
         setStatus("saved");
+        queueDriveRefresh();
       }
     } catch {
       setStatus("error");
@@ -775,6 +845,7 @@ export default function Drive() {
         previewObjectUrl: localPreviewUrl || undefined,
       });
       setFiles((prev) => [nextFile, ...prev.filter((existing) => existing.id !== tempId && existing.id !== nextFile.id)]);
+      queueDriveRefresh();
       return nextFile;
     } catch (error) {
       setFiles((prev) => prev.filter((existing) => existing.id !== tempId));
@@ -1229,7 +1300,7 @@ export default function Drive() {
 
       {inspectorOpen && selectedNote ? (
         <div style={{ position: "fixed", top: isMobile ? "auto" : (focusMode ? 8 : 94), right: isMobile ? 8 : 8, left: isMobile ? 8 : "auto", bottom: isMobile ? 8 : "auto", width: isMobile ? "auto" : 250, maxHeight: isMobile ? "55vh" : (focusMode ? "calc(100vh - 16px)" : "calc(100vh - 102px)"), overflow: "auto", zIndex: 90 }}>
-          <NoteInspector note={selectedNote} backlinks={backlinks} onOpenNote={selectNote} onClose={() => setInspectorOpen(false)} compact />
+          <NoteInspector note={selectedNote} backlinks={backlinks} onOpenNote={selectNote} onClose={() => setInspectorOpen(false)} postMeta={postMeta} onPublish={publishSelectedNote} onUnpublish={unpublishSelectedNote} publishBusy={publishBusy} compact />
         </div>
       ) : null}
     </div>

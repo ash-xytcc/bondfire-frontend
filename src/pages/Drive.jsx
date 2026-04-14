@@ -44,6 +44,15 @@ function serializeFrontmatter(properties, body) {
   const lines = entries.map((p) => `${String(p.key).trim()}: ${String(p.value || "").trim()}`);
   return `---\n${lines.join("\n")}\n---\n\n${String(body || "")}`;
 }
+function slugifyText(input) {
+  return String(input || "")
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 100) || "untitled";
+}
 function getFileExtension(name) {
   const match = String(name || "").toLowerCase().match(/\.([a-z0-9]+)$/);
   return match ? match[1] : "";
@@ -387,6 +396,71 @@ export default function Drive() {
   }, [notes]);
 
   const backlinks = selectedNote ? notes.filter((note) => note.id !== selectedNote.id && parseWikiLinks(note.body).some((link) => link.toLowerCase() === String(selectedNote.title || "").toLowerCase())) : [];
+
+  async function updateSelectedNoteBulletin(extra = {}) {
+    if (!selectedNote?.id) return;
+    try {
+      const payload = { ...extra };
+      if (selectedId === selectedNote.id && selectedKind === "note") {
+        payload.title = title;
+        payload.body = content;
+      }
+      const res = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/notes/${encodeURIComponent(selectedNote.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+      if (res?.note) {
+        setNotes((prev) => prev.map((n) => (n.id === res.note.id ? res.note : n)));
+        skipNextSave.current = true;
+        setTitle(res.note.title || "untitled");
+        setContent(res.note.body || "");
+        setStatus("saved");
+      }
+    } catch (e) {
+      console.error("Failed to update bulletin metadata for note", e);
+      setStatus("error");
+    }
+  }
+
+  async function saveBulletinDraft() {
+    if (!selectedNote) return;
+    const defaultSlug = selectedNote?.bulletinSlug || slugifyText(title || selectedNote.title || "untitled");
+    const slug = window.prompt("Bulletin slug", defaultSlug);
+    if (!slug) return;
+    const excerpt = window.prompt("Bulletin excerpt", selectedNote?.bulletinExcerpt || "");
+    await updateSelectedNoteBulletin({
+      bulletinSlug: slugifyText(slug),
+      bulletinExcerpt: String(excerpt || ""),
+      bulletinStatus: "draft",
+    });
+  }
+
+  async function publishSelectedNote() {
+    if (!selectedNote) return;
+    const defaultSlug = selectedNote?.bulletinSlug || slugifyText(title || selectedNote.title || "untitled");
+    const slug = window.prompt("Public slug", defaultSlug);
+    if (!slug) return;
+    const excerpt = window.prompt("Public excerpt", selectedNote?.bulletinExcerpt || "");
+    await updateSelectedNoteBulletin({
+      bulletinSlug: slugifyText(slug),
+      bulletinExcerpt: String(excerpt || ""),
+      bulletinStatus: "published",
+    });
+  }
+
+  async function unpublishSelectedNote() {
+    if (!selectedNote) return;
+    const ok = window.confirm(`Remove "${selectedNote.title || "this note"}" from the public bulletin?`);
+    if (!ok) return;
+    await updateSelectedNoteBulletin({
+      bulletinStatus: "",
+    });
+  }
+
+  function openPublicBulletinPage() {
+    if (!selectedNote?.bulletinSlug) return;
+    window.open(`${window.location.origin}/#/bulletin/${encodeURIComponent(selectedNote.bulletinSlug)}`, "_blank", "noopener,noreferrer");
+  }
 
   function beginResize(which) {
     resizeMode.current = which;
@@ -1223,7 +1297,17 @@ export default function Drive() {
 
       {inspectorOpen && selectedNote ? (
         <div style={{ position: "fixed", top: isMobile ? "auto" : (focusMode ? 8 : 94), right: isMobile ? 8 : 8, left: isMobile ? 8 : "auto", bottom: isMobile ? 8 : "auto", width: isMobile ? "auto" : 250, maxHeight: isMobile ? "55vh" : (focusMode ? "calc(100vh - 16px)" : "calc(100vh - 102px)"), overflow: "auto", zIndex: 90 }}>
-          <NoteInspector note={selectedNote} backlinks={backlinks} onOpenNote={selectNote} onClose={() => setInspectorOpen(false)} compact />
+          <NoteInspector
+            note={selectedNote}
+            backlinks={backlinks}
+            onOpenNote={selectNote}
+            onClose={() => setInspectorOpen(false)}
+            onSaveBulletinDraft={saveBulletinDraft}
+            onPublishNote={publishSelectedNote}
+            onUnpublishNote={unpublishSelectedNote}
+            onOpenPublicBulletin={openPublicBulletinPage}
+            compact
+          />
         </div>
       ) : null}
     </div>

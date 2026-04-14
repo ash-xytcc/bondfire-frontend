@@ -30,6 +30,17 @@ export async function ensureDriveSchema(env) {
     await db.prepare(sql).run();
   }
 
+  const noteAlterStatements = [
+    "ALTER TABLE drive_notes ADD COLUMN bulletin_slug TEXT",
+    "ALTER TABLE drive_notes ADD COLUMN bulletin_excerpt TEXT",
+    "ALTER TABLE drive_notes ADD COLUMN bulletin_status TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE drive_notes ADD COLUMN bulletin_published_at TEXT",
+  ];
+
+  for (const sql of noteAlterStatements) {
+    try { await db.prepare(sql).run(); } catch {}
+  }
+
   env.__bfDriveSchemaReady = true;
 }
 
@@ -112,7 +123,7 @@ export async function listDriveTree(env, orgId) {
   const db = getDb(env);
   const [foldersRes, notesRes, filesRes, templatesRes] = await Promise.all([
     db.prepare(`SELECT id, parent_id, name, created_at, updated_at FROM drive_folders WHERE org_id = ? ORDER BY LOWER(name) ASC, created_at ASC`).bind(orgId).all(),
-    db.prepare(`SELECT id, parent_id, title, content, tags, created_at, updated_at FROM drive_notes WHERE org_id = ? ORDER BY updated_at DESC, created_at DESC`).bind(orgId).all(),
+    db.prepare(`SELECT id, parent_id, title, content, tags, bulletin_slug, bulletin_excerpt, bulletin_status, bulletin_published_at, created_at, updated_at FROM drive_notes WHERE org_id = ? ORDER BY updated_at DESC, created_at DESC`).bind(orgId).all(),
     db.prepare(`SELECT id, parent_id, name, mime, size, storage_key, created_at, updated_at FROM drive_files WHERE org_id = ? ORDER BY LOWER(name) ASC, created_at ASC`).bind(orgId).all(),
     db.prepare(`SELECT id, name, title, content, created_at, updated_at FROM drive_templates WHERE org_id = ? ORDER BY updated_at DESC, created_at DESC`).bind(orgId).all(),
   ]);
@@ -131,6 +142,10 @@ export async function listDriveTree(env, orgId) {
       title: row.title || "untitled",
       body: decrypt(row.content || ""),
       tags: parseTags(row.tags),
+      bulletinSlug: row.bulletin_slug || "",
+      bulletinExcerpt: row.bulletin_excerpt || "",
+      bulletinStatus: row.bulletin_status || "",
+      bulletinPublishedAt: row.bulletin_published_at || null,
       createdAt: Number(row.created_at || 0),
       updatedAt: Number(row.updated_at || 0),
     })),

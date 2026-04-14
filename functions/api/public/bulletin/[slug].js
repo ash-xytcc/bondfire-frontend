@@ -1,4 +1,5 @@
 import { ensureBulletinTable, normalizePost } from "../../_lib/bulletin.js";
+import { ensureDriveSchema } from "../../_lib/drive.js";
 
 async function hasColumn(db, tableName, columnName) {
   const rows = await db.prepare(`PRAGMA table_info(${tableName})`).all();
@@ -13,9 +14,7 @@ async function resolveOrg(db, requestedSlug) {
   if (orgsHaveSlug && requestedSlug) {
     const row = await db.prepare(
       `SELECT id, slug, ${orgsHaveName ? "name" : "NULL as name"} FROM orgs WHERE slug = ? LIMIT 1`
-    )
-      .bind(String(requestedSlug))
-      .first();
+    ).bind(String(requestedSlug)).first();
     if (row) return row;
   }
 
@@ -26,9 +25,29 @@ async function resolveOrg(db, requestedSlug) {
   return fallback || null;
 }
 
+function normalizeDriveNotePost(row, orgId) {
+  return {
+    id: `drive:${row.id}`,
+    orgId: String(orgId),
+    title: row.title || "",
+    slug: row.bulletin_slug || "",
+    excerpt: row.bulletin_excerpt || "",
+    body: row.content || "",
+    status: row.bulletin_status || "draft",
+    authorId: null,
+    authorName: "",
+    publishedAt: row.bulletin_published_at || null,
+    createdAt: row.created_at || null,
+    updatedAt: row.updated_at || null,
+    source: "drive_note",
+    docId: row.id,
+  };
+}
+
 export const onRequestGet = async ({ env, request, params }) => {
   try {
     await ensureBulletinTable(env.BF_DB);
+    await ensureDriveSchema(env);
 
     const url = new URL(request.url);
     const requestedSlug = String(url.searchParams.get("org") || "").trim();
@@ -42,16 +61,33 @@ export const onRequestGet = async ({ env, request, params }) => {
       );
     }
 
-    const row = await env.BF_DB.prepare(`
+    const legacy = await env.BF_DB.prepare(`
       SELECT *
       FROM bulletin_posts
       WHERE org_id = ? AND slug = ? AND status = 'published'
       LIMIT 1
-    `)
-      .bind(String(org.id), String(params.slug))
-      .first();
+    `).bind(String(org.id), String(params.slug)).first();
 
-    if (!row) {
+    if (legacy) {
+      return Response.json({
+        ok: true,
+        org: {
+          id: String(org.id),
+          slug: org.slug || requestedSlug || "",
+          name: org.name || "",
+        },
+        post: normalizePost(legacy),
+      });
+    }
+
+    const driveNote = await env.BF_DB.prepare(`
+      SELECT id, title, content, bulletin_slug, bulletin_excerpt, bulletin_status, bulletin_published_at, created_at, updated_at
+      FROM drive_notes
+      WHERE org_id = ? AND bulletin_slug = ? AND bulletin_status = 'published'
+      LIMIT 1
+    `).bind(String(org.id), String(params.slug)).first();
+
+    if (!driveNote) {
       return Response.json(
         { ok: false, error: "NOT_FOUND", message: "Post not found" },
         { status: 404 }
@@ -65,7 +101,7 @@ export const onRequestGet = async ({ env, request, params }) => {
         slug: org.slug || requestedSlug || "",
         name: org.name || "",
       },
-      post: normalizePost(row),
+      post: normalizeDriveNotePost(driveNote, org.id),
     });
   } catch (err) {
     return Response.json(

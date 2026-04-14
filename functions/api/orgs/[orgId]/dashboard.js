@@ -23,7 +23,6 @@ async function safeAll(env, sql, binds = [], fallback = []) {
   }
 }
 
-
 async function ensureInventoryTable(db) {
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS inventory (
@@ -48,7 +47,6 @@ async function ensureInventoryTable(db) {
   try { await db.prepare("ALTER TABLE inventory ADD COLUMN encrypted_blob TEXT").run(); } catch {}
   try { await db.prepare("ALTER TABLE inventory ADD COLUMN key_version INTEGER").run(); } catch {}
 }
-
 
 async function ensurePledgesTable(db) {
   await db.prepare(`
@@ -78,9 +76,6 @@ export async function onRequestGet({ env, request, params }) {
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!a.ok) return a.resp;
-
-  // The dashboard should never hard-crash because one table is missing
-  // (migrations happen, humans forget things, etc.).
 
   const peopleCount = await safeFirst(
     env,
@@ -154,7 +149,7 @@ export async function onRequestGet({ env, request, params }) {
 
   const inventory = await safeAll(
     env,
-    `SELECT i.id, i.name, i.qty, i.unit, i.category, i.encrypted_blob, i.key_version, ip.par
+    `SELECT i.id, i.name, i.quantity AS qty, i.unit, i.category, i.encrypted_blob, i.key_version, ip.par
      FROM inventory i
      LEFT JOIN inventory_pars ip
        ON ip.org_id = i.org_id AND ip.inventory_id = i.id
@@ -164,7 +159,6 @@ export async function onRequestGet({ env, request, params }) {
     []
   );
 
-  
   const newsletterCount = await safeFirst(
     env,
     "SELECT COUNT(*) as c FROM newsletter_subscribers WHERE org_id = ?",

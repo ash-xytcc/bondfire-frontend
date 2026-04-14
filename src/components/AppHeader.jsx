@@ -78,26 +78,79 @@ const Brand = ({ orgId, logoSrc }) => {
     };
   }, [inferredOrgId]);
 
-  const label = orgName || "Org";
+  const appMode = getAppMode();
+  const brandLabel = appMode === "red-harbor" ? "IWW RED HARBOR" : "Bondfire";
+  const secondaryLabel = String(orgName || "").trim();
+  const showSecondary =
+    inferredOrgId &&
+    secondaryLabel &&
+    secondaryLabel.toLowerCase() !== brandLabel.toLowerCase();
+
   const imgSrc = logoSrc || "/red-harbor-logo.png";
 
   return (
-    <div className="bf-brand-wrap">
-      <Link className="bf-brand" to={homeHref}>
-        <img src={imgSrc} alt="Red Harbor logo" className="bf-org-logo" />
-        <span>{label}</span>
+    <div
+      className="bf-brand-wrap"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        minWidth: 0,
+        maxWidth: "100%",
+        overflow: "hidden",
+      }}
+    >
+      <Link
+        className="bf-brand"
+        to={homeHref}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 10,
+          minWidth: 0,
+          maxWidth: "100%",
+          overflow: "hidden",
+          flex: "0 1 auto",
+        }}
+      >
+        <img
+          src={imgSrc}
+          alt="Red Harbor logo"
+          className="bf-org-logo"
+          style={{ flex: "0 0 auto" }}
+        />
+        <span
+          style={{
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            display: "inline-block",
+            maxWidth: "100%",
+          }}
+        >
+          {brandLabel}
+        </span>
       </Link>
 
-      {inferredOrgId ? (
+      {showSecondary ? (
         <span
           className="bf-brand-org"
-          title={label}
-          style={{ display: "inline-flex", alignItems: "center", gap: 10, minWidth: 0 }}
+          title={secondaryLabel}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            minWidth: 0,
+            maxWidth: 220,
+            overflow: "hidden",
+            flex: "0 1 auto",
+          }}
         >
           {orgLogo ? (
             <img
               src={orgLogo}
-              alt={`${label} logo`}
+              alt={`${secondaryLabel} logo`}
               className="bf-org-logo"
               style={{
                 width: 26,
@@ -115,14 +168,15 @@ const Brand = ({ orgId, logoSrc }) => {
           <span
             className="bf-org-name"
             style={{
+              minWidth: 0,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               display: "inline-block",
-              maxWidth: 220,
+              maxWidth: "100%",
             }}
           >
-            {label}
+            {secondaryLabel}
           </span>
         </span>
       ) : null}
@@ -144,13 +198,13 @@ function OrgNav({ variant = "desktop" }) {
     : {
         display: "flex",
         alignItems: "center",
-        gap: 6,
+        justifyContent: "flex-end",
+        gap: 4,
         flexWrap: "nowrap",
-        overflowX: "auto",
-        overflowY: "hidden",
+        overflow: "hidden",
         whiteSpace: "nowrap",
         minWidth: 0,
-        scrollbarWidth: "thin",
+        width: "100%",
       };
 
   const drawerLinkStyle = isDrawer
@@ -219,11 +273,16 @@ function OrgNav({ variant = "desktop" }) {
                   border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
                 }
               : {
-                  fontSize: 13,
+                  fontSize: 12,
                   lineHeight: 1.1,
-                  padding: "8px 12px",
+                  padding: "8px 10px",
                   borderRadius: 10,
-                  flex: "0 0 auto",
+                  flex: "0 1 auto",
+                  minWidth: 0,
+                  maxWidth: 112,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }
           }
           className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
@@ -299,7 +358,14 @@ export default function AppHeader({ onLogout, showLogout }) {
   return (
     <>
       <header className="bf-appHeader">
-        <div className="bf-appHeader-left" style={{ minWidth: 0, flex: "0 0 auto" }}>
+        <div
+          className="bf-appHeader-left"
+          style={{
+            minWidth: 0,
+            flex: "1 1 auto",
+            overflow: "hidden",
+          }}
+        >
           <Brand />
         </div>
 
@@ -308,14 +374,21 @@ export default function AppHeader({ onLogout, showLogout }) {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
+            gap: 8,
             minWidth: 0,
-            flex: "1 1 auto",
+            flex: "1 1 0",
             justifyContent: "flex-end",
             overflow: "hidden",
           }}
         >
-          <div className="bf-nav-desktop" style={{ minWidth: 0, flex: "1 1 auto" }}>
+          <div
+            className="bf-nav-desktop"
+            style={{
+              minWidth: 0,
+              flex: "1 1 auto",
+              overflow: "hidden",
+            }}
+          >
             <OrgNav variant="desktop" />
           </div>
 
@@ -325,6 +398,7 @@ export default function AppHeader({ onLogout, showLogout }) {
               type="button"
               onClick={onLogout}
               title="Logout"
+              style={{ flex: "0 0 auto" }}
             >
               Logout
             </button>
@@ -336,6 +410,7 @@ export default function AppHeader({ onLogout, showLogout }) {
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen ? "true" : "false"}
             onClick={() => setMobileOpen((v) => !v)}
+            style={{ flex: "0 0 auto" }}
           >
             <span aria-hidden="true">☰</span>
           </button>

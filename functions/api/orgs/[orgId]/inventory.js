@@ -1,6 +1,7 @@
 import { json, bad, now, uuid } from "../../_lib/http.js";
 import { requireOrgRole } from "../../_lib/auth.js";
 import { logActivity } from "../../_lib/activity.js";
+
 async function getOrgCryptoKeyVersion(db, orgId) {
 	// org_crypto historically used either key_version or version.
 	try {
@@ -27,11 +28,8 @@ async function ensureInventoryParsTable(db) {
 }
 
 // Inventory items for an org.
-// Columns expected:
-// id, org_id, name, qty, unit, category, location, notes,
-// encrypted_notes, encrypted_blob, key_version,
-// is_public, created_at, updated_at
-
+// Frontend expects `qty`, but this branch schema uses `quantity`.
+// Always alias `quantity AS qty` in SELECTs and write to `quantity`.
 
 async function ensureInventoryTable(db) {
   await db.prepare(`
@@ -66,7 +64,7 @@ export async function onRequestGet({ env, request, params }) {
 
   await ensureInventoryParsTable(env.BF_DB);
   const res = await env.BF_DB.prepare(
-    `SELECT i.id, i.name, i.qty, i.unit, i.category, i.location, i.notes,
+    `SELECT i.id, i.name, i.quantity AS qty, i.unit, i.category, i.location, i.notes,
             i.encrypted_notes, i.encrypted_blob, i.key_version,
             i.is_public, i.created_at, i.updated_at,
             ip.par
@@ -97,12 +95,11 @@ export async function onRequestPost({ env, request, params }) {
   const t = now();
   const qty = Number.isFinite(Number(body.qty)) ? Number(body.qty) : 0;
 
-  // If client provided ciphertext, stamp the org's current key version.
   const keyVersion = body.encrypted_blob ? await getOrgCryptoKeyVersion(env.BF_DB, orgId) : null;
 
   await env.BF_DB.prepare(
     `INSERT INTO inventory (
-        id, org_id, name, qty, unit, category, location, notes,
+        id, org_id, name, quantity, unit, category, location, notes,
         encrypted_notes, encrypted_blob, key_version,
         is_public, created_at, updated_at
      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
@@ -116,9 +113,9 @@ export async function onRequestPost({ env, request, params }) {
       String(body.category || ""),
       String(body.location || ""),
       String(body.notes || ""),
-		body.encrypted_notes ?? null,
-		body.encrypted_blob ?? null,
-		keyVersion,
+      body.encrypted_notes ?? null,
+      body.encrypted_blob ?? null,
+      keyVersion,
       body.is_public ? 1 : 0,
       t,
       t
@@ -137,17 +134,17 @@ export async function onRequestPost({ env, request, params }) {
 
   try {
     await logActivity(env, {
-    orgId,
-    kind: "inventory.created",
-    message: `inventory added: ${name}`,
-    actorUserId: a?.user?.sub || null,
-  });
+      orgId,
+      kind: "inventory.created",
+      message: `inventory added: ${name}`,
+      actorUserId: a?.user?.sub || null,
+    });
   } catch (e) {
     console.error("ACTIVITY_FAIL", e);
   }
 
-    const created = await env.BF_DB.prepare(
-    `SELECT i.id, i.org_id, i.name, i.qty, i.unit, i.category, i.location, i.notes,
+  const created = await env.BF_DB.prepare(
+    `SELECT i.id, i.org_id, i.name, i.quantity AS qty, i.unit, i.category, i.location, i.notes,
             i.encrypted_notes, i.encrypted_blob, i.key_version,
             i.is_public, i.created_at, i.updated_at,
             ip.par
@@ -181,13 +178,12 @@ export async function onRequestPut({ env, request, params }) {
       ? Number(body.qty)
       : 0;
 
-  // If client provided ciphertext, stamp the org's current key version.
   const keyVersion = body.encrypted_blob ? await getOrgCryptoKeyVersion(env.BF_DB, orgId) : null;
 
   await env.BF_DB.prepare(
     `UPDATE inventory
      SET name = COALESCE(?, name),
-         qty = COALESCE(?, qty),
+         quantity = COALESCE(?, quantity),
          unit = COALESCE(?, unit),
          category = COALESCE(?, category),
          location = COALESCE(?, location),
@@ -206,9 +202,9 @@ export async function onRequestPut({ env, request, params }) {
       body.category ?? null,
       body.location ?? null,
       body.notes ?? null,
-		body.encrypted_notes ?? null,
-		body.encrypted_blob ?? null,
-		keyVersion,
+      body.encrypted_notes ?? null,
+      body.encrypted_blob ?? null,
+      keyVersion,
       isPublic,
       now(),
       id,
@@ -235,17 +231,17 @@ export async function onRequestPut({ env, request, params }) {
 
   try {
     await logActivity(env, {
-    orgId,
-    kind: "inventory.updated",
-    message: `inventory updated: ${id}`,
-    actorUserId: a?.user?.sub || null,
-  });
+      orgId,
+      kind: "inventory.updated",
+      message: `inventory updated: ${id}`,
+      actorUserId: a?.user?.sub || null,
+    });
   } catch (e) {
     console.error("ACTIVITY_FAIL", e);
   }
 
   const item = await env.BF_DB.prepare(
-    `SELECT i.id, i.org_id, i.name, i.qty, i.unit, i.category, i.location, i.notes,
+    `SELECT i.id, i.org_id, i.name, i.quantity AS qty, i.unit, i.category, i.location, i.notes,
             i.encrypted_notes, i.encrypted_blob, i.key_version,
             i.is_public, i.created_at, i.updated_at,
             ip.par
@@ -267,31 +263,30 @@ export async function onRequestDelete({ env, request, params }) {
   const id = url.searchParams.get("id");
   if (!id) return bad(400, "MISSING_ID");
 
-const prev = await env.BF_DB.prepare(
-  "SELECT name FROM inventory WHERE id = ? AND org_id = ?"
-).bind(id, orgId).first();
+  const prev = await env.BF_DB.prepare(
+    "SELECT name FROM inventory WHERE id = ? AND org_id = ?"
+  ).bind(id, orgId).first();
 
-const shortId = (x) =>
-  typeof x === "string" && x.length > 12 ? `${x.slice(0, 8)}…${x.slice(-4)}` : (x || "");
+  const shortId = (x) =>
+    typeof x === "string" && x.length > 12 ? `${x.slice(0, 8)}…${x.slice(-4)}` : (x || "");
 
-const name = String(prev?.name || "").trim();
-const label = name || shortId(id);
+  const name = String(prev?.name || "").trim();
+  const label = name || shortId(id);
 
-await ensureInventoryParsTable(env.BF_DB);
-await env.BF_DB.prepare("DELETE FROM inventory_pars WHERE org_id = ? AND inventory_id = ?")
-  .bind(orgId, id)
-  .run();
-await env.BF_DB.prepare("DELETE FROM inventory WHERE id = ? AND org_id = ?")
-  .bind(id, orgId)
-  .run();
+  await ensureInventoryParsTable(env.BF_DB);
+  await env.BF_DB.prepare("DELETE FROM inventory_pars WHERE org_id = ? AND inventory_id = ?")
+    .bind(orgId, id)
+    .run();
+  await env.BF_DB.prepare("DELETE FROM inventory WHERE id = ? AND org_id = ?")
+    .bind(id, orgId)
+    .run();
 
-logActivity(env, {
-  orgId,
-  kind: "inventory.deleted",
-  message: `Inventory removed: ${label} (${shortId(id)})`,
-  actorUserId: a?.user?.sub || a?.user?.id || null,
-}).catch(() => {});
-
+  logActivity(env, {
+    orgId,
+    kind: "inventory.deleted",
+    message: `Inventory removed: ${label} (${shortId(id)})`,
+    actorUserId: a?.user?.sub || a?.user?.id || null,
+  }).catch(() => {});
 
   return json({ ok: true });
 }

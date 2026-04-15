@@ -1,5 +1,5 @@
 import React from 'react';
-import { getBranding } from '../lib/appVariant.js';
+import { applyAppVariantToDocument, getBranding } from '../lib/appVariant.js';
 import { getDpgPublicTheme, useDpgPublicSiteConfig } from '../lib/dpgPublicSite.js';
 import PublicBulletinIndex from './dpg/PublicBulletinIndex.jsx';
 import PublicBulletinPost from './dpg/PublicBulletinPost.jsx';
@@ -28,6 +28,14 @@ export default function DpgPublicHome() {
   const { loading, config } = useDpgPublicSiteConfig();
   const theme = getDpgPublicTheme(config);
   const dark = String(config?.theme_mode || "light") === "dark";
+
+  React.useEffect(() => {
+    try {
+      document.documentElement.dataset.app = "dpg";
+      document.body.dataset.app = "dpg";
+    } catch {}
+    applyAppVariantToDocument();
+  }, []);
 
   if (pathname === "/bulletin" || pathname === "/bulletin/") return <PublicBulletinIndex />;
   if (/^\/bulletin\/.+/.test(pathname)) return <PublicBulletinPost />;

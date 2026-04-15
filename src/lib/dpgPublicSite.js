@@ -1,6 +1,8 @@
 import React from "react";
 
 const DEFAULTS = {
+  theme_mode: "dark",
+  accent_color: "#385032",
   hero_eyebrow: "Dual Power West",
   hero_title: "Build it together before we even arrive.",
   hero_body:
@@ -94,7 +96,7 @@ export function useDpgPublicSiteConfig() {
 
 export function getDpgPublicTheme(pub = {}) {
   const accent = String(pub?.accent_color || "#385032");
-  const dark = String(pub?.theme_mode || "light") === "dark";
+  const dark = true;
 
   return {
     page: {

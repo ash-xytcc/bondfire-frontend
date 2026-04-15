@@ -1,9 +1,18 @@
 import React from "react";
 import { getDpgPublicTheme, useDpgPublicSiteConfig } from "../../lib/dpgPublicSite.js";
+import { applyAppVariantToDocument } from "../../lib/appVariant.js";
 
 export default function PublicBulletinPost() {
   const { config } = useDpgPublicSiteConfig();
   const theme = getDpgPublicTheme(config);
+  React.useEffect(() => {
+    try {
+      document.documentElement.dataset.app = "dpg";
+      document.body.dataset.app = "dpg";
+    } catch {}
+    applyAppVariantToDocument();
+  }, []);
+
 
   const slug = React.useMemo(() => {
     const parts = String(window.location.pathname || "/").split("/").filter(Boolean);

@@ -89,6 +89,10 @@ export default function DpgPublicHome() {
                   margin: 0,
                   color: '#f3efe8',
                   fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+                  textShadow: 'none',
+                  filter: 'none',
+                  WebkitFontSmoothing: 'antialiased',
+                  MozOsxFontSmoothing: 'grayscale',
                 }}
               >
                 {config?.hero_title || 'Build it together before we even arrive.'}
@@ -104,12 +108,16 @@ export default function DpgPublicHome() {
           </button>
         </header>
 
-        <section style={{ ...theme.card, marginBottom: 22, color: '#f3efe8' }}>
-          <p style={{ fontSize: 18, lineHeight: 1.6, margin: 0, maxWidth: 860, color: '#f3efe8' }}>
-            {config?.hero_body || ''}
-          </p>
-          {loading ? <div style={{ marginTop: 10, opacity: 0.7, fontSize: 13, color: '#d7ddd8' }}>Loading public config…</div> : null}
-        </section>
+        {(loading || String(config?.hero_body || '').trim()) ? (
+          <section style={{ ...theme.card, marginBottom: 22, color: '#f3efe8' }}>
+            {String(config?.hero_body || '').trim() ? (
+              <p style={{ fontSize: 18, lineHeight: 1.6, margin: 0, maxWidth: 860, color: '#f3efe8' }}>
+                {config?.hero_body || ''}
+              </p>
+            ) : null}
+            {loading ? <div style={{ marginTop: 10, opacity: 0.7, fontSize: 13, color: '#d7ddd8' }}>Loading public config…</div> : null}
+          </section>
+        ) : null}
 
         {stickyCards.length ? (
           <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18, marginBottom: 26 }}>

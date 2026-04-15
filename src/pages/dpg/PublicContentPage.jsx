@@ -147,7 +147,49 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
           </div>
         ) : null}
 
+        <style>{`
+          .dpg-public-content,
+          .dpg-public-content p,
+          .dpg-public-content li,
+          .dpg-public-content blockquote,
+          .dpg-public-content strong,
+          .dpg-public-content em,
+          .dpg-public-content span,
+          .dpg-public-content a {
+            color: #f3efe8;
+          }
+
+          .dpg-public-content h1,
+          .dpg-public-content h2,
+          .dpg-public-content h3,
+          .dpg-public-content h4,
+          .dpg-public-content h5,
+          .dpg-public-content h6 {
+            color: #f3efe8;
+            font-family: Inter, system-ui, Arial, sans-serif;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-top: 1.25em;
+          }
+
+          .dpg-public-content a {
+            text-decoration: underline;
+          }
+
+          .dpg-public-content ul,
+          .dpg-public-content ol {
+            padding-left: 1.4em;
+          }
+
+          .dpg-public-content blockquote {
+            border-left: 3px solid rgba(255,255,255,0.2);
+            padding-left: 1em;
+            margin-left: 0;
+          }
+        `}</style>
+
         <article
+          className="dpg-public-content"
           style={{
             ...theme.articleCard,
             color: "#f3efe8",

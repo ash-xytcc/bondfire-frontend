@@ -198,7 +198,19 @@ export default function DpgPublicHome() {
 
   const stickyCards = Array.isArray(config?.sticky_cards) ? config.sticky_cards.slice(0, 4) : [];
   const progressItems = Array.isArray(config?.progress_items) ? config.progress_items : [];
-  const navLinks = Array.isArray(config?.nav_links) && config.nav_links.length ? config.nav_links : [];
+  const navLinks =
+    Array.isArray(config?.nav_links) && config.nav_links.length
+      ? config.nav_links
+      : [
+          { label: "Home", url: "/" },
+          { label: "About", url: "/about" },
+          { label: "FAQ", url: "/faq" },
+          { label: "Volunteer", url: "/volunteer" },
+          { label: "Donate", url: "/donate" },
+          { label: "Press", url: "/press" },
+          { label: "DPG Shares", url: "/bulletin" },
+          { label: "RSVP", url: "/rsvp" },
+        ];
   const heroBackground = String(config?.hero_background_url || '').trim();
 
   const selectedSlugs = Array.isArray(config?.featured_post_slugs)

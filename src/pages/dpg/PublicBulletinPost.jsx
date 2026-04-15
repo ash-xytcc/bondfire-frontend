@@ -1,18 +1,10 @@
 import React from "react";
-import { getDpgPublicTheme, useDpgPublicSiteConfig } from "../../lib/dpgPublicSite.js";
 import { applyAppVariantToDocument } from "../../lib/appVariant.js";
+import { getDpgPublicTheme, useDpgPublicSiteConfig } from "../../lib/dpgPublicSite.js";
 
 export default function PublicBulletinPost() {
   const { config } = useDpgPublicSiteConfig();
   const theme = getDpgPublicTheme(config);
-  React.useEffect(() => {
-    try {
-      document.documentElement.dataset.app = "dpg";
-      document.body.dataset.app = "dpg";
-    } catch {}
-    applyAppVariantToDocument();
-  }, []);
-
 
   const slug = React.useMemo(() => {
     const parts = String(window.location.pathname || "/").split("/").filter(Boolean);
@@ -20,6 +12,14 @@ export default function PublicBulletinPost() {
   }, []);
 
   const [state, setState] = React.useState({ loading: true, post: null, error: "" });
+
+  React.useEffect(() => {
+    try {
+      document.documentElement.dataset.app = "dpg";
+      document.body.dataset.app = "dpg";
+    } catch {}
+    applyAppVariantToDocument();
+  }, []);
 
   React.useEffect(() => {
     let dead = false;
@@ -38,18 +38,40 @@ export default function PublicBulletinPost() {
     return () => { dead = true; };
   }, [slug]);
 
-  if (state.loading) return <div style={{ padding: 24 }}>Loading…</div>;
-  if (state.error) return <div style={{ padding: 24, color: "crimson" }}>{state.error}</div>;
+  if (state.loading) {
+    return (
+      <div style={{ ...theme.page, padding: 24, color: "#d7ddd8", fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}>
+        Loading…
+      </div>
+    );
+  }
+
+  if (state.error) {
+    return (
+      <div style={{ ...theme.page, padding: 24, color: "crimson", fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}>
+        {state.error}
+      </div>
+    );
+  }
 
   const post = state.post;
   return (
-    <div style={theme.page}>
+    <div style={{ ...theme.page, fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}>
       <div style={{ maxWidth: 820, margin: "0 auto", padding: "32px 20px 64px" }}>
-        <a href="/bulletin" style={theme.link}>← Back to bulletin</a>
+        <a href="/bulletin" style={{ ...theme.link, fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}>← Back to bulletin</a>
         <div style={{ marginTop: 18, fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", opacity: 0.8, color: "#d7ddd8" }}>
           {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ""}
         </div>
-        <h1 className="dpg-heading" style={{ margin: "10px 0 14px", fontSize: "clamp(2rem, 5vw, 4rem)", lineHeight: 0.98, color: "#f3efe8" }}>
+        <h1
+          className="dpg-heading"
+          style={{
+            margin: "10px 0 14px",
+            fontSize: "clamp(2rem, 5vw, 4rem)",
+            lineHeight: 0.98,
+            color: "#f3efe8",
+            fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+          }}
+        >
           {post.title}
         </h1>
         {post.excerpt ? <p style={{ margin: "0 0 24px", lineHeight: 1.7, fontSize: 18, color: "#f3efe8" }}>{post.excerpt}</p> : null}

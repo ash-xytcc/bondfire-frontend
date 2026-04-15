@@ -1370,9 +1370,7 @@ Outreach`} />
                 {msg && <span className={msg.includes("Saved") ? "success" : "error"}>{msg}</span>}
               </div>
               <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                {true && slug ? (
-                  <a className="btn" href={`/#/p/${encodeURIComponent(slug)}`} target="_blank" rel="noreferrer">Open live preview</a>
-                ) : null}
+
                 <button className="btn-red" type="submit">Save</button>
               </div>
             </div>

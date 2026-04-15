@@ -343,6 +343,18 @@ function AdminApp() {
 }
 
 export default function App() {
+
+  const browserPath = typeof window !== "undefined" ? (window.location.pathname || "/") : "/";
+  const isDpgPublicBrowserPath =
+    browserPath === "/" ||
+    browserPath === "/bulletin" ||
+    browserPath === "/bulletin/" ||
+    /^\/bulletin\/.+/.test(browserPath);
+
+  if (typeof isDpgVariant === "function" && isDpgVariant() && isDpgPublicBrowserPath) {
+    return <DpgPublicHome />;
+  }
+
 	const variant = getAppVariant();
 
 	if (variant === "dpg") {

@@ -406,6 +406,9 @@ export default function Settings() {
   const [primaryActionItems, setPrimaryActionItems] = React.useState([]);
   const [getInvolvedActionItems, setGetInvolvedActionItems] = React.useState([]);
   const [msg, setMsg] = React.useState("");
+  const [heroBackgroundUrl, setHeroBackgroundUrl] = React.useState("");
+  const [featuredPostSlugsText, setFeaturedPostSlugsText] = React.useState("");
+  const [navLinksText, setNavLinksText] = React.useState("");
   const [publicInboxItems, setPublicInboxItems] = React.useState([]);
   const [publicInboxBusy, setPublicInboxBusy] = React.useState(false);
   const [publicInboxMsg, setPublicInboxMsg] = React.useState("");
@@ -565,6 +568,13 @@ const loadPublic = React.useCallback(async () => {
     setWebsiteUrl(String(pub.website_link?.url || ""));
     setMeetingRsvpUrl(String(pub.meeting_rsvp_url || ""));
     setWhatWeDo(Array.isArray(pub.what_we_do) ? pub.what_we_do.join("\n") : Array.isArray(pub.features) ? pub.features.join("\n") : "");
+    setHeroBackgroundUrl(String(pub.hero_background_url || ""));
+    setFeaturedPostSlugsText(Array.isArray(pub.featured_post_slugs) ? pub.featured_post_slugs.join("\n") : "");
+    setNavLinksText(
+      Array.isArray(pub.nav_links)
+        ? pub.nav_links.map((item) => [item?.label || "", item?.url || ""].join(" | ")).join("\n")
+        : ""
+    );
     setPrimaryActionItems(toActionEditorItems(pub.primary_actions, primaryActionDefaults));
     setGetInvolvedActionItems(toActionEditorItems(pub.get_involved_links, getInvolvedDefaults));
   } catch (e) {
@@ -650,6 +660,21 @@ React.useEffect(() => {
         what_we_do: (whatWeDo || "").split("\n").map((s) => s.trim()).filter(Boolean),
         primary_actions: fromActionEditorItems(primaryActionItems, 3),
         get_involved_links: fromActionEditorItems(getInvolvedActionItems, 4),
+        hero_background_url: (heroBackgroundUrl || "").trim(),
+        featured_post_slugs: (featuredPostSlugsText || "").split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 4),
+        nav_links: (navLinksText || "")
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .slice(0, 12)
+          .map((line) => {
+            const parts = line.split("|").map((x) => x.trim());
+            return {
+              label: parts[0] || "",
+              url: parts[1] || "",
+            };
+          })
+          .filter((item) => item.label && item.url),
       };
 
       const r = await authFetch(
@@ -670,6 +695,13 @@ React.useEffect(() => {
       setWhatWeDo(Array.isArray(pub.what_we_do) ? pub.what_we_do.join("\n") : whatWeDo);
       setPrimaryActionItems(toActionEditorItems(pub.primary_actions || payload.primary_actions, primaryActionDefaults));
       setGetInvolvedActionItems(toActionEditorItems(pub.get_involved_links || payload.get_involved_links, getInvolvedDefaults));
+      setHeroBackgroundUrl(String(pub.hero_background_url ?? payload.hero_background_url ?? ""));
+      setFeaturedPostSlugsText(Array.isArray(pub.featured_post_slugs) ? pub.featured_post_slugs.join("\n") : payload.featured_post_slugs.join("\n"));
+      setNavLinksText(
+        Array.isArray(pub.nav_links)
+          ? pub.nav_links.map((item) => [item?.label || "", item?.url || ""].join(" | ")).join("\n")
+          : payload.nav_links.map((item) => [item?.label || "", item?.url || ""].join(" | ")).join("\n")
+      );
       setEnabled(!!pub.enabled);
       setPublicNewsletterEnabled(!!pub.newsletter_enabled);
       setPublicPledgesEnabled(pub.pledges_enabled !== false);
@@ -1368,6 +1400,38 @@ React.useEffect(() => {
 Community Meals
 Outreach`} />
               </label>
+
+              <label className="grid" style={{ gap: 6, marginTop: 12 }}>
+                <span className="helper">Hero background image URL</span>
+                <input
+                  className="input"
+                  value={heroBackgroundUrl}
+                  onChange={(e) => setHeroBackgroundUrl(e.target.value)}
+                  placeholder="https://..."
+                />
+              </label>
+
+              <label className="grid" style={{ gap: 6, marginTop: 12 }}>
+                <span className="helper">Featured post slugs, one per line</span>
+                <textarea
+                  className="textarea"
+                  rows={4}
+                  value={featuredPostSlugsText}
+                  onChange={(e) => setFeaturedPostSlugsText(e.target.value)}
+                />
+              </label>
+
+              <label className="grid" style={{ gap: 6, marginTop: 12 }}>
+                <span className="helper">Top nav links, one per line</span>
+                <textarea
+                  className="textarea"
+                  rows={6}
+                  value={navLinksText}
+                  onChange={(e) => setNavLinksText(e.target.value)}
+                  placeholder="Home | /"
+                />
+              </label>
+
             </div>
 
             <div className="card" style={{ padding: 12 }}>

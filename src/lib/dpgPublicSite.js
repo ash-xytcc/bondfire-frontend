@@ -14,6 +14,18 @@ const DEFAULTS = {
   bulletin_intro:
     "Updates, logistics, and public notes from Dual Power West.",
   home_featured_bulletin_enabled: true,
+  hero_background_url: "",
+  featured_post_slugs: [],
+  nav_links: [
+    { label: "Home", url: "/" },
+    { label: "About", url: "/about" },
+    { label: "FAQ", url: "/faq" },
+    { label: "Volunteer", url: "/volunteer" },
+    { label: "Donate", url: "/donate" },
+    { label: "Press", url: "/press" },
+    { label: "DPG Shares", url: "/bulletin" },
+    { label: "RSVP", url: "/rsvp" }
+  ],
   sticky_cards: [
     {
       title: "RSVP first",

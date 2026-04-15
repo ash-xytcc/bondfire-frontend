@@ -48,6 +48,9 @@ export async function onRequestGet({ env, request, params }) {
     home_featured_bulletin_enabled: cfg?.home_featured_bulletin_enabled !== false,
     progress_items: Array.isArray(cfg?.progress_items) ? cfg.progress_items : [],
     sticky_cards: Array.isArray(cfg?.sticky_cards) ? cfg.sticky_cards : [],
+    hero_background_url: String(cfg?.hero_background_url || ""),
+    featured_post_slugs: Array.isArray(cfg?.featured_post_slugs) ? cfg.featured_post_slugs : [],
+    nav_links: Array.isArray(cfg?.nav_links) ? cfg.nav_links : [],
   };
 
   return Response.json({ ok: true, public: cleaned });

@@ -44,6 +44,21 @@ function cleanStickyCards(arr, limit) {
     : [];
 }
 
+function cleanNavLinks(arr, limit) {
+  return Array.isArray(arr)
+    ? arr
+        .map((item) => {
+          if (!item || typeof item !== "object") return null;
+          const label = String(item.label || item.text || "").trim();
+          const url = String(item.url || "").trim();
+          if (!label || !url) return null;
+          return { label, url };
+        })
+        .filter(Boolean)
+        .slice(0, limit)
+    : [];
+}
+
 export async function onRequestPost({ env, request, params }) {
   if (!authOk(env, request)) {
     return Response.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
@@ -82,6 +97,9 @@ export async function onRequestPost({ env, request, params }) {
     home_featured_bulletin_enabled,
     progress_items,
     sticky_cards,
+    hero_background_url,
+    featured_post_slugs,
+    nav_links,
     slug,
   } = body || {};
 
@@ -139,6 +157,9 @@ export async function onRequestPost({ env, request, params }) {
     home_featured_bulletin_enabled: home_featured_bulletin_enabled !== false,
     progress_items: cleanStrings(progress_items, 8),
     sticky_cards: cleanStickyCards(sticky_cards, 4),
+    hero_background_url: String(hero_background_url || "").trim(),
+    featured_post_slugs: cleanStrings(featured_post_slugs, 4),
+    nav_links: cleanNavLinks(nav_links, 12),
   };
 
   await setPublicCfg(env, orgId, cleaned);

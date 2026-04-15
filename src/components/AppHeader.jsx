@@ -212,7 +212,6 @@ function OrgNav({ variant = "drawer" }) {
   const defs = isRedHarbor
     ? [
         ["overview", "Branch Board", `${base}/overview`, "nav-branch-board"],
-        ["bulletin", "Bulletin", `${base}/bulletin`, "nav-bulletin"],
         ["people", "Members", `${base}/people`, "nav-members"],
         ["inventory", "Supplies", `${base}/inventory`, "nav-supplies"],
         ["needs", "Requests", `${base}/needs`, "nav-requests"],

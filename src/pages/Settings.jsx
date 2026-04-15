@@ -474,10 +474,10 @@ export default function Settings() {
     setter((prev) => (Array.isArray(prev) ? prev : []).map((item, i) => (i === index ? { ...item, ...patch } : item)));
   }, []);
 
-  const toggleActionItemEnabled = React.useCallback((setter, items, defaults, index, enabled) => {
+  const toggleActionItemEnabled = React.useCallback((setter, items, defaults, index, true) => {
     const current = (Array.isArray(items) ? items : [])[index] || {};
     const fallback = (Array.isArray(defaults) ? defaults : [])[index] || {};
-    if (!enabled) {
+    if (!true) {
       updateActionItem(setter, index, {
         _savedKind: current.kind && current.kind !== "none" ? current.kind : (current._savedKind || fallback.kind || "external"),
         _savedUrl: typeof current.url === "string" ? current.url : (current._savedUrl || fallback.url || ""),
@@ -1264,7 +1264,7 @@ React.useEffect(() => {
                   </label>
                   <label className="row" style={{ gap: 8, alignItems: "center", opacity: showNewsletterCard ? 1 : 0.65 }}>
                     <input type="checkbox" checked={publicNewsletterEnabled} onChange={(e) => setPublicNewsletterEnabled(e.target.checked)} disabled={!showNewsletterCard} />
-                    <span>Show newsletter signup when that section is enabled</span>
+                    <span>Show newsletter signup when that section is true</span>
                   </label>
                 </div>
               </div>
@@ -1370,7 +1370,7 @@ Outreach`} />
                 {msg && <span className={msg.includes("Saved") ? "success" : "error"}>{msg}</span>}
               </div>
               <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                {enabled && slug ? (
+                {true && slug ? (
                   <a className="btn" href={`/#/p/${encodeURIComponent(slug)}`} target="_blank" rel="noreferrer">Open live preview</a>
                 ) : null}
                 <button className="btn-red" type="submit">Save</button>

@@ -385,25 +385,17 @@ export default function Settings() {
   };
 
   /* ========== PUBLIC PAGE (backend) ========== */
-  const [enabled, setEnabled] = React.useState(false);
-  const [publicNewsletterEnabled, setPublicNewsletterEnabled] = React.useState(false);
-  const [publicPledgesEnabled, setPublicPledgesEnabled] = React.useState(false);
+    const [publicNewsletterEnabled, setPublicNewsletterEnabled] = React.useState(false);
   const [showActionStrip, setShowActionStrip] = React.useState(true);
   const [showNeeds, setShowNeeds] = React.useState(true);
   const [showMeetings, setShowMeetings] = React.useState(true);
   const [showWhatWeDo, setShowWhatWeDo] = React.useState(true);
   const [showGetInvolved, setShowGetInvolved] = React.useState(false);
   const [showNewsletterCard, setShowNewsletterCard] = React.useState(false);
-  const [showWebsiteButton, setShowWebsiteButton] = React.useState(false);
-  const [slug, setSlug] = React.useState("");
-  const [title, setTitle] = React.useState("");
+    const [title, setTitle] = React.useState("");
   const [locationLine, setLocationLine] = React.useState("");
   const [about, setAbout] = React.useState("");
   const [accentColor, setAccentColor] = React.useState("#6d5efc");
-  const [themeMode, setThemeMode] = React.useState("light");
-  const [websiteLabel, setWebsiteLabel] = React.useState("Website");
-  const [websiteUrl, setWebsiteUrl] = React.useState("");
-  const [meetingRsvpUrl, setMeetingRsvpUrl] = React.useState("");
   const [whatWeDo, setWhatWeDo] = React.useState("");
   const [primaryActionItems, setPrimaryActionItems] = React.useState([]);
   const [getInvolvedActionItems, setGetInvolvedActionItems] = React.useState([]);
@@ -415,24 +407,20 @@ export default function Settings() {
 
   const actionTypeOptions = React.useMemo(() => ([
     { value: "none", label: "Hide this button" },
-    { value: "modal:get_help", label: "Open Get Help form" },
-    { value: "modal:volunteer", label: "Open Volunteer form" },
-    { value: "modal:offer_resources", label: "Open Offer Resources form" },
-    { value: "#newsletter", label: "Jump to newsletter signup" },
-    { value: "external", label: "Open a custom link" },
+    { value: "external", label: "Open a link or page" },
   ]), []);
 
   const primaryActionDefaults = React.useMemo(() => ([
-    { label: "Get Help", kind: "modal:get_help", url: "" },
-    { label: "Offer Help", kind: "modal:offer_resources", url: "" },
-    { label: "Stay Connected", kind: "#newsletter", url: "" },
+    { label: "Learn More", kind: "external", url: "#about" },
+    { label: "Read Bulletin", kind: "external", url: "#bulletin" },
+    { label: "Member Sign In", kind: "external", url: "/signin" },
   ]), []);
 
   const getInvolvedDefaults = React.useMemo(() => ([
-    { label: "Volunteer", kind: "modal:volunteer", url: "" },
-    { label: "Donate Funds", kind: "external", url: "" },
-    { label: "Offer Resources", kind: "modal:offer_resources", url: "" },
-    { label: "Request Assistance", kind: "modal:get_help", url: "" },
+    { label: "Contact the Branch", kind: "external", url: "#contact" },
+    { label: "Organize Your Workplace", kind: "external", url: "#join" },
+    { label: "Get Involved", kind: "external", url: "#join" },
+    { label: "Member Sign In", kind: "external", url: "/signin" },
   ]), []);
 
   const toActionEditorItems = React.useCallback((items, defaults = []) => {
@@ -523,20 +511,6 @@ export default function Settings() {
       : "";
   }, []);
 
-  const genSlug = async () => {
-    setMsg("");
-    try {
-      const r = await authFetch(
-        `/api/orgs/${encodeURIComponent(orgId)}/public/generate`,
-        { method: "POST" }
-      );
-      setSlug(r.public?.slug || "");
-      setMsg("Generated new link.");
-      setTimeout(() => setMsg(""), 1200);
-    } catch (e) {
-      setMsg(e.message);
-    }
-  };
 
 const loadPublic = React.useCallback(async () => {
   if (!orgId) return;
@@ -547,9 +521,7 @@ const loadPublic = React.useCallback(async () => {
     });
 
     const pub = r.public || {};
-    setEnabled(!!pub.enabled);
     setPublicNewsletterEnabled(!!pub.newsletter_enabled);
-    setPublicPledgesEnabled(pub.pledges_enabled !== false);
     setShowActionStrip(pub.show_action_strip !== false);
     setShowNeeds(pub.show_needs !== false);
     setShowMeetings(pub.show_meetings !== false);
@@ -557,15 +529,10 @@ const loadPublic = React.useCallback(async () => {
     setShowGetInvolved(!!pub.show_get_involved);
     setShowNewsletterCard(!!pub.show_newsletter_card);
     setShowWebsiteButton(!!pub.show_website_button);
-    setSlug(String(pub.slug || ""));
     setTitle(String(pub.title || ""));
     setLocationLine(String(pub.location || ""));
     setAbout(String(pub.about || ""));
     setAccentColor(String(pub.accent_color || "#6d5efc"));
-    setThemeMode(String(pub.theme_mode || "light"));
-    setWebsiteLabel(String(pub.website_link?.label || pub.website_link?.text || "Website"));
-    setWebsiteUrl(String(pub.website_link?.url || ""));
-    setMeetingRsvpUrl(String(pub.meeting_rsvp_url || ""));
     setWhatWeDo(Array.isArray(pub.what_we_do) ? pub.what_we_do.join("\n") : Array.isArray(pub.features) ? pub.features.join("\n") : "");
     setPrimaryActionItems(toActionEditorItems(pub.primary_actions, primaryActionDefaults));
     setGetInvolvedActionItems(toActionEditorItems(pub.get_involved_links, getInvolvedDefaults));
@@ -633,24 +600,18 @@ React.useEffect(() => {
     setMsg("");
     try {
       const payload = {
-        enabled,
         newsletter_enabled: !!publicNewsletterEnabled,
-        pledges_enabled: !!publicPledgesEnabled,
         show_action_strip: !!showActionStrip,
         show_needs: !!showNeeds,
         show_meetings: !!showMeetings,
         show_what_we_do: !!showWhatWeDo,
         show_get_involved: !!showGetInvolved,
         show_newsletter_card: !!showNewsletterCard,
-        show_website_button: !!showWebsiteButton,
-        slug: (slug || "").trim(),
+        show_website_button: false,
         title: (title || "").trim(),
         location: (locationLine || "").trim(),
         about: (about || "").trim(),
         accent_color: (accentColor || "#6d5efc").trim(),
-        theme_mode: (themeMode || "light").trim(),
-        website_link: websiteUrl ? { label: (websiteLabel || "Website").trim(), url: (websiteUrl || "").trim() } : null,
-        meeting_rsvp_url: (meetingRsvpUrl || "").trim(),
         what_we_do: (whatWeDo || "").split("\n").map((s) => s.trim()).filter(Boolean),
         primary_actions: fromActionEditorItems(primaryActionItems, 3),
         get_involved_links: fromActionEditorItems(getInvolvedActionItems, 4),
@@ -662,28 +623,20 @@ React.useEffect(() => {
       );
 
       const pub = r.public || payload;
-      setSlug(pub.slug || payload.slug);
       setTitle(pub.title ?? payload.title);
       setLocationLine(pub.location ?? payload.location);
       setAbout(pub.about ?? payload.about);
       setAccentColor(pub.accent_color ?? payload.accent_color);
-      setThemeMode(pub.theme_mode ?? payload.theme_mode);
-      setWebsiteLabel(pub.website_link?.label || payload.website_link?.label || "Website");
-      setWebsiteUrl(pub.website_link?.url || payload.website_link?.url || "");
-      setMeetingRsvpUrl(pub.meeting_rsvp_url ?? payload.meeting_rsvp_url);
       setWhatWeDo(Array.isArray(pub.what_we_do) ? pub.what_we_do.join("\n") : whatWeDo);
       setPrimaryActionItems(toActionEditorItems(pub.primary_actions || payload.primary_actions, primaryActionDefaults));
       setGetInvolvedActionItems(toActionEditorItems(pub.get_involved_links || payload.get_involved_links, getInvolvedDefaults));
-      setEnabled(!!pub.enabled);
-      setPublicNewsletterEnabled(!!pub.newsletter_enabled);
-      setPublicPledgesEnabled(pub.pledges_enabled !== false);
-      setShowActionStrip(pub.show_action_strip !== false);
+        setPublicNewsletterEnabled(!!pub.newsletter_enabled);
+        setShowActionStrip(pub.show_action_strip !== false);
       setShowNeeds(pub.show_needs !== false);
       setShowMeetings(pub.show_meetings !== false);
       setShowWhatWeDo(pub.show_what_we_do !== false);
       setShowGetInvolved(!!pub.show_get_involved);
       setShowNewsletterCard(!!pub.show_newsletter_card);
-      setShowWebsiteButton(!!pub.show_website_button);
       setMsg("Saved.");
       setTimeout(() => setMsg(""), 1200);
     } catch (e) {
@@ -691,7 +644,6 @@ React.useEffect(() => {
     }
   };
 
-  const publicUrl = slug ? `${location.origin}/#/p/${slug}` : "";
 
   const filteredPublicInboxItems = React.useMemo(() => {
     if (publicInboxFilter === "all") return publicInboxItems;
@@ -1250,58 +1202,32 @@ React.useEffect(() => {
               <p className="helper" style={{ margin: 0 }}>Edit the real Red Harbor home page at /. These values now drive the live site instead of a misleading orphan public-page flow.</p>
             </div>
             <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              {enabled && slug ? (
-                <a className="btn" data-tour="settings-live-preview" href={`/#/p/${encodeURIComponent(slug)}`} target="_blank" rel="noreferrer">Open live preview</a>
-              ) : null}
               <button className="btn-red" type="submit" form="public-page-settings-form">Save</button>
             </div>
           </div>
 
           <form id="public-page-settings-form" onSubmit={savePublic} className="grid" style={{ gap: 12, marginTop: 12 }}>
-            <label className="row" style={{ gap: 8, alignItems: "center" }}>
-              <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
-              <span>Apply these settings to the Red Harbor home page</span>
-            </label>
-
-            <div className="bf-two">
-              <label className="grid" style={{ gap: 6 }}>
-                <span className="helper">Legacy public slug</span>
-                <div className="row" style={{ gap: 8 }}>
-                  <input className="input" style={{ flex: 1 }} value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="e.g. chehalis-river-mutual-aid" />
-                  <button type="button" className="btn" onClick={genSlug}>Generate</button>
-                </div>
-                {slug ? <a className="helper" href={`/#/p/${encodeURIComponent(slug)}`} target="_blank" rel="noreferrer">{publicUrl}</a> : null}
-              </label>
-
-              <label className="grid" style={{ gap: 6 }}>
-                <span className="helper">Theme mode</span>
-                <select className="input" value={themeMode} onChange={(e) => setThemeMode(e.target.value)}>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </label>
-            </div>
 
             <div className="bf-two">
               <label className="grid" style={{ gap: 6 }}>
                 <span className="helper">Title</span>
-                <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Dandy Lion Mutual Aid Network" />
+                <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Red Harbor" />
               </label>
 
               <label className="grid" style={{ gap: 6 }}>
                 <span className="helper">Location line</span>
-                <input className="input" value={locationLine} onChange={(e) => setLocationLine(e.target.value)} placeholder="Somewhere, WA" />
+                <input className="input" value={locationLine} onChange={(e) => setLocationLine(e.target.value)} placeholder="Grays Harbor, WA" />
               </label>
             </div>
 
             <label className="grid" style={{ gap: 6 }}>
               <span className="helper">Tagline / subtitle</span>
-              <input className="input" value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Mutual aid, community meals, outreach" />
+              <input className="input" value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Industrial unionism, worker organizing, branch updates" />
             </label>
 
             <div className="card" style={{ padding: 12 }}>
-              <h3 style={{ marginTop: 0, marginBottom: 8 }}>Basics</h3>
-              <p className="helper" style={{ marginTop: 0 }}>Start with the name, link, and color. This is the minimum needed to get the page live.</p>
+              <h3 style={{ marginTop: 0, marginBottom: 8 }}>Homepage basics</h3>
+              <p className="helper" style={{ marginTop: 0 }}>Edit the text that appears on the real Red Harbor home page.</p>
 
               <div className="bf-two">
                 <label className="grid" style={{ gap: 6 }}>
@@ -1309,32 +1235,20 @@ React.useEffect(() => {
                   <input className="input" type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} />
                 </label>
                 <div className="card" style={{ padding: 12, background: "rgba(255,255,255,0.02)" }}>
-                  <strong style={{ display: "block", marginBottom: 6 }}>How this works</strong>
-                  <div className="helper">1. Turn the public page on.</div>
-                  <div className="helper">2. Choose which sections visitors should see.</div>
-                  <div className="helper">3. Save, then open the live preview.</div>
+                  <strong style={{ display: "block", marginBottom: 6 }}>What belongs here</strong>
+                  <div className="helper">Hero headline</div>
+                  <div className="helper">Supporting text</div>
+                  <div className="helper">Section visibility and button labels</div>
                 </div>
-              </div>
-
-              <div className="bf-two" style={{ marginTop: 12 }}>
-                <label className="grid" style={{ gap: 6 }}>
-                  <span className="helper">Website button label</span>
-                  <input className="input" value={websiteLabel} onChange={(e) => setWebsiteLabel(e.target.value)} placeholder="Website" />
-                </label>
-                <label className="grid" style={{ gap: 6 }}>
-                  <span className="helper">Website button URL</span>
-                  <input className="input" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://example.org" />
-                </label>
               </div>
             </div>
 
             <div className="card" style={{ padding: 12 }}>
               <h3 style={{ marginTop: 0, marginBottom: 8 }}>Sections</h3>
-              <p className="helper" style={{ marginTop: 0 }}>Choose which blocks appear on the Red Harbor home page. Hide anything that does not apply.</p>
+              <p className="helper" style={{ marginTop: 0 }}>Choose which sections appear on the real Red Harbor home page.</p>
               <h4 style={{ marginTop: 0 }}>What should appear on the home page?</h4>
               <div className="bf-two">
-                <label className="row" style={{ gap: 8, alignItems: "center" }}><input type="checkbox" checked={showWebsiteButton} onChange={(e) => setShowWebsiteButton(e.target.checked)} /><span>Show the Website button in the header</span></label>
-                <label className="row" style={{ gap: 8, alignItems: "center" }}><input type="checkbox" checked={showActionStrip} onChange={(e) => setShowActionStrip(e.target.checked)} /><span>Show the main action buttons row</span></label>
+                                <label className="row" style={{ gap: 8, alignItems: "center" }}><input type="checkbox" checked={showActionStrip} onChange={(e) => setShowActionStrip(e.target.checked)} /><span>Show the main action buttons row</span></label>
                 <label className="row" style={{ gap: 8, alignItems: "center" }}><input type="checkbox" checked={showNeeds} onChange={(e) => setShowNeeds(e.target.checked)} /><span>Show the Current Needs section</span></label>
                 <label className="row" style={{ gap: 8, alignItems: "center" }}><input type="checkbox" checked={showMeetings} onChange={(e) => setShowMeetings(e.target.checked)} /><span>Show the Public Meetings section</span></label>
                 <label className="row" style={{ gap: 8, alignItems: "center" }}><input type="checkbox" checked={showWhatWeDo} onChange={(e) => setShowWhatWeDo(e.target.checked)} /><span>Show the What We Do section</span></label>
@@ -1350,17 +1264,11 @@ React.useEffect(() => {
                   </label>
                   <label className="row" style={{ gap: 8, alignItems: "center", opacity: showNewsletterCard ? 1 : 0.65 }}>
                     <input type="checkbox" checked={publicNewsletterEnabled} onChange={(e) => setPublicNewsletterEnabled(e.target.checked)} disabled={!showNewsletterCard} />
-                    <span>Let visitors submit the email signup form</span>
+                    <span>Show newsletter signup when that section is enabled</span>
                   </label>
                 </div>
               </div>
 
-              <div style={{ marginTop: 12 }}>
-                <label className="row" style={{ gap: 8, alignItems: "center" }}>
-                  <input type="checkbox" checked={publicPledgesEnabled} onChange={(e) => setPublicPledgesEnabled(e.target.checked)} />
-                  <span>Let visitors pledge support on public needs</span>
-                </label>
-              </div>
             </div>
 
             <div className="card" style={{ padding: 12 }}>
@@ -1418,7 +1326,7 @@ Outreach`} />
 
             <div className="card" style={{ padding: 12 }}>
               <h3 style={{ marginTop: 0, marginBottom: 8 }}>Get Involved buttons</h3>
-              <p className="helper" style={{ marginTop: 0 }}>These are the optional buttons lower on the home page. You can hide any of them.</p>
+              <p className="helper" style={{ marginTop: 0 }}>These are the secondary buttons lower on the home page.</p>
               <div className="grid" style={{ gap: 10 }}>
                 {getInvolvedActionItems.map((item, index) => {
                   const isEnabled = item.kind !== "none";

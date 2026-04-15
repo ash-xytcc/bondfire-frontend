@@ -261,12 +261,13 @@ fetch("/api/orgs", { credentials: "include" })
 				{/* PUBLIC */}
 				<Route path="/p/:slug" element={<PublicPage />} />
 				<Route path="/p/*" element={<PublicPage />} />
-				<Route path="/bulletin/:slug" element={<BulletinArticlePage />} />
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/demo" element={<DemoBoot />} />
 
 				{/* Landing */}
 				<Route path="/" element={<RedHarborHome />} />
+  <Route path="/bulletin" element={<BulletinIndexPage />} />
+  <Route path="/bulletin/:slug" element={<BulletinArticlePage />} />
 
 				{/* Orgs list */}
 				<Route
@@ -300,8 +301,7 @@ fetch("/api/orgs", { credentials: "include" })
 					<Route index element={<BranchBoard />} />
 					<Route path="overview" element={<Overview />} />
 					<Route path="people" element={<People />} />
-					<Route path="/bulletin" element={<BulletinIndexPage />} />
-					<Route path="inventory" element={<Inventory />} />
+<Route path="inventory" element={<Inventory />} />
 					<Route path="needs" element={<Needs />} />
 					<Route path="meetings" element={<Meetings />} />
 					<Route path="meetings/:meetingId" element={<MeetingDetail />} />

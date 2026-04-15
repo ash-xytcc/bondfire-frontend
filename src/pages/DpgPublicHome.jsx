@@ -50,7 +50,13 @@ export default function DpgPublicHome() {
               </h1>
             </div>
           </div>
-          <a href={brand.adminSignInHref} style={theme.button}>Organizer login</a>
+          <button
+            type="button"
+            style={{ ...theme.button, border: 0, cursor: "pointer" }}
+            onClick={() => window.location.assign(brand.adminSignInHref)}
+          >
+            Organizer login
+          </button>
         </header>
 
         <section style={{ ...theme.card, marginBottom: 22 }}>

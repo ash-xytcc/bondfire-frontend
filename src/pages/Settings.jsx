@@ -1347,20 +1347,12 @@ React.useEffect(() => {
               <input className="input" value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Mutual aid, community meals, outreach" />
             </label>
 
-            <details className="card" style={{ padding: 12 }} open={showLegacyPublicSettings}>
-              <summary
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowLegacyPublicSettings((v) => !v);
-                }}
-                style={{ cursor: "pointer", fontWeight: 800, marginBottom: 10 }}
-              >
-                Advanced / legacy public settings
-              </summary>
+            <div className="card" style={{ padding: 12, border: "1px dashed rgba(255,255,255,0.15)", opacity: 0.85 }}>
+              <h3 style={{ marginTop: 0, marginBottom: 8 }}>Advanced / legacy public settings</h3>
               <p className="helper" style={{ marginTop: 0 }}>
-                These are the older Bondfire public-page controls. Keep them if useful, but they are no longer the main way you shape the DPG website.
+                Older Bondfire public-page controls. Still functional, but not the primary DPG site editor anymore.
               </p>
-              <div className="card" style={{ padding: 12, background: "rgba(0,0,0,0.08)" }}>
+
               <h3 style={{ marginTop: 0, marginBottom: 8 }}>Basics</h3>
               <p className="helper" style={{ marginTop: 0 }}>Start with the name, link, and color. This is the minimum needed to get the page live.</p>
 

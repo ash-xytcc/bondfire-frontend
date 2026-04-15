@@ -1,6 +1,9 @@
 import React from "react";
+import { getDpgPublicTheme, useDpgPublicSiteConfig } from "../../lib/dpgPublicSite.js";
 
 export default function PublicBulletinIndex() {
+  const { config } = useDpgPublicSiteConfig();
+  const theme = getDpgPublicTheme(config);
   const [state, setState] = React.useState({ loading: true, posts: [], error: "" });
 
   React.useEffect(() => {
@@ -21,15 +24,26 @@ export default function PublicBulletinIndex() {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f3ea", color: "#171717" }}>
+    <div style={theme.page}>
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 20px 64px" }}>
-        <a href="/" style={{ color: "#171717", fontWeight: 800, textDecoration: "none" }}>← Back home</a>
-        <h1 className="dpg-heading" style={{ margin: "16px 0 10px", fontSize: "clamp(2rem, 5vw, 4rem)" }}>Bulletin</h1>
+        <a href="/" style={theme.link}>← Back home</a>
+        <h1 className="dpg-heading" style={{ margin: "16px 0 10px", fontSize: "clamp(2rem, 5vw, 4rem)" }}>
+          {config?.bulletin_title || "Bulletin"}
+        </h1>
+        {config?.bulletin_intro ? (
+          <div style={{ ...theme.card, marginBottom: 16 }}>
+            <p style={{ margin: 0, lineHeight: 1.65 }}>{config.bulletin_intro}</p>
+          </div>
+        ) : null}
         <div style={{ display: "grid", gap: 16 }}>
           {state.loading ? <div>Loading…</div> : null}
           {state.error ? <div style={{ color: "crimson" }}>{state.error}</div> : null}
           {state.posts.map((post) => (
-            <a key={post.slug} href={`/bulletin/${post.slug}`} style={{ display: "block", textDecoration: "none", color: "#171717", border: "1px solid rgba(17,17,17,0.12)", borderRadius: 18, padding: 18, background: "rgba(255,255,255,0.88)" }}>
+            <a
+              key={post.slug}
+              href={`/bulletin/${post.slug}`}
+              style={{ display: "block", textDecoration: "none", color: "inherit", ...theme.card }}
+            >
               <div style={{ fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", opacity: 0.68, marginBottom: 8 }}>
                 {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ""}
               </div>

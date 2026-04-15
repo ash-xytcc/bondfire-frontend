@@ -1,6 +1,10 @@
 import React from "react";
+import { getDpgPublicTheme, useDpgPublicSiteConfig } from "../../lib/dpgPublicSite.js";
 
 export default function PublicBulletinPost() {
+  const { config } = useDpgPublicSiteConfig();
+  const theme = getDpgPublicTheme(config);
+
   const slug = React.useMemo(() => {
     const parts = String(window.location.pathname || "/").split("/").filter(Boolean);
     return decodeURIComponent(parts[1] || "");
@@ -30,15 +34,17 @@ export default function PublicBulletinPost() {
 
   const post = state.post;
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f3ea", color: "#171717" }}>
+    <div style={theme.page}>
       <div style={{ maxWidth: 820, margin: "0 auto", padding: "32px 20px 64px" }}>
-        <a href="/bulletin" style={{ color: "#171717", fontWeight: 800, textDecoration: "none" }}>← Back to bulletin</a>
+        <a href="/bulletin" style={theme.link}>← Back to bulletin</a>
         <div style={{ marginTop: 18, fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", opacity: 0.68 }}>
           {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ""}
         </div>
-        <h1 className="dpg-heading" style={{ margin: "10px 0 14px", fontSize: "clamp(2rem, 5vw, 4rem)", lineHeight: 0.98 }}>{post.title}</h1>
+        <h1 className="dpg-heading" style={{ margin: "10px 0 14px", fontSize: "clamp(2rem, 5vw, 4rem)", lineHeight: 0.98 }}>
+          {post.title}
+        </h1>
         {post.excerpt ? <p style={{ margin: "0 0 24px", lineHeight: 1.7, fontSize: 18 }}>{post.excerpt}</p> : null}
-        <article style={{ border: "1px solid rgba(17,17,17,0.12)", borderRadius: 18, padding: 22, background: "rgba(255,255,255,0.9)", lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
+        <article style={{ ...theme.articleCard, whiteSpace: "pre-wrap" }}>
           {post.body}
         </article>
       </div>

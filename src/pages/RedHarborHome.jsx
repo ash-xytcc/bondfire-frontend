@@ -2,7 +2,6 @@ import React from "react"
 import { Link } from "react-router-dom"
 import "../styles/redharbor-public-pass1.css"
 
-const ORG_ID = "red-harbor"
 const ORG_SLUG = "red-harbor"
 
 const defaultEvents = [
@@ -163,7 +162,7 @@ export default function RedHarborHome() {
 
     async function loadHome() {
       try {
-        const res = await fetch(`/api/public-home/${ORG_ID}`)
+        const res = await fetch(`/api/public-home/red-harbor`)
         const data = await res.json().catch(() => ({}))
         if (!res.ok || data?.ok === false) {
           throw new Error(data?.message || data?.error || "Failed to load site settings")

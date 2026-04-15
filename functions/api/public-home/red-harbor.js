@@ -1,57 +1,3 @@
-import { getPublicCfg } from "../_lib/publicPageStore.js";
-
-async function getRedHarborCfg(env) {
-  if (!env?.BF_DB) return {};
-
-  await env.BF_DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS public_site_configs (
-        org_id TEXT PRIMARY KEY,
-        slug TEXT UNIQUE,
-        cfg_json TEXT NOT NULL DEFAULT '{}',
-        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `)
-    .run();
-
-  const bySlug = await env.BF_DB
-    .prepare(`
-      SELECT org_id, slug, cfg_json, updated_at
-      FROM public_site_configs
-      WHERE lower(slug) = 'red-harbor'
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `)
-    .first();
-
-  if (bySlug?.cfg_json) {
-    try {
-      return JSON.parse(bySlug.cfg_json);
-    } catch {
-      return {};
-    }
-  }
-
-  const newest = await env.BF_DB
-    .prepare(`
-      SELECT org_id, slug, cfg_json, updated_at
-      FROM public_site_configs
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `)
-    .first();
-
-  if (newest?.cfg_json) {
-    try {
-      return JSON.parse(newest.cfg_json);
-    } catch {
-      return {};
-    }
-  }
-
-  return {};
-}
-
 function normalizePublicCfg(cfg) {
   const src = cfg && typeof cfg === "object" ? cfg : {};
   return {
@@ -77,6 +23,58 @@ function normalizePublicCfg(cfg) {
     primary_actions: Array.isArray(src.primary_actions) ? src.primary_actions : [],
     get_involved_links: Array.isArray(src.get_involved_links) ? src.get_involved_links : [],
   };
+}
+
+async function ensurePublicSiteTable(env) {
+  if (!env?.BF_DB) return false;
+  await env.BF_DB
+    .prepare(`
+      CREATE TABLE IF NOT EXISTS public_site_configs (
+        org_id TEXT PRIMARY KEY,
+        slug TEXT UNIQUE,
+        cfg_json TEXT NOT NULL DEFAULT '{}',
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    .run();
+  return true;
+}
+
+async function getRedHarborCfg(env) {
+  if (!(await ensurePublicSiteTable(env))) return {};
+
+  const bySlug = await env.BF_DB
+    .prepare(`
+      SELECT cfg_json
+      FROM public_site_configs
+      WHERE lower(slug) = 'red-harbor'
+      ORDER BY updated_at DESC
+      LIMIT 1
+    `)
+    .first();
+
+  if (bySlug?.cfg_json) {
+    try {
+      return JSON.parse(bySlug.cfg_json);
+    } catch {}
+  }
+
+  const newest = await env.BF_DB
+    .prepare(`
+      SELECT cfg_json
+      FROM public_site_configs
+      ORDER BY updated_at DESC
+      LIMIT 1
+    `)
+    .first();
+
+  if (newest?.cfg_json) {
+    try {
+      return JSON.parse(newest.cfg_json);
+    } catch {}
+  }
+
+  return {};
 }
 
 export async function onRequestGet({ env }) {

@@ -239,7 +239,7 @@ function Shell() {
 		logout,
 	}), [state, refresh, logout]);
 
-	const HomeRoute = () => <PublicHome />;
+	const HomeRoute = () => isDpgVariant() ? <DpgPublicHome /> : <PublicHome />;
 
 	// Hide the header on public routes
 	const hideHeader = path === "/" || path.startsWith("/p/") || path === "/signin" || path === "/demo";

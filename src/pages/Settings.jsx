@@ -132,13 +132,10 @@ export default function Settings() {
 
   const tabs = React.useMemo(
     () => [
-      ["org", "Organization"],
       ["invites", "Invites"],
       ["members", "Members"],
-      ["public", "Public page"],
       ["public-inbox", "Public inbox"],
       ["newsletter", "Newsletter"],
-      ["pledges", "Pledges"],
       ["security", "Security"],
     ],
     []

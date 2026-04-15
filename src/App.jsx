@@ -262,6 +262,11 @@ function Shell() {
 
 				{/* Landing */}
 				<Route path="/" element={<HomeRoute />} />
+
+                {/* DPG PUBLIC BULLETIN */}
+                <Route path="/bulletin" element={<DpgPublicHome />} />
+                <Route path="/bulletin/:slug" element={<DpgPublicHome />} />
+
                                 <Route path="/dpg" element={<PublicHome />} />
                                 <Route path="/dpg/app" element={<DpgAppRedirect to="overview" />} />
                                 <Route path="/dpg/app/overview" element={<DpgAppRedirect to="overview" />} />

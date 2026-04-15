@@ -348,28 +348,18 @@ function AdminApp() {
 }
 
 export default function App() {
-
   const browserPath = typeof window !== "undefined" ? (window.location.pathname || "/") : "/";
+  const isAdminPath = browserPath === "/admin" || browserPath.startsWith("/admin/");
   const isDpgPublicBrowserPath =
     browserPath === "/" ||
     browserPath === "/bulletin" ||
     browserPath === "/bulletin/" ||
     /^\/bulletin\/.+/.test(browserPath);
 
-  if (typeof isDpgVariant === "function" && isDpgVariant() && isDpgPublicBrowserPath) {
+  // DPG branch: always serve the public shell directly for public browser paths.
+  if (!isAdminPath && isDpgPublicBrowserPath) {
     return <DpgPublicHome />;
   }
 
-	const variant = getAppVariant();
-
-	if (variant === "dpg") {
-		const pathname = typeof window !== "undefined" ? window.location.pathname || "/" : "/";
-		const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
-
-		if (!isAdminPath) {
-			return <DpgPublicHome />;
-		}
-	}
-
-	return <AdminApp />;
+  return <AdminApp />;
 }

@@ -12,10 +12,18 @@ const defaultEvents = [
 ]
 
 const defaultHome = {
-  title: "Building worker power on the harbor and beyond.",
-  location: "Red Harbor Branch",
-  about:
+  branch_label: "Red Harbor Branch",
+  hero_headline: "Building worker power on the harbor and beyond.",
+  hero_text:
     "Red Harbor is a branch of the Industrial Workers of the World. We organize across workplaces, support workers in struggle, publish branch updates, and build solidarity rooted in direct action and rank and file power.",
+  about_intro:
+    "Red Harbor is the local IWW branch building organization, education, and solidarity among workers in Aberdeen, Hoquiam, Grays Harbor, and the surrounding region.",
+  join_intro:
+    "Organize with the branch, connect with others, and build power through workplace struggle, direct action, and collective effort.",
+  contact_intro:
+    "Reach out for branch contact, organizing support, membership questions, or public inquiries.",
+  events_intro:
+    "Meetings, branch activity, and public events will appear here as the public side develops.",
   accent_color: "#a11f1f",
   show_action_strip: true,
   show_what_we_do: true,
@@ -95,7 +103,6 @@ function cleanStringArray(arr, limit = 12) {
     .slice(0, limit)
 }
 
-
 function hexToRgb(hex) {
   const clean = String(hex || "").trim().replace("#", "")
   if (!/^[0-9a-fA-F]{6}$/.test(clean)) return null
@@ -129,9 +136,13 @@ function normalizeHome(raw) {
   return {
     ...defaultHome,
     ...base,
-    title: String(base.title || defaultHome.title).trim(),
-    location: String(base.location || defaultHome.location).trim(),
-    about: String(base.about || defaultHome.about).trim(),
+    branch_label: String(base.branch_label || base.location || defaultHome.branch_label).trim(),
+    hero_headline: String(base.hero_headline || base.title || defaultHome.hero_headline).trim(),
+    hero_text: String(base.hero_text || base.about || defaultHome.hero_text).trim(),
+    about_intro: String(base.about_intro || defaultHome.about_intro).trim(),
+    join_intro: String(base.join_intro || defaultHome.join_intro).trim(),
+    contact_intro: String(base.contact_intro || defaultHome.contact_intro).trim(),
+    events_intro: String(base.events_intro || defaultHome.events_intro).trim(),
     accent_color: String(base.accent_color || defaultHome.accent_color).trim(),
     what_we_do: cleanStringArray(base.what_we_do, 12).length
       ? cleanStringArray(base.what_we_do, 12)
@@ -295,10 +306,10 @@ export default function RedHarborHome() {
       <main>
         <section className="rh-hero">
           <div className="rh-hero-copy">
-            <p className="rh-eyebrow">{home.location || defaultHome.location}</p>
-            <h1>{home.title || defaultHome.title}</h1>
+            <p className="rh-eyebrow">{home.branch_label || defaultHome.branch_label}</p>
+            <h1>{home.hero_headline || defaultHome.hero_headline}</h1>
             <p className="rh-lead">
-              {home.about || defaultHome.about}
+              {home.hero_text || defaultHome.hero_text}
             </p>
 
             {home.show_action_strip && primaryActions.length > 0 ? (
@@ -354,17 +365,18 @@ export default function RedHarborHome() {
           <div className="rh-section-head">
             <p className="rh-section-kicker">About</p>
             <h2>About Red Harbor</h2>
+            <p className="rh-section-copy">{home.about_intro || defaultHome.about_intro}</p>
           </div>
 
           <div className="rh-grid-two">
             <div className="rh-card">
               <h3>Branch overview</h3>
-              <p>{home.about || defaultHome.about}</p>
+              <p>{home.about_intro || defaultHome.about_intro}</p>
             </div>
 
             <div className="rh-card">
               <h3>Location</h3>
-              <p>{home.location || "Grays Harbor and the surrounding region."}</p>
+              <p>{home.branch_label || "Grays Harbor and the surrounding region."}</p>
             </div>
 
             {home.show_what_we_do && whatWeDoItems.length > 0 ? (
@@ -386,6 +398,7 @@ export default function RedHarborHome() {
           <div className="rh-section-head">
             <p className="rh-section-kicker">Join</p>
             <h2>Organize with us</h2>
+            <p className="rh-section-copy">{home.join_intro || defaultHome.join_intro}</p>
           </div>
 
           <div className="rh-grid-three">
@@ -451,6 +464,7 @@ export default function RedHarborHome() {
             <div className="rh-section-head">
               <p className="rh-section-kicker">Events</p>
               <h2>Meetings and public activity</h2>
+              <p className="rh-section-copy">{home.events_intro || defaultHome.events_intro}</p>
             </div>
             <div className="rh-card">
               <ul className="rh-event-list">
@@ -466,14 +480,14 @@ export default function RedHarborHome() {
           <div className="rh-section-head">
             <p className="rh-section-kicker">Contact</p>
             <h2>Get in touch</h2>
+            <p className="rh-section-copy">{home.contact_intro || defaultHome.contact_intro}</p>
           </div>
 
           <div className="rh-grid-two">
             <div className="rh-card">
               <h3>Branch contact</h3>
               <p>
-                Use this section for your public email, intake form, or branch contact instructions.
-                This is the next obvious thing to wire once the homepage editor is in place.
+                {home.contact_intro || defaultHome.contact_intro}
               </p>
               {home.show_website_button && home.website_link?.url ? (
                 <a

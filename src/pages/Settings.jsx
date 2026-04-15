@@ -392,9 +392,13 @@ export default function Settings() {
   const [showWhatWeDo, setShowWhatWeDo] = React.useState(true);
   const [showGetInvolved, setShowGetInvolved] = React.useState(false);
   const [showNewsletterCard, setShowNewsletterCard] = React.useState(false);
-    const [title, setTitle] = React.useState("");
-  const [locationLine, setLocationLine] = React.useState("");
-  const [about, setAbout] = React.useState("");
+    const [branchLabel, setBranchLabel] = React.useState("");
+  const [heroHeadline, setHeroHeadline] = React.useState("");
+  const [heroText, setHeroText] = React.useState("");
+  const [aboutIntro, setAboutIntro] = React.useState("");
+  const [joinIntro, setJoinIntro] = React.useState("");
+  const [contactIntro, setContactIntro] = React.useState("");
+  const [eventsIntro, setEventsIntro] = React.useState("");
   const [accentColor, setAccentColor] = React.useState("#6d5efc");
   const [whatWeDo, setWhatWeDo] = React.useState("");
   const [primaryActionItems, setPrimaryActionItems] = React.useState([]);
@@ -528,9 +532,13 @@ const loadPublic = React.useCallback(async () => {
     setShowWhatWeDo(pub.show_what_we_do !== false);
     setShowGetInvolved(!!pub.show_get_involved);
     setShowNewsletterCard(!!pub.show_newsletter_card);
-    setTitle(String(pub.title || ""));
-    setLocationLine(String(pub.location || ""));
-    setAbout(String(pub.about || ""));
+    setBranchLabel(String(pub.branch_label || pub.location || ""));
+    setHeroHeadline(String(pub.hero_headline || pub.title || ""));
+    setHeroText(String(pub.hero_text || pub.about || ""));
+    setAboutIntro(String(pub.about_intro || ""));
+    setJoinIntro(String(pub.join_intro || ""));
+    setContactIntro(String(pub.contact_intro || ""));
+    setEventsIntro(String(pub.events_intro || ""));
     setAccentColor(String(pub.accent_color || "#6d5efc"));
     setWhatWeDo(Array.isArray(pub.what_we_do) ? pub.what_we_do.join("\n") : Array.isArray(pub.features) ? pub.features.join("\n") : "");
     setPrimaryActionItems(toActionEditorItems(pub.primary_actions, primaryActionDefaults));
@@ -608,9 +616,16 @@ React.useEffect(() => {
         show_get_involved: !!showGetInvolved,
         show_newsletter_card: !!showNewsletterCard,
         show_website_button: false,
-        title: (title || "").trim(),
-        location: (locationLine || "").trim(),
-        about: (about || "").trim(),
+        title: (heroHeadline || "").trim(),
+        location: (branchLabel || "").trim(),
+        about: (heroText || "").trim(),
+        branch_label: (branchLabel || "").trim(),
+        hero_headline: (heroHeadline || "").trim(),
+        hero_text: (heroText || "").trim(),
+        about_intro: (aboutIntro || "").trim(),
+        join_intro: (joinIntro || "").trim(),
+        contact_intro: (contactIntro || "").trim(),
+        events_intro: (eventsIntro || "").trim(),
         accent_color: (accentColor || "#6d5efc").trim(),
         what_we_do: (whatWeDo || "").split("\n").map((s) => s.trim()).filter(Boolean),
         primary_actions: fromActionEditorItems(primaryActionItems, 3),
@@ -623,9 +638,13 @@ React.useEffect(() => {
       );
 
       const pub = r.public || payload;
-      setTitle(pub.title ?? payload.title);
-      setLocationLine(pub.location ?? payload.location);
-      setAbout(pub.about ?? payload.about);
+      setBranchLabel(pub.branch_label ?? pub.location ?? payload.branch_label ?? payload.location);
+      setHeroHeadline(pub.hero_headline ?? pub.title ?? payload.hero_headline ?? payload.title);
+      setHeroText(pub.hero_text ?? pub.about ?? payload.hero_text ?? payload.about);
+      setAboutIntro(pub.about_intro ?? payload.about_intro);
+      setJoinIntro(pub.join_intro ?? payload.join_intro);
+      setContactIntro(pub.contact_intro ?? payload.contact_intro);
+      setEventsIntro(pub.events_intro ?? payload.events_intro);
       setAccentColor(pub.accent_color ?? payload.accent_color);
       setWhatWeDo(Array.isArray(pub.what_we_do) ? pub.what_we_do.join("\n") : whatWeDo);
       setPrimaryActionItems(toActionEditorItems(pub.primary_actions || payload.primary_actions, primaryActionDefaults));
@@ -1210,24 +1229,51 @@ React.useEffect(() => {
 
             <div className="bf-two">
               <label className="grid" style={{ gap: 6 }}>
-                <span className="helper">Title</span>
-                <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Red Harbor" />
+                <span className="helper">Branch label</span>
+                <input className="input" value={branchLabel} onChange={(e) => setBranchLabel(e.target.value)} placeholder="Red Harbor Branch" />
               </label>
 
               <label className="grid" style={{ gap: 6 }}>
-                <span className="helper">Location line</span>
-                <input className="input" value={locationLine} onChange={(e) => setLocationLine(e.target.value)} placeholder="Grays Harbor, WA" />
+                <span className="helper">Hero headline</span>
+                <input className="input" value={heroHeadline} onChange={(e) => setHeroHeadline(e.target.value)} placeholder="Building worker power on the harbor and beyond." />
               </label>
             </div>
 
             <label className="grid" style={{ gap: 6 }}>
-              <span className="helper">Tagline / subtitle</span>
-              <input className="input" value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Industrial unionism, worker organizing, branch updates" />
+              <span className="helper">Hero supporting text</span>
+              <textarea className="textarea" rows={4} value={heroText} onChange={(e) => setHeroText(e.target.value)} placeholder="Red Harbor is a branch of the Industrial Workers of the World..." />
             </label>
 
             <div className="card" style={{ padding: 12 }}>
+              <h3 style={{ marginTop: 0, marginBottom: 8 }}>Section copy</h3>
+              <p className="helper" style={{ marginTop: 0 }}>Edit the supporting copy for the main homepage sections.</p>
+
+              <div className="grid" style={{ gap: 10 }}>
+                <label className="grid" style={{ gap: 6 }}>
+                  <span className="helper">About section intro</span>
+                  <textarea className="textarea" rows={3} value={aboutIntro} onChange={(e) => setAboutIntro(e.target.value)} placeholder="Red Harbor is the local IWW branch..." />
+                </label>
+
+                <label className="grid" style={{ gap: 6 }}>
+                  <span className="helper">Join section intro</span>
+                  <textarea className="textarea" rows={3} value={joinIntro} onChange={(e) => setJoinIntro(e.target.value)} placeholder="Organize with the branch, connect with others..." />
+                </label>
+
+                <label className="grid" style={{ gap: 6 }}>
+                  <span className="helper">Contact section intro</span>
+                  <textarea className="textarea" rows={3} value={contactIntro} onChange={(e) => setContactIntro(e.target.value)} placeholder="Reach out for branch contact, organizing support..." />
+                </label>
+
+                <label className="grid" style={{ gap: 6 }}>
+                  <span className="helper">Events section intro</span>
+                  <textarea className="textarea" rows={3} value={eventsIntro} onChange={(e) => setEventsIntro(e.target.value)} placeholder="Meetings, branch activity, and public events..." />
+                </label>
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: 12 }}>
               <h3 style={{ marginTop: 0, marginBottom: 8 }}>Homepage basics</h3>
-              <p className="helper" style={{ marginTop: 0 }}>Edit the text that appears on the real Red Harbor home page.</p>
+              <p className="helper" style={{ marginTop: 0 }}>Edit the accent and structure of the real Red Harbor home page.</p>
 
               <div className="bf-two">
                 <label className="grid" style={{ gap: 6 }}>
@@ -1236,9 +1282,9 @@ React.useEffect(() => {
                 </label>
                 <div className="card" style={{ padding: 12, background: "rgba(255,255,255,0.02)" }}>
                   <strong style={{ display: "block", marginBottom: 6 }}>What belongs here</strong>
-                  <div className="helper">Hero headline</div>
-                  <div className="helper">Supporting text</div>
-                  <div className="helper">Section visibility and button labels</div>
+                  <div className="helper">Hero headline and supporting text</div>
+                  <div className="helper">Section intros</div>
+                  <div className="helper">Visibility and button labels</div>
                 </div>
               </div>
             </div>

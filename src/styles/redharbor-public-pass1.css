@@ -586,3 +586,12 @@
   }
 }
 
+
+
+.rh-section-copy {
+  margin: 10px 0 0;
+  max-width: 760px;
+  color: var(--rh-muted);
+  font-size: 17px;
+  line-height: 1.65;
+}

@@ -48,9 +48,16 @@ function normalizeSavedCfg(prev, body, slug) {
     show_newsletter_card: !!body.show_newsletter_card,
     show_website_button: !!body.show_website_button,
     slug: String(slug || prev?.slug || ""),
-    title: String(body.title || "").trim(),
-    location: String(body.location || "").trim(),
-    about: String(body.about || "").trim(),
+    title: String(body.title || body.hero_headline || "").trim(),
+    location: String(body.location || body.branch_label || "").trim(),
+    about: String(body.about || body.hero_text || "").trim(),
+    branch_label: String(body.branch_label || body.location || "").trim(),
+    hero_headline: String(body.hero_headline || body.title || "").trim(),
+    hero_text: String(body.hero_text || body.about || "").trim(),
+    about_intro: String(body.about_intro || "").trim(),
+    join_intro: String(body.join_intro || "").trim(),
+    contact_intro: String(body.contact_intro || "").trim(),
+    events_intro: String(body.events_intro || "").trim(),
     accent_color: String(body.accent_color || "#6d5efc").trim(),
     theme_mode: "light",
     website_link: cleanLink(body.website_link),
@@ -84,7 +91,7 @@ export async function onRequestPost({ env, request, params }) {
         await setSlugMapping(env, newSlug, orgId);
       }
     } else if (!newSlug) {
-      const base = slugify(body.title || orgId || "org") || "org";
+      const base = slugify(body.hero_headline || body.title || orgId || "org") || "org";
       newSlug = await uniqueSlug(env, base, orgId);
       await setSlugMapping(env, newSlug, orgId);
     }

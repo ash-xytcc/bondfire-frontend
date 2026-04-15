@@ -442,11 +442,37 @@ export default function Drive() {
     const slug = window.prompt("Public slug", defaultSlug);
     if (!slug) return;
     const excerpt = window.prompt("Public excerpt", selectedNote?.bulletinExcerpt || "");
+    const cleanSlug = slugifyText(slug);
+    const cleanExcerpt = String(excerpt || "");
+    const publishTitle = title || selectedNote.title || "untitled";
+    const publishBody = selectedId === selectedNote.id && selectedKind === "note"
+      ? content
+      : (selectedNote.body || "");
+
     await updateSelectedNoteBulletin({
-      bulletinSlug: slugifyText(slug),
-      bulletinExcerpt: String(excerpt || ""),
+      bulletinSlug: cleanSlug,
+      bulletinExcerpt: cleanExcerpt,
       bulletinStatus: "published",
     });
+
+    try {
+      const res = await api(`/api/orgs/${encodeURIComponent(orgId)}/bulletin`, {
+        method: "POST",
+        body: JSON.stringify({
+          title: publishTitle,
+          slug: cleanSlug,
+          excerpt: cleanExcerpt,
+          body: publishBody,
+          status: "published",
+        }),
+      });
+      if (!res?.ok && !res?.post && !res?.article && !res?.item) {
+        throw new Error(res?.error || "Failed to publish bulletin post");
+      }
+    } catch (e) {
+      console.error("Failed to publish public bulletin post", e);
+      window.alert(`Drive note updated, but public bulletin publish failed: ${String(e?.message || e)}`);
+    }
   }
 
   async function unpublishSelectedNote() {

@@ -379,34 +379,36 @@ export default function RedHarborHome() {
         </section>
 
         <section id="bulletin" className="rh-section">
-          <div className="rh-section-head">
-            <p className="rh-section-kicker">Bulletin</p>
-            <h2>Publications and updates</h2>
-          </div>
+          <div className="rh-bulletin-home">
+            <div className="rh-bulletin-home-intro">
+              <div className="rh-section-head">
+                <p className="rh-section-kicker">Bulletin</p>
+                <h2>Publications and updates</h2>
+              </div>
 
-          {bulletinError ? (
-            <div className="rh-note-wrap">
-              <p className="rh-note">{bulletinError}</p>
-            </div>
-          ) : null}
+              <div className="rh-bulletin-home-actions">
+                <Link to="/bulletin" className="rh-btn rh-btn-secondary">Browse all bulletin posts</Link>
+              </div>
 
-          <div className="rh-grid-three">
-            {posts.map((post) => (
-              <article className="rh-card" key={post.id}>
-                <div style={{ fontSize: 12, opacity: 0.65, marginBottom: 8 }}>
-                  {post.publishedAt || post.updatedAt || ""}
+              {bulletinError ? (
+                <div className="rh-note-wrap">
+                  <p className="rh-note">{bulletinError}</p>
                 </div>
-                <h3>{post.title}</h3>
-                <p>{post.excerpt}</p>
-                <Link to={`/bulletin/${post.slug}`} className="rh-inline-link">Read post</Link>
-              </article>
-            ))}
-          </div>
+              ) : null}
+            </div>
 
-          <div className="rh-note-wrap">
-            <p className="rh-note">
-              <Link to="/bulletin">Browse all bulletin posts</Link>
-            </p>
+            <div className="rh-bulletin-home-list">
+              {posts.map((post) => (
+                <article className="rh-card rh-bulletin-home-card" key={post.id}>
+                  <div className="rh-bulletin-home-date">
+                    {post.publishedAt || post.updatedAt || ""}
+                  </div>
+                  <h3 className="rh-bulletin-home-card-title">{post.title}</h3>
+                  {post.excerpt ? <p>{post.excerpt}</p> : null}
+                  <Link to={`/bulletin/${post.slug}`} className="rh-inline-link">Read post</Link>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 

@@ -11,6 +11,30 @@ export default function PublicBulletinIndex() {
       document.body.dataset.app = "dpg";
     } catch {}
     applyAppVariantToDocument();
+
+    const killDarkMode = () => {
+      try {
+        const nodes = Array.from(document.querySelectorAll("button, a, div"));
+        for (const node of nodes) {
+          const text = String(node.textContent || "").trim().toLowerCase();
+          const style = window.getComputedStyle(node);
+          if (text === "dark mode" && style.position === "fixed") {
+            node.remove();
+          }
+        }
+      } catch {}
+    };
+
+    killDarkMode();
+    const t1 = window.setTimeout(killDarkMode, 50);
+    const t2 = window.setTimeout(killDarkMode, 300);
+    const t3 = window.setTimeout(killDarkMode, 1200);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+    };
   }, []);
 
   const [state, setState] = React.useState({ loading: true, posts: [], error: "" });
@@ -41,7 +65,7 @@ export default function PublicBulletinIndex() {
         </h1>
         {config?.bulletin_intro ? (
           <div style={{ ...theme.card, marginBottom: 16 }}>
-            <p style={{ margin: 0, lineHeight: 1.65 }}>{config.bulletin_intro}</p>
+            <p style={{ margin: 0, lineHeight: 1.65, color: "#f3efe8" }}>{config.bulletin_intro}</p>
           </div>
         ) : null}
         <div style={{ display: "grid", gap: 16 }}>
@@ -53,11 +77,11 @@ export default function PublicBulletinIndex() {
               href={`/bulletin/${post.slug}`}
               style={{ display: "block", textDecoration: "none", color: "inherit", ...theme.card }}
             >
-              <div style={{ fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", opacity: 0.68, marginBottom: 8 }}>
+              <div style={{ fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", opacity: 0.8, marginBottom: 8, color: "#d7ddd8" }}>
                 {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ""}
               </div>
-              <h2 className="dpg-heading" style={{ margin: 0, fontSize: 28 }}>{post.title}</h2>
-              <p style={{ margin: "10px 0 0", lineHeight: 1.6 }}>{post.excerpt}</p>
+              <h2 className="dpg-heading" style={{ margin: 0, fontSize: 28, color: "#f3efe8" }}>{post.title}</h2>
+              <p style={{ margin: "10px 0 0", lineHeight: 1.6, color: "#f3efe8" }}>{post.excerpt}</p>
             </a>
           ))}
           {!state.loading && !state.posts.length && !state.error ? <div>No posts yet.</div> : null}

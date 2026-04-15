@@ -35,6 +35,30 @@ export default function DpgPublicHome() {
       document.body.dataset.app = "dpg";
     } catch {}
     applyAppVariantToDocument();
+
+    const killDarkMode = () => {
+      try {
+        const nodes = Array.from(document.querySelectorAll("button, a, div"));
+        for (const node of nodes) {
+          const text = String(node.textContent || "").trim().toLowerCase();
+          const style = window.getComputedStyle(node);
+          if (text === "dark mode" && style.position === "fixed") {
+            node.remove();
+          }
+        }
+      } catch {}
+    };
+
+    killDarkMode();
+    const t1 = window.setTimeout(killDarkMode, 50);
+    const t2 = window.setTimeout(killDarkMode, 300);
+    const t3 = window.setTimeout(killDarkMode, 1200);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+    };
   }, []);
 
   if (pathname === "/bulletin" || pathname === "/bulletin/") return <PublicBulletinIndex />;
@@ -68,7 +92,7 @@ export default function DpgPublicHome() {
         </header>
 
         <section style={{ ...theme.card, marginBottom: 22 }}>
-          <p style={{ fontSize: 18, lineHeight: 1.6, margin: 0, maxWidth: 860 }}>
+          <p style={{ fontSize: 18, lineHeight: 1.6, margin: 0, maxWidth: 860, color: dark ? '#f3efe8' : '#171717' }}>
             {config?.hero_body || ''}
           </p>
           {loading ? <div style={{ marginTop: 10, opacity: 0.7, fontSize: 13 }}>Loading public config…</div> : null}
@@ -92,7 +116,7 @@ export default function DpgPublicHome() {
         <section style={{ display: 'grid', gridTemplateColumns: '1.2fr .8fr', gap: 20, alignItems: 'start' }}>
           <div style={theme.card}>
             <h2 className="dpg-heading" style={{ marginTop: 0 }}>What is in progress</h2>
-            <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
+            <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7, color: dark ? '#f3efe8' : '#171717' }}>
               {progressItems.map((item, idx) => <li key={`${item}-${idx}`}>{item}</li>)}
             </ul>
           </div>
@@ -101,7 +125,7 @@ export default function DpgPublicHome() {
             <h2 className="dpg-heading" style={{ marginTop: 0 }}>
               {config?.organizer_title || 'Organizer entry'}
             </h2>
-            <p style={{ marginTop: 0, lineHeight: 1.6 }}>
+            <p style={{ marginTop: 0, lineHeight: 1.6, color: dark ? '#f3efe8' : '#171717' }}>
               {config?.organizer_body || ''}
             </p>
             <div style={{ display: "grid", gap: 10 }}>

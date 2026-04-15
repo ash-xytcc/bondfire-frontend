@@ -349,12 +349,18 @@ function AdminApp() {
 
 export default function App() {
   const browserPath = typeof window !== "undefined" ? (window.location.pathname || "/") : "/";
+  const adminHash = typeof window !== "undefined" ? (window.location.hash || "") : "";
   const isAdminPath = browserPath === "/admin" || browserPath.startsWith("/admin/");
   const isDpgPublicBrowserPath =
     browserPath === "/" ||
     browserPath === "/bulletin" ||
     browserPath === "/bulletin/" ||
     /^\/bulletin\/.+/.test(browserPath);
+
+  // Hard route admin sign-in so /admin/?app=dpg#/signin does not get stranded.
+  if (isAdminPath && (adminHash === "#/signin" || adminHash.startsWith("#/signin?"))) {
+    return <AdminApp />;
+  }
 
   // DPG branch: always serve the public shell directly for public browser paths.
   if (!isAdminPath && isDpgPublicBrowserPath) {

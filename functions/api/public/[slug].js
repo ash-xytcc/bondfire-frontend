@@ -1,13 +1,14 @@
+import { resolveSlug, getPublicCfg } from "../_lib/publicPageStore.js";
+
 export async function onRequestGet({ env, params }) {
   const slug = params.slug;
 
-  const orgId = await env.BF_PUBLIC.get(`slug:${slug}`);
+  const orgId = await resolveSlug(env, slug);
   if (!orgId) {
     return Response.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
   }
 
-  const cfgRaw = await env.BF_PUBLIC.get(`org:${orgId}`);
-  const cfg = cfgRaw ? JSON.parse(cfgRaw) : null;
+  const cfg = await getPublicCfg(env, orgId);
 
   if (!cfg || !cfg.enabled) {
     return Response.json({ ok: false, error: "NOT_PUBLIC" }, { status: 404 });

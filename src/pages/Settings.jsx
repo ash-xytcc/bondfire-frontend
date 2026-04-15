@@ -537,7 +537,7 @@ const loadPublic = React.useCallback(async () => {
     setGetInvolvedActionItems(toActionEditorItems(pub.get_involved_links, getInvolvedDefaults));
   } catch (e) {
     console.error("loadPublic failed:", e);
-    setMsg("");
+    setMsg("Failed to load site settings.");
   }
 }, [orgId, primaryActionDefaults, getInvolvedDefaults, toActionEditorItems]);
 

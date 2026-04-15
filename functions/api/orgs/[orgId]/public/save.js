@@ -35,6 +35,15 @@ function cleanStrings(arr, limit) {
     : [];
 }
 
+function cleanJoinCards(arr) {
+  return Array.isArray(arr)
+    ? arr.slice(0, 3).map((item) => ({
+        title: String(item?.title || "").trim(),
+        body: String(item?.body || "").trim(),
+      }))
+    : [];
+}
+
 function normalizeSavedCfg(prev, body, slug) {
   return {
     enabled: true,
@@ -63,6 +72,13 @@ function normalizeSavedCfg(prev, body, slug) {
     website_link: cleanLink(body.website_link),
     meeting_rsvp_url: String(body.meeting_rsvp_url || "").trim(),
     what_we_do: cleanStrings(body.what_we_do, 12),
+    site_purpose_items: cleanStrings(body.site_purpose_items, 8),
+    join_cards: cleanJoinCards(body.join_cards),
+    events_items: cleanStrings(body.events_items, 8),
+    contact_card_title: String(body.contact_card_title || "").trim(),
+    contact_card_body: String(body.contact_card_body || "").trim(),
+    member_access_title: String(body.member_access_title || "").trim(),
+    member_access_body: String(body.member_access_body || "").trim(),
     primary_actions: cleanLinks(body.primary_actions, 3),
     get_involved_links: cleanLinks(body.get_involved_links, 4),
   };

@@ -5,12 +5,6 @@ import "../styles/redharbor-public-pass1.css"
 const ORG_ID = "red-harbor"
 const ORG_SLUG = "red-harbor"
 
-const defaultEvents = [
-  "Branch meetings and public events will be posted here.",
-  "Workplace organizing support and one to one follow up available.",
-  "Bulletin updates and announcements published on a regular basis.",
-]
-
 const defaultHome = {
   branch_label: "Red Harbor Branch",
   hero_headline: "Building worker power on the harbor and beyond.",
@@ -38,6 +32,37 @@ const defaultHome = {
     "Public bulletins and branch updates",
     "Solidarity rooted in direct action",
   ],
+  site_purpose_items: [
+    "Learn what the branch is and what it does",
+    "Find organizing and membership information",
+    "Read public updates and branch publications",
+    "Access the private branch board through sign in",
+  ],
+  join_cards: [
+    {
+      title: "Join the branch",
+      body: "Become part of the Red Harbor branch and plug into meetings, campaigns, education, and organizing support.",
+    },
+    {
+      title: "Organize your workplace",
+      body: "If you want help organizing on the job, reach out. We can help you start carefully, map relationships, and build toward collective action.",
+    },
+    {
+      title: "Support broader struggle",
+      body: "Workers, tenants, precarious workers, and unemployed workers all deserve organization, dignity, and solidarity. There is room to build.",
+    },
+  ],
+  events_items: [
+    "Branch meetings and public events will be posted here.",
+    "Workplace organizing support and one to one follow up available.",
+    "Bulletin updates and announcements published on a regular basis.",
+  ],
+  contact_card_title: "Branch contact",
+  contact_card_body:
+    "Use this section for your public email, intake form, or branch contact instructions. This is the next obvious thing to wire once the homepage editor is in place.",
+  member_access_title: "Member access",
+  member_access_body:
+    "Existing members can use the private branch board for internal updates, documents, meetings, and announcements.",
   primary_actions: [
     { label: "Join Us", url: "#join" },
     { label: "Read the Bulletin", url: "#bulletin" },
@@ -103,6 +128,18 @@ function cleanStringArray(arr, limit = 12) {
     .slice(0, limit)
 }
 
+function cleanJoinCards(arr) {
+  const fallback = defaultHome.join_cards
+  const items = Array.isArray(arr) ? arr : []
+  return fallback.map((def, i) => {
+    const raw = items[i] && typeof items[i] === "object" ? items[i] : {}
+    return {
+      title: String(raw.title || def.title).trim(),
+      body: String(raw.body || def.body).trim(),
+    }
+  })
+}
+
 function hexToRgb(hex) {
   const clean = String(hex || "").trim().replace("#", "")
   if (!/^[0-9a-fA-F]{6}$/.test(clean)) return null
@@ -147,6 +184,17 @@ function normalizeHome(raw) {
     what_we_do: cleanStringArray(base.what_we_do, 12).length
       ? cleanStringArray(base.what_we_do, 12)
       : defaultHome.what_we_do,
+    site_purpose_items: cleanStringArray(base.site_purpose_items, 8).length
+      ? cleanStringArray(base.site_purpose_items, 8)
+      : defaultHome.site_purpose_items,
+    join_cards: cleanJoinCards(base.join_cards),
+    events_items: cleanStringArray(base.events_items, 8).length
+      ? cleanStringArray(base.events_items, 8)
+      : defaultHome.events_items,
+    contact_card_title: String(base.contact_card_title || defaultHome.contact_card_title).trim(),
+    contact_card_body: String(base.contact_card_body || defaultHome.contact_card_body).trim(),
+    member_access_title: String(base.member_access_title || defaultHome.member_access_title).trim(),
+    member_access_body: String(base.member_access_body || defaultHome.member_access_body).trim(),
     primary_actions: cleanLinkArray(base.primary_actions, 3).length
       ? cleanLinkArray(base.primary_actions, 3)
       : defaultHome.primary_actions,
@@ -243,17 +291,11 @@ export default function RedHarborHome() {
     }
   }, [])
 
-  const whatWeDoItems = React.useMemo(() => {
-    return cleanStringArray(home.what_we_do, 8)
-  }, [home.what_we_do])
-
-  const primaryActions = React.useMemo(() => {
-    return cleanLinkArray(home.primary_actions, 3)
-  }, [home.primary_actions])
-
-  const involvedActions = React.useMemo(() => {
-    return cleanLinkArray(home.get_involved_links, 6)
-  }, [home.get_involved_links])
+  const whatWeDoItems = React.useMemo(() => cleanStringArray(home.what_we_do, 8), [home.what_we_do])
+  const purposeItems = React.useMemo(() => cleanStringArray(home.site_purpose_items, 8), [home.site_purpose_items])
+  const eventItems = React.useMemo(() => cleanStringArray(home.events_items, 8), [home.events_items])
+  const primaryActions = React.useMemo(() => cleanLinkArray(home.primary_actions, 3), [home.primary_actions])
+  const involvedActions = React.useMemo(() => cleanLinkArray(home.get_involved_links, 6), [home.get_involved_links])
 
   const accent = home.accent_color || defaultHome.accent_color
   const accentDark = darkenHex(accent, 0.22)
@@ -289,16 +331,6 @@ export default function RedHarborHome() {
           <SectionLink id="bulletin" className="rh-nav-link">Bulletin</SectionLink>
           {home.show_meetings ? <SectionLink id="events" className="rh-nav-link">Events</SectionLink> : null}
           <SectionLink id="contact" className="rh-nav-link">Contact</SectionLink>
-          {home.show_website_button && home.website_link?.url ? (
-            <a
-              href={home.website_link.url}
-              className="rh-signin-link"
-              target="_blank"
-              rel="noreferrer"
-            >
-              {home.website_link.label || "Website"}
-            </a>
-          ) : null}
           <Link to="/signin" className="rh-signin-link">Member Sign In</Link>
         </nav>
       </header>
@@ -308,9 +340,7 @@ export default function RedHarborHome() {
           <div className="rh-hero-copy">
             <p className="rh-eyebrow">{home.branch_label || defaultHome.branch_label}</p>
             <h1>{home.hero_headline || defaultHome.hero_headline}</h1>
-            <p className="rh-lead">
-              {home.hero_text || defaultHome.hero_text}
-            </p>
+            <p className="rh-lead">{home.hero_text || defaultHome.hero_text}</p>
 
             {home.show_action_strip && primaryActions.length > 0 ? (
               <div className="rh-hero-actions">
@@ -348,10 +378,9 @@ export default function RedHarborHome() {
           <aside className="rh-hero-card">
             <h2>What this site is for</h2>
             <ul>
-              <li>Learn what the branch is and what it does</li>
-              <li>Find organizing and membership information</li>
-              <li>Read public updates and branch publications</li>
-              <li>Access the private branch board through sign in</li>
+              {purposeItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
             {siteError ? (
               <p className="rh-note" style={{ marginTop: 12 }}>
@@ -402,26 +431,29 @@ export default function RedHarborHome() {
           </div>
 
           <div className="rh-grid-three">
-            {(home.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links).map((item) => (
-              <article className="rh-card" key={`${item.label}-${item.url}`}>
-                <h3>{item.label}</h3>
-                <p>
-                  Use this action to connect with the branch, get involved, or move toward organizing with others.
-                </p>
-                {String(item.url || "").startsWith("/") ? (
-                  <Link to={item.url} className="rh-inline-link">{item.label}</Link>
-                ) : (
-                  <button
-                    type="button"
-                    className="rh-inline-link"
-                    style={{ background: "none", border: 0, padding: 0, cursor: "pointer", textAlign: "left" }}
-                    onClick={() => runAction(item.url)}
-                  >
-                    {item.label}
-                  </button>
-                )}
-              </article>
-            ))}
+            {home.join_cards.map((card, index) => {
+              const action = (home.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
+              return (
+                <article className="rh-card" key={`${card.title}-${index}`}>
+                  <h3>{card.title}</h3>
+                  <p>{card.body}</p>
+                  {action ? (
+                    String(action.url || "").startsWith("/") ? (
+                      <Link to={action.url} className="rh-inline-link">{action.label}</Link>
+                    ) : (
+                      <button
+                        type="button"
+                        className="rh-inline-link"
+                        style={{ background: "none", border: 0, padding: 0, cursor: "pointer", textAlign: "left" }}
+                        onClick={() => runAction(action.url)}
+                      >
+                        {action.label}
+                      </button>
+                    )
+                  ) : null}
+                </article>
+              )
+            })}
           </div>
         </section>
 
@@ -468,7 +500,7 @@ export default function RedHarborHome() {
             </div>
             <div className="rh-card">
               <ul className="rh-event-list">
-                {defaultEvents.map((item) => (
+                {eventItems.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>
@@ -485,28 +517,13 @@ export default function RedHarborHome() {
 
           <div className="rh-grid-two">
             <div className="rh-card">
-              <h3>Branch contact</h3>
-              <p>
-                {home.contact_intro || defaultHome.contact_intro}
-              </p>
-              {home.show_website_button && home.website_link?.url ? (
-                <a
-                  href={home.website_link.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rh-btn rh-btn-secondary"
-                >
-                  {home.website_link.label || "Website"}
-                </a>
-              ) : null}
+              <h3>{home.contact_card_title || defaultHome.contact_card_title}</h3>
+              <p>{home.contact_card_body || defaultHome.contact_card_body}</p>
             </div>
 
             <div className="rh-card">
-              <h3>Member access</h3>
-              <p>
-                Existing members can use the private branch board for internal updates,
-                documents, meetings, and announcements.
-              </p>
+              <h3>{home.member_access_title || defaultHome.member_access_title}</h3>
+              <p>{home.member_access_body || defaultHome.member_access_body}</p>
               <Link to="/signin" className="rh-btn rh-btn-primary">Go to Member Sign In</Link>
             </div>
           </div>

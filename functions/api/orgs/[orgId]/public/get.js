@@ -37,6 +37,13 @@ function normalizePublicCfg(cfg) {
     website_link: src.website_link || null,
     meeting_rsvp_url: String(src.meeting_rsvp_url || ""),
     what_we_do: Array.isArray(src.what_we_do) ? src.what_we_do : [],
+    site_purpose_items: Array.isArray(src.site_purpose_items) ? src.site_purpose_items : [],
+    join_cards: Array.isArray(src.join_cards) ? src.join_cards : [],
+    events_items: Array.isArray(src.events_items) ? src.events_items : [],
+    contact_card_title: String(src.contact_card_title || ""),
+    contact_card_body: String(src.contact_card_body || ""),
+    member_access_title: String(src.member_access_title || ""),
+    member_access_body: String(src.member_access_body || ""),
     primary_actions: Array.isArray(src.primary_actions) ? src.primary_actions : [],
     get_involved_links: Array.isArray(src.get_involved_links) ? src.get_involved_links : [],
   };

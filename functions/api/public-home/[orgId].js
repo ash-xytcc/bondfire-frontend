@@ -36,6 +36,13 @@ export async function onRequestGet({ env, params }) {
     website_link: cfg?.website_link || null,
     meeting_rsvp_url: String(cfg?.meeting_rsvp_url || ""),
     what_we_do: Array.isArray(cfg?.what_we_do) ? cfg.what_we_do : [],
+    site_purpose_items: Array.isArray(cfg?.site_purpose_items) ? cfg.site_purpose_items : [],
+    join_cards: Array.isArray(cfg?.join_cards) ? cfg.join_cards : [],
+    events_items: Array.isArray(cfg?.events_items) ? cfg.events_items : [],
+    contact_card_title: String(cfg?.contact_card_title || ""),
+    contact_card_body: String(cfg?.contact_card_body || ""),
+    member_access_title: String(cfg?.member_access_title || ""),
+    member_access_body: String(cfg?.member_access_body || ""),
     primary_actions: Array.isArray(cfg?.primary_actions) ? cfg.primary_actions : [],
     get_involved_links: Array.isArray(cfg?.get_involved_links) ? cfg.get_involved_links : [],
   }

@@ -6,10 +6,9 @@ const KEY = 'bf_store_v2'
 
 const defaultState = () => ({
   orgs: [
-    { id: 'crman', name: 'Chehalis River Mutual Aid Network', slug:'crman', color:'#8a1111', logoDataUrl:null },
     { id: 'bondfire', name: 'Bondfire', slug:'bondfire', color:'#8a1111', logoDataUrl:null }
   ],
-  currentOrgId: 'crman',
+  currentOrgId: [],
   people: [],
   inventory: [],
   needs: [],

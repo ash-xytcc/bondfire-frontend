@@ -175,7 +175,7 @@ function buildSeed() {
       show_website_button: false,
       slug: "rainbridge-demo",
       title: "Rainbridge Mutual Aid",
-      location_line: "Aberdeen, WA",
+      location_line: "Somewhere, WA",
       about: "A neighborhood mutual aid network sharing food, rides, supplies, and coordination.",
       accent_color: "#6d5efc",
       theme_mode: "light",

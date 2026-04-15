@@ -1287,12 +1287,12 @@ React.useEffect(() => {
             <div className="bf-two">
               <label className="grid" style={{ gap: 6 }}>
                 <span className="helper">Title</span>
-                <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Chehalis River Mutual Aid Network" />
+                <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Dandy Lion Mutual Aid Network" />
               </label>
 
               <label className="grid" style={{ gap: 6 }}>
                 <span className="helper">Location line</span>
-                <input className="input" value={locationLine} onChange={(e) => setLocationLine(e.target.value)} placeholder="Aberdeen, WA" />
+                <input className="input" value={locationLine} onChange={(e) => setLocationLine(e.target.value)} placeholder="Somewhere, WA" />
               </label>
             </div>
 

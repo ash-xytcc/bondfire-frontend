@@ -114,10 +114,10 @@ export default function DpgPublicHome() {
         ) : null}
 
         <section style={{ display: 'grid', gridTemplateColumns: '1.2fr .8fr', gap: 20, alignItems: 'start' }}>
-          <div style={theme.card}>
-            <h2 className="dpg-heading" style={{ marginTop: 0 }}>What is in progress</h2>
-            <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7, color: dark ? '#f3efe8' : '#171717' }}>
-              {progressItems.map((item, idx) => <li key={`${item}-${idx}`}>{item}</li>)}
+          <div style={{ ...theme.card, color: '#f3efe8' }}>
+            <h2 className="dpg-heading" style={{ marginTop: 0, color: '#f3efe8' }}>What is in progress</h2>
+            <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7, color: '#f3efe8' }}>
+              {progressItems.map((item, idx) => <li key={`${item}-${idx}`} style={{ color: '#f3efe8' }}>{item}</li>)}
             </ul>
           </div>
 
@@ -130,7 +130,13 @@ export default function DpgPublicHome() {
             </p>
             <div style={{ display: "grid", gap: 10 }}>
               <a href="/bulletin" style={theme.link}>Read public bulletin</a>
-              <a href={brand.adminSignInHref} style={theme.link}>Go to admin sign-in</a>
+              <button
+                type="button"
+                style={{ ...theme.link, background: 'transparent', border: 0, padding: 0, textAlign: 'left', cursor: 'pointer' }}
+                onClick={() => window.location.assign(brand.adminSignInHref)}
+              >
+                Go to admin sign-in
+              </button>
             </div>
           </div>
         </section>

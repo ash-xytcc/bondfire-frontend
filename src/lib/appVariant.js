@@ -441,7 +441,7 @@ export function getAppBrand() {
         publicSiteTitle: "Dual Power West",
         homeHref: "/admin/#/orgs",
         adminLabel: "Dual Power West admin",
-        adminSignInHref: "/admin/?app=dpg#/signin",
+        adminSignInHref: "/?app=dpg#/signin",
         footerLabel: "Powered by Bondfire",
         logoSrc: "/branding/dpg-logo.png",
         logoAlt: "Dual Power West",

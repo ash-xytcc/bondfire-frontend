@@ -351,18 +351,19 @@ export default function App() {
   const browserPath = typeof window !== "undefined" ? (window.location.pathname || "/") : "/";
   const adminHash = typeof window !== "undefined" ? (window.location.hash || "") : "";
   const isAdminPath = browserPath === "/admin" || browserPath.startsWith("/admin/");
+  const isSignInHash = adminHash === "#/signin" || adminHash.startsWith("#/signin?");
   const isDpgPublicBrowserPath =
     browserPath === "/" ||
     browserPath === "/bulletin" ||
     browserPath === "/bulletin/" ||
     /^\/bulletin\/.+/.test(browserPath);
 
-  // Hard route admin sign-in so /admin/?app=dpg#/signin does not get stranded.
-  if (isAdminPath && (adminHash === "#/signin" || adminHash.startsWith("#/signin?"))) {
+  // Always let explicit sign-in hashes boot the real app router first.
+  if (isSignInHash) {
     return <AdminApp />;
   }
 
-  // DPG branch: always serve the public shell directly for public browser paths.
+  // DPG branch: serve the public shell only for true public browser paths with no sign-in hash.
   if (!isAdminPath && isDpgPublicBrowserPath) {
     return <DpgPublicHome />;
   }

@@ -95,6 +95,35 @@ function cleanStringArray(arr, limit = 12) {
     .slice(0, limit)
 }
 
+
+function hexToRgb(hex) {
+  const clean = String(hex || "").trim().replace("#", "")
+  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return null
+  const n = parseInt(clean, 16)
+  return {
+    r: (n >> 16) & 255,
+    g: (n >> 8) & 255,
+    b: n & 255,
+  }
+}
+
+function rgbToHex(r, g, b) {
+  return "#" + [r, g, b].map((v) => {
+    const n = Math.max(0, Math.min(255, Math.round(v)))
+    return n.toString(16).padStart(2, "0")
+  }).join("")
+}
+
+function darkenHex(hex, amount = 0.2) {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return "#7b3029"
+  return rgbToHex(
+    rgb.r * (1 - amount),
+    rgb.g * (1 - amount),
+    rgb.b * (1 - amount),
+  )
+}
+
 function normalizeHome(raw) {
   const base = raw && typeof raw === "object" ? raw : {}
   return {
@@ -215,11 +244,16 @@ export default function RedHarborHome() {
     return cleanLinkArray(home.get_involved_links, 6)
   }, [home.get_involved_links])
 
+  const accent = home.accent_color || defaultHome.accent_color
+  const accentDark = darkenHex(accent, 0.22)
+
   return (
     <div
       className="rh-public"
       style={{
-        "--rh-accent": home.accent_color || defaultHome.accent_color,
+        "--rh-accent": accent,
+        "--rh-red": accent,
+        "--rh-red-2": accentDark,
       }}
     >
       <header className="rh-public-header">

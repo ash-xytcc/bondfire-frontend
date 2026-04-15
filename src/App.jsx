@@ -261,7 +261,6 @@ fetch("/api/orgs", { credentials: "include" })
 				{/* PUBLIC */}
 				<Route path="/p/:slug" element={<PublicPage />} />
 				<Route path="/p/*" element={<PublicPage />} />
-				<Route path="/bulletin" element={<BulletinPublicPage />} />
 				<Route path="/bulletin/:slug" element={<BulletinArticlePage />} />
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/demo" element={<DemoBoot />} />

@@ -131,7 +131,7 @@ export default function Settings() {
       ["org", "Organization"],
       ["invites", "Invites"],
       ["members", "Members"],
-      ["public", "Public page"],
+      ["public", "Public site"],
       ["public-inbox", "Public inbox"],
       ["newsletter", "Newsletter"],
       ["pledges", "Pledges"],
@@ -406,6 +406,7 @@ export default function Settings() {
   const [primaryActionItems, setPrimaryActionItems] = React.useState([]);
   const [getInvolvedActionItems, setGetInvolvedActionItems] = React.useState([]);
   const [msg, setMsg] = React.useState("");
+  const [showLegacyPublicSettings, setShowLegacyPublicSettings] = React.useState(false);
   const [heroBackgroundUrl, setHeroBackgroundUrl] = React.useState("");
   const [featuredPostSlugsText, setFeaturedPostSlugsText] = React.useState("");
   const [navLinksText, setNavLinksText] = React.useState("");
@@ -523,6 +524,25 @@ export default function Settings() {
       ? items.map((item) => `${item?.label || item?.text || item?.url || ""} | ${item?.url || ""}`.trim()).filter(Boolean).join("\n")
       : "";
   }, []);
+
+  const publicNavPreviewItems = React.useMemo(() => {
+    return String(navLinksText || "")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [label, url] = line.split("|").map((x) => (x || "").trim());
+        return { label: label || url || "", url: url || "" };
+      })
+      .filter((item) => item.label && item.url);
+  }, [navLinksText]);
+
+  const featuredPostPreviewItems = React.useMemo(() => {
+    return String(featuredPostSlugsText || "")
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }, [featuredPostSlugsText]);
 
   const genSlug = async () => {
     setMsg("");
@@ -1275,7 +1295,7 @@ React.useEffect(() => {
           <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div>
               <h2 style={{ marginTop: 0, marginBottom: 6 }}>Public Page</h2>
-              <p className="helper" style={{ margin: 0 }}>Set up the public-facing page visitors will see. Turn sections on or off, choose the theme, and decide what each button does.</p>
+              <p className="helper" style={{ margin: 0 }}>Shape the public-facing DPG website. Edit the homepage, hero image, navigation, and featured content here instead of babysitting old Ghost layouts.</p>
             </div>
             <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               {enabled && slug ? (
@@ -1327,7 +1347,20 @@ React.useEffect(() => {
               <input className="input" value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Mutual aid, community meals, outreach" />
             </label>
 
-            <div className="card" style={{ padding: 12 }}>
+            <details className="card" style={{ padding: 12 }} open={showLegacyPublicSettings}>
+              <summary
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowLegacyPublicSettings((v) => !v);
+                }}
+                style={{ cursor: "pointer", fontWeight: 800, marginBottom: 10 }}
+              >
+                Advanced / legacy public settings
+              </summary>
+              <p className="helper" style={{ marginTop: 0 }}>
+                These are the older Bondfire public-page controls. Keep them if useful, but they are no longer the main way you shape the DPG website.
+              </p>
+              <div className="card" style={{ padding: 12, background: "rgba(0,0,0,0.08)" }}>
               <h3 style={{ marginTop: 0, marginBottom: 8 }}>Basics</h3>
               <p className="helper" style={{ marginTop: 0 }}>Start with the name, link, and color. This is the minimum needed to get the page live.</p>
 
@@ -1392,6 +1425,35 @@ React.useEffect(() => {
             </div>
 
             <div className="card" style={{ padding: 12 }}>
+
+            <div className="card" style={{ padding: 16, marginBottom: 14, border: "1px solid rgba(147,180,240,0.24)", background: "linear-gradient(180deg, rgba(147,180,240,0.08), rgba(147,180,240,0.03))" }}>
+              <div style={{ display: "grid", gap: 14, gridTemplateColumns: "1.2fr .8fr" }}>
+                <div>
+                  <div className="helper" style={{ textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>DPG Site Studio</div>
+                  <h3 style={{ marginTop: 0, marginBottom: 8 }}>This is the editor for the public website</h3>
+                  <p className="helper" style={{ marginTop: 0 }}>
+                    Use this section to shape the public front door people see first: the hero image, homepage copy, top nav, featured bulletin cards, and public routes.
+                    The older generic public-page controls are still available below under advanced settings.
+                  </p>
+                </div>
+
+                <div className="card" style={{ padding: 12, background: "rgba(0,0,0,0.12)" }}>
+                  <h4 style={{ marginTop: 0, marginBottom: 8 }}>Current site summary</h4>
+                  <div className="helper" style={{ display: "grid", gap: 8 }}>
+                    <div><strong>Hero image:</strong> {heroBackgroundUrl ? "set" : "not set"}</div>
+                    <div><strong>Featured posts:</strong> {featuredPostPreviewItems.length || 0}</div>
+                    <div><strong>Nav links:</strong> {publicNavPreviewItems.length || 0}</div>
+                    <div><strong>Public slug:</strong> {slug || "not generated"}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: 16, marginBottom: 14 }}>
+              <h3 style={{ marginTop: 0, marginBottom: 8 }}>Homepage and navigation</h3>
+              <p className="helper" style={{ marginTop: 0 }}>
+                These fields drive the new public homepage shell, hero image, featured stories, and top nav.
+              </p>
               <h3 style={{ marginTop: 0, marginBottom: 8 }}>What We Do</h3>
               <p className="helper" style={{ marginTop: 0 }}>Add a short list of what the org does. Use one line per item.</p>
               <label className="grid" style={{ gap: 6 }}>
@@ -1413,6 +1475,7 @@ Outreach`} />
 
               <label className="grid" style={{ gap: 6, marginTop: 12 }}>
                 <span className="helper">Featured post slugs, one per line</span>
+                {featuredPostPreviewItems.length ? <div className="helper" style={{ marginTop: 6 }}>Current: {featuredPostPreviewItems.join(" · ")}</div> : null}
                 <textarea
                   className="textarea"
                   rows={4}
@@ -1423,6 +1486,7 @@ Outreach`} />
 
               <label className="grid" style={{ gap: 6, marginTop: 12 }}>
                 <span className="helper">Top nav links, one per line</span>
+                {publicNavPreviewItems.length ? <div className="helper" style={{ marginTop: 6 }}>Current: {publicNavPreviewItems.map((item) => item.label).join(" · ")}</div> : null}
                 <textarea
                   className="textarea"
                   rows={6}

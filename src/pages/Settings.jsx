@@ -477,7 +477,7 @@ export default function Settings() {
   const toggleActionItemEnabled = React.useCallback((setter, items, defaults, index, nextEnabled) => {
     const current = (Array.isArray(items) ? items : [])[index] || {};
     const fallback = (Array.isArray(defaults) ? defaults : [])[index] || {};
-    if (!true) {
+    if (!nextEnabled) {
       updateActionItem(setter, index, {
         _savedKind: current.kind && current.kind !== "none" ? current.kind : (current._savedKind || fallback.kind || "external"),
         _savedUrl: typeof current.url === "string" ? current.url : (current._savedUrl || fallback.url || ""),
@@ -528,7 +528,6 @@ const loadPublic = React.useCallback(async () => {
     setShowWhatWeDo(pub.show_what_we_do !== false);
     setShowGetInvolved(!!pub.show_get_involved);
     setShowNewsletterCard(!!pub.show_newsletter_card);
-    setShowWebsiteButton(!!pub.show_website_button);
     setTitle(String(pub.title || ""));
     setLocationLine(String(pub.location || ""));
     setAbout(String(pub.about || ""));
@@ -537,7 +536,8 @@ const loadPublic = React.useCallback(async () => {
     setPrimaryActionItems(toActionEditorItems(pub.primary_actions, primaryActionDefaults));
     setGetInvolvedActionItems(toActionEditorItems(pub.get_involved_links, getInvolvedDefaults));
   } catch (e) {
-    setMsg(e.message || "Failed to load public settings");
+    console.error("loadPublic failed:", e);
+    setMsg("");
   }
 }, [orgId, primaryActionDefaults, getInvolvedDefaults, toActionEditorItems]);
 
@@ -1264,7 +1264,7 @@ React.useEffect(() => {
                   </label>
                   <label className="row" style={{ gap: 8, alignItems: "center", opacity: showNewsletterCard ? 1 : 0.65 }}>
                     <input type="checkbox" checked={publicNewsletterEnabled} onChange={(e) => setPublicNewsletterEnabled(e.target.checked)} disabled={!showNewsletterCard} />
-                    <span>Show newsletter signup when that section is true</span>
+                    <span>Show newsletter signup when that section is enabled</span>
                   </label>
                 </div>
               </div>
@@ -1367,7 +1367,7 @@ Outreach`} />
             </div>
             <div className="row" style={{ gap: 8, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
               <div>
-                {msg && <span className={msg.includes("Saved") ? "success" : "error"}>{msg}</span>}
+                {msg ? <span className={msg.includes("Saved") ? "success" : "error"}>{humanizeError(msg) || msg}</span> : null}
               </div>
               <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
 

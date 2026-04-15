@@ -29,6 +29,7 @@ import DpgSessionsPage from "./pages/dpg/DpgSessionsPage";
 import DpgPublicHome from "./pages/DpgPublicHome.jsx";
 import PublicBulletinIndex from "./pages/dpg/PublicBulletinIndex.jsx";
 import PublicBulletinPost from "./pages/dpg/PublicBulletinPost.jsx";
+import PublicContentPage from "./pages/dpg/PublicContentPage.jsx";
 
 // COMPONENTS
 import AppHeader from "./components/AppHeader.jsx";
@@ -362,6 +363,10 @@ export default function App() {
 
   if (/^\/bulletin\/.+/.test(browserPath)) {
     return <PublicBulletinPost />;
+  }
+
+  if (["/about", "/faq", "/volunteer", "/donate", "/press", "/rsvp"].includes(browserPath)) {
+    return <PublicContentPage />;
   }
 
   if (browserPath === "/" && !isAnyHashAppRoute) {

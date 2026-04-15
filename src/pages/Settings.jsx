@@ -401,6 +401,18 @@ export default function Settings() {
   const [eventsIntro, setEventsIntro] = React.useState("");
   const [accentColor, setAccentColor] = React.useState("#6d5efc");
   const [whatWeDo, setWhatWeDo] = React.useState("");
+  const [sitePurposeItems, setSitePurposeItems] = React.useState("");
+  const [eventsItems, setEventsItems] = React.useState("");
+  const [joinCard1Title, setJoinCard1Title] = React.useState("");
+  const [joinCard1Body, setJoinCard1Body] = React.useState("");
+  const [joinCard2Title, setJoinCard2Title] = React.useState("");
+  const [joinCard2Body, setJoinCard2Body] = React.useState("");
+  const [joinCard3Title, setJoinCard3Title] = React.useState("");
+  const [joinCard3Body, setJoinCard3Body] = React.useState("");
+  const [contactCardTitle, setContactCardTitle] = React.useState("");
+  const [contactCardBody, setContactCardBody] = React.useState("");
+  const [memberAccessTitle, setMemberAccessTitle] = React.useState("");
+  const [memberAccessBody, setMemberAccessBody] = React.useState("");
   const [primaryActionItems, setPrimaryActionItems] = React.useState([]);
   const [getInvolvedActionItems, setGetInvolvedActionItems] = React.useState([]);
   const [msg, setMsg] = React.useState("");
@@ -541,6 +553,19 @@ const loadPublic = React.useCallback(async () => {
     setEventsIntro(String(pub.events_intro || ""));
     setAccentColor(String(pub.accent_color || "#6d5efc"));
     setWhatWeDo(Array.isArray(pub.what_we_do) ? pub.what_we_do.join("\n") : Array.isArray(pub.features) ? pub.features.join("\n") : "");
+    setSitePurposeItems(Array.isArray(pub.site_purpose_items) ? pub.site_purpose_items.join("\n") : "");
+    setEventsItems(Array.isArray(pub.events_items) ? pub.events_items.join("\n") : "");
+    const joinCards = Array.isArray(pub.join_cards) ? pub.join_cards : [];
+    setJoinCard1Title(String(joinCards[0]?.title || ""));
+    setJoinCard1Body(String(joinCards[0]?.body || ""));
+    setJoinCard2Title(String(joinCards[1]?.title || ""));
+    setJoinCard2Body(String(joinCards[1]?.body || ""));
+    setJoinCard3Title(String(joinCards[2]?.title || ""));
+    setJoinCard3Body(String(joinCards[2]?.body || ""));
+    setContactCardTitle(String(pub.contact_card_title || ""));
+    setContactCardBody(String(pub.contact_card_body || ""));
+    setMemberAccessTitle(String(pub.member_access_title || ""));
+    setMemberAccessBody(String(pub.member_access_body || ""));
     setPrimaryActionItems(toActionEditorItems(pub.primary_actions, primaryActionDefaults));
     setGetInvolvedActionItems(toActionEditorItems(pub.get_involved_links, getInvolvedDefaults));
   } catch (e) {
@@ -628,6 +653,17 @@ React.useEffect(() => {
         events_intro: (eventsIntro || "").trim(),
         accent_color: (accentColor || "#6d5efc").trim(),
         what_we_do: (whatWeDo || "").split("\n").map((s) => s.trim()).filter(Boolean),
+        site_purpose_items: (sitePurposeItems || "").split("\n").map((s) => s.trim()).filter(Boolean),
+        events_items: (eventsItems || "").split("\n").map((s) => s.trim()).filter(Boolean),
+        join_cards: [
+          { title: (joinCard1Title || "").trim(), body: (joinCard1Body || "").trim() },
+          { title: (joinCard2Title || "").trim(), body: (joinCard2Body || "").trim() },
+          { title: (joinCard3Title || "").trim(), body: (joinCard3Body || "").trim() },
+        ],
+        contact_card_title: (contactCardTitle || "").trim(),
+        contact_card_body: (contactCardBody || "").trim(),
+        member_access_title: (memberAccessTitle || "").trim(),
+        member_access_body: (memberAccessBody || "").trim(),
         primary_actions: fromActionEditorItems(primaryActionItems, 3),
         get_involved_links: fromActionEditorItems(getInvolvedActionItems, 4),
       };
@@ -647,6 +683,19 @@ React.useEffect(() => {
       setEventsIntro(pub.events_intro ?? payload.events_intro);
       setAccentColor(pub.accent_color ?? payload.accent_color);
       setWhatWeDo(Array.isArray(pub.what_we_do) ? pub.what_we_do.join("\n") : whatWeDo);
+      setSitePurposeItems(Array.isArray(pub.site_purpose_items) ? pub.site_purpose_items.join("\n") : sitePurposeItems);
+      setEventsItems(Array.isArray(pub.events_items) ? pub.events_items.join("\n") : eventsItems);
+      const joinCards = Array.isArray(pub.join_cards) ? pub.join_cards : payload.join_cards;
+      setJoinCard1Title(String(joinCards?.[0]?.title || ""));
+      setJoinCard1Body(String(joinCards?.[0]?.body || ""));
+      setJoinCard2Title(String(joinCards?.[1]?.title || ""));
+      setJoinCard2Body(String(joinCards?.[1]?.body || ""));
+      setJoinCard3Title(String(joinCards?.[2]?.title || ""));
+      setJoinCard3Body(String(joinCards?.[2]?.body || ""));
+      setContactCardTitle(pub.contact_card_title ?? payload.contact_card_title);
+      setContactCardBody(pub.contact_card_body ?? payload.contact_card_body);
+      setMemberAccessTitle(pub.member_access_title ?? payload.member_access_title);
+      setMemberAccessBody(pub.member_access_body ?? payload.member_access_body);
       setPrimaryActionItems(toActionEditorItems(pub.primary_actions || payload.primary_actions, primaryActionDefaults));
       setGetInvolvedActionItems(toActionEditorItems(pub.get_involved_links || payload.get_involved_links, getInvolvedDefaults));
         setPublicNewsletterEnabled(!!pub.newsletter_enabled);
@@ -1315,6 +1364,108 @@ React.useEffect(() => {
                 </div>
               </div>
 
+            </div>
+
+            <div className="helper">Homepage changes may require a refresh on the public site to appear.</div>
+
+            <div className="card" style={{ padding: 12 }}>
+              <h3 style={{ marginTop: 0, marginBottom: 8 }}>Hero side card</h3>
+              <p className="helper" style={{ marginTop: 0 }}>Edit the “What this site is for” list shown beside the hero.</p>
+              <label className="grid" style={{ gap: 6 }}>
+                <span className="helper">One item per line</span>
+                <textarea className="textarea" rows={5} value={sitePurposeItems} onChange={(e) => setSitePurposeItems(e.target.value)} placeholder={`Learn what the branch is and what it does
+Find organizing and membership information
+Read public updates and branch publications
+Access the private branch board through sign in`} />
+              </label>
+            </div>
+
+            <div className="card" style={{ padding: 12 }}>
+              <h3 style={{ marginTop: 0, marginBottom: 8 }}>Join cards</h3>
+              <p className="helper" style={{ marginTop: 0 }}>Edit the three cards in the Join section.</p>
+              <div className="grid" style={{ gap: 12 }}>
+                <div className="card" style={{ padding: 12, border: "1px solid #222" }}>
+                  <div className="grid" style={{ gap: 8 }}>
+                    <label className="grid" style={{ gap: 6 }}>
+                      <span className="helper">Card 1 title</span>
+                      <input className="input" value={joinCard1Title} onChange={(e) => setJoinCard1Title(e.target.value)} placeholder="Join the branch" />
+                    </label>
+                    <label className="grid" style={{ gap: 6 }}>
+                      <span className="helper">Card 1 body</span>
+                      <textarea className="textarea" rows={3} value={joinCard1Body} onChange={(e) => setJoinCard1Body(e.target.value)} placeholder="Become part of the Red Harbor branch..." />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="card" style={{ padding: 12, border: "1px solid #222" }}>
+                  <div className="grid" style={{ gap: 8 }}>
+                    <label className="grid" style={{ gap: 6 }}>
+                      <span className="helper">Card 2 title</span>
+                      <input className="input" value={joinCard2Title} onChange={(e) => setJoinCard2Title(e.target.value)} placeholder="Organize your workplace" />
+                    </label>
+                    <label className="grid" style={{ gap: 6 }}>
+                      <span className="helper">Card 2 body</span>
+                      <textarea className="textarea" rows={3} value={joinCard2Body} onChange={(e) => setJoinCard2Body(e.target.value)} placeholder="If you want help organizing on the job..." />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="card" style={{ padding: 12, border: "1px solid #222" }}>
+                  <div className="grid" style={{ gap: 8 }}>
+                    <label className="grid" style={{ gap: 6 }}>
+                      <span className="helper">Card 3 title</span>
+                      <input className="input" value={joinCard3Title} onChange={(e) => setJoinCard3Title(e.target.value)} placeholder="Support broader struggle" />
+                    </label>
+                    <label className="grid" style={{ gap: 6 }}>
+                      <span className="helper">Card 3 body</span>
+                      <textarea className="textarea" rows={3} value={joinCard3Body} onChange={(e) => setJoinCard3Body(e.target.value)} placeholder="Workers, tenants, precarious workers..." />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: 12 }}>
+              <h3 style={{ marginTop: 0, marginBottom: 8 }}>Events list</h3>
+              <p className="helper" style={{ marginTop: 0 }}>Edit the bullet list shown in the Events section.</p>
+              <label className="grid" style={{ gap: 6 }}>
+                <span className="helper">One item per line</span>
+                <textarea className="textarea" rows={5} value={eventsItems} onChange={(e) => setEventsItems(e.target.value)} placeholder={`Branch meetings and public events will be posted here.
+Workplace organizing support and one to one follow up available.
+Bulletin updates and announcements published on a regular basis.`} />
+              </label>
+            </div>
+
+            <div className="card" style={{ padding: 12 }}>
+              <h3 style={{ marginTop: 0, marginBottom: 8 }}>Contact cards</h3>
+              <p className="helper" style={{ marginTop: 0 }}>Edit the titles and body text for the two cards in the Contact section.</p>
+              <div className="grid" style={{ gap: 12 }}>
+                <div className="card" style={{ padding: 12, border: "1px solid #222" }}>
+                  <div className="grid" style={{ gap: 8 }}>
+                    <label className="grid" style={{ gap: 6 }}>
+                      <span className="helper">Contact card title</span>
+                      <input className="input" value={contactCardTitle} onChange={(e) => setContactCardTitle(e.target.value)} placeholder="Branch contact" />
+                    </label>
+                    <label className="grid" style={{ gap: 6 }}>
+                      <span className="helper">Contact card body</span>
+                      <textarea className="textarea" rows={3} value={contactCardBody} onChange={(e) => setContactCardBody(e.target.value)} placeholder="Use this section for your public email..." />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="card" style={{ padding: 12, border: "1px solid #222" }}>
+                  <div className="grid" style={{ gap: 8 }}>
+                    <label className="grid" style={{ gap: 6 }}>
+                      <span className="helper">Member access title</span>
+                      <input className="input" value={memberAccessTitle} onChange={(e) => setMemberAccessTitle(e.target.value)} placeholder="Member access" />
+                    </label>
+                    <label className="grid" style={{ gap: 6 }}>
+                      <span className="helper">Member access body</span>
+                      <textarea className="textarea" rows={3} value={memberAccessBody} onChange={(e) => setMemberAccessBody(e.target.value)} placeholder="Existing members can use the private branch board..." />
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="card" style={{ padding: 12 }}>

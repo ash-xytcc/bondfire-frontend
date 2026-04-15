@@ -38,6 +38,16 @@ export async function onRequestGet({ env, request, params }) {
     what_we_do: Array.isArray(cfg?.what_we_do) ? cfg.what_we_do : [],
     primary_actions: Array.isArray(cfg?.primary_actions) ? cfg.primary_actions : [],
     get_involved_links: Array.isArray(cfg?.get_involved_links) ? cfg.get_involved_links : [],
+    hero_eyebrow: String(cfg?.hero_eyebrow || ""),
+    hero_title: String(cfg?.hero_title || ""),
+    hero_body: String(cfg?.hero_body || ""),
+    organizer_title: String(cfg?.organizer_title || ""),
+    organizer_body: String(cfg?.organizer_body || ""),
+    bulletin_title: String(cfg?.bulletin_title || ""),
+    bulletin_intro: String(cfg?.bulletin_intro || ""),
+    home_featured_bulletin_enabled: cfg?.home_featured_bulletin_enabled !== false,
+    progress_items: Array.isArray(cfg?.progress_items) ? cfg.progress_items : [],
+    sticky_cards: Array.isArray(cfg?.sticky_cards) ? cfg.sticky_cards : [],
   };
 
   return Response.json({ ok: true, public: cleaned });

@@ -28,6 +28,22 @@ function cleanStrings(arr, limit) {
     : [];
 }
 
+function cleanStickyCards(arr, limit) {
+  return Array.isArray(arr)
+    ? arr
+        .map((item) => {
+          if (!item || typeof item !== "object") return null;
+          const title = String(item.title || "").trim();
+          const text = String(item.text || "").trim();
+          const tone = String(item.tone || "").trim();
+          if (!title && !text) return null;
+          return { title, text, tone: tone || "#f3e28b" };
+        })
+        .filter(Boolean)
+        .slice(0, limit)
+    : [];
+}
+
 export async function onRequestPost({ env, request, params }) {
   if (!authOk(env, request)) {
     return Response.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
@@ -56,6 +72,16 @@ export async function onRequestPost({ env, request, params }) {
     what_we_do,
     primary_actions,
     get_involved_links,
+    hero_eyebrow,
+    hero_title,
+    hero_body,
+    organizer_title,
+    organizer_body,
+    bulletin_title,
+    bulletin_intro,
+    home_featured_bulletin_enabled,
+    progress_items,
+    sticky_cards,
     slug,
   } = body || {};
 
@@ -103,6 +129,16 @@ export async function onRequestPost({ env, request, params }) {
     what_we_do: cleanStrings(what_we_do, 12),
     primary_actions: cleanLinks(primary_actions, 3),
     get_involved_links: cleanLinks(get_involved_links, 4),
+    hero_eyebrow: String(hero_eyebrow || "").trim(),
+    hero_title: String(hero_title || "").trim(),
+    hero_body: String(hero_body || "").trim(),
+    organizer_title: String(organizer_title || "").trim(),
+    organizer_body: String(organizer_body || "").trim(),
+    bulletin_title: String(bulletin_title || "").trim(),
+    bulletin_intro: String(bulletin_intro || "").trim(),
+    home_featured_bulletin_enabled: home_featured_bulletin_enabled !== false,
+    progress_items: cleanStrings(progress_items, 8),
+    sticky_cards: cleanStickyCards(sticky_cards, 4),
   };
 
   await setPublicCfg(env, orgId, cleaned);

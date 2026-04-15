@@ -9,14 +9,16 @@ export function slugify(input) {
 
 async function ensurePublicSiteTable(env) {
   if (!env?.BF_DB) return false;
-  await env.BF_DB.exec(`
-    CREATE TABLE IF NOT EXISTS public_site_configs (
-      org_id TEXT PRIMARY KEY,
-      slug TEXT UNIQUE,
-      cfg_json TEXT NOT NULL DEFAULT '{}',
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
+  await env.BF_DB
+    .prepare(`
+      CREATE TABLE IF NOT EXISTS public_site_configs (
+        org_id TEXT PRIMARY KEY,
+        slug TEXT UNIQUE,
+        cfg_json TEXT NOT NULL DEFAULT '{}',
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    .run();
   return true;
 }
 

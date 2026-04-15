@@ -474,7 +474,7 @@ export default function Settings() {
     setter((prev) => (Array.isArray(prev) ? prev : []).map((item, i) => (i === index ? { ...item, ...patch } : item)));
   }, []);
 
-  const toggleActionItemEnabled = React.useCallback((setter, items, defaults, index, true) => {
+  const toggleActionItemEnabled = React.useCallback((setter, items, defaults, index, nextEnabled) => {
     const current = (Array.isArray(items) ? items : [])[index] || {};
     const fallback = (Array.isArray(defaults) ? defaults : [])[index] || {};
     if (!true) {

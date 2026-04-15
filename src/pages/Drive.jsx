@@ -273,7 +273,7 @@ export default function Drive() {
           const hasLegacy = Array.isArray(legacy?.folders) && legacy.folders.length || Array.isArray(legacy?.notes) && legacy.notes.length || Array.isArray(legacy?.files) && legacy.files.length || Array.isArray(legacy?.templates) && legacy.templates.length;
           if (!alreadyImported && hasLegacy) {
             await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/import`, {
-              method: "POST",
+              method: "PATCH",
               body: JSON.stringify({
                 folders: legacy.folders || [],
                 notes: legacy.notes || [],

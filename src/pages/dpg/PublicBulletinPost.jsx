@@ -11,30 +11,6 @@ export default function PublicBulletinPost() {
       document.body.dataset.app = "dpg";
     } catch {}
     applyAppVariantToDocument();
-
-    const killDarkMode = () => {
-      try {
-        const nodes = Array.from(document.querySelectorAll("button, a, div"));
-        for (const node of nodes) {
-          const text = String(node.textContent || "").trim().toLowerCase();
-          const style = window.getComputedStyle(node);
-          if (text === "dark mode" && style.position === "fixed") {
-            node.remove();
-          }
-        }
-      } catch {}
-    };
-
-    killDarkMode();
-    const t1 = window.setTimeout(killDarkMode, 50);
-    const t2 = window.setTimeout(killDarkMode, 300);
-    const t3 = window.setTimeout(killDarkMode, 1200);
-
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-      window.clearTimeout(t3);
-    };
   }, []);
 
 

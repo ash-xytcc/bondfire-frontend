@@ -437,7 +437,7 @@ export default function Drive() {
   }
 
   async function publishSelectedNote() {
-    if (!selectedNote) return;
+    if (!selectedNote?.id) return;
     const defaultSlug = selectedNote?.bulletinSlug || slugifyText(title || selectedNote.title || "untitled");
     const slug = window.prompt("Public slug", defaultSlug);
     if (!slug) return;
@@ -445,9 +445,6 @@ export default function Drive() {
     const cleanSlug = slugifyText(slug);
     const cleanExcerpt = String(excerpt || "");
     const publishTitle = title || selectedNote.title || "untitled";
-    const publishBody = selectedId === selectedNote.id && selectedKind === "note"
-      ? content
-      : (selectedNote.body || "");
 
     await updateSelectedNoteBulletin({
       bulletinSlug: cleanSlug,
@@ -457,31 +454,66 @@ export default function Drive() {
 
     try {
       const res = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/posts/${encodeURIComponent(selectedNote.id)}`, {
-        method: "POST",
+        method: "PATCH",
         body: JSON.stringify({
-          title: publishTitle,
           slug: cleanSlug,
+          titleOverride: publishTitle,
           excerpt: cleanExcerpt,
-          body: publishBody,
           status: "published",
         }),
       });
-      if (!res?.ok && !res?.post && !res?.article && !res?.item) {
+      if (!res?.ok && !res?.post) {
         throw new Error(res?.error || "Failed to publish bulletin post");
       }
+
+      setNotes((prev) => prev.map((n) => (
+        n.id === selectedNote.id
+          ? {
+              ...n,
+              bulletinSlug: cleanSlug,
+              bulletinExcerpt: cleanExcerpt,
+              bulletinStatus: "published",
+              bulletinPublishedAt: res?.post?.publishedAt || n?.bulletinPublishedAt || Date.now(),
+            }
+          : n
+      )));
     } catch (e) {
       console.error("Failed to publish public bulletin post", e);
       window.alert(`Drive note updated, but public bulletin publish failed: ${String(e?.message || e)}`);
     }
   }
 
+
   async function unpublishSelectedNote() {
-    if (!selectedNote) return;
+    if (!selectedNote?.id) return;
     const ok = window.confirm(`Remove "${selectedNote.title || "this note"}" from the public bulletin?`);
     if (!ok) return;
+
     await updateSelectedNoteBulletin({
       bulletinStatus: "",
     });
+
+    try {
+      const res = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/posts/${encodeURIComponent(selectedNote.id)}`, {
+        method: "DELETE",
+      });
+      if (!res?.ok && !res?.deleted) {
+        throw new Error(res?.error || "Failed to remove bulletin post");
+      }
+
+      setNotes((prev) => prev.map((n) => (
+        n.id === selectedNote.id
+          ? {
+              ...n,
+              bulletinStatus: "",
+              bulletinPublishedAt: "",
+            }
+          : n
+      )));
+    } catch (e) {
+      console.error("Failed to remove public bulletin post", e);
+      window.alert(`Drive note metadata cleared, but public bulletin removal failed: ${String(e?.message || e)}`);
+    }
   }
 
   function openPublicBulletinPage() {

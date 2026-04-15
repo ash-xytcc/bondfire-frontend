@@ -456,7 +456,7 @@ export default function Drive() {
     });
 
     try {
-      const res = await api(`/api/orgs/${encodeURIComponent(orgId)}/bulletin`, {
+      const res = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/posts/${encodeURIComponent(selectedNote.id)}`, {
         method: "POST",
         body: JSON.stringify({
           title: publishTitle,

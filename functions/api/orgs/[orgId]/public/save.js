@@ -1,4 +1,11 @@
-import { slugify, uniqueSlug, getPublicCfg, setPublicCfg, setSlugMapping, removeSlugMapping } from "../../../_lib/publicPageStore.js";
+import {
+  slugify,
+  uniqueSlug,
+  getPublicCfg,
+  setPublicCfg,
+  setSlugMapping,
+  removeSlugMapping,
+} from "../../../_lib/publicPageStore.js";
 
 function authOk(env, request) {
   if (env.BF_WRITE_LOCKED === "true") {
@@ -28,83 +35,66 @@ function cleanStrings(arr, limit) {
     : [];
 }
 
+function normalizeSavedCfg(prev, body, slug) {
+  return {
+    enabled: true,
+    newsletter_enabled: !!body.newsletter_enabled,
+    pledges_enabled: prev?.pledges_enabled !== false,
+    show_action_strip: body.show_action_strip !== false,
+    show_needs: body.show_needs !== false,
+    show_meetings: body.show_meetings !== false,
+    show_what_we_do: body.show_what_we_do !== false,
+    show_get_involved: !!body.show_get_involved,
+    show_newsletter_card: !!body.show_newsletter_card,
+    show_website_button: !!body.show_website_button,
+    slug: String(slug || prev?.slug || ""),
+    title: String(body.title || "").trim(),
+    location: String(body.location || "").trim(),
+    about: String(body.about || "").trim(),
+    accent_color: String(body.accent_color || "#6d5efc").trim(),
+    theme_mode: "light",
+    website_link: cleanLink(body.website_link),
+    meeting_rsvp_url: String(body.meeting_rsvp_url || "").trim(),
+    what_we_do: cleanStrings(body.what_we_do, 12),
+    primary_actions: cleanLinks(body.primary_actions, 3),
+    get_involved_links: cleanLinks(body.get_involved_links, 4),
+  };
+}
+
 export async function onRequestPost({ env, request, params }) {
   if (!authOk(env, request)) {
     return Response.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
   }
 
-  const orgId = params.orgId;
-  const body = await request.json().catch(() => ({}));
-  const {
-    enabled,
-    newsletter_enabled,
-    pledges_enabled,
-    show_action_strip,
-    show_needs,
-    show_meetings,
-    show_what_we_do,
-    show_get_involved,
-    show_newsletter_card,
-    show_website_button,
-    title,
-    location,
-    about,
-    accent_color,
-    theme_mode,
-    website_link,
-    meeting_rsvp_url,
-    what_we_do,
-    primary_actions,
-    get_involved_links,
-    slug,
-  } = body || {};
+  try {
+    const orgId = String(params.orgId || "").trim();
+    const body = await request.json().catch(() => ({}));
+    const prev = await getPublicCfg(env, orgId);
 
-  const prev = await getPublicCfg(env, orgId);
-  let newSlug = prev.slug;
+    let newSlug = String(prev?.slug || "").trim();
 
-  if (typeof slug === "string" && slug.trim()) {
-    const base = slugify(slug);
-    if (!base) return Response.json({ ok: false, error: "BAD_SLUG" }, { status: 400 });
-
-    if (prev.slug) {
-      const mapped = await env.BF_PUBLIC.get(`slug:${prev.slug}`);
-      if (mapped === orgId) await removeSlugMapping(env, prev.slug);
+    if (typeof body.slug === "string" && body.slug.trim()) {
+      const base = slugify(body.slug);
+      if (base) {
+        if (prev?.slug) {
+          const mappedSlug = String(prev.slug || "").trim();
+          if (mappedSlug) await removeSlugMapping(env, mappedSlug);
+        }
+        newSlug = await uniqueSlug(env, base, orgId);
+        await setSlugMapping(env, newSlug, orgId);
+      }
+    } else if (!newSlug) {
+      const base = slugify(body.title || orgId || "org") || "org";
+      newSlug = await uniqueSlug(env, base, orgId);
+      await setSlugMapping(env, newSlug, orgId);
     }
 
-    const final = await uniqueSlug(env, base, orgId);
-    await setSlugMapping(env, final, orgId);
-    newSlug = final;
-  } else if (!prev.slug) {
-    const base = slugify(title) || slugify(orgId) || "org";
-    const final = await uniqueSlug(env, base, orgId);
-    await setSlugMapping(env, final, orgId);
-    newSlug = final;
+    const cleaned = normalizeSavedCfg(prev, body, newSlug);
+    await setPublicCfg(env, orgId, cleaned);
+
+    return Response.json({ ok: true, public: cleaned });
+  } catch (err) {
+    console.error("public/save failed", err);
+    return Response.json({ ok: false, error: "INTERNAL", detail: String(err?.message || err || "") }, { status: 500 });
   }
-
-  const cleaned = {
-    enabled: !!enabled,
-    newsletter_enabled: !!newsletter_enabled,
-    pledges_enabled: pledges_enabled !== false,
-    show_action_strip: show_action_strip !== false,
-    show_needs: show_needs !== false,
-    show_meetings: show_meetings !== false,
-    show_what_we_do: show_what_we_do !== false,
-    show_get_involved: !!show_get_involved,
-    show_newsletter_card: !!show_newsletter_card,
-    show_website_button: !!show_website_button,
-    slug: newSlug,
-    title: String(title || "").trim(),
-    location: String(location || "").trim(),
-    about: String(about || "").trim(),
-    accent_color: String(accent_color || "#6d5efc").trim(),
-    theme_mode: String(theme_mode || "light").trim() === "dark" ? "dark" : "light",
-    website_link: cleanLink(website_link),
-    meeting_rsvp_url: String(meeting_rsvp_url || "").trim(),
-    what_we_do: cleanStrings(what_we_do, 12),
-    primary_actions: cleanLinks(primary_actions, 3),
-    get_involved_links: cleanLinks(get_involved_links, 4),
-  };
-
-  await setPublicCfg(env, orgId, cleaned);
-  return Response.json({ ok: true, public: cleaned });
 }

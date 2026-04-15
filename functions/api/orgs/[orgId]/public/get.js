@@ -8,37 +8,48 @@ function authOk(env, request) {
   return true;
 }
 
+function normalizePublicCfg(cfg) {
+  const src = cfg && typeof cfg === "object" ? cfg : {};
+  return {
+    enabled: src.enabled !== false,
+    newsletter_enabled: !!src.newsletter_enabled,
+    pledges_enabled: src.pledges_enabled !== false,
+    show_action_strip: src.show_action_strip !== false,
+    show_needs: src.show_needs !== false,
+    show_meetings: src.show_meetings !== false,
+    show_what_we_do: src.show_what_we_do !== false,
+    show_get_involved: !!src.show_get_involved,
+    show_newsletter_card: !!src.show_newsletter_card,
+    show_website_button: !!src.show_website_button,
+    slug: String(src.slug || ""),
+    title: String(src.title || ""),
+    location: String(src.location || ""),
+    about: String(src.about || ""),
+    accent_color: String(src.accent_color || "#6d5efc"),
+    theme_mode: String(src.theme_mode || "light"),
+    website_link: src.website_link || null,
+    meeting_rsvp_url: String(src.meeting_rsvp_url || ""),
+    what_we_do: Array.isArray(src.what_we_do) ? src.what_we_do : [],
+    primary_actions: Array.isArray(src.primary_actions) ? src.primary_actions : [],
+    get_involved_links: Array.isArray(src.get_involved_links) ? src.get_involved_links : [],
+  };
+}
+
 export async function onRequestGet({ env, request, params }) {
   if (!authOk(env, request)) {
     return Response.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
   }
 
-  const orgId = params.orgId;
-  const cfg = await getPublicCfg(env, orgId);
-
-  const cleaned = {
-    enabled: !!cfg?.enabled,
-    newsletter_enabled: !!cfg?.newsletter_enabled,
-    pledges_enabled: cfg?.pledges_enabled !== false,
-    show_action_strip: cfg?.show_action_strip !== false,
-    show_needs: cfg?.show_needs !== false,
-    show_meetings: cfg?.show_meetings !== false,
-    show_what_we_do: cfg?.show_what_we_do !== false,
-    show_get_involved: !!cfg?.show_get_involved,
-    show_newsletter_card: !!cfg?.show_newsletter_card,
-    show_website_button: !!cfg?.show_website_button,
-    slug: String(cfg?.slug || ""),
-    title: String(cfg?.title || ""),
-    location: String(cfg?.location || ""),
-    about: String(cfg?.about || ""),
-    accent_color: String(cfg?.accent_color || "#6d5efc"),
-    theme_mode: String(cfg?.theme_mode || "light"),
-    website_link: cfg?.website_link || null,
-    meeting_rsvp_url: String(cfg?.meeting_rsvp_url || ""),
-    what_we_do: Array.isArray(cfg?.what_we_do) ? cfg.what_we_do : [],
-    primary_actions: Array.isArray(cfg?.primary_actions) ? cfg.primary_actions : [],
-    get_involved_links: Array.isArray(cfg?.get_involved_links) ? cfg.get_involved_links : [],
-  };
-
-  return Response.json({ ok: true, public: cleaned });
+  try {
+    const orgId = String(params.orgId || "").trim();
+    const cfg = await getPublicCfg(env, orgId);
+    return Response.json({ ok: true, public: normalizePublicCfg(cfg) });
+  } catch (err) {
+    console.error("public/get failed", err);
+    return Response.json({
+      ok: true,
+      public: normalizePublicCfg({}),
+      warning: "PUBLIC_GET_FALLBACK",
+    });
+  }
 }

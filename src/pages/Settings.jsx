@@ -116,10 +116,10 @@ export default function Settings() {
 
   /* ---------- Submenu tabs ---------- */
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = String(searchParams.get("tab") || "org").toLowerCase();
+  const tab = String(searchParams.get("tab") || "invites").toLowerCase();
 
   const setTab = (next) => {
-    const n = String(next || "org").toLowerCase();
+    const n = String(next || "invites").toLowerCase();
     setSearchParams(
       (prev) => {
         const p = new URLSearchParams(prev);
@@ -134,6 +134,7 @@ export default function Settings() {
     () => [
       ["invites", "Invites"],
       ["members", "Members"],
+      ["public", "Site settings"],
       ["public-inbox", "Public inbox"],
       ["newsletter", "Newsletter"],
       ["security", "Security"],
@@ -1240,13 +1241,13 @@ React.useEffect(() => {
         </div>
       )}
 
-      {/* Public Page */}
+      {/* Site settings */}
       {tab === "public" && (
         <div className="card" style={{ padding: 16 }}>
           <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div>
-              <h2 style={{ marginTop: 0, marginBottom: 6 }}>Public Page</h2>
-              <p className="helper" style={{ margin: 0 }}>Set up the public-facing page visitors will see. Turn sections on or off, choose the theme, and decide what each button does.</p>
+              <h2 style={{ marginTop: 0, marginBottom: 6 }}>Site settings</h2>
+              <p className="helper" style={{ margin: 0 }}>Edit the real Red Harbor home page at /. These values now drive the live site instead of a misleading orphan public-page flow.</p>
             </div>
             <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               {enabled && slug ? (
@@ -1259,12 +1260,12 @@ React.useEffect(() => {
           <form id="public-page-settings-form" onSubmit={savePublic} className="grid" style={{ gap: 12, marginTop: 12 }}>
             <label className="row" style={{ gap: 8, alignItems: "center" }}>
               <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
-              <span>Enable public page</span>
+              <span>Apply these settings to the Red Harbor home page</span>
             </label>
 
             <div className="bf-two">
               <label className="grid" style={{ gap: 6 }}>
-                <span className="helper">Share URL (slug)</span>
+                <span className="helper">Legacy public slug</span>
                 <div className="row" style={{ gap: 8 }}>
                   <input className="input" style={{ flex: 1 }} value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="e.g. chehalis-river-mutual-aid" />
                   <button type="button" className="btn" onClick={genSlug}>Generate</button>
@@ -1329,8 +1330,8 @@ React.useEffect(() => {
 
             <div className="card" style={{ padding: 12 }}>
               <h3 style={{ marginTop: 0, marginBottom: 8 }}>Sections</h3>
-              <p className="helper" style={{ marginTop: 0 }}>Choose which blocks appear on the public page. You can hide anything that does not apply to this org.</p>
-              <h4 style={{ marginTop: 0 }}>What should appear on the public page?</h4>
+              <p className="helper" style={{ marginTop: 0 }}>Choose which blocks appear on the Red Harbor home page. Hide anything that does not apply.</p>
+              <h4 style={{ marginTop: 0 }}>What should appear on the home page?</h4>
               <div className="bf-two">
                 <label className="row" style={{ gap: 8, alignItems: "center" }}><input type="checkbox" checked={showWebsiteButton} onChange={(e) => setShowWebsiteButton(e.target.checked)} /><span>Show the Website button in the header</span></label>
                 <label className="row" style={{ gap: 8, alignItems: "center" }}><input type="checkbox" checked={showActionStrip} onChange={(e) => setShowActionStrip(e.target.checked)} /><span>Show the main action buttons row</span></label>
@@ -1345,7 +1346,7 @@ React.useEffect(() => {
                 <div className="grid" style={{ gap: 8, marginTop: 10 }}>
                   <label className="row" style={{ gap: 8, alignItems: "center" }}>
                     <input type="checkbox" checked={showNewsletterCard} onChange={(e) => setShowNewsletterCard(e.target.checked)} />
-                    <span>Show the Stay Connected card on the public page</span>
+                    <span>Show the Stay Connected card on the home page</span>
                   </label>
                   <label className="row" style={{ gap: 8, alignItems: "center", opacity: showNewsletterCard ? 1 : 0.65 }}>
                     <input type="checkbox" checked={publicNewsletterEnabled} onChange={(e) => setPublicNewsletterEnabled(e.target.checked)} disabled={!showNewsletterCard} />
@@ -1375,7 +1376,7 @@ Outreach`} />
 
             <div className="card" style={{ padding: 12 }}>
               <h3 style={{ marginTop: 0, marginBottom: 8 }}>Main action buttons</h3>
-              <p className="helper" style={{ marginTop: 0 }}>These are the big buttons near the top of the public page.</p>
+              <p className="helper" style={{ marginTop: 0 }}>These are the main call to action buttons near the top of the home page.</p>
               <div className="grid" style={{ gap: 10 }}>
                 {primaryActionItems.map((item, index) => {
                   const isEnabled = item.kind !== "none";
@@ -1417,7 +1418,7 @@ Outreach`} />
 
             <div className="card" style={{ padding: 12 }}>
               <h3 style={{ marginTop: 0, marginBottom: 8 }}>Get Involved buttons</h3>
-              <p className="helper" style={{ marginTop: 0 }}>These are the optional buttons lower on the page. You can hide any of them.</p>
+              <p className="helper" style={{ marginTop: 0 }}>These are the optional buttons lower on the home page. You can hide any of them.</p>
               <div className="grid" style={{ gap: 10 }}>
                 {getInvolvedActionItems.map((item, index) => {
                   const isEnabled = item.kind !== "none";

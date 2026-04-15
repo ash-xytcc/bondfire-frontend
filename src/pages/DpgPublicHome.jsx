@@ -1,8 +1,6 @@
 import React from 'react';
 import { applyAppVariantToDocument } from '../lib/appVariant.js';
 import { getDpgPublicTheme, useDpgPublicSiteConfig } from '../lib/dpgPublicSite.js';
-import PublicBulletinIndex from './dpg/PublicBulletinIndex.jsx';
-import PublicBulletinPost from './dpg/PublicBulletinPost.jsx';
 
 const DPG_BRAND = {
   name: "Dual Power West",
@@ -33,26 +31,34 @@ function Sticky({ title, text, rotate = '-1deg', tone = '#fff7a8', dark = false 
       border: '1px solid rgba(0,0,0,0.08)',
     }}>
       <div
-        className="dpg-heading"
         style={{
           fontSize: 15,
           fontWeight: 800,
           marginBottom: 10,
           color: '#171717',
           textShadow: 'none',
-          fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+          fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
         }}
       >
         {title}
       </div>
-      <div style={{ fontSize: 14, lineHeight: 1.5, color: '#171717', textShadow: 'none' }}>{text}</div>
+      <div
+        style={{
+          fontSize: 14,
+          lineHeight: 1.5,
+          color: '#171717',
+          textShadow: 'none',
+          fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+        }}
+      >
+        {text}
+      </div>
     </div>
   );
 }
 
 export default function DpgPublicHome() {
   const brand = DPG_BRAND;
-  const pathname = typeof window !== "undefined" ? window.location.pathname || "/" : "/";
   const { loading, config } = useDpgPublicSiteConfig();
   const theme = getDpgPublicTheme(config);
   const dark = true;
@@ -65,11 +71,9 @@ export default function DpgPublicHome() {
     applyAppVariantToDocument();
   }, []);
 
-  if (pathname === "/bulletin" || pathname === "/bulletin/") return <PublicBulletinIndex />;
-  if (/^\/bulletin\/.+/.test(pathname)) return <PublicBulletinPost />;
-
   const stickyCards = Array.isArray(config?.sticky_cards) ? config.sticky_cards.slice(0, 4) : [];
   const progressItems = Array.isArray(config?.progress_items) ? config.progress_items : [];
+  const eyebrowText = String(config?.hero_title || config?.hero_eyebrow || 'Build it together before we even arrive.').trim() || 'Build it together before we even arrive.';
 
   return (
     <div style={{ ...theme.page, fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}>
@@ -78,11 +82,20 @@ export default function DpgPublicHome() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 18 }}>
             <img src={brand.logoSrc} alt={brand.logoAlt} style={{ width: 86, height: 86, objectFit: 'contain', flex: '0 0 auto' }} />
             <div>
-              <div style={{ fontSize: 13, letterSpacing: '.08em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 8, color: '#f3efe8' }}>
-                {config?.hero_eyebrow || 'Dual Power West'}
+              <div
+                style={{
+                  fontSize: 16,
+                  letterSpacing: '.01em',
+                  marginBottom: 10,
+                  color: '#f3efe8',
+                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                  textShadow: 'none',
+                }}
+              >
+                {eyebrowText}
               </div>
+
               <h1
-                className="dpg-heading"
                 style={{
                   fontSize: 'clamp(2.3rem, 6vw, 5rem)',
                   lineHeight: 0.95,
@@ -95,13 +108,19 @@ export default function DpgPublicHome() {
                   MozOsxFontSmoothing: 'grayscale',
                 }}
               >
-                {config?.hero_title || 'Build it together before we even arrive.'}
+                {brand.name}
               </h1>
             </div>
           </div>
+
           <button
             type="button"
-            style={{ ...theme.button, border: 0, cursor: "pointer", fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}
+            style={{
+              ...theme.button,
+              border: 0,
+              cursor: "pointer",
+              fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+            }}
             onClick={() => window.location.href = "/?app=dpg#/signin"}
           >
             Organizer login
@@ -137,11 +156,11 @@ export default function DpgPublicHome() {
         <section style={{ display: 'grid', gridTemplateColumns: '1.2fr .8fr', gap: 20, alignItems: 'start' }}>
           <div style={{ ...theme.card, color: '#f3efe8' }}>
             <h2
-              className="dpg-heading"
               style={{
                 marginTop: 0,
                 color: '#f3efe8',
-                fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+                fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                fontWeight: 800,
               }}
             >
               What is in progress
@@ -153,11 +172,11 @@ export default function DpgPublicHome() {
 
           <div style={{ ...theme.card, color: '#f3efe8' }}>
             <h2
-              className="dpg-heading"
               style={{
                 marginTop: 0,
                 color: '#f3efe8',
-                fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+                fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                fontWeight: 800,
               }}
             >
               {config?.organizer_title || 'Organizer entry'}

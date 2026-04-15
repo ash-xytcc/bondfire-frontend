@@ -27,6 +27,8 @@ import Studio from "./pages/Studio.jsx";
 import Attendees from "./pages/Attendees.jsx";
 import DpgSessionsPage from "./pages/dpg/DpgSessionsPage";
 import DpgPublicHome from "./pages/DpgPublicHome.jsx";
+import PublicBulletinIndex from "./pages/dpg/PublicBulletinIndex.jsx";
+import PublicBulletinPost from "./pages/dpg/PublicBulletinPost.jsx";
 
 // COMPONENTS
 import AppHeader from "./components/AppHeader.jsx";
@@ -264,8 +266,8 @@ function Shell() {
 				<Route path="/" element={<HomeRoute />} />
 
                 {/* DPG PUBLIC BULLETIN */}
-                <Route path="/bulletin" element={<DpgPublicHome />} />
-                <Route path="/bulletin/:slug" element={<DpgPublicHome />} />
+                <Route path="/bulletin" element={<PublicBulletinIndex />} />
+                <Route path="/bulletin/:slug" element={<PublicBulletinPost />} />
 
                                 <Route path="/dpg" element={<PublicHome />} />
                                 <Route path="/dpg/app" element={<DpgAppRedirect to="overview" />} />
@@ -352,20 +354,22 @@ export default function App() {
   const adminHash = typeof window !== "undefined" ? (window.location.hash || "") : "";
   const isAdminPath = browserPath === "/admin" || browserPath.startsWith("/admin/");
   const isSignInHash = adminHash === "#/signin" || adminHash.startsWith("#/signin?");
-  const isDpgPublicBrowserPath =
-    browserPath === "/" ||
-    browserPath === "/bulletin" ||
-    browserPath === "/bulletin/" ||
-    /^\/bulletin\/.+/.test(browserPath);
+  const isAnyHashAppRoute = adminHash.startsWith("#/");
 
-  // Always let explicit sign-in hashes boot the real app router first.
-  if (isSignInHash) {
-    return <AdminApp />;
+  if (browserPath === "/bulletin" || browserPath === "/bulletin/") {
+    return <PublicBulletinIndex />;
   }
 
-  // DPG branch: serve the public shell only for true public browser paths with no sign-in hash.
-  if (!isAdminPath && isDpgPublicBrowserPath) {
+  if (/^\/bulletin\/.+/.test(browserPath)) {
+    return <PublicBulletinPost />;
+  }
+
+  if (browserPath === "/" && !isAnyHashAppRoute) {
     return <DpgPublicHome />;
+  }
+
+  if (isSignInHash || isAdminPath || isAnyHashAppRoute) {
+    return <AdminApp />;
   }
 
   return <AdminApp />;

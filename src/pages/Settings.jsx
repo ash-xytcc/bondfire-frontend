@@ -1416,8 +1416,6 @@ React.useEffect(() => {
               </div>
             </div>
 
-            <div className="card" style={{ padding: 12 }}>
-
             <div className="card" style={{ padding: 16, marginBottom: 14, border: "1px solid rgba(147,180,240,0.24)", background: "linear-gradient(180deg, rgba(147,180,240,0.08), rgba(147,180,240,0.03))" }}>
               <div style={{ display: "grid", gap: 14, gridTemplateColumns: "1.2fr .8fr" }}>
                 <div>

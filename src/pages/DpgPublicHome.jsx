@@ -9,11 +9,52 @@ const DPG_BRAND = {
   logoAlt: "Dual Power West",
 };
 
-function InlineTextEditor({ value, onChange, className = "", style = {}, placeholder = "", multiline = false }) {
+function normalizeHomeConfig(src = {}) {
+  return {
+    enabled: true,
+    accent_color: String(src?.accent_color || "#385032"),
+    hero_eyebrow: String(src?.hero_eyebrow || ""),
+    hero_title: String(src?.hero_title || ""),
+    hero_body: String(src?.hero_body || ""),
+    hero_background_url: String(src?.hero_background_url || ""),
+    organizer_title: String(src?.organizer_title || ""),
+    organizer_body: String(src?.organizer_body || ""),
+    bulletin_title: String(src?.bulletin_title || ""),
+    bulletin_intro: String(src?.bulletin_intro || ""),
+    nav_links: Array.isArray(src?.nav_links) ? src.nav_links : [],
+    featured_post_slugs: Array.isArray(src?.featured_post_slugs) ? src.featured_post_slugs : [],
+    sticky_cards: Array.isArray(src?.sticky_cards) ? src.sticky_cards : [],
+    progress_items: Array.isArray(src?.progress_items) ? src.progress_items : [],
+  };
+}
+
+async function authFetch(path, opts = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...(opts.headers || {}),
+  };
+  const res = await fetch(path, {
+    ...opts,
+    headers,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    credentials: "include",
+  });
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    data = {};
+  }
+  if (!res.ok || data?.ok === false) {
+    throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
+function InlineTextEditor({ value, onChange, style = {}, placeholder = "", multiline = false }) {
   if (multiline) {
     return (
       <textarea
-        className={className}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -33,7 +74,6 @@ function InlineTextEditor({ value, onChange, className = "", style = {}, placeho
   }
   return (
     <input
-      className={className}
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
@@ -56,13 +96,17 @@ function InlineStringListEditor({ title, items, onChange, limit = 6, itemPlaceho
 
   return (
     <div style={{ display: "grid", gap: 8 }}>
-      {title ? <div style={{ color: light ? "#8fa1ab" : "#555", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em" }}>{title}</div> : null}
+      {title ? (
+        <div style={{ color: light ? "#8fa1ab" : "#555", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em" }}>
+          {title}
+        </div>
+      ) : null}
       {safe.map((item, index) => (
         <input
           key={`${title || "item"}-${index}`}
           value={item || ""}
           onChange={(e) => {
-            const next = safe.map((x, i) => i === index ? e.target.value : x).map((x) => String(x || "").trimEnd());
+            const next = safe.map((x, i) => (i === index ? e.target.value : x)).map((x) => String(x || "").trimEnd());
             onChange(next.filter((x) => x.trim()));
           }}
           placeholder={`${itemPlaceholder} ${index + 1}`}
@@ -88,12 +132,14 @@ function InlineCardBlockEditor({ items, onChange, editorMode }) {
     <div style={{ display: "grid", gap: 12 }}>
       {safe.map((item, index) => (
         <div key={`sticky-${index}`} style={{ padding: 12, border: "1px dashed rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.04)" }}>
-          <div style={{ color: "#8fa1ab", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>Sticky note {index + 1}</div>
+          <div style={{ color: "#8fa1ab", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>
+            Sticky note {index + 1}
+          </div>
           <div style={{ display: "grid", gap: 8 }}>
             <input
               value={item.title || ""}
               onChange={(e) => {
-                const next = safe.map((x, i) => i === index ? { ...x, title: e.target.value } : x);
+                const next = safe.map((x, i) => (i === index ? { ...x, title: e.target.value } : x));
                 onChange(next.filter((x) => x.title || x.text));
               }}
               placeholder="Title"
@@ -103,7 +149,7 @@ function InlineCardBlockEditor({ items, onChange, editorMode }) {
               rows={3}
               value={item.text || ""}
               onChange={(e) => {
-                const next = safe.map((x, i) => i === index ? { ...x, text: e.target.value } : x);
+                const next = safe.map((x, i) => (i === index ? { ...x, text: e.target.value } : x));
                 onChange(next.filter((x) => x.title || x.text));
               }}
               placeholder="Text"
@@ -112,7 +158,7 @@ function InlineCardBlockEditor({ items, onChange, editorMode }) {
             <input
               value={item.tone || ""}
               onChange={(e) => {
-                const next = safe.map((x, i) => i === index ? { ...x, tone: e.target.value } : x);
+                const next = safe.map((x, i) => (i === index ? { ...x, tone: e.target.value } : x));
                 onChange(next.filter((x) => x.title || x.text));
               }}
               placeholder="#f3e28b"
@@ -139,7 +185,7 @@ function InlineNavEditor({ links, onChange, editorMode }) {
             <input
               value={item.label || ""}
               onChange={(e) => {
-                const next = safe.map((x, i) => i === idx ? { ...x, label: e.target.value } : x);
+                const next = safe.map((x, i) => (i === idx ? { ...x, label: e.target.value } : x));
                 onChange(next.filter((x) => x.label && x.url));
               }}
               placeholder={`Label ${idx + 1}`}
@@ -148,7 +194,7 @@ function InlineNavEditor({ links, onChange, editorMode }) {
             <input
               value={item.url || ""}
               onChange={(e) => {
-                const next = safe.map((x, i) => i === idx ? { ...x, url: e.target.value } : x);
+                const next = safe.map((x, i) => (i === idx ? { ...x, url: e.target.value } : x));
                 onChange(next.filter((x) => x.label && x.url));
               }}
               placeholder={`/${idx === 0 ? "" : "route"}`}
@@ -329,8 +375,12 @@ export default function DpgPublicHome({
   saveMsg = "",
 }) {
   const { config } = useDpgPublicSiteConfig();
-  const liveConfig = liveHome || config || {};
-  const theme = getDpgPublicTheme(liveConfig);
+  const [authState, setAuthState] = React.useState({ checked: false, authed: false });
+  const [embeddedEditorMode, setEmbeddedEditorMode] = React.useState(false);
+  const [embeddedDraft, setEmbeddedDraft] = React.useState(null);
+  const [embeddedSaveBusy, setEmbeddedSaveBusy] = React.useState(false);
+  const [embeddedSaveMsg, setEmbeddedSaveMsg] = React.useState("");
+  const [savedOverride, setSavedOverride] = React.useState(null);
   const [postsState, setPostsState] = React.useState({ loading: true, posts: [], error: "" });
 
   React.useEffect(() => {
@@ -340,6 +390,39 @@ export default function DpgPublicHome({
     } catch {}
     applyAppVariantToDocument();
   }, []);
+
+  React.useEffect(() => {
+    if (editorMode) return;
+    let dead = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (dead) return;
+        setAuthState({ checked: true, authed: !!(res.ok && data?.ok) });
+      } catch {
+        if (dead) return;
+        setAuthState({ checked: true, authed: false });
+      }
+    })();
+    return () => { dead = true; };
+  }, [editorMode]);
+
+  const baseConfig = savedOverride || config || {};
+  const effectiveEditorMode = editorMode || (!!authState.authed && embeddedEditorMode);
+  const liveConfig = editorMode
+    ? (liveHome || baseConfig || {})
+    : (effectiveEditorMode ? (embeddedDraft || normalizeHomeConfig(baseConfig)) : baseConfig);
+
+  const effectiveSaveBusy = editorMode ? saveBusy : embeddedSaveBusy;
+  const effectiveSaveMsg = editorMode ? saveMsg : embeddedSaveMsg;
+  const effectiveUpdateDraft = editorMode
+    ? updateDraft
+    : (key, value) => setEmbeddedDraft((prev) => ({ ...(prev || normalizeHomeConfig(baseConfig)), [key]: value }));
 
   React.useEffect(() => {
     let dead = false;
@@ -363,6 +446,55 @@ export default function DpgPublicHome({
     })();
     return () => { dead = true; };
   }, []);
+
+  const beginEmbeddedEditing = () => {
+    setEmbeddedDraft(normalizeHomeConfig(baseConfig));
+    setEmbeddedEditorMode(true);
+    setEmbeddedSaveMsg("");
+  };
+
+  const cancelEmbeddedEditing = () => {
+    setEmbeddedDraft(normalizeHomeConfig(baseConfig));
+    setEmbeddedEditorMode(false);
+    setEmbeddedSaveMsg("");
+  };
+
+  const saveEmbeddedDraft = async () => {
+    const src = normalizeHomeConfig(embeddedDraft || baseConfig);
+    setEmbeddedSaveBusy(true);
+    setEmbeddedSaveMsg("");
+    try {
+      const payload = {
+        enabled: true,
+        accent_color: String(src.accent_color || "#385032").trim(),
+        hero_eyebrow: String(src.hero_eyebrow || "").trim(),
+        hero_title: String(src.hero_title || "").trim(),
+        hero_body: String(src.hero_body || "").trim(),
+        hero_background_url: String(src.hero_background_url || "").trim(),
+        organizer_title: String(src.organizer_title || "").trim(),
+        organizer_body: String(src.organizer_body || "").trim(),
+        bulletin_title: String(src.bulletin_title || "").trim(),
+        bulletin_intro: String(src.bulletin_intro || "").trim(),
+        nav_links: Array.isArray(src.nav_links) ? src.nav_links.filter((x) => x?.label && x?.url) : [],
+        featured_post_slugs: Array.isArray(src.featured_post_slugs) ? src.featured_post_slugs.filter(Boolean).slice(0, 4) : [],
+        sticky_cards: Array.isArray(src.sticky_cards) ? src.sticky_cards.filter((x) => x?.title || x?.text).slice(0, 4) : [],
+        progress_items: Array.isArray(src.progress_items) ? src.progress_items.filter(Boolean).slice(0, 8) : [],
+      };
+      const r = await authFetch(`/api/orgs/dpg/public/save`, {
+        method: "POST",
+        body: payload,
+      });
+      const next = normalizeHomeConfig({ ...payload, ...(r.public || {}) });
+      setSavedOverride(next);
+      setEmbeddedDraft(next);
+      setEmbeddedSaveMsg("Saved.");
+      setTimeout(() => setEmbeddedSaveMsg(""), 1200);
+    } catch (e) {
+      setEmbeddedSaveMsg(e.message || "Failed to save");
+    } finally {
+      setEmbeddedSaveBusy(false);
+    }
+  };
 
   const stickyCards = Array.isArray(liveConfig?.sticky_cards) ? liveConfig.sticky_cards.slice(0, 4) : [];
   const progressItems = Array.isArray(liveConfig?.progress_items) ? liveConfig.progress_items : [];
@@ -394,10 +526,35 @@ export default function DpgPublicHome({
   const eyebrowText = String(liveConfig?.hero_title || liveConfig?.hero_eyebrow || 'Build it together before we even arrive.').trim() || 'Build it together before we even arrive.';
   const heroSubheading = String(liveConfig?.hero_body || '').trim() || 'A gathering for learning, sharing, building, and reflection';
   const accent = String(liveConfig?.accent_color || "#385032").trim() || "#385032";
+  const theme = getDpgPublicTheme(liveConfig);
 
   return (
     <div style={{ ...theme.page, fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}>
-      {editorMode ? (
+      {!editorMode && authState.authed ? (
+        <button
+          type="button"
+          onClick={() => (effectiveEditorMode ? cancelEmbeddedEditing() : beginEmbeddedEditing())}
+          style={{
+            position: "fixed",
+            right: 18,
+            bottom: 18,
+            zIndex: 50,
+            border: 0,
+            borderRadius: 999,
+            padding: "12px 18px",
+            background: effectiveEditorMode ? "#f4f2eb" : "#385032",
+            color: effectiveEditorMode ? "#121715" : "#f3efe8",
+            cursor: "pointer",
+            fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+            fontWeight: 800,
+            boxShadow: "0 10px 24px rgba(0,0,0,0.28)",
+          }}
+        >
+          {effectiveEditorMode ? "Done editing" : "Edit site"}
+        </button>
+      ) : null}
+
+      {effectiveEditorMode ? (
         <div style={{
           position: "sticky",
           top: 0,
@@ -415,7 +572,7 @@ export default function DpgPublicHome({
           <div style={{ display: "grid", gap: 4 }}>
             <strong style={{ color: "#f3efe8" }}>Editor mode</strong>
             <span style={{ color: "#8fa1ab", fontSize: 13 }}>
-              Inline live editing for homepage copy, cards, nav, and accent color.
+              Inline live editing on the real homepage.
             </span>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -424,15 +581,15 @@ export default function DpgPublicHome({
               <input
                 type="color"
                 value={accent}
-                onChange={(e) => updateDraft("accent_color", e.target.value)}
+                onChange={(e) => effectiveUpdateDraft("accent_color", e.target.value)}
               />
             </label>
-            {saveMsg ? <span className={saveMsg.includes("Saved") ? "success" : "error"}>{saveMsg}</span> : null}
-            <button type="button" className="btn" onClick={cancelEditing} disabled={saveBusy}>
+            {effectiveSaveMsg ? <span className={effectiveSaveMsg.includes("Saved") ? "success" : "error"}>{effectiveSaveMsg}</span> : null}
+            <button type="button" className="btn" onClick={() => (editorMode ? cancelEditing() : cancelEmbeddedEditing())} disabled={effectiveSaveBusy}>
               Cancel
             </button>
-            <button type="button" className="btn-red" onClick={saveDraft} disabled={saveBusy}>
-              {saveBusy ? "Saving…" : "Save and publish"}
+            <button type="button" className="btn-red" onClick={() => (editorMode ? saveDraft() : saveEmbeddedDraft())} disabled={effectiveSaveBusy}>
+              {effectiveSaveBusy ? "Saving…" : "Save and publish"}
             </button>
           </div>
         </div>
@@ -445,15 +602,15 @@ export default function DpgPublicHome({
           ? `linear-gradient(rgba(10,14,12,0.34), rgba(10,14,12,0.38)), url("${heroBackground}") center/cover no-repeat`
           : '#121715',
       }}>
-        <NavBar links={navLinks} editorMode={editorMode} />
-        <InlineNavEditor links={navLinks} onChange={(next) => updateDraft("nav_links", next)} editorMode={editorMode} />
+        <NavBar links={navLinks} editorMode={effectiveEditorMode} />
+        <InlineNavEditor links={navLinks} onChange={(next) => effectiveUpdateDraft("nav_links", next)} editorMode={effectiveEditorMode} />
 
         <div style={{
           position: 'relative',
           zIndex: 2,
           maxWidth: 1240,
           margin: '0 auto',
-          padding: editorMode ? '260px 28px 110px' : '180px 28px 110px',
+          padding: effectiveEditorMode ? '260px 28px 110px' : '180px 28px 110px',
           textAlign: 'center',
         }}>
           <div style={{
@@ -488,10 +645,10 @@ export default function DpgPublicHome({
           </div>
 
           <div style={{ marginTop: 26 }}>
-            {editorMode ? (
+            {effectiveEditorMode ? (
               <InlineTextEditor
                 value={heroSubheading}
-                onChange={(v) => updateDraft("hero_body", v)}
+                onChange={(v) => effectiveUpdateDraft("hero_body", v)}
                 multiline
                 style={{
                   maxWidth: 820,
@@ -518,10 +675,10 @@ export default function DpgPublicHome({
           </div>
 
           <div style={{ marginTop: 18 }}>
-            {editorMode ? (
+            {effectiveEditorMode ? (
               <InlineTextEditor
                 value={eyebrowText}
-                onChange={(v) => updateDraft("hero_title", v)}
+                onChange={(v) => effectiveUpdateDraft("hero_title", v)}
                 style={{
                   maxWidth: 760,
                   margin: "0 auto",
@@ -543,11 +700,11 @@ export default function DpgPublicHome({
             )}
           </div>
 
-          {editorMode ? (
+          {effectiveEditorMode ? (
             <div style={{ marginTop: 16, maxWidth: 760, marginInline: "auto" }}>
               <InlineTextEditor
                 value={heroBackground}
-                onChange={(v) => updateDraft("hero_background_url", v)}
+                onChange={(v) => effectiveUpdateDraft("hero_background_url", v)}
                 placeholder="Hero background image URL"
               />
             </div>
@@ -564,12 +721,12 @@ export default function DpgPublicHome({
           ))}
         </section>
 
-        {editorMode ? (
+        {effectiveEditorMode ? (
           <section style={{ marginBottom: 26 }}>
             <InlineStringListEditor
               title="Featured post slugs"
               items={selectedSlugs}
-              onChange={(items) => updateDraft("featured_post_slugs", items)}
+              onChange={(items) => effectiveUpdateDraft("featured_post_slugs", items)}
               limit={4}
               itemPlaceholder="featured-post-slug"
             />
@@ -591,12 +748,12 @@ export default function DpgPublicHome({
           </section>
         ) : null}
 
-        {editorMode ? (
+        {effectiveEditorMode ? (
           <section style={{ marginBottom: 28 }}>
             <InlineCardBlockEditor
               items={stickyCards}
-              onChange={(items) => updateDraft("sticky_cards", items)}
-              editorMode={editorMode}
+              onChange={(items) => effectiveUpdateDraft("sticky_cards", items)}
+              editorMode={effectiveEditorMode}
             />
           </section>
         ) : null}
@@ -611,10 +768,10 @@ export default function DpgPublicHome({
             }}>
               What is in progress
             </h2>
-            {editorMode ? (
+            {effectiveEditorMode ? (
               <InlineStringListEditor
                 items={progressItems}
-                onChange={(items) => updateDraft("progress_items", items)}
+                onChange={(items) => effectiveUpdateDraft("progress_items", items)}
                 limit={8}
                 itemPlaceholder="Progress item"
               />
@@ -626,17 +783,17 @@ export default function DpgPublicHome({
           </div>
 
           <div style={{ ...theme.card, color: '#f3efe8' }}>
-            {editorMode ? (
+            {effectiveEditorMode ? (
               <>
                 <InlineTextEditor
                   value={String(liveConfig?.organizer_title || '')}
-                  onChange={(v) => updateDraft("organizer_title", v)}
+                  onChange={(v) => effectiveUpdateDraft("organizer_title", v)}
                   placeholder="Organizer card title"
                   style={{ marginBottom: 10, fontWeight: 800 }}
                 />
                 <InlineTextEditor
                   value={String(liveConfig?.organizer_body || '')}
-                  onChange={(v) => updateDraft("organizer_body", v)}
+                  onChange={(v) => effectiveUpdateDraft("organizer_body", v)}
                   placeholder="Organizer card body"
                   multiline
                 />

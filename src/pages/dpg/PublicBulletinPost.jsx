@@ -25,7 +25,7 @@ export default function PublicBulletinPost() {
     let dead = false;
     (async () => {
       try {
-        const res = await fetch(`/api/public/bulletin/${encodeURIComponent(slug)}?org=dpg`, { headers: { Accept: "application/json" } });
+        const res = await fetch(`/api/public/posts/${encodeURIComponent(slug)}?org=dpg`, { headers: { Accept: "application/json" } });
         const data = await res.json().catch(() => ({}));
         if (dead) return;
         if (!res.ok || !data?.ok || !data?.post) throw new Error(data?.error || "Post not found");

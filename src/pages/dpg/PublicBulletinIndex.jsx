@@ -19,7 +19,7 @@ export default function PublicBulletinIndex() {
     let dead = false;
     (async () => {
       try {
-        const res = await fetch("/api/public/bulletin?org=dpg&limit=20", { headers: { Accept: "application/json" } });
+        const res = await fetch("/api/public/posts?org=dpg", { headers: { Accept: "application/json" } });
         const data = await res.json().catch(() => ({}));
         if (dead) return;
         if (!res.ok || !data?.ok) throw new Error(data?.error || "Failed to load posts");

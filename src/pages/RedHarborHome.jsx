@@ -707,8 +707,9 @@ export default function RedHarborHome() {
               <label className="rh-editor-font">
                 <span>Font</span>
                 <select
-                  value={liveHome.font_family || "system"}
-                  onChange={(e) =>
+                value={liveHome.font_family || "system"}
+                onChange={(e) => updateDraft("font_family", e.target.value)}
+              >
                 <option value="system">System</option>
                 <option value="inter">Inter</option>
                 <option value="plex">IBM Plex Sans</option>

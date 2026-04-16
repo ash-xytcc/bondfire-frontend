@@ -376,50 +376,6 @@ function InlineCardBlockEditor({
   )
 }
 
-function InlineActionListEditor({
-  title,
-  items,
-  onChange,
-  editorMode,
-  limit = 3,
-}) {
-  if (!editorMode) return null
-
-  const safe = Array.isArray(items) ? items.slice(0, limit) : []
-  while (safe.length < limit) safe.push({ label: "", url: "" })
-
-  return (
-    <div className="rh-inline-group">
-      {title ? <div className="rh-inline-group-label">{title}</div> : null}
-      <div className="rh-inline-actions-grid">
-        {safe.map((item, index) => (
-          <div key={`${title || "action"}-${index}`} className="rh-inline-action-card">
-            <div className="rh-inline-group-label">Button {index + 1}</div>
-            <input
-              className="rh-inline-editor"
-              value={item.label || ""}
-              onChange={(e) => {
-                const next = safe.map((x, i) => i === index ? { ...x, label: e.target.value } : x)
-                onChange(next)
-              }}
-              placeholder="Button label"
-            />
-            <input
-              className="rh-inline-editor"
-              value={item.url || ""}
-              onChange={(e) => {
-                const next = safe.map((x, i) => i === index ? { ...x, url: e.target.value } : x)
-                onChange(next)
-              }}
-              placeholder="#join or /signin or https://..."
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export default function RedHarborHome() {
   const [home, setHome] = React.useState(defaultHome)
   const [draft, setDraft] = React.useState(null)
@@ -534,24 +490,6 @@ export default function RedHarborHome() {
     })
   }, [home])
 
-  const updateActionList = React.useCallback((key, items, limit = 3) => {
-    setDraft((prev) => {
-      const src = normalizeHome(prev || home)
-      const cleaned = (Array.isArray(items) ? items : [])
-        .slice(0, limit)
-        .map((item) => ({
-          label: String(item?.label || "").trim(),
-          url: String(item?.url || "").trim(),
-        }))
-        .filter((item) => item.label && item.url)
-      return normalizeHome({ ...src, [key]: cleaned })
-    })
-  }, [home])
-
-  const updateToggle = React.useCallback((key, checked) => {
-    setDraft((prev) => normalizeHome({ ...(prev || home), [key]: !!checked }))
-  }, [home])
-
   const saveDraft = React.useCallback(async () => {
     const orgId = currentOrgId || readCurrentOrgId()
     if (!orgId) {
@@ -661,74 +599,29 @@ export default function RedHarborHome() {
       </header>
 
       {editorMode ? (
-        <>
-          <div className="rh-editor-toolbar">
-            <div className="rh-editor-toolbar-left">
-              <strong>Editor mode</strong>
-              <span className="rh-editor-toolbar-note">Phase 3 live editing for buttons, visibility, what-we-do, and better contrast.</span>
-            </div>
-            <div className="rh-editor-toolbar-actions">
-              <label className="rh-editor-color">
-                <span>Accent</span>
-                <input
-                  type="color"
-                  value={liveHome.accent_color || defaultHome.accent_color}
-                  onChange={(e) => updateDraft("accent_color", e.target.value)}
-                />
-              </label>
-              {saveMsg ? <span className={saveMsg.includes("Saved") ? "rh-editor-success" : "rh-editor-error"}>{saveMsg}</span> : null}
-              <button type="button" className="rh-btn rh-btn-ghost" onClick={cancelEditing} disabled={saveBusy}>
-                Cancel
-              </button>
-              <button type="button" className="rh-btn rh-btn-primary" onClick={saveDraft} disabled={saveBusy}>
-                {saveBusy ? "Saving…" : "Save and publish"}
-              </button>
-            </div>
+        <div className="rh-editor-toolbar">
+          <div className="rh-editor-toolbar-left">
+            <strong>Editor mode</strong>
+            <span className="rh-editor-toolbar-note">Phase 2 live editing for lists, cards, and accent color.</span>
           </div>
-
-          <div className="rh-editor-panels">
-            <div className="rh-editor-panel">
-              <div className="rh-inline-group-label">Section visibility</div>
-              <div className="rh-editor-checks">
-                <label><input type="checkbox" checked={!!liveHome.show_action_strip} onChange={(e) => updateToggle("show_action_strip", e.target.checked)} /> Hero buttons</label>
-                <label><input type="checkbox" checked={!!liveHome.show_what_we_do} onChange={(e) => updateToggle("show_what_we_do", e.target.checked)} /> What we do</label>
-                <label><input type="checkbox" checked={!!liveHome.show_get_involved} onChange={(e) => updateToggle("show_get_involved", e.target.checked)} /> Join links</label>
-                <label><input type="checkbox" checked={!!liveHome.show_meetings} onChange={(e) => updateToggle("show_meetings", e.target.checked)} /> Events section</label>
-              </div>
-            </div>
-
-            <div className="rh-editor-panel">
-              <InlineActionListEditor
-                title="Hero buttons"
-                items={liveHome.primary_actions}
-                onChange={(items) => updateActionList("primary_actions", items, 3)}
-                editorMode={editorMode}
-                limit={3}
+          <div className="rh-editor-toolbar-actions">
+            <label className="rh-editor-color">
+              <span>Accent</span>
+              <input
+                type="color"
+                value={liveHome.accent_color || defaultHome.accent_color}
+                onChange={(e) => updateDraft("accent_color", e.target.value)}
               />
-            </div>
-
-            <div className="rh-editor-panel">
-              <InlineActionListEditor
-                title="Join action links"
-                items={liveHome.get_involved_links}
-                onChange={(items) => updateActionList("get_involved_links", items, 6)}
-                editorMode={editorMode}
-                limit={3}
-              />
-            </div>
-
-            <div className="rh-editor-panel">
-              <InlineStringListEditor
-                title="What we do items"
-                items={whatWeDoItems}
-                onChange={(items) => updateDraft("what_we_do", items)}
-                editorMode={editorMode}
-                itemPlaceholder="What we do item"
-                rows={6}
-              />
-            </div>
+            </label>
+            {saveMsg ? <span className={saveMsg.includes("Saved") ? "rh-editor-success" : "rh-editor-error"}>{saveMsg}</span> : null}
+            <button type="button" className="rh-btn rh-btn-ghost" onClick={cancelEditing} disabled={saveBusy}>
+              Cancel
+            </button>
+            <button type="button" className="rh-btn rh-btn-primary" onClick={saveDraft} disabled={saveBusy}>
+              {saveBusy ? "Saving…" : "Save and publish"}
+            </button>
           </div>
-        </>
+        </div>
       ) : null}
 
       <main>

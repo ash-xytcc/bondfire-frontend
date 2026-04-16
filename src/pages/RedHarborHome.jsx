@@ -454,7 +454,13 @@ export default function RedHarborHome() {
     }
   }, [])
 
-  const liveHome = draft ? normalizeHome(draft) : home
+  let liveHome
+  try {
+    liveHome = draft ? normalizeHome(draft) : home
+  } catch (e) {
+    console.error("normalizeHome crash:", e)
+    liveHome = home || {}
+  }
 
   const whatWeDoItems = React.useMemo(() => cleanStringArray(liveHome.what_we_do, 8), [liveHome.what_we_do])
   const purposeItems = React.useMemo(() => cleanStringArray(liveHome.site_purpose_items, 8), [liveHome.site_purpose_items])

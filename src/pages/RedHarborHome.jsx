@@ -12,6 +12,11 @@ const defaultHome = {
     "Red Harbor is a branch of the Industrial Workers of the World. We organize across workplaces, support workers in struggle, publish branch updates, and build solidarity rooted in direct action and rank and file power.",
   about_intro:
     "Red Harbor is the local IWW branch building organization, education, and solidarity among workers in Aberdeen, Hoquiam, Grays Harbor, and the surrounding region.",
+  about_card_title: "Branch overview",
+  about_card_body:
+    "Red Harbor is the local IWW branch building organization, education, and solidarity among workers in Aberdeen, Hoquiam, Grays Harbor, and the surrounding region.",
+  location_card_title: "Location",
+  location_card_body: "Red Harbor Branch",
   join_intro:
     "Organize with the branch, connect with others, and build power through workplace struggle, direct action, and collective effort.",
   contact_intro:
@@ -178,6 +183,10 @@ function normalizeHome(raw) {
     hero_headline: String(base.hero_headline || base.title || defaultHome.hero_headline).trim(),
     hero_text: String(base.hero_text || base.about || defaultHome.hero_text).trim(),
     about_intro: String(base.about_intro || defaultHome.about_intro).trim(),
+    about_card_title: String(base.about_card_title || defaultHome.about_card_title).trim(),
+    about_card_body: String(base.about_card_body || base.about_intro || defaultHome.about_card_body).trim(),
+    location_card_title: String(base.location_card_title || defaultHome.location_card_title).trim(),
+    location_card_body: String(base.location_card_body || base.branch_label || defaultHome.location_card_body).trim(),
     join_intro: String(base.join_intro || defaultHome.join_intro).trim(),
     contact_intro: String(base.contact_intro || defaultHome.contact_intro).trim(),
     events_intro: String(base.events_intro || defaultHome.events_intro).trim(),
@@ -598,6 +607,10 @@ export default function RedHarborHome() {
       hero_headline: src.hero_headline,
       hero_text: src.hero_text,
       about_intro: src.about_intro,
+      about_card_title: src.about_card_title,
+      about_card_body: src.about_card_body,
+      location_card_title: src.location_card_title,
+      location_card_body: src.location_card_body,
       join_intro: src.join_intro,
       contact_intro: src.contact_intro,
       events_intro: src.events_intro,
@@ -844,25 +857,48 @@ export default function RedHarborHome() {
 
           <div className="rh-grid-two">
             <div className="rh-card">
-              <h3>Branch overview</h3>
-              <p>{liveHome.about_intro || defaultHome.about_intro}</p>
+              <InlineCardBlockEditor
+                title={editorMode ? "About card" : ""}
+                cardTitle={liveHome.about_card_title || defaultHome.about_card_title}
+                cardBody={liveHome.about_card_body || defaultHome.about_card_body}
+                onTitleChange={(value) => updateDraft("about_card_title", value)}
+                onBodyChange={(value) => updateDraft("about_card_body", value)}
+                editorMode={editorMode}
+              />
             </div>
 
             <div className="rh-card">
-              <h3>Location</h3>
-              <p>{liveHome.branch_label || "Grays Harbor and the surrounding region."}</p>
+              <InlineCardBlockEditor
+                title={editorMode ? "Location card" : ""}
+                cardTitle={liveHome.location_card_title || defaultHome.location_card_title}
+                cardBody={liveHome.location_card_body || defaultHome.location_card_body}
+                onTitleChange={(value) => updateDraft("location_card_title", value)}
+                onBodyChange={(value) => updateDraft("location_card_body", value)}
+                editorMode={editorMode}
+              />
             </div>
 
             {liveHome.show_what_we_do && whatWeDoItems.length > 0 ? (
               <div className="rh-card" style={{ gridColumn: "1 / -1" }}>
                 <h3>What we do</h3>
-                <div className="rh-grid-two">
-                  {whatWeDoItems.map((item) => (
-                    <div key={item} className="rh-card">
-                      <p style={{ margin: 0 }}>{item}</p>
-                    </div>
-                  ))}
-                </div>
+                {editorMode ? (
+                  <InlineStringListEditor
+                    title="What we do items"
+                    items={whatWeDoItems}
+                    onChange={(items) => updateDraft("what_we_do", items)}
+                    editorMode={editorMode}
+                    itemPlaceholder="What we do item"
+                    rows={6}
+                  />
+                ) : (
+                  <div className="rh-grid-two">
+                    {whatWeDoItems.map((item) => (
+                      <div key={item} className="rh-card">
+                        <p style={{ margin: 0 }}>{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : null}
           </div>

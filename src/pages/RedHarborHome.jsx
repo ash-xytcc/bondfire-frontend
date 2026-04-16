@@ -240,11 +240,75 @@ function runAction(url) {
   window.open(normalizeUrl(target), "_blank", "noopener,noreferrer")
 }
 
+function readCurrentOrgId() {
+  try {
+    const raw = localStorage.getItem("bf_org")
+    if (!raw) return ""
+    const parsed = JSON.parse(raw)
+    return String(parsed?.id || "").trim()
+  } catch {
+    return ""
+  }
+}
+
+function InlineTextEdit({
+  tag = "div",
+  value,
+  onChange,
+  editorMode,
+  className = "",
+  multiline = false,
+  placeholder = "",
+}) {
+  if (!editorMode) {
+    const Tag = tag
+    return <Tag className={className}>{value}</Tag>
+  }
+
+  if (multiline) {
+    return (
+      <textarea
+        className={`rh-inline-editor rh-inline-editor-textarea ${className}`.trim()}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={4}
+      />
+    )
+  }
+
+  if (tag === "h1") {
+    return (
+      <input
+        className={`rh-inline-editor rh-inline-editor-h1 ${className}`.trim()}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+    )
+  }
+
+  return (
+    <input
+      className={`rh-inline-editor ${className}`.trim()}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+    />
+  )
+}
+
 export default function RedHarborHome() {
   const [home, setHome] = React.useState(defaultHome)
+  const [draft, setDraft] = React.useState(null)
   const [posts, setPosts] = React.useState([])
   const [bulletinError, setBulletinError] = React.useState("")
   const [siteError, setSiteError] = React.useState("")
+  const [editorAvailable, setEditorAvailable] = React.useState(false)
+  const [editorMode, setEditorMode] = React.useState(false)
+  const [saveBusy, setSaveBusy] = React.useState(false)
+  const [saveMsg, setSaveMsg] = React.useState("")
+  const [currentOrgId, setCurrentOrgId] = React.useState("")
 
   React.useEffect(() => {
     let ignore = false
@@ -283,26 +347,134 @@ export default function RedHarborHome() {
       }
     }
 
+    async function checkEditor() {
+      const orgId = readCurrentOrgId()
+      if (!ignore) setCurrentOrgId(orgId || "")
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!ignore) {
+          setEditorAvailable(!!(res.ok && data?.ok && orgId))
+        }
+      } catch {
+        if (!ignore) {
+          setEditorAvailable(false)
+        }
+      }
+    }
+
     loadHome()
     loadBulletin()
+    checkEditor()
 
     return () => {
       ignore = true
     }
   }, [])
 
-  const whatWeDoItems = React.useMemo(() => cleanStringArray(home.what_we_do, 8), [home.what_we_do])
-  const purposeItems = React.useMemo(() => cleanStringArray(home.site_purpose_items, 8), [home.site_purpose_items])
-  const eventItems = React.useMemo(() => cleanStringArray(home.events_items, 8), [home.events_items])
-  const primaryActions = React.useMemo(() => cleanLinkArray(home.primary_actions, 3), [home.primary_actions])
-  const involvedActions = React.useMemo(() => cleanLinkArray(home.get_involved_links, 6), [home.get_involved_links])
+  const liveHome = draft ? normalizeHome(draft) : home
 
-  const accent = home.accent_color || defaultHome.accent_color
+  const whatWeDoItems = React.useMemo(() => cleanStringArray(liveHome.what_we_do, 8), [liveHome.what_we_do])
+  const purposeItems = React.useMemo(() => cleanStringArray(liveHome.site_purpose_items, 8), [liveHome.site_purpose_items])
+  const eventItems = React.useMemo(() => cleanStringArray(liveHome.events_items, 8), [liveHome.events_items])
+  const primaryActions = React.useMemo(() => cleanLinkArray(liveHome.primary_actions, 3), [liveHome.primary_actions])
+  const involvedActions = React.useMemo(() => cleanLinkArray(liveHome.get_involved_links, 6), [liveHome.get_involved_links])
+
+  const accent = liveHome.accent_color || defaultHome.accent_color
   const accentDark = darkenHex(accent, 0.22)
+
+  const startEditing = React.useCallback(() => {
+    setDraft({ ...home })
+    setEditorMode(true)
+    setSaveMsg("")
+  }, [home])
+
+  const cancelEditing = React.useCallback(() => {
+    setDraft(null)
+    setEditorMode(false)
+    setSaveBusy(false)
+    setSaveMsg("")
+  }, [])
+
+  const updateDraft = React.useCallback((key, value) => {
+    setDraft((prev) => normalizeHome({ ...(prev || home), [key]: value }))
+  }, [home])
+
+  const saveDraft = React.useCallback(async () => {
+    const orgId = currentOrgId || readCurrentOrgId()
+    if (!orgId) {
+      setSaveMsg("No org context found for saving.")
+      return
+    }
+
+    const src = normalizeHome(draft || home)
+    const payload = {
+      newsletter_enabled: !!src.newsletter_enabled,
+      show_action_strip: !!src.show_action_strip,
+      show_needs: !!src.show_needs,
+      show_meetings: !!src.show_meetings,
+      show_what_we_do: !!src.show_what_we_do,
+      show_get_involved: !!src.show_get_involved,
+      show_newsletter_card: !!src.show_newsletter_card,
+      show_website_button: !!src.show_website_button,
+      title: src.hero_headline,
+      location: src.branch_label,
+      about: src.hero_text,
+      branch_label: src.branch_label,
+      hero_headline: src.hero_headline,
+      hero_text: src.hero_text,
+      about_intro: src.about_intro,
+      join_intro: src.join_intro,
+      contact_intro: src.contact_intro,
+      events_intro: src.events_intro,
+      accent_color: src.accent_color,
+      what_we_do: src.what_we_do,
+      site_purpose_items: src.site_purpose_items,
+      join_cards: src.join_cards,
+      events_items: src.events_items,
+      contact_card_title: src.contact_card_title,
+      contact_card_body: src.contact_card_body,
+      member_access_title: src.member_access_title,
+      member_access_body: src.member_access_body,
+      primary_actions: src.primary_actions,
+      get_involved_links: src.get_involved_links,
+    }
+
+    setSaveBusy(true)
+    setSaveMsg("")
+    try {
+      const res = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/public/save`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.detail || data?.error || data?.message || "Failed to save page")
+      }
+      const nextHome = normalizeHome(data.public || payload)
+      setHome(nextHome)
+      setDraft(nextHome)
+      setSaveMsg("Saved and published.")
+      setTimeout(() => setSaveMsg(""), 1500)
+    } catch (err) {
+      setSaveMsg(String(err?.message || err || "Failed to save page"))
+    } finally {
+      setSaveBusy(false)
+    }
+  }, [currentOrgId, draft, home])
 
   return (
     <div
-      className="rh-public"
+      className={`rh-public ${editorMode ? "rh-editor-mode" : ""}`}
       style={{
         "--rh-accent": accent,
         "--rh-red": accent,
@@ -329,20 +501,65 @@ export default function RedHarborHome() {
           <SectionLink id="about" className="rh-nav-link">About</SectionLink>
           <SectionLink id="join" className="rh-nav-link">Join</SectionLink>
           <SectionLink id="bulletin" className="rh-nav-link">Bulletin</SectionLink>
-          {home.show_meetings ? <SectionLink id="events" className="rh-nav-link">Events</SectionLink> : null}
+          {liveHome.show_meetings ? <SectionLink id="events" className="rh-nav-link">Events</SectionLink> : null}
           <SectionLink id="contact" className="rh-nav-link">Contact</SectionLink>
+          {editorAvailable && !editorMode ? (
+            <button type="button" className="rh-signin-link rh-editor-toggle" onClick={startEditing}>
+              Edit page
+            </button>
+          ) : null}
           <Link to="/signin" className="rh-signin-link">Member Sign In</Link>
         </nav>
       </header>
 
+      {editorMode ? (
+        <div className="rh-editor-toolbar">
+          <div className="rh-editor-toolbar-left">
+            <strong>Editor mode</strong>
+            <span className="rh-editor-toolbar-note">Phase 1 live editing for hero and section intros.</span>
+          </div>
+          <div className="rh-editor-toolbar-actions">
+            {saveMsg ? <span className={saveMsg.includes("Saved") ? "rh-editor-success" : "rh-editor-error"}>{saveMsg}</span> : null}
+            <button type="button" className="rh-btn rh-btn-ghost" onClick={cancelEditing} disabled={saveBusy}>
+              Cancel
+            </button>
+            <button type="button" className="rh-btn rh-btn-primary" onClick={saveDraft} disabled={saveBusy}>
+              {saveBusy ? "Saving…" : "Save and publish"}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <main>
         <section className="rh-hero">
           <div className="rh-hero-copy">
-            <p className="rh-eyebrow">{home.branch_label || defaultHome.branch_label}</p>
-            <h1>{home.hero_headline || defaultHome.hero_headline}</h1>
-            <p className="rh-lead">{home.hero_text || defaultHome.hero_text}</p>
+            <InlineTextEdit
+              tag="p"
+              className="rh-eyebrow"
+              editorMode={editorMode}
+              value={liveHome.branch_label || defaultHome.branch_label}
+              onChange={(value) => updateDraft("branch_label", value)}
+              placeholder="Red Harbor Branch"
+            />
+            <InlineTextEdit
+              tag="h1"
+              className=""
+              editorMode={editorMode}
+              value={liveHome.hero_headline || defaultHome.hero_headline}
+              onChange={(value) => updateDraft("hero_headline", value)}
+              placeholder="Building worker power on the harbor and beyond."
+            />
+            <InlineTextEdit
+              tag="p"
+              className="rh-lead"
+              multiline
+              editorMode={editorMode}
+              value={liveHome.hero_text || defaultHome.hero_text}
+              onChange={(value) => updateDraft("hero_text", value)}
+              placeholder="Hero supporting text"
+            />
 
-            {home.show_action_strip && primaryActions.length > 0 ? (
+            {liveHome.show_action_strip && primaryActions.length > 0 ? (
               <div className="rh-hero-actions">
                 {primaryActions.map((action, index) => {
                   const cls =
@@ -394,21 +611,29 @@ export default function RedHarborHome() {
           <div className="rh-section-head">
             <p className="rh-section-kicker">About</p>
             <h2>About Red Harbor</h2>
-            <p className="rh-section-copy">{home.about_intro || defaultHome.about_intro}</p>
+            <InlineTextEdit
+              tag="p"
+              className="rh-section-copy"
+              multiline
+              editorMode={editorMode}
+              value={liveHome.about_intro || defaultHome.about_intro}
+              onChange={(value) => updateDraft("about_intro", value)}
+              placeholder="About section intro"
+            />
           </div>
 
           <div className="rh-grid-two">
             <div className="rh-card">
               <h3>Branch overview</h3>
-              <p>{home.about_intro || defaultHome.about_intro}</p>
+              <p>{liveHome.about_intro || defaultHome.about_intro}</p>
             </div>
 
             <div className="rh-card">
               <h3>Location</h3>
-              <p>{home.branch_label || "Grays Harbor and the surrounding region."}</p>
+              <p>{liveHome.branch_label || "Grays Harbor and the surrounding region."}</p>
             </div>
 
-            {home.show_what_we_do && whatWeDoItems.length > 0 ? (
+            {liveHome.show_what_we_do && whatWeDoItems.length > 0 ? (
               <div className="rh-card" style={{ gridColumn: "1 / -1" }}>
                 <h3>What we do</h3>
                 <div className="rh-grid-two">
@@ -427,12 +652,20 @@ export default function RedHarborHome() {
           <div className="rh-section-head">
             <p className="rh-section-kicker">Join</p>
             <h2>Organize with us</h2>
-            <p className="rh-section-copy">{home.join_intro || defaultHome.join_intro}</p>
+            <InlineTextEdit
+              tag="p"
+              className="rh-section-copy"
+              multiline
+              editorMode={editorMode}
+              value={liveHome.join_intro || defaultHome.join_intro}
+              onChange={(value) => updateDraft("join_intro", value)}
+              placeholder="Join section intro"
+            />
           </div>
 
           <div className="rh-grid-three">
-            {home.join_cards.map((card, index) => {
-              const action = (home.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
+            {liveHome.join_cards.map((card, index) => {
+              const action = (liveHome.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
               return (
                 <article className="rh-card" key={`${card.title}-${index}`}>
                   <h3>{card.title}</h3>
@@ -491,12 +724,20 @@ export default function RedHarborHome() {
           </div>
         </section>
 
-        {home.show_meetings ? (
+        {liveHome.show_meetings ? (
           <section id="events" className="rh-section rh-section-band">
             <div className="rh-section-head">
               <p className="rh-section-kicker">Events</p>
               <h2>Meetings and public activity</h2>
-              <p className="rh-section-copy">{home.events_intro || defaultHome.events_intro}</p>
+              <InlineTextEdit
+                tag="p"
+                className="rh-section-copy"
+                multiline
+                editorMode={editorMode}
+                value={liveHome.events_intro || defaultHome.events_intro}
+                onChange={(value) => updateDraft("events_intro", value)}
+                placeholder="Events section intro"
+              />
             </div>
             <div className="rh-card">
               <ul className="rh-event-list">
@@ -512,23 +753,31 @@ export default function RedHarborHome() {
           <div className="rh-section-head">
             <p className="rh-section-kicker">Contact</p>
             <h2>Get in touch</h2>
-            <p className="rh-section-copy">{home.contact_intro || defaultHome.contact_intro}</p>
+            <InlineTextEdit
+              tag="p"
+              className="rh-section-copy"
+              multiline
+              editorMode={editorMode}
+              value={liveHome.contact_intro || defaultHome.contact_intro}
+              onChange={(value) => updateDraft("contact_intro", value)}
+              placeholder="Contact section intro"
+            />
           </div>
 
           <div className="rh-grid-two">
             <div className="rh-card">
-              <h3>{home.contact_card_title || defaultHome.contact_card_title}</h3>
-              <p>{home.contact_card_body || defaultHome.contact_card_body}</p>
+              <h3>{liveHome.contact_card_title || defaultHome.contact_card_title}</h3>
+              <p>{liveHome.contact_card_body || defaultHome.contact_card_body}</p>
             </div>
 
             <div className="rh-card">
-              <h3>{home.member_access_title || defaultHome.member_access_title}</h3>
-              <p>{home.member_access_body || defaultHome.member_access_body}</p>
+              <h3>{liveHome.member_access_title || defaultHome.member_access_title}</h3>
+              <p>{liveHome.member_access_body || defaultHome.member_access_body}</p>
               <Link to="/signin" className="rh-btn rh-btn-primary">Go to Member Sign In</Link>
             </div>
           </div>
 
-          {home.show_newsletter_card ? (
+          {liveHome.show_newsletter_card ? (
             <div className="rh-note-wrap" style={{ marginTop: 16 }}>
               <p className="rh-note">
                 Newsletter visibility is enabled in Site settings. The next pass can wire the actual signup block directly into this home page.
@@ -547,7 +796,7 @@ export default function RedHarborHome() {
           <SectionLink id="about" className="rh-footer-link-button">About</SectionLink>
           <SectionLink id="join" className="rh-footer-link-button">Join</SectionLink>
           <SectionLink id="bulletin" className="rh-footer-link-button">Bulletin</SectionLink>
-          {home.show_meetings ? <SectionLink id="events" className="rh-footer-link-button">Events</SectionLink> : null}
+          {liveHome.show_meetings ? <SectionLink id="events" className="rh-footer-link-button">Events</SectionLink> : null}
           <SectionLink id="contact" className="rh-footer-link-button">Contact</SectionLink>
           <Link to="/signin">Member Sign In</Link>
         </div>

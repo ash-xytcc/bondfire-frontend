@@ -18,6 +18,7 @@ const defaultHome = {
     "Reach out for branch contact, organizing support, membership questions, or public inquiries.",
   events_intro:
     "Meetings, branch activity, and public events will appear here as the public side develops.",
+  font_family: "system",
   accent_color: "#a11f1f",
   show_action_strip: true,
   show_what_we_do: true,
@@ -585,7 +586,7 @@ export default function RedHarborHome() {
 
   return (
     <div
-      className={`rh-public ${editorMode ? "rh-editor-mode" : ""}`}
+      className={`rh-public rh-font-${liveHome.font_family || "system"} ${editorMode ? "rh-editor-mode" : ""}`}
       style={{
         "--rh-accent": accent,
         "--rh-red": accent,
@@ -630,6 +631,21 @@ export default function RedHarborHome() {
             <span className="rh-editor-toolbar-note">Phase 2 live editing for lists, cards, and accent color.</span>
           </div>
           <div className="rh-editor-toolbar-actions">
+            <label className="rh-editor-font">
+              <span>Font</span>
+              <select
+                value={liveHome.font_family || "system"}
+                onChange={(e) => updateDraft("font_family", e.target.value)}
+              >
+                <option value="system">System</option>
+                <option value="inter">Inter</option>
+                <option value="plex">IBM Plex Sans</option>
+                <option value="serif">Source Serif 4</option>
+                <option value="space">Space Grotesk</option>
+                <option value="cormorant">Cormorant Garamond</option>
+              </select>
+            </label>
+
             <label className="rh-editor-color">
               <span>Accent</span>
               <input

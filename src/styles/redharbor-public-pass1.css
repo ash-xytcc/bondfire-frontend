@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=IBM+Plex+Sans:wght@400;600;700&family=Source+Serif+4:wght@400;600&family=Space+Grotesk:wght@400;600;700&family=Cormorant+Garamond:wght@400;600&display=swap');
+
 :root {
   --rh-bg: #0f1619;
   --rh-panel: #162126;
@@ -777,3 +779,58 @@
   outline-offset: 2px;
 }
 
+
+
+/* font system */
+:root {
+  --rh-font: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.rh-public {
+  font-family: var(--rh-font);
+}
+
+/* font variants */
+.rh-font-system {
+  --rh-font: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.rh-font-inter {
+  --rh-font: "Inter", sans-serif;
+}
+
+.rh-font-plex {
+  --rh-font: "IBM Plex Sans", sans-serif;
+}
+
+.rh-font-serif {
+  --rh-font: "Source Serif 4", serif;
+}
+
+.rh-font-space {
+  --rh-font: "Space Grotesk", sans-serif;
+}
+
+.rh-font-cormorant {
+  --rh-font: "Cormorant Garamond", serif;
+}
+
+
+.rh-editor-font {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--rh-line);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.03);
+  font-size: 13px;
+}
+
+.rh-editor-font select {
+  background: transparent;
+  border: none;
+  color: var(--rh-text);
+  font: inherit;
+  cursor: pointer;
+}

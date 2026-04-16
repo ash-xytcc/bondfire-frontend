@@ -708,15 +708,20 @@ export default function RedHarborHome() {
                 <span>Font</span>
                 <select
                   value={liveHome.font_family || "system"}
-                  onChange={(e) => updateDraft("font_family", e.target.value)}
-                >
-                  <option value="system">System</option>
-                  <option value="inter">Inter</option>
-                  <option value="plex">IBM Plex Sans</option>
-                  <option value="serif">Source Serif 4</option>
-                  <option value="space">Space Grotesk</option>
-                  <option value="cormorant">Cormorant Garamond</option>
-                </select>
+                  onChange={(e) =>
+                <option value="system">System</option>
+                <option value="inter">Inter</option>
+                <option value="plex">IBM Plex Sans</option>
+                <option value="manrope">Manrope</option>
+                <option value="archivo">Archivo</option>
+                <option value="space">Space Grotesk</option>
+                <option value="oswald">Oswald</option>
+                <option value="bebas">Bebas Neue</option>
+                <option value="serif">Source Serif 4</option>
+                <option value="playfair">Playfair Display</option>
+                <option value="fraunces">Fraunces</option>
+                <option value="cormorant">Cormorant Garamond</option>
+              </select>
               </label>
 
               <label className="rh-editor-color">

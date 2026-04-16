@@ -697,3 +697,49 @@
   }
 }
 
+.rh-editor-color {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--rh-line);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.03);
+  font-size: 13px;
+}
+
+.rh-editor-color input[type="color"] {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rh-inline-group {
+  display: grid;
+  gap: 10px;
+}
+
+.rh-inline-group-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rh-muted);
+}
+
+.rh-inline-group ul {
+  margin: 0;
+}
+
+.rh-editor-mode .rh-hero-card,
+.rh-editor-mode .rh-card {
+  position: relative;
+}
+
+.rh-editor-mode .rh-inline-editor,
+.rh-editor-mode .rh-inline-editor-textarea {
+  background: rgba(255,255,255,0.05);
+}
+

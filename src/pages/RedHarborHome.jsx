@@ -259,6 +259,7 @@ function InlineTextEdit({
   className = "",
   multiline = false,
   placeholder = "",
+  rows = 4,
 }) {
   if (!editorMode) {
     const Tag = tag
@@ -272,7 +273,7 @@ function InlineTextEdit({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        rows={4}
+        rows={rows}
       />
     )
   }
@@ -295,6 +296,83 @@ function InlineTextEdit({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
     />
+  )
+}
+
+function InlineStringListEditor({
+  title,
+  items,
+  onChange,
+  editorMode,
+  className = "",
+  itemPlaceholder = "List item",
+  rows = 4,
+}) {
+  if (!editorMode) {
+    return (
+      <ul className={className}>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    )
+  }
+
+  return (
+    <div className={`rh-inline-group ${className}`.trim()}>
+      {title ? <div className="rh-inline-group-label">{title}</div> : null}
+      <textarea
+        className="rh-inline-editor rh-inline-editor-textarea"
+        value={items.join("\n")}
+        onChange={(e) =>
+          onChange(
+            String(e.target.value || "")
+              .split("\n")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          )
+        }
+        placeholder={`${itemPlaceholder}\n${itemPlaceholder}\n${itemPlaceholder}`}
+        rows={rows}
+      />
+    </div>
+  )
+}
+
+function InlineCardBlockEditor({
+  title,
+  cardTitle,
+  cardBody,
+  onTitleChange,
+  onBodyChange,
+  editorMode,
+}) {
+  if (!editorMode) {
+    return (
+      <>
+        <h3>{cardTitle}</h3>
+        <p>{cardBody}</p>
+      </>
+    )
+  }
+
+  return (
+    <div className="rh-inline-group">
+      {title ? <div className="rh-inline-group-label">{title}</div> : null}
+      <input
+        className="rh-inline-editor"
+        value={cardTitle}
+        onChange={(e) => onTitleChange(e.target.value)}
+        placeholder="Card title"
+      />
+      <textarea
+        className="rh-inline-editor rh-inline-editor-textarea"
+        value={cardBody}
+        onChange={(e) => onBodyChange(e.target.value)}
+        placeholder="Card body"
+        rows={4}
+      />
+    </div>
   )
 }
 
@@ -388,7 +466,7 @@ export default function RedHarborHome() {
   const accentDark = darkenHex(accent, 0.22)
 
   const startEditing = React.useCallback(() => {
-    setDraft({ ...home })
+    setDraft(normalizeHome({ ...home }))
     setEditorMode(true)
     setSaveMsg("")
   }, [home])
@@ -402,6 +480,14 @@ export default function RedHarborHome() {
 
   const updateDraft = React.useCallback((key, value) => {
     setDraft((prev) => normalizeHome({ ...(prev || home), [key]: value }))
+  }, [home])
+
+  const updateJoinCard = React.useCallback((index, patch) => {
+    setDraft((prev) => {
+      const src = normalizeHome(prev || home)
+      const next = src.join_cards.map((card, i) => (i === index ? { ...card, ...patch } : card))
+      return normalizeHome({ ...src, join_cards: next })
+    })
   }, [home])
 
   const saveDraft = React.useCallback(async () => {
@@ -516,9 +602,17 @@ export default function RedHarborHome() {
         <div className="rh-editor-toolbar">
           <div className="rh-editor-toolbar-left">
             <strong>Editor mode</strong>
-            <span className="rh-editor-toolbar-note">Phase 1 live editing for hero and section intros.</span>
+            <span className="rh-editor-toolbar-note">Phase 2 live editing for lists, cards, and accent color.</span>
           </div>
           <div className="rh-editor-toolbar-actions">
+            <label className="rh-editor-color">
+              <span>Accent</span>
+              <input
+                type="color"
+                value={liveHome.accent_color || defaultHome.accent_color}
+                onChange={(e) => updateDraft("accent_color", e.target.value)}
+              />
+            </label>
             {saveMsg ? <span className={saveMsg.includes("Saved") ? "rh-editor-success" : "rh-editor-error"}>{saveMsg}</span> : null}
             <button type="button" className="rh-btn rh-btn-ghost" onClick={cancelEditing} disabled={saveBusy}>
               Cancel
@@ -594,11 +688,13 @@ export default function RedHarborHome() {
 
           <aside className="rh-hero-card">
             <h2>What this site is for</h2>
-            <ul>
-              {purposeItems.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+            <InlineStringListEditor
+              items={purposeItems}
+              onChange={(items) => updateDraft("site_purpose_items", items)}
+              editorMode={editorMode}
+              itemPlaceholder="Purpose item"
+              rows={6}
+            />
             {siteError ? (
               <p className="rh-note" style={{ marginTop: 12 }}>
                 {siteError}
@@ -668,8 +764,14 @@ export default function RedHarborHome() {
               const action = (liveHome.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
               return (
                 <article className="rh-card" key={`${card.title}-${index}`}>
-                  <h3>{card.title}</h3>
-                  <p>{card.body}</p>
+                  <InlineCardBlockEditor
+                    title={editorMode ? `Join card ${index + 1}` : ""}
+                    cardTitle={card.title}
+                    cardBody={card.body}
+                    onTitleChange={(value) => updateJoinCard(index, { title: value })}
+                    onBodyChange={(value) => updateJoinCard(index, { body: value })}
+                    editorMode={editorMode}
+                  />
                   {action ? (
                     String(action.url || "").startsWith("/") ? (
                       <Link to={action.url} className="rh-inline-link">{action.label}</Link>
@@ -740,11 +842,14 @@ export default function RedHarborHome() {
               />
             </div>
             <div className="rh-card">
-              <ul className="rh-event-list">
-                {eventItems.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
+              <InlineStringListEditor
+                items={eventItems}
+                onChange={(items) => updateDraft("events_items", items)}
+                editorMode={editorMode}
+                className="rh-event-list"
+                itemPlaceholder="Event list item"
+                rows={6}
+              />
             </div>
           </section>
         ) : null}
@@ -766,13 +871,25 @@ export default function RedHarborHome() {
 
           <div className="rh-grid-two">
             <div className="rh-card">
-              <h3>{liveHome.contact_card_title || defaultHome.contact_card_title}</h3>
-              <p>{liveHome.contact_card_body || defaultHome.contact_card_body}</p>
+              <InlineCardBlockEditor
+                title={editorMode ? "Contact card" : ""}
+                cardTitle={liveHome.contact_card_title || defaultHome.contact_card_title}
+                cardBody={liveHome.contact_card_body || defaultHome.contact_card_body}
+                onTitleChange={(value) => updateDraft("contact_card_title", value)}
+                onBodyChange={(value) => updateDraft("contact_card_body", value)}
+                editorMode={editorMode}
+              />
             </div>
 
             <div className="rh-card">
-              <h3>{liveHome.member_access_title || defaultHome.member_access_title}</h3>
-              <p>{liveHome.member_access_body || defaultHome.member_access_body}</p>
+              <InlineCardBlockEditor
+                title={editorMode ? "Member access card" : ""}
+                cardTitle={liveHome.member_access_title || defaultHome.member_access_title}
+                cardBody={liveHome.member_access_body || defaultHome.member_access_body}
+                onTitleChange={(value) => updateDraft("member_access_title", value)}
+                onBodyChange={(value) => updateDraft("member_access_body", value)}
+                editorMode={editorMode}
+              />
               <Link to="/signin" className="rh-btn rh-btn-primary">Go to Member Sign In</Link>
             </div>
           </div>

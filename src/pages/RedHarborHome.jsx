@@ -377,6 +377,50 @@ function InlineCardBlockEditor({
   )
 }
 
+function InlineActionListEditor({
+  title,
+  items,
+  onChange,
+  editorMode,
+  limit = 3,
+}) {
+  if (!editorMode) return null
+
+  const safe = Array.isArray(items) ? items.slice(0, limit) : []
+  while (safe.length < limit) safe.push({ label: "", url: "" })
+
+  return (
+    <div className="rh-inline-group">
+      {title ? <div className="rh-inline-group-label">{title}</div> : null}
+      <div className="rh-inline-actions-grid">
+        {safe.map((item, index) => (
+          <div key={`${title || "action"}-${index}`} className="rh-inline-action-card">
+            <div className="rh-inline-group-label">Button {index + 1}</div>
+            <input
+              className="rh-inline-editor"
+              value={item.label || ""}
+              onChange={(e) => {
+                const next = safe.map((x, i) => i === index ? { ...x, label: e.target.value } : x)
+                onChange(next)
+              }}
+              placeholder="Button label"
+            />
+            <input
+              className="rh-inline-editor"
+              value={item.url || ""}
+              onChange={(e) => {
+                const next = safe.map((x, i) => i === index ? { ...x, url: e.target.value } : x)
+                onChange(next)
+              }}
+              placeholder="#join or /signin or https://..."
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function RedHarborHome() {
   const [home, setHome] = React.useState(defaultHome)
   const [draft, setDraft] = React.useState(null)
@@ -498,6 +542,21 @@ export default function RedHarborHome() {
       setIsDirty(true)
       const next = src.join_cards.map((card, i) => (i === index ? { ...card, ...patch } : card))
       return normalizeHome({ ...src, join_cards: next })
+    })
+  }, [home])
+
+  const updateActionList = React.useCallback((key, items, limit = 3) => {
+    setDraft((prev) => {
+      const src = normalizeHome(prev || home)
+      setIsDirty(true)
+      const cleaned = (Array.isArray(items) ? items : [])
+        .slice(0, limit)
+        .map((item) => ({
+          label: String(item?.label || "").trim(),
+          url: String(item?.url || "").trim(),
+        }))
+        .filter((item) => item.label && item.url)
+      return normalizeHome({ ...src, [key]: cleaned })
     })
   }, [home])
 
@@ -625,44 +684,68 @@ export default function RedHarborHome() {
       </header>
 
       {editorMode ? (
-        <div className="rh-editor-toolbar">
-          <div className="rh-editor-toolbar-left">
-            <strong>Editor mode</strong>
-            <span className="rh-editor-toolbar-note">Phase 2 live editing for lists, cards, and accent color.</span>
-          </div>
-          <div className="rh-editor-toolbar-actions">
-            <label className="rh-editor-font">
-              <span>Font</span>
-              <select
-                value={liveHome.font_family || "system"}
-                onChange={(e) => updateDraft("font_family", e.target.value)}
-              >
-                <option value="system">System</option>
-                <option value="inter">Inter</option>
-                <option value="plex">IBM Plex Sans</option>
-                <option value="serif">Source Serif 4</option>
-                <option value="space">Space Grotesk</option>
-                <option value="cormorant">Cormorant Garamond</option>
-              </select>
-            </label>
+        <>
+          <div className="rh-editor-toolbar">
+            <div className="rh-editor-toolbar-left">
+              <strong>Editor mode</strong>
+              <span className="rh-editor-toolbar-note">Inline editing for public page copy, fonts, color, and buttons.</span>
+            </div>
+            <div className="rh-editor-toolbar-actions">
+              <label className="rh-editor-font">
+                <span>Font</span>
+                <select
+                  value={liveHome.font_family || "system"}
+                  onChange={(e) => updateDraft("font_family", e.target.value)}
+                >
+                  <option value="system">System</option>
+                  <option value="inter">Inter</option>
+                  <option value="plex">IBM Plex Sans</option>
+                  <option value="serif">Source Serif 4</option>
+                  <option value="space">Space Grotesk</option>
+                  <option value="cormorant">Cormorant Garamond</option>
+                </select>
+              </label>
 
-            <label className="rh-editor-color">
-              <span>Accent</span>
-              <input
-                type="color"
-                value={liveHome.accent_color || defaultHome.accent_color}
-                onChange={(e) => updateDraft("accent_color", e.target.value)}
-              />
-            </label>
-            {saveMsg ? <span className={saveMsg.includes("Saved") ? "rh-editor-success" : "rh-editor-error"}>{saveMsg}</span> : null}
-            <button type="button" className="rh-btn rh-btn-ghost" onClick={cancelEditing} disabled={saveBusy}>
-              Cancel
-            </button>
-            <button type="button" className="rh-btn rh-btn-primary" onClick={saveDraft} disabled={saveBusy}>
-              {saveBusy ? "Saving…" : "Save and publish"}
-            </button>
+              <label className="rh-editor-color">
+                <span>Accent</span>
+                <input
+                  type="color"
+                  value={liveHome.accent_color || defaultHome.accent_color}
+                  onChange={(e) => updateDraft("accent_color", e.target.value)}
+                />
+              </label>
+              {saveMsg ? <span className={saveMsg.includes("Saved") ? "rh-editor-success" : "rh-editor-error"}>{saveMsg}</span> : null}
+              <button type="button" className="rh-btn rh-btn-ghost" onClick={cancelEditing} disabled={saveBusy}>
+                Cancel
+              </button>
+              <button type="button" className="rh-btn rh-btn-primary" onClick={saveDraft} disabled={saveBusy}>
+                {saveBusy ? "Saving…" : "Save and publish"}
+              </button>
+            </div>
           </div>
-        </div>
+
+          <div className="rh-editor-panels">
+            <div className="rh-editor-panel">
+              <InlineActionListEditor
+                title="Hero buttons"
+                items={liveHome.primary_actions}
+                onChange={(items) => updateActionList("primary_actions", items, 3)}
+                editorMode={editorMode}
+                limit={3}
+              />
+            </div>
+
+            <div className="rh-editor-panel">
+              <InlineActionListEditor
+                title="Join action links"
+                items={liveHome.get_involved_links}
+                onChange={(items) => updateActionList("get_involved_links", items, 3)}
+                editorMode={editorMode}
+                limit={3}
+              />
+            </div>
+          </div>
+        </>
       ) : null}
 
       <main>

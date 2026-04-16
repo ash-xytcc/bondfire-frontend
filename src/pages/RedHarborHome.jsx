@@ -83,20 +83,6 @@ function scrollToSection(id) {
 }
 
 function SectionLink({ id, children, className = "" }) {
-  
-  React.useEffect(() => {
-    if (!editorMode) return
-
-    const handler = (e) => {
-      if (!isDirty) return
-      e.preventDefault()
-      e.returnValue = ""
-    }
-
-    window.addEventListener("beforeunload", handler)
-    return () => window.removeEventListener("beforeunload", handler)
-  }, [editorMode, isDirty])
-
   return (
     <button
       type="button"
@@ -514,6 +500,20 @@ export default function RedHarborHome() {
       return normalizeHome({ ...src, join_cards: next })
     })
   }, [home])
+
+
+  React.useEffect(() => {
+    if (!editorMode) return
+
+    const handler = (e) => {
+      if (!isDirty) return
+      e.preventDefault()
+      e.returnValue = ""
+    }
+
+    window.addEventListener("beforeunload", handler)
+    return () => window.removeEventListener("beforeunload", handler)
+  }, [editorMode, isDirty])
 
   const saveDraft = React.useCallback(async () => {
     const orgId = currentOrgId || readCurrentOrgId()

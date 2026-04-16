@@ -19,11 +19,17 @@ export default function PublicBulletinIndex() {
     let dead = false;
     (async () => {
       try {
-        const res = await fetch("/api/public/posts?org=dpg", { headers: { Accept: "application/json" } });
+        const res = await fetch("/api/public/bulletin?org=dpg&limit=20", { headers: { Accept: "application/json" } });
         const data = await res.json().catch(() => ({}));
         if (dead) return;
         if (!res.ok || !data?.ok) throw new Error(data?.error || "Failed to load posts");
-        setState({ loading: false, posts: Array.isArray(data.posts) ? data.posts : [], error: "" });
+        const posts = (Array.isArray(data.posts) ? data.posts : []).map((post) => ({
+          ...post,
+          publishedAt: post?.publishedAt || post?.published_at || "",
+          featureImage: post?.featureImage || post?.feature_image || "",
+          feature_image: post?.feature_image || post?.featureImage || "",
+        }));
+        setState({ loading: false, posts, error: "" });
       } catch (e) {
         if (dead) return;
         setState({ loading: false, posts: [], error: String(e?.message || e) });

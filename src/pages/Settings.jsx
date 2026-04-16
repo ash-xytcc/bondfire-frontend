@@ -1106,10 +1106,13 @@ React.useEffect(() => {
               )}
             </label>
 
-            <div>
+            <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
               <button className="btn-red" onClick={saveBasics}>
                 Save
               </button>
+              <Link className="btn" to={`/org/${encodeURIComponent(orgId)}/site-editor`}>
+                Open Site Editor
+              </Link>
             </div>
           </div>
         </div>

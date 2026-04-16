@@ -30,6 +30,7 @@ import DpgPublicHome from "./pages/DpgPublicHome.jsx";
 import PublicBulletinIndex from "./pages/dpg/PublicBulletinIndex.jsx";
 import PublicBulletinPost from "./pages/dpg/PublicBulletinPost.jsx";
 import PublicContentPage from "./pages/dpg/PublicContentPage.jsx";
+import SiteEditor from "./pages/SiteEditor.jsx";
 
 // COMPONENTS
 import AppHeader from "./components/AppHeader.jsx";
@@ -320,6 +321,7 @@ function Shell() {
 					<Route path="meetings" element={<Meetings />} />
 					<Route path="meetings/:meetingId" element={<MeetingDetail />} />
 					<Route path="settings" element={<Settings />} />
+					<Route path="site-editor" element={<SiteEditor />} />
 					<Route path="drive" element={<Drive />} />
 					<Route path="studio" element={<Studio />} />
 					<Route path="sessions" element={<DpgSessionsPage />} />

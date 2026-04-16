@@ -82,6 +82,20 @@ function scrollToSection(id) {
 }
 
 function SectionLink({ id, children, className = "" }) {
+  
+  React.useEffect(() => {
+    if (!editorMode) return
+
+    const handler = (e) => {
+      if (!isDirty) return
+      e.preventDefault()
+      e.returnValue = ""
+    }
+
+    window.addEventListener("beforeunload", handler)
+    return () => window.removeEventListener("beforeunload", handler)
+  }, [editorMode, isDirty])
+
   return (
     <button
       type="button"
@@ -386,6 +400,7 @@ export default function RedHarborHome() {
   const [editorMode, setEditorMode] = React.useState(false)
   const [saveBusy, setSaveBusy] = React.useState(false)
   const [saveMsg, setSaveMsg] = React.useState("")
+  const [isDirty, setIsDirty] = React.useState(false)
   const [currentOrgId, setCurrentOrgId] = React.useState("")
 
   React.useEffect(() => {
@@ -481,16 +496,19 @@ export default function RedHarborHome() {
     setDraft(null)
     setEditorMode(false)
     setSaveBusy(false)
+    setIsDirty(false)
     setSaveMsg("")
   }, [])
 
   const updateDraft = React.useCallback((key, value) => {
+    setIsDirty(true)
     setDraft((prev) => normalizeHome({ ...(prev || home), [key]: value }))
   }, [home])
 
   const updateJoinCard = React.useCallback((index, patch) => {
     setDraft((prev) => {
       const src = normalizeHome(prev || home)
+      setIsDirty(true)
       const next = src.join_cards.map((card, i) => (i === index ? { ...card, ...patch } : card))
       return normalizeHome({ ...src, join_cards: next })
     })
@@ -555,7 +573,8 @@ export default function RedHarborHome() {
       const nextHome = normalizeHome(data.public || payload)
       setHome(nextHome)
       setDraft(nextHome)
-      setSaveMsg("Saved and published.")
+      setIsDirty(false)
+      setSaveMsg("Saved")
       setTimeout(() => setSaveMsg(""), 1500)
     } catch (err) {
       setSaveMsg(String(err?.message || err || "Failed to save page"))

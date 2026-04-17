@@ -146,6 +146,22 @@ function cleanJoinCards(arr) {
   })
 }
 
+function moveArrayItem(arr, fromIndex, toIndex) {
+  const list = Array.isArray(arr) ? arr.slice() : []
+  if (
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= list.length ||
+    toIndex >= list.length ||
+    fromIndex === toIndex
+  ) {
+    return list
+  }
+  const [moved] = list.splice(fromIndex, 1)
+  list.splice(toIndex, 0, moved)
+  return list
+}
+
 function hexToRgb(hex) {
   const clean = String(hex || "").trim().replace("#", "")
   if (!/^[0-9a-fA-F]{6}$/.test(clean)) return null
@@ -349,6 +365,89 @@ function InlineStringListEditor({
   )
 }
 
+function InlineReorderableStringListEditor({
+  title,
+  items,
+  onChange,
+  editorMode,
+  className = "",
+  itemPlaceholder = "List item",
+  maxItems = 12,
+}) {
+  if (!editorMode) {
+    return (
+      <ul className={className}>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    )
+  }
+
+  const safe = Array.isArray(items) ? items.slice(0, maxItems) : []
+
+  return (
+    <div className={`rh-inline-group ${className}`.trim()}>
+      {title ? <div className="rh-inline-group-label">{title}</div> : null}
+
+      <div className="rh-inline-reorder-list">
+        {safe.map((item, index) => (
+          <div key={`${title || "item"}-${index}`} className="rh-inline-reorder-row">
+            <input
+              className="rh-inline-editor"
+              value={item || ""}
+              onChange={(e) => {
+                const next = safe.slice()
+                next[index] = e.target.value
+                onChange(next)
+              }}
+              placeholder={itemPlaceholder}
+            />
+            <div className="rh-inline-reorder-actions">
+              <button
+                type="button"
+                className="rh-inline-move-btn"
+                onClick={() => onChange(moveArrayItem(safe, index, index - 1))}
+                disabled={index === 0}
+                aria-label={`Move ${title || "item"} ${index + 1} up`}
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                className="rh-inline-move-btn"
+                onClick={() => onChange(moveArrayItem(safe, index, index + 1))}
+                disabled={index === safe.length - 1}
+                aria-label={`Move ${title || "item"} ${index + 1} down`}
+              >
+                ↓
+              </button>
+              <button
+                type="button"
+                className="rh-inline-remove-btn"
+                onClick={() => onChange(safe.filter((_, i) => i !== index))}
+                aria-label={`Remove ${title || "item"} ${index + 1}`}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {safe.length < maxItems ? (
+        <button
+          type="button"
+          className="rh-inline-add-btn"
+          onClick={() => onChange([...safe, ""])}
+        >
+          Add item
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
 function InlineCardBlockEditor({
   title,
   cardTitle,
@@ -404,7 +503,29 @@ function InlineActionListEditor({
       <div className="rh-inline-actions-grid">
         {safe.map((item, index) => (
           <div key={`${title || "action"}-${index}`} className="rh-inline-action-card">
-            <div className="rh-inline-group-label">Button {index + 1}</div>
+            <div className="rh-inline-action-head">
+              <div className="rh-inline-group-label">Button {index + 1}</div>
+              <div className="rh-inline-reorder-actions">
+                <button
+                  type="button"
+                  className="rh-inline-move-btn"
+                  onClick={() => onChange(moveArrayItem(safe, index, index - 1))}
+                  disabled={index === 0}
+                  aria-label={`Move button ${index + 1} up`}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className="rh-inline-move-btn"
+                  onClick={() => onChange(moveArrayItem(safe, index, index + 1))}
+                  disabled={index === safe.length - 1}
+                  aria-label={`Move button ${index + 1} down`}
+                >
+                  ↓
+                </button>
+              </div>
+            </div>
             <input
               className="rh-inline-editor"
               value={item.label || ""}
@@ -890,13 +1011,13 @@ export default function RedHarborHome() {
               <div className="rh-card" style={{ gridColumn: "1 / -1" }}>
                 <h3>What we do</h3>
                 {editorMode ? (
-                  <InlineStringListEditor
+                  <InlineReorderableStringListEditor
                     title="What we do items"
                     items={whatWeDoItems}
                     onChange={(items) => updateDraft("what_we_do", items)}
                     editorMode={editorMode}
                     itemPlaceholder="What we do item"
-                    rows={6}
+                    maxItems={12}
                   />
                 ) : (
                   <div className="rh-grid-two">

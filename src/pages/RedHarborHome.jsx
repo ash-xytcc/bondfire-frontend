@@ -830,6 +830,13 @@ export default function RedHarborHome() {
       console.log("RH SAVE STEP 8 savedHome", savedHome)
 
       setHome(savedHome)
+      try {
+        if (savedHome?.font_family) {
+          localStorage.setItem('rh_font_family', savedHome.font_family)
+        }
+      } catch (e) {
+        console.warn("font localStorage failed", e)
+      }
       setDraft(null)
       setIsDirty(false)
       setSaveMsg("Saved")

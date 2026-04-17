@@ -722,6 +722,7 @@ export default function RedHarborHome() {
                 <option value="playfair">Playfair Display</option>
                 <option value="fraunces">Fraunces</option>
                 <option value="cormorant">Cormorant Garamond</option>
+                <option value="altehaas">Alte Haas Grotesk</option>
               </select>
               </label>
 

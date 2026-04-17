@@ -684,6 +684,14 @@ export default function RedHarborHome() {
     setSaveMsg("")
   }, [])
 
+  const doneEditing = React.useCallback(() => {
+    setDraft(null)
+    setEditorMode(false)
+    setSaveBusy(false)
+    setIsDirty(false)
+    setSaveMsg("")
+  }, [])
+
   const updateDraft = React.useCallback((key, value) => {
     setIsDirty(true)
     setDraft((prev) => normalizeHome({ ...(prev || home), [key]: value }))
@@ -794,12 +802,23 @@ export default function RedHarborHome() {
       if (!res.ok || data?.ok === false) {
         throw new Error(data?.detail || data?.error || data?.message || "Failed to save page")
       }
-      const nextHome = normalizeHome(data.public || payload)
+
+      const verifyRes = await fetch(`/api/public-home/${ORG_ID}`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      })
+      const verifyData = await verifyRes.json().catch(() => ({}))
+      if (!verifyRes.ok || verifyData?.ok === false) {
+        throw new Error(verifyData?.detail || verifyData?.error || verifyData?.message || "Save verification failed")
+      }
+
+      const nextHome = normalizeHome(verifyData.public || data.public || payload)
       setHome(nextHome)
-      setDraft(nextHome)
+      setDraft(null)
       setIsDirty(false)
+      setEditorMode(false)
       setSaveMsg("Saved")
-      setTimeout(() => setSaveMsg(""), 1500)
+      setTimeout(() => setSaveMsg(""), 1800)
     } catch (err) {
       setSaveMsg(String(err?.message || err || "Failed to save page"))
     } finally {
@@ -886,11 +905,14 @@ export default function RedHarborHome() {
                 />
               </label>
               {saveMsg ? <span className={saveMsg.includes("Saved") ? "rh-editor-success" : "rh-editor-error"}>{saveMsg}</span> : null}
+              <button type="button" className="rh-btn rh-btn-ghost" onClick={doneEditing} disabled={saveBusy || isDirty}>
+                Done
+              </button>
               <button type="button" className="rh-btn rh-btn-ghost" onClick={cancelEditing} disabled={saveBusy}>
                 Cancel
               </button>
               <button type="button" className="rh-btn rh-btn-primary" onClick={saveDraft} disabled={saveBusy}>
-                {saveBusy ? "Saving…" : "Save and publish"}
+                {saveBusy ? "Saving…" : "Save and exit"}
               </button>
             </div>
           </div>

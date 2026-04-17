@@ -4,7 +4,14 @@ export async function onRequestGet({ env, params }) {
   const rawOrgId = String(params.orgId || "").trim()
 
   if (!rawOrgId) {
-    return Response.json({ ok: false, error: "MISSING_ORG_ID" }, { status: 400 })
+    return Response.json(
+      {
+        ok: false,
+        error: "MISSING_ORG_ID",
+        route_version: "public-home-fontfix-v3",
+      },
+      { status: 400 }
+    )
   }
 
   let resolvedOrgId = rawOrgId
@@ -63,5 +70,10 @@ export async function onRequestGet({ env, params }) {
     get_involved_links: Array.isArray(cfg?.get_involved_links) ? cfg.get_involved_links : [],
   }
 
-  return Response.json({ ok: true, orgId: resolvedOrgId, public: cleaned })
+  return Response.json({
+    ok: true,
+    orgId: resolvedOrgId,
+    route_version: "public-home-fontfix-v3",
+    public: cleaned,
+  })
 }

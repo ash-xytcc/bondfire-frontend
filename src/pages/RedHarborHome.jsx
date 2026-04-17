@@ -803,21 +803,32 @@ export default function RedHarborHome() {
         throw new Error(data?.detail || data?.error || data?.message || "Failed to save page")
       }
 
-      const verifyRes = await fetch(`/api/public-home/${ORG_ID}`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-      })
-      const verifyData = await verifyRes.json().catch(() => ({}))
-      if (!verifyRes.ok || verifyData?.ok === false) {
-        throw new Error(verifyData?.detail || verifyData?.error || verifyData?.message || "Save verification failed")
-      }
-
-      const nextHome = normalizeHome(verifyData.public || data.public || payload)
-      setHome(nextHome)
+      const savedHome = normalizeHome(data.public || payload)
+      setHome(savedHome)
       setDraft(null)
       setIsDirty(false)
-      setEditorMode(false)
       setSaveMsg("Saved")
+      setEditorMode(false)
+
+      try {
+        const verifyRes = await fetch(`/api/public-home/${ORG_ID}?t=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            Accept: "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        })
+        const verifyData = await verifyRes.json().catch(() => ({}))
+        if (verifyRes.ok && verifyData?.ok !== false && verifyData?.public) {
+          const verifiedHome = normalizeHome(verifyData.public)
+          setHome(verifiedHome)
+        }
+      } catch (verifyErr) {
+        console.warn("public-home verification skipped", verifyErr)
+      }
+
       setTimeout(() => setSaveMsg(""), 1800)
     } catch (err) {
       setSaveMsg(String(err?.message || err || "Failed to save page"))

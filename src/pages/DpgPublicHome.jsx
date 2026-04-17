@@ -433,6 +433,7 @@ export default function DpgPublicHome() {
   const [saveBusy, setSaveBusy] = React.useState(false);
   const [saveMsg, setSaveMsg] = React.useState("");
   const [postsState, setPostsState] = React.useState({ loading: true, posts: [], error: "" });
+  const heroFileInputRef = React.useRef(null);
 
   React.useEffect(() => {
     try {
@@ -507,6 +508,22 @@ export default function DpgPublicHome() {
 
   const updateDraft = (key, value) => {
     setDraft((prev) => ({ ...(prev || normalizeHomeConfig(baseConfig)), [key]: value }));
+  };
+
+  const onChooseHeroImage = () => {
+    heroFileInputRef.current?.click();
+  };
+
+  const onHeroFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateDraft("hero_background_url", String(reader.result || ""));
+      setActiveField("");
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   const saveDraft = async () => {
@@ -770,16 +787,31 @@ export default function DpgPublicHome() {
               <InlineTextEditor
                 value={heroBackground}
                 onChange={(v) => updateDraft("hero_background_url", v)}
-                placeholder="Hero background image URL"
+                placeholder="Paste image URL here, or use Choose image"
               />
             </div>
           ) : null}
 
           {editorMode ? (
-            <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
+            <div style={{ marginTop: 12, display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
               <EditChip onClick={() => setActiveField(activeField === "hero_bg" ? "" : "hero_bg")} subtle>
-                {activeField === "hero_bg" ? "Hide image URL" : "Edit hero image"}
+                {activeField === "hero_bg" ? "Hide image field" : "Edit hero image"}
               </EditChip>
+              <EditChip onClick={onChooseHeroImage} subtle>
+                Choose image
+              </EditChip>
+              {heroBackground ? (
+                <EditChip onClick={() => updateDraft("hero_background_url", "")} subtle>
+                  Clear image
+                </EditChip>
+              ) : null}
+              <input
+                ref={heroFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={onHeroFileChange}
+                style={{ display: "none" }}
+              />
             </div>
           ) : null}
         </div>

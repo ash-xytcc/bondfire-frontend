@@ -736,6 +736,12 @@ export default function RedHarborHome() {
   }, [editorMode, isDirty])
 
   const saveDraft = React.useCallback(async () => {
+    console.log("RH SAVE CLICK", {
+      orgId: ORG_ID,
+      currentOrgId,
+      draftFont: draft?.font_family,
+      homeFont: home?.font_family,
+    })
     const orgId = ORG_ID
     if (!orgId) {
       setSaveMsg("No org context found for saving.")
@@ -916,13 +922,31 @@ export default function RedHarborHome() {
                 />
               </label>
               {saveMsg ? <span className={saveMsg.includes("Saved") ? "rh-editor-success" : "rh-editor-error"}>{saveMsg}</span> : null}
-              <button type="button" className="rh-btn rh-btn-ghost" onClick={doneEditing} disabled={saveBusy || isDirty}>
+              <button
+                type="button"
+                className="rh-btn rh-btn-ghost"
+                onClick={doneEditing}
+                disabled={saveBusy || isDirty}
+              >
                 Done
               </button>
-              <button type="button" className="rh-btn rh-btn-ghost" onClick={cancelEditing} disabled={saveBusy}>
+              <button
+                type="button"
+                className="rh-btn rh-btn-ghost"
+                onClick={cancelEditing}
+                disabled={saveBusy}
+              >
                 Cancel
               </button>
-              <button type="button" className="rh-btn rh-btn-primary" onClick={saveDraft} disabled={saveBusy}>
+              <button
+                type="button"
+                className="rh-btn rh-btn-primary"
+                onClick={() => {
+                  console.log("RH SAVE BUTTON PRESSED")
+                  saveDraft()
+                }}
+                disabled={saveBusy}
+              >
                 {saveBusy ? "Saving…" : "Save and exit"}
               </button>
             </div>

@@ -547,6 +547,39 @@ function normalizeVolunteerContent(src = {}, page = {}) {
   };
 }
 
+function normalizeDonateContent(src = {}, page = {}) {
+  return {
+    eyebrow: String(src?.eyebrow || page?.eyebrow || "Money is fake and yet unfortunately still useful."),
+    title: String(src?.title || page?.title || "Donate"),
+    intro: String(src?.intro || "The gathering is free to attend, but making it real still costs actual money in the cursed material world."),
+    lead_title: String(src?.lead_title || "Help cover the real costs"),
+    lead_body: String(src?.lead_body || "Dual Power West is free for anyone to attend, but holding the gathering still costs money. Campsites, food, equipment, accessibility support, and travel all add up."),
+    support_title: String(src?.support_title || "What donations support"),
+    support_items: Array.isArray(src?.support_items) && src.support_items.length
+      ? src.support_items.slice(0, 8).map((x) => String(x || "").trim()).filter(Boolean)
+      : [
+          "Campsites and shared infrastructure",
+          "Food and kitchen costs",
+          "Accessibility support",
+          "Travel help for organizers and participants",
+          "Equipment and event logistics",
+          "Supplies that make the gathering actually function",
+        ],
+    impact_title: String(src?.impact_title || "Why it matters"),
+    impact_body: String(src?.impact_body || "Donations help make the event more accessible, more materially stable, and less dependent on the personal sacrifice of whoever is already carrying too much."),
+    cta_title: String(src?.cta_title || "Give what you can"),
+    cta_body: String(src?.cta_body || "If you or someone you know would like to support the gathering, donations make the event more accessible and materially sustainable."),
+    cta_url: String(src?.cta_url || "https://hcb.hackclub.com/donations/start/dual-power-gathering"),
+    cta_label: String(src?.cta_label || "Donate to Dual Power Gathering"),
+    receipt_title: String(src?.receipt_title || "Receipts and questions"),
+    receipt_body: String(src?.receipt_body || "If you need a receipt or have questions, reach out through the organizer contacts."),
+    side_title: String(src?.side_title || "Keep it usable"),
+    side_body: String(src?.side_body || "The point is not luxury. The point is making the gathering materially possible without pricing people out or burning organizers down."),
+    sticky_title: String(src?.sticky_title || "small amounts matter"),
+    sticky_body: String(src?.sticky_body || "A lot of real support looks like many people giving what they can, not one mythical donor descending from the heavens."),
+  };
+}
+
 function AboutPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
   const updateSection = (index, key, value) => {
     const next = [...content.sections];
@@ -1152,10 +1185,7 @@ function VolunteerPageLayout({ accent, editorMode = false, activeField = "", set
                 display={content.contact_body}
                 displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
               />
-              <a
-                href="mailto:dualpowergathering@proton.me"
-                className="dpg-vol-cta"
-              >
+              <a href="mailto:dualpowergathering@proton.me" className="dpg-vol-cta">
                 Email organizers
               </a>
             </div>
@@ -1208,6 +1238,340 @@ function VolunteerPageLayout({ accent, editorMode = false, activeField = "", set
                 value={content.sticky_body}
                 onChange={(v) => setContent({ ...content, sticky_body: v })}
                 onStartEdit={() => setActiveField("vol_sticky_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky body"
+                multiline
+                hint="Edit note"
+                dark={false}
+                display={content.sticky_body}
+                displayStyle={{ color: "#171717", lineHeight: 1.56, fontSize: "0.98rem", borderRadius: 10 }}
+              />
+            </div>
+          </aside>
+        </section>
+      </div>
+    </>
+  );
+}
+
+function DonatePageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+  const updateSupportItem = (index, value) => {
+    const next = [...content.support_items];
+    while (next.length < 8) next.push("");
+    next[index] = value;
+    setContent({ ...content, support_items: next.filter((x) => String(x || "").trim()) });
+  };
+
+  return (
+    <>
+      <style>{`
+        .dpg-donate-shell { display: grid; gap: 24px; }
+        .dpg-donate-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+          gap: 22px;
+          align-items: start;
+        }
+        .dpg-donate-card {
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 24px;
+          padding: 22px;
+          box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+        }
+        .dpg-donate-support {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 12px;
+          margin-top: 16px;
+        }
+        .dpg-donate-pill {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: 14px;
+          color: #f3efe8;
+          min-height: 62px;
+          display: flex;
+          align-items: center;
+        }
+        .dpg-donate-side {
+          display: grid;
+          gap: 18px;
+        }
+        .dpg-donate-cta {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 15px 18px;
+          border-radius: 999px;
+          background: ${accent};
+          color: #121715;
+          text-decoration: none;
+          font-weight: 800;
+          box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+        }
+        .dpg-donate-sticky {
+          background: #f3e28b;
+          color: #171717;
+          border-radius: 16px;
+          padding: 18px;
+          transform: rotate(1deg);
+          border: 1px solid rgba(0,0,0,0.08);
+          box-shadow: 0 18px 36px rgba(0,0,0,0.16);
+        }
+        @media (max-width: 920px) {
+          .dpg-donate-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div className="dpg-donate-shell">
+        <PageHero
+          accent={accent}
+          editorMode={editorMode}
+          activeField={activeField}
+          setActiveField={setActiveField}
+          prefix="donate"
+          content={content}
+          setContent={setContent}
+        />
+
+        <section className="dpg-donate-grid">
+          <div style={{ display: "grid", gap: 18 }}>
+            <article className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_lead_title"}
+                value={content.lead_title}
+                onChange={(v) => setContent({ ...content, lead_title: v })}
+                onStartEdit={() => setActiveField("donate_lead_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead title"
+                hint="Edit title"
+                display={content.lead_title}
+                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "2rem", lineHeight: 1.05, marginBottom: 14, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_lead_body"}
+                value={content.lead_body}
+                onChange={(v) => setContent({ ...content, lead_body: v })}
+                onStartEdit={() => setActiveField("donate_lead_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead body"
+                multiline
+                hint="Edit intro block"
+                display={content.lead_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, fontSize: "1.06rem", borderRadius: 10 }}
+              />
+            </article>
+
+            <article className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_support_title"}
+                value={content.support_title}
+                onChange={(v) => setContent({ ...content, support_title: v })}
+                onStartEdit={() => setActiveField("donate_support_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Support title"
+                hint="Edit section label"
+                display={content.support_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+
+              <div className="dpg-donate-support">
+                {Array.from({ length: Math.max(content.support_items.length, editorMode ? 6 : content.support_items.length) }).map((_, idx) => {
+                  const value = content.support_items[idx] || "";
+                  return (
+                    <div className="dpg-donate-pill" key={`support-${idx}`}>
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `donate_support_${idx}`}
+                        value={value}
+                        onChange={(v) => updateSupportItem(idx, v)}
+                        onStartEdit={() => setActiveField(`donate_support_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Support item ${idx + 1}`}
+                        hint="Edit item"
+                        display={value || (editorMode ? "Empty support slot" : "")}
+                        displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+
+            <article className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_impact_title"}
+                value={content.impact_title}
+                onChange={(v) => setContent({ ...content, impact_title: v })}
+                onStartEdit={() => setActiveField("donate_impact_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Impact title"
+                hint="Edit title"
+                display={content.impact_title}
+                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1.2rem", lineHeight: 1.1, marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_impact_body"}
+                value={content.impact_body}
+                onChange={(v) => setContent({ ...content, impact_body: v })}
+                onStartEdit={() => setActiveField("donate_impact_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Impact body"
+                multiline
+                hint="Edit body"
+                display={content.impact_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </article>
+          </div>
+
+          <aside className="dpg-donate-side">
+            <div className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_cta_title"}
+                value={content.cta_title}
+                onChange={(v) => setContent({ ...content, cta_title: v })}
+                onStartEdit={() => setActiveField("donate_cta_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="CTA title"
+                hint="Edit title"
+                display={content.cta_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_cta_body"}
+                value={content.cta_body}
+                onChange={(v) => setContent({ ...content, cta_body: v })}
+                onStartEdit={() => setActiveField("donate_cta_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="CTA body"
+                multiline
+                hint="Edit body"
+                display={content.cta_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
+              />
+
+              <div style={{ display: "grid", gap: 10 }}>
+                <InlineField
+                  editorMode={editorMode}
+                  editing={editorMode && activeField === "donate_cta_label"}
+                  value={content.cta_label}
+                  onChange={(v) => setContent({ ...content, cta_label: v })}
+                  onStartEdit={() => setActiveField("donate_cta_label")}
+                  onStopEdit={() => setActiveField("")}
+                  placeholder="CTA label"
+                  hint="Edit button label"
+                  display={content.cta_label}
+                  displayStyle={{ color: "#f3efe8", fontWeight: 800, borderRadius: 10 }}
+                />
+
+                {editorMode ? (
+                  <InlineField
+                    editorMode={editorMode}
+                    editing={editorMode && activeField === "donate_cta_url"}
+                    value={content.cta_url}
+                    onChange={(v) => setContent({ ...content, cta_url: v })}
+                    onStartEdit={() => setActiveField("donate_cta_url")}
+                    onStopEdit={() => setActiveField("")}
+                    placeholder="CTA URL"
+                    hint="Edit link"
+                    display={content.cta_url}
+                    displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                  />
+                ) : null}
+
+                <a href={content.cta_url} target="_blank" rel="noreferrer" className="dpg-donate-cta">
+                  {content.cta_label}
+                </a>
+              </div>
+            </div>
+
+            <div className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_receipt_title"}
+                value={content.receipt_title}
+                onChange={(v) => setContent({ ...content, receipt_title: v })}
+                onStartEdit={() => setActiveField("donate_receipt_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Receipt title"
+                hint="Edit label"
+                display={content.receipt_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_receipt_body"}
+                value={content.receipt_body}
+                onChange={(v) => setContent({ ...content, receipt_body: v })}
+                onStartEdit={() => setActiveField("donate_receipt_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Receipt body"
+                multiline
+                hint="Edit note"
+                display={content.receipt_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_side_title"}
+                value={content.side_title}
+                onChange={(v) => setContent({ ...content, side_title: v })}
+                onStartEdit={() => setActiveField("donate_side_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side title"
+                hint="Edit label"
+                display={content.side_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_side_body"}
+                value={content.side_body}
+                onChange={(v) => setContent({ ...content, side_body: v })}
+                onStartEdit={() => setActiveField("donate_side_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side body"
+                multiline
+                hint="Edit note"
+                display={content.side_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-donate-sticky">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_sticky_title"}
+                value={content.sticky_title}
+                onChange={(v) => setContent({ ...content, sticky_title: v })}
+                onStartEdit={() => setActiveField("donate_sticky_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky title"
+                hint="Edit title"
+                dark={false}
+                display={content.sticky_title}
+                displayStyle={{ color: "#171717", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.1, marginBottom: 8, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_sticky_body"}
+                value={content.sticky_body}
+                onChange={(v) => setContent({ ...content, sticky_body: v })}
+                onStartEdit={() => setActiveField("donate_sticky_body")}
                 onStopEdit={() => setActiveField("")}
                 placeholder="Sticky body"
                 multiline
@@ -1401,6 +1765,11 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
     ...(draftPages?.volunteer || {}),
   }, page);
 
+  const donateContent = normalizeDonateContent({
+    ...(contentPages?.donate || {}),
+    ...(draftPages?.donate || {}),
+  }, page);
+
   const beginEditing = () => {
     setDraftPages(contentPages || {});
     setEditorMode(true);
@@ -1449,6 +1818,10 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
 
   const setVolunteerContent = (next) => {
     setDraftPages((prev) => ({ ...(prev || {}), volunteer: next }));
+  };
+
+  const setDonateContent = (next) => {
+    setDraftPages((prev) => ({ ...(prev || {}), donate: next }));
   };
 
   if (!page) {
@@ -1560,6 +1933,15 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
             setActiveField={setActiveField}
             content={volunteerContent}
             setContent={setVolunteerContent}
+          />
+        ) : slug === "donate" ? (
+          <DonatePageLayout
+            accent={accent}
+            editorMode={editorMode}
+            activeField={activeField}
+            setActiveField={setActiveField}
+            content={donateContent}
+            setContent={setDonateContent}
           />
         ) : (
           <GenericPublicPage page={page} accent={accent} />

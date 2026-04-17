@@ -1,13 +1,22 @@
-import { getPublicCfg } from "../_lib/publicPageStore.js"
+import { getPublicCfg, resolveSlug } from "../_lib/publicPageStore.js"
 
 export async function onRequestGet({ env, params }) {
-  const orgId = String(params.orgId || "").trim()
+  const rawOrgParam = String(params.orgId || "").trim()
 
-  if (!orgId) {
+  if (!rawOrgParam) {
     return Response.json({ ok: false, error: "MISSING_ORG_ID" }, { status: 400 })
   }
 
-  const cfg = await getPublicCfg(env, orgId)
+  let resolvedOrgId = rawOrgParam
+  let cfg = await getPublicCfg(env, resolvedOrgId)
+
+  if (!cfg || !Object.keys(cfg).length) {
+    const slugOrgId = await resolveSlug(env, rawOrgParam)
+    if (slugOrgId) {
+      resolvedOrgId = String(slugOrgId).trim()
+      cfg = await getPublicCfg(env, resolvedOrgId)
+    }
+  }
 
   const cleaned = {
     enabled: !!cfg?.enabled,
@@ -54,5 +63,5 @@ export async function onRequestGet({ env, params }) {
     get_involved_links: Array.isArray(cfg?.get_involved_links) ? cfg.get_involved_links : [],
   }
 
-  return Response.json({ ok: true, orgId, public: cleaned })
+  return Response.json({ ok: true, orgId: resolvedOrgId, public: cleaned })
 }

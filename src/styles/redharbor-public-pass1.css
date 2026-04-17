@@ -16,23 +16,6 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: "Alte Haas Grotesk";
-  src: url("/fonts/AlteHaasGroteskRegular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Alte Haas Grotesk";
-  src: url("/fonts/AlteHaasGroteskBold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-
 :root {
   --rh-bg: #0f1619;
   --rh-panel: #162126;
@@ -995,4 +978,14 @@
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+
+/* enforce bold weights for Alte Haas */
+.rh-public h1,
+.rh-public h2,
+.rh-public h3,
+.rh-public .rh-public-title,
+.rh-public .rh-btn {
+  font-weight: 700;
 }

@@ -67,6 +67,7 @@ function normalizeSavedCfg(prev, body, slug) {
     join_intro: String(body.join_intro || "").trim(),
     contact_intro: String(body.contact_intro || "").trim(),
     events_intro: String(body.events_intro || "").trim(),
+    font_family: String(body.font_family || prev?.font_family || "system").trim(),
     accent_color: String(body.accent_color || "#6d5efc").trim(),
     theme_mode: "light",
     website_link: cleanLink(body.website_link),

@@ -31,6 +31,7 @@ export async function onRequestGet({ env, params }) {
     join_intro: String(cfg?.join_intro || ""),
     contact_intro: String(cfg?.contact_intro || ""),
     events_intro: String(cfg?.events_intro || ""),
+    font_family: String(cfg?.font_family || "system"),
     accent_color: String(cfg?.accent_color || "#6d5efc"),
     theme_mode: String(cfg?.theme_mode || "light"),
     website_link: cfg?.website_link || null,

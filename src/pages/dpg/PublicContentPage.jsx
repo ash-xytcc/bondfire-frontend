@@ -345,8 +345,50 @@ function normalizeAboutContent(src = {}) {
   };
 }
 
+function normalizeFaqContent(src = {}, page = {}) {
+  const defaults = [
+    {
+      q: "What is Dual Power?",
+      a: "Dual power is the project of building self determination, mutual aid, solidarity, and direct democracy in our communities by creating spaces that empower us all and from which new emancipatory institutions can emerge.",
+    },
+    {
+      q: "Who is organizing Dual Power West?",
+      a: "Dual Power West is an autonomous event being organized by a developing network of tenants, workers, and activists participating in Symbiosis Federation, Autonomous Tenants Union Network, the Industrial Workers of the World, and independent dual power projects across the country. We are not affiliated with any political party.",
+    },
+    {
+      q: "Why do we think this is important?",
+      a: "We come together from across the spectrum of anti authoritarian and anti capitalist tendencies, traditions, and organizations. We want a space where people can build trusting relationships, construct bridges, share ideas, and strengthen each other.",
+    },
+    {
+      q: "What kind of event is this?",
+      a: "The gathering uses an unconference structure. That means participants help create the agenda, shape sessions, and bring their own ideas, skills, and questions into the space.",
+    },
+    {
+      q: "Will it be child friendly?",
+      a: "Several core organizers have children and they will be part of the event. Child friendly planning is part of the event culture, not an afterthought.",
+    },
+    {
+      q: "What happens after the gathering?",
+      a: "We are not imposing a predetermined outcome. What comes next will be defined locally, and the networks built through the gathering will help inform, grow, and articulate the movements that emerge from it.",
+    },
+  ];
+
+  return {
+    eyebrow: String(src?.eyebrow || page?.eyebrow || "Questions people keep asking because apparently reading minds is still not a feature."),
+    title: String(src?.title || page?.title || "FAQ"),
+    intro: String(src?.intro || "Answers, context, and basic orientation without making people dig through a wall of text."),
+    side_title: String(src?.side_title || "Quick read"),
+    side_body: String(src?.side_body || "Start here if you want the shape of the thing before you decide whether to show up, volunteer, or send this to somebody else."),
+    items: Array.isArray(src?.items) && src.items.length
+      ? src.items.slice(0, 10).map((x) => ({
+          q: String(x?.q || "").trim(),
+          a: String(x?.a || "").trim(),
+        })).filter((x) => x.q || x.a)
+      : defaults,
+  };
+}
+
 function AboutPageLayout({
-  page,
   accent,
   editorMode = false,
   activeField = "",
@@ -395,32 +437,6 @@ function AboutPageLayout({
             rgba(10,16,14,0.78);
         }
 
-        .dpg-about-card h2 {
-          margin: 0 0 12px;
-          color: #f3efe8;
-          font-family: Inter, system-ui, Arial, sans-serif;
-          font-size: 1.05rem;
-          line-height: 1.1;
-          font-weight: 800;
-          letter-spacing: 0.02em;
-        }
-
-        .dpg-about-kicker {
-          margin-bottom: 10px;
-          color: ${accent};
-          font-size: 11px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-
-        .dpg-about-card p {
-          margin: 0;
-          color: #f3efe8;
-          line-height: 1.72;
-          font-size: 1.06rem;
-        }
-
         .dpg-about-side {
           display: grid;
           gap: 18px;
@@ -435,41 +451,12 @@ function AboutPageLayout({
           content: "";
           position: absolute;
           left: 18px;
-          top: 18px;
-          bottom: 18px;
+          top: 22px;
+          bottom: 22px;
           width: 3px;
           border-radius: 999px;
           background: ${accent};
           opacity: 0.9;
-        }
-
-        .dpg-about-quote p {
-          padding-left: 18px;
-          font-size: 1.14rem;
-          line-height: 1.58;
-        }
-
-        .dpg-about-meta {
-          display: grid;
-          gap: 14px;
-        }
-
-        .dpg-about-meta-row {
-          display: grid;
-          gap: 4px;
-        }
-
-        .dpg-about-meta-label {
-          color: ${accent};
-          font-size: 11px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-
-        .dpg-about-meta-value {
-          color: #f3efe8;
-          line-height: 1.58;
         }
 
         .dpg-about-sticky {
@@ -480,22 +467,6 @@ function AboutPageLayout({
           transform: rotate(1.2deg);
           border: 1px solid rgba(0,0,0,0.08);
           box-shadow: 0 18px 36px rgba(0,0,0,0.16);
-        }
-
-        .dpg-about-sticky h3 {
-          margin: 0 0 8px;
-          color: #171717;
-          font-family: Inter, system-ui, Arial, sans-serif;
-          font-size: 1rem;
-          line-height: 1.1;
-          font-weight: 800;
-        }
-
-        .dpg-about-sticky p {
-          margin: 0;
-          color: #171717;
-          line-height: 1.56;
-          font-size: 0.98rem;
         }
 
         @media (max-width: 880px) {
@@ -602,7 +573,10 @@ function AboutPageLayout({
       <section className="dpg-about-grid">
         <div style={{ display: "grid", gap: 18 }}>
           {content.sections.map((section, idx) => (
-            <article className="dpg-about-card" key={`section-${idx}`}>
+            <article
+              key={`section-${idx}`}
+              className="dpg-about-card"
+            >
               <InlineField
                 editorMode={editorMode}
                 editing={editorMode && activeField === `section_${idx}_kicker`}
@@ -700,7 +674,8 @@ function AboutPageLayout({
               hint="Edit quote"
               display={content.quote_text}
               displayStyle={{
-                paddingLeft: 18,
+                paddingLeft: 28,
+                color: "#f3efe8",
                 fontSize: "1.14rem",
                 lineHeight: 1.58,
                 borderRadius: 10,
@@ -708,9 +683,9 @@ function AboutPageLayout({
             />
           </div>
 
-          <div className="dpg-about-card dpg-about-meta">
+          <div className="dpg-about-card" style={{ display: "grid", gap: 14 }}>
             {content.meta_rows.map((row, idx) => (
-              <div className="dpg-about-meta-row" key={`meta-${idx}`}>
+              <div key={`meta-${idx}`} style={{ display: "grid", gap: 4 }}>
                 <InlineField
                   editorMode={editorMode}
                   editing={editorMode && activeField === `meta_${idx}_label`}
@@ -795,6 +770,337 @@ function AboutPageLayout({
           </div>
         </aside>
       </section>
+    </>
+  );
+}
+
+function FaqPageLayout({
+  accent,
+  editorMode = false,
+  activeField = "",
+  setActiveField = () => {},
+  content,
+  setContent = () => {},
+}) {
+  const [openIdx, setOpenIdx] = React.useState(0);
+
+  const updateItem = (index, key, value) => {
+    const next = [...content.items];
+    next[index] = { ...(next[index] || {}), [key]: value };
+    setContent({
+      ...content,
+      items: next.filter((x) => String(x?.q || "").trim() || String(x?.a || "").trim()),
+    });
+  };
+
+  return (
+    <>
+      <style>{`
+        .dpg-faq-shell {
+          display: grid;
+          gap: 24px;
+        }
+
+        .dpg-faq-hero {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: 22px;
+          align-items: center;
+        }
+
+        .dpg-faq-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+          gap: 22px;
+          align-items: start;
+        }
+
+        .dpg-faq-card {
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+            rgba(10,16,14,0.72);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 24px;
+          padding: 20px;
+          box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+        }
+
+        .dpg-faq-item {
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 18px;
+          overflow: hidden;
+          background: rgba(255,255,255,0.02);
+        }
+
+        .dpg-faq-item + .dpg-faq-item {
+          margin-top: 12px;
+        }
+
+        .dpg-faq-trigger {
+          width: 100%;
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 14px;
+          align-items: center;
+          padding: 18px 18px 16px;
+          background: transparent;
+          border: 0;
+          color: #f3efe8;
+          text-align: left;
+          cursor: pointer;
+        }
+
+        .dpg-faq-answer {
+          padding: 0 18px 18px;
+          color: #f3efe8;
+          line-height: 1.72;
+          font-size: 1.02rem;
+        }
+
+        .dpg-faq-badge {
+          color: ${accent};
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .dpg-faq-side-note {
+          background: #dce8d6;
+          color: #171717;
+          border-radius: 18px;
+          padding: 18px;
+          box-shadow: 0 18px 36px rgba(0,0,0,0.16);
+          border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        @media (max-width: 920px) {
+          .dpg-faq-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
+      <div className="dpg-faq-shell">
+        <header className="dpg-faq-hero">
+          <img
+            src={DPG_BRAND.logoSrc}
+            alt={DPG_BRAND.logoAlt}
+            style={{
+              width: 84,
+              height: 84,
+              objectFit: "contain",
+              filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.22))",
+            }}
+          />
+          <div>
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "faq_eyebrow"}
+              value={content.eyebrow}
+              onChange={(v) => setContent({ ...content, eyebrow: v })}
+              onStartEdit={() => setActiveField("faq_eyebrow")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Eyebrow"
+              hint="Edit eyebrow"
+              display={content.eyebrow}
+              displayStyle={{
+                color: "#d7ddd8",
+                marginBottom: 10,
+                fontSize: 15,
+                borderRadius: 10,
+              }}
+            />
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "faq_title"}
+              value={content.title}
+              onChange={(v) => setContent({ ...content, title: v })}
+              onStartEdit={() => setActiveField("faq_title")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Title"
+              hint="Edit title"
+              display={content.title}
+              displayStyle={{
+                margin: 0,
+                color: accent,
+                fontSize: "clamp(2.6rem, 6vw, 5.4rem)",
+                lineHeight: 0.95,
+                fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+                textShadow: "0 1px 2px rgba(0,0,0,0.35)",
+                borderRadius: 14,
+              }}
+              style={{
+                fontSize: "clamp(2.6rem, 6vw, 5.4rem)",
+                lineHeight: 0.95,
+                fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+              }}
+            />
+            <div style={{ marginTop: 14 }}>
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "faq_intro"}
+                value={content.intro}
+                onChange={(v) => setContent({ ...content, intro: v })}
+                onStartEdit={() => setActiveField("faq_intro")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Intro"
+                hint="Edit intro"
+                display={content.intro}
+                displayStyle={{
+                  color: "#f3efe8",
+                  fontSize: "1.12rem",
+                  lineHeight: 1.55,
+                  maxWidth: 860,
+                  borderRadius: 12,
+                }}
+              />
+            </div>
+          </div>
+        </header>
+
+        <section className="dpg-faq-grid">
+          <div className="dpg-faq-card">
+            <div style={{ marginBottom: 16, color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
+              Common questions
+            </div>
+
+            {content.items.map((item, idx) => {
+              const open = openIdx === idx;
+              return (
+                <div className="dpg-faq-item" key={`faq-item-${idx}`}>
+                  <button
+                    type="button"
+                    className="dpg-faq-trigger"
+                    onClick={() => setOpenIdx(open ? -1 : idx)}
+                  >
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === `faq_q_${idx}`}
+                      value={item.q}
+                      onChange={(v) => updateItem(idx, "q", v)}
+                      onStartEdit={() => setActiveField(`faq_q_${idx}`)}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder={`Question ${idx + 1}`}
+                      hint="Edit question"
+                      display={item.q}
+                      displayStyle={{
+                        color: "#f3efe8",
+                        fontFamily: "Inter, system-ui, Arial, sans-serif",
+                        fontWeight: 800,
+                        fontSize: "1.08rem",
+                        lineHeight: 1.25,
+                        borderRadius: 10,
+                      }}
+                    />
+                    <div
+                      style={{
+                        color: accent,
+                        fontSize: 22,
+                        lineHeight: 1,
+                        transform: open ? "rotate(45deg)" : "rotate(0deg)",
+                        transition: "transform 140ms ease",
+                      }}
+                    >
+                      +
+                    </div>
+                  </button>
+
+                  {open ? (
+                    <div className="dpg-faq-answer">
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `faq_a_${idx}`}
+                        value={item.a}
+                        onChange={(v) => updateItem(idx, "a", v)}
+                        onStartEdit={() => setActiveField(`faq_a_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Answer ${idx + 1}`}
+                        multiline
+                        hint="Edit answer"
+                        display={item.a}
+                        displayStyle={{
+                          color: "#f3efe8",
+                          lineHeight: 1.72,
+                          fontSize: "1.02rem",
+                          borderRadius: 10,
+                        }}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+
+            {editorMode && content.items.length < 10 ? (
+              <div style={{ marginTop: 14 }}>
+                <EditChip
+                  onClick={() =>
+                    setContent({
+                      ...content,
+                      items: [...content.items, { q: "New question", a: "New answer" }],
+                    })
+                  }
+                  subtle
+                >
+                  Add question
+                </EditChip>
+              </div>
+            ) : null}
+          </div>
+
+          <div style={{ display: "grid", gap: 18 }}>
+            <div className="dpg-faq-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "faq_side_title"}
+                value={content.side_title}
+                onChange={(v) => setContent({ ...content, side_title: v })}
+                onStartEdit={() => setActiveField("faq_side_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side title"
+                hint="Edit label"
+                display={content.side_title}
+                displayStyle={{
+                  color: accent,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: ".08em",
+                  marginBottom: 10,
+                  borderRadius: 10,
+                }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "faq_side_body"}
+                value={content.side_body}
+                onChange={(v) => setContent({ ...content, side_body: v })}
+                onStartEdit={() => setActiveField("faq_side_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side body"
+                multiline
+                hint="Edit note"
+                display={content.side_body}
+                displayStyle={{
+                  color: "#f3efe8",
+                  lineHeight: 1.68,
+                  borderRadius: 10,
+                }}
+              />
+            </div>
+
+            <div className="dpg-faq-side-note">
+              <div style={{ color: "#171717", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
+                Shortcut
+              </div>
+              <div style={{ color: "#171717", lineHeight: 1.58 }}>
+                RSVP if you know you are coming. Volunteer if you want to help shape the thing. Send the FAQ to the person who is asking you six separate questions in a row.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
     </>
   );
 }
@@ -966,6 +1272,11 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
     ...(draftPages?.about || {}),
   });
 
+  const faqContent = normalizeFaqContent({
+    ...(contentPages?.faq || {}),
+    ...(draftPages?.faq || {}),
+  }, page);
+
   const beginEditing = () => {
     setDraftPages(contentPages || {});
     setEditorMode(true);
@@ -1008,6 +1319,13 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
     setDraftPages((prev) => ({
       ...(prev || {}),
       about: next,
+    }));
+  };
+
+  const setFaqContent = (next) => {
+    setDraftPages((prev) => ({
+      ...(prev || {}),
+      faq: next,
     }));
   };
 
@@ -1091,18 +1409,26 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
         </div>
       ) : null}
 
-      <div style={{ maxWidth: slug === "about" ? 1240 : 1040, margin: "0 auto", padding: "32px 20px 80px" }}>
+      <div style={{ maxWidth: slug === "about" ? 1240 : 1160, margin: "0 auto", padding: "32px 20px 80px" }}>
         <PublicNav links={navLinks} authed={authState.authed} accent={accent} />
 
         {slug === "about" ? (
           <AboutPageLayout
-            page={page}
             accent={accent}
             editorMode={editorMode}
             activeField={activeField}
             setActiveField={setActiveField}
             content={aboutContent}
             setContent={setAboutContent}
+          />
+        ) : slug === "faq" ? (
+          <FaqPageLayout
+            accent={accent}
+            editorMode={editorMode}
+            activeField={activeField}
+            setActiveField={setActiveField}
+            content={faqContent}
+            setContent={setFaqContent}
           />
         ) : (
           <GenericPublicPage page={page} accent={accent} />

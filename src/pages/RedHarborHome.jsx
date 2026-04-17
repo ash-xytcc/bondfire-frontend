@@ -742,59 +742,72 @@ export default function RedHarborHome() {
       draftFont: draft?.font_family,
       homeFont: home?.font_family,
     })
-    const orgId = ORG_ID
-    if (!orgId) {
-      setSaveMsg("No org context found for saving.")
-      return
-    }
 
-    const src = normalizeHome(draft || home)
-    const payload = {
-      newsletter_enabled: !!src.newsletter_enabled,
-      show_action_strip: !!src.show_action_strip,
-      show_needs: !!src.show_needs,
-      show_meetings: !!src.show_meetings,
-      show_what_we_do: !!src.show_what_we_do,
-      show_get_involved: !!src.show_get_involved,
-      show_newsletter_card: !!src.show_newsletter_card,
-      show_website_button: !!src.show_website_button,
-      title: src.hero_headline,
-      location: src.branch_label,
-      about: src.hero_text,
-      branch_label: src.branch_label,
-      hero_headline: src.hero_headline,
-      hero_text: src.hero_text,
-      about_intro: src.about_intro,
-      purpose_title: src.purpose_title,
-      about_title: src.about_title,
-      join_title: src.join_title,
-      bulletin_title: src.bulletin_title,
-      events_title: src.events_title,
-      contact_title: src.contact_title,
-      about_card_title: src.about_card_title,
-      about_card_body: src.about_card_body,
-      location_card_title: src.location_card_title,
-      location_card_body: src.location_card_body,
-      join_intro: src.join_intro,
-      contact_intro: src.contact_intro,
-      events_intro: src.events_intro,
-      font_family: src.font_family,
-      accent_color: src.accent_color,
-      what_we_do: src.what_we_do,
-      site_purpose_items: src.site_purpose_items,
-      join_cards: src.join_cards,
-      events_items: src.events_items,
-      contact_card_title: src.contact_card_title,
-      contact_card_body: src.contact_card_body,
-      member_access_title: src.member_access_title,
-      member_access_body: src.member_access_body,
-      primary_actions: src.primary_actions,
-      get_involved_links: src.get_involved_links,
-    }
-
-    setSaveBusy(true)
-    setSaveMsg("")
     try {
+      const orgId = ORG_ID
+      console.log("RH SAVE STEP 1 orgId", orgId)
+
+      if (!orgId) {
+        setSaveMsg("No org context found for saving.")
+        console.error("RH SAVE STOP no orgId")
+        return
+      }
+
+      console.log("RH SAVE STEP 2 before normalizeHome")
+      const src = normalizeHome(draft || home)
+      console.log("RH SAVE STEP 3 after normalizeHome", {
+        font_family: src?.font_family,
+        accent_color: src?.accent_color,
+      })
+
+      const payload = {
+        newsletter_enabled: !!src.newsletter_enabled,
+        show_action_strip: !!src.show_action_strip,
+        show_needs: !!src.show_needs,
+        show_meetings: !!src.show_meetings,
+        show_what_we_do: !!src.show_what_we_do,
+        show_get_involved: !!src.show_get_involved,
+        show_newsletter_card: !!src.show_newsletter_card,
+        show_website_button: !!src.show_website_button,
+        title: src.hero_headline,
+        location: src.branch_label,
+        about: src.hero_text,
+        branch_label: src.branch_label,
+        hero_headline: src.hero_headline,
+        hero_text: src.hero_text,
+        about_intro: src.about_intro,
+        purpose_title: src.purpose_title,
+        about_title: src.about_title,
+        join_title: src.join_title,
+        bulletin_title: src.bulletin_title,
+        events_title: src.events_title,
+        contact_title: src.contact_title,
+        about_card_title: src.about_card_title,
+        about_card_body: src.about_card_body,
+        location_card_title: src.location_card_title,
+        location_card_body: src.location_card_body,
+        join_intro: src.join_intro,
+        contact_intro: src.contact_intro,
+        events_intro: src.events_intro,
+        font_family: src.font_family,
+        accent_color: src.accent_color,
+        what_we_do: src.what_we_do,
+        site_purpose_items: src.site_purpose_items,
+        join_cards: src.join_cards,
+        events_items: src.events_items,
+        contact_card_title: src.contact_card_title,
+        contact_card_body: src.contact_card_body,
+        member_access_title: src.member_access_title,
+        member_access_body: src.member_access_body,
+        primary_actions: src.primary_actions,
+        get_involved_links: src.get_involved_links,
+      }
+
+      console.log("RH SAVE STEP 4 payload ready", payload)
+      setSaveBusy(true)
+      setSaveMsg("")
+
+      console.log("RH SAVE STEP 5 before fetch")
       const res = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/public/save`, {
         method: "POST",
         credentials: "include",
@@ -804,12 +817,18 @@ export default function RedHarborHome() {
         },
         body: JSON.stringify(payload),
       })
+      console.log("RH SAVE STEP 6 fetch returned", res.status)
+
       const data = await res.json().catch(() => ({}))
+      console.log("RH SAVE STEP 7 response json", data)
+
       if (!res.ok || data?.ok === false) {
         throw new Error(data?.detail || data?.error || data?.message || "Failed to save page")
       }
 
       const savedHome = normalizeHome(data.public || payload)
+      console.log("RH SAVE STEP 8 savedHome", savedHome)
+
       setHome(savedHome)
       setDraft(null)
       setIsDirty(false)
@@ -817,6 +836,7 @@ export default function RedHarborHome() {
       setEditorMode(false)
 
       try {
+        console.log("RH SAVE STEP 9 verify fetch start")
         const verifyRes = await fetch(`/api/public-home/${ORG_ID}?t=${Date.now()}`, {
           method: "GET",
           cache: "no-store",
@@ -826,9 +846,12 @@ export default function RedHarborHome() {
             Pragma: "no-cache",
           },
         })
+        console.log("RH SAVE STEP 10 verify fetch returned", verifyRes.status)
         const verifyData = await verifyRes.json().catch(() => ({}))
+        console.log("RH SAVE STEP 11 verify json", verifyData)
         if (verifyRes.ok && verifyData?.ok !== false && verifyData?.public) {
           const verifiedHome = normalizeHome(verifyData.public)
+          console.log("RH SAVE STEP 12 apply verified home", verifiedHome)
           setHome(verifiedHome)
         }
       } catch (verifyErr) {
@@ -837,6 +860,7 @@ export default function RedHarborHome() {
 
       setTimeout(() => setSaveMsg(""), 1800)
     } catch (err) {
+      console.error("RH SAVE FAILED", err)
       setSaveMsg(String(err?.message || err || "Failed to save page"))
     } finally {
       setSaveBusy(false)

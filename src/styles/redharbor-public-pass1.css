@@ -1009,3 +1009,27 @@
   font-weight: 700;
   background: rgba(255,255,255,0.03);
 }
+
+
+/* enforce selected homepage font across rendered public content */
+.rh-public,
+.rh-public h1,
+.rh-public h2,
+.rh-public h3,
+.rh-public h4,
+.rh-public h5,
+.rh-public h6,
+.rh-public p,
+.rh-public li,
+.rh-public a,
+.rh-public button,
+.rh-public input,
+.rh-public textarea,
+.rh-public select,
+.rh-public label,
+.rh-public span,
+.rh-public strong,
+.rh-public em,
+.rh-public blockquote {
+  font-family: var(--rh-font);
+}

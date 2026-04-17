@@ -1,17 +1,17 @@
 import { getPublicCfg, resolveSlug } from "../_lib/publicPageStore.js"
 
 export async function onRequestGet({ env, params }) {
-  const rawOrgParam = String(params.orgId || "").trim()
+  const rawOrgId = String(params.orgId || "").trim()
 
-  if (!rawOrgParam) {
+  if (!rawOrgId) {
     return Response.json({ ok: false, error: "MISSING_ORG_ID" }, { status: 400 })
   }
 
-  let resolvedOrgId = rawOrgParam
+  let resolvedOrgId = rawOrgId
   let cfg = await getPublicCfg(env, resolvedOrgId)
 
   if (!cfg || !Object.keys(cfg).length) {
-    const slugOrgId = await resolveSlug(env, rawOrgParam)
+    const slugOrgId = await resolveSlug(env, rawOrgId)
     if (slugOrgId) {
       resolvedOrgId = String(slugOrgId).trim()
       cfg = await getPublicCfg(env, resolvedOrgId)
@@ -46,7 +46,7 @@ export async function onRequestGet({ env, params }) {
     join_intro: String(cfg?.join_intro || ""),
     contact_intro: String(cfg?.contact_intro || ""),
     events_intro: String(cfg?.events_intro || ""),
-    font_family: String(cfg?.font_family || "system"),
+    font_family: String(cfg?.font_family || cfg?.fontFamily || "system"),
     accent_color: String(cfg?.accent_color || "#6d5efc"),
     theme_mode: String(cfg?.theme_mode || "light"),
     website_link: cfg?.website_link || null,

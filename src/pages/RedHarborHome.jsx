@@ -635,7 +635,7 @@ export default function RedHarborHome() {
         })
         const data = await res.json().catch(() => ({}))
         if (!ignore) {
-          setEditorAvailable(!!(res.ok && data?.ok && orgId))
+          setEditorAvailable(!!(res.ok && data?.ok))
         }
       } catch {
         if (!ignore) {
@@ -736,7 +736,7 @@ export default function RedHarborHome() {
   }, [editorMode, isDirty])
 
   const saveDraft = React.useCallback(async () => {
-    const orgId = currentOrgId || readCurrentOrgId()
+    const orgId = ORG_ID
     if (!orgId) {
       setSaveMsg("No org context found for saving.")
       return

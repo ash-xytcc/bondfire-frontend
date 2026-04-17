@@ -73,6 +73,73 @@ function EditChip({ onClick, children, subtle = false }) {
   );
 }
 
+function InlineTextEditor({ value, onChange, style = {}, placeholder = "", multiline = false, dark = true }) {
+  const baseStyle = {
+    width: "100%",
+    background: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+    color: dark ? "#f3efe8" : "#171717",
+    border: dark ? "1px dashed rgba(255,255,255,0.28)" : "1px dashed rgba(0,0,0,0.18)",
+    padding: 10,
+    font: "inherit",
+    ...style,
+  };
+
+  if (multiline) {
+    return (
+      <textarea
+        autoFocus
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{ ...baseStyle, minHeight: 72, resize: "vertical" }}
+      />
+    );
+  }
+
+  return (
+    <input
+      autoFocus
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      style={baseStyle}
+    />
+  );
+}
+
+function InlineStringListEditor({ title, items, onChange, limit = 6, itemPlaceholder = "Item", light = true }) {
+  const safe = Array.isArray(items) ? items.slice(0, limit) : [];
+  while (safe.length < limit) safe.push("");
+
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      {title ? (
+        <div style={{ color: light ? "#8fa1ab" : "#555", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em" }}>
+          {title}
+        </div>
+      ) : null}
+      {safe.map((item, index) => (
+        <input
+          key={`${title || "item"}-${index}`}
+          value={item || ""}
+          onChange={(e) => {
+            const next = safe.map((x, i) => (i === index ? e.target.value : x)).map((x) => String(x || "").trimEnd());
+            onChange(next.filter((x) => x.trim()));
+          }}
+          placeholder={`${itemPlaceholder} ${index + 1}`}
+          style={{
+            width: "100%",
+            background: light ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+            color: light ? "#f3efe8" : "#171717",
+            border: light ? "1px dashed rgba(255,255,255,0.24)" : "1px dashed rgba(0,0,0,0.18)",
+            padding: 10,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function InlineField({
   editing = false,
   value = "",

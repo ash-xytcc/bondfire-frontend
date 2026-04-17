@@ -375,7 +375,7 @@ function Sticky({ title, text, rotate = '-1deg', tone = '#fff7a8', dark = false,
   );
 }
 
-function NavBar({ links = [], editorMode = false, onOpenNavEditor, authed = false }) {
+function NavBar({ links = [], editorMode = false, onOpenNavEditor, authed = false, accent = "#385032" }) {
   const items = Array.isArray(links) ? links : [];
 
   return (
@@ -425,7 +425,7 @@ function NavBar({ links = [], editorMode = false, onOpenNavEditor, authed = fals
             border: 0,
             borderRadius: 999,
             padding: '12px 18px',
-            background: '#f4f2eb',
+            background: accent,
             color: '#121715',
             cursor: 'pointer',
             fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
@@ -812,7 +812,7 @@ export default function DpgPublicHome() {
             border: 0,
             borderRadius: 999,
             padding: "12px 18px",
-            background: editorMode ? "#f4f2eb" : "rgba(56,80,50,0.94)",
+            background: editorMode ? "#f4f2eb" : accent,
             color: editorMode ? "#121715" : "#f3efe8",
             cursor: "pointer",
             fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
@@ -888,6 +888,7 @@ export default function DpgPublicHome() {
           editorMode={editorMode}
           onOpenNavEditor={() => setNavEditorOpen((v) => !v)}
           authed={authState.authed}
+          accent={accent}
         />
         <NavEditPopover
           links={navLinks}
@@ -923,12 +924,12 @@ export default function DpgPublicHome() {
             <h1
               style={{
                 margin: 0,
-                color: '#93b4f0',
+                color: accent,
                 fontSize: 'clamp(2.4rem, 5.5vw, 5.8rem)',
                 lineHeight: 1,
                 fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
                 textShadow: '0 1px 2px rgba(0,0,0,0.35)',
-                WebkitTextStroke: '0.35px rgba(220,230,255,0.45)',
+                WebkitTextStroke: '0.35px rgba(255,255,255,0.28)',
               }}
             >
               {DPG_BRAND.name}
@@ -1158,7 +1159,7 @@ export default function DpgPublicHome() {
                 style={{
                   marginTop: 0,
                   marginBottom: 0,
-                  color: '#f3efe8',
+                  color: accent,
                   fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
                   fontWeight: 800,
                 }}
@@ -1270,6 +1271,7 @@ export default function DpgPublicHome() {
                 href="/bulletin"
                 style={{
                   ...theme.link,
+                  color: accent,
                   fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
                 }}
               >
@@ -1279,6 +1281,7 @@ export default function DpgPublicHome() {
                 type="button"
                 style={{
                   ...theme.link,
+                  color: accent,
                   background: 'transparent',
                   border: 0,
                   padding: 0,

@@ -12,6 +12,12 @@ const defaultHome = {
     "Red Harbor is a branch of the Industrial Workers of the World. We organize across workplaces, support workers in struggle, publish branch updates, and build solidarity rooted in direct action and rank and file power.",
   about_intro:
     "Red Harbor is the local IWW branch building organization, education, and solidarity among workers in Aberdeen, Hoquiam, Grays Harbor, and the surrounding region.",
+  purpose_title: "What this site is for",
+  about_title: "About Red Harbor",
+  join_title: "Organize with us",
+  bulletin_title: "Publications and updates",
+  events_title: "Meetings and public activity",
+  contact_title: "Get in touch",
   about_card_title: "Branch overview",
   about_card_body:
     "Red Harbor is the local IWW branch building organization, education, and solidarity among workers in Aberdeen, Hoquiam, Grays Harbor, and the surrounding region.",
@@ -199,6 +205,12 @@ function normalizeHome(raw) {
     hero_headline: String(base.hero_headline || base.title || defaultHome.hero_headline).trim(),
     hero_text: String(base.hero_text || base.about || defaultHome.hero_text).trim(),
     about_intro: String(base.about_intro || defaultHome.about_intro).trim(),
+    purpose_title: String(base.purpose_title || defaultHome.purpose_title).trim(),
+    about_title: String(base.about_title || defaultHome.about_title).trim(),
+    join_title: String(base.join_title || defaultHome.join_title).trim(),
+    bulletin_title: String(base.bulletin_title || defaultHome.bulletin_title).trim(),
+    events_title: String(base.events_title || defaultHome.events_title).trim(),
+    contact_title: String(base.contact_title || defaultHome.contact_title).trim(),
     about_card_title: String(base.about_card_title || defaultHome.about_card_title).trim(),
     about_card_body: String(base.about_card_body || base.about_intro || defaultHome.about_card_body).trim(),
     location_card_title: String(base.location_card_title || defaultHome.location_card_title).trim(),
@@ -308,6 +320,17 @@ function InlineTextEdit({
     return (
       <input
         className={`rh-inline-editor rh-inline-editor-h1 ${className}`.trim()}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+    )
+  }
+
+  if (tag === "h2") {
+    return (
+      <input
+        className={`rh-inline-editor rh-inline-editor-h2 ${className}`.trim()}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -728,6 +751,12 @@ export default function RedHarborHome() {
       hero_headline: src.hero_headline,
       hero_text: src.hero_text,
       about_intro: src.about_intro,
+      purpose_title: src.purpose_title,
+      about_title: src.about_title,
+      join_title: src.join_title,
+      bulletin_title: src.bulletin_title,
+      events_title: src.events_title,
+      contact_title: src.contact_title,
       about_card_title: src.about_card_title,
       about_card_body: src.about_card_body,
       location_card_title: src.location_card_title,
@@ -953,7 +982,14 @@ export default function RedHarborHome() {
           </div>
 
           <aside className="rh-hero-card">
-            <h2>What this site is for</h2>
+            <InlineTextEdit
+              tag="h2"
+              className=""
+              editorMode={editorMode}
+              value={liveHome.purpose_title || defaultHome.purpose_title}
+              onChange={(value) => updateDraft("purpose_title", value)}
+              placeholder="What this site is for"
+            />
             <InlineStringListEditor
               items={purposeItems}
               onChange={(items) => updateDraft("site_purpose_items", items)}
@@ -972,7 +1008,14 @@ export default function RedHarborHome() {
         <section id="about" className="rh-section">
           <div className="rh-section-head">
             <p className="rh-section-kicker">About</p>
-            <h2>About Red Harbor</h2>
+            <InlineTextEdit
+              tag="h2"
+              className=""
+              editorMode={editorMode}
+              value={liveHome.about_title || defaultHome.about_title}
+              onChange={(value) => updateDraft("about_title", value)}
+              placeholder="About Red Harbor"
+            />
             <InlineTextEdit
               tag="p"
               className="rh-section-copy"
@@ -1036,7 +1079,14 @@ export default function RedHarborHome() {
         <section id="join" className="rh-section rh-section-band">
           <div className="rh-section-head">
             <p className="rh-section-kicker">Join</p>
-            <h2>Organize with us</h2>
+            <InlineTextEdit
+              tag="h2"
+              className=""
+              editorMode={editorMode}
+              value={liveHome.join_title || defaultHome.join_title}
+              onChange={(value) => updateDraft("join_title", value)}
+              placeholder="Organize with us"
+            />
             <InlineTextEdit
               tag="p"
               className="rh-section-copy"
@@ -1086,7 +1136,14 @@ export default function RedHarborHome() {
             <div className="rh-bulletin-home-intro">
               <div className="rh-section-head">
                 <p className="rh-section-kicker">Bulletin</p>
-                <h2>Publications and updates</h2>
+                <InlineTextEdit
+                  tag="h2"
+                  className=""
+                  editorMode={editorMode}
+                  value={liveHome.bulletin_title || defaultHome.bulletin_title}
+                  onChange={(value) => updateDraft("bulletin_title", value)}
+                  placeholder="Publications and updates"
+                />
               </div>
 
               <div className="rh-bulletin-home-actions">
@@ -1119,7 +1176,14 @@ export default function RedHarborHome() {
           <section id="events" className="rh-section rh-section-band">
             <div className="rh-section-head">
               <p className="rh-section-kicker">Events</p>
-              <h2>Meetings and public activity</h2>
+              <InlineTextEdit
+                tag="h2"
+                className=""
+                editorMode={editorMode}
+                value={liveHome.events_title || defaultHome.events_title}
+                onChange={(value) => updateDraft("events_title", value)}
+                placeholder="Meetings and public activity"
+              />
               <InlineTextEdit
                 tag="p"
                 className="rh-section-copy"
@@ -1146,7 +1210,14 @@ export default function RedHarborHome() {
         <section id="contact" className="rh-section">
           <div className="rh-section-head">
             <p className="rh-section-kicker">Contact</p>
-            <h2>Get in touch</h2>
+            <InlineTextEdit
+              tag="h2"
+              className=""
+              editorMode={editorMode}
+              value={liveHome.contact_title || defaultHome.contact_title}
+              onChange={(value) => updateDraft("contact_title", value)}
+              placeholder="Get in touch"
+            />
             <InlineTextEdit
               tag="p"
               className="rh-section-copy"

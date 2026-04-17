@@ -51,139 +51,99 @@ async function authFetch(path, opts = {}) {
   return data;
 }
 
-function SectionChip({ label, active = false, onClick }) {
+function EditChip({ onClick, children, subtle = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
       style={{
         border: "1px solid rgba(255,255,255,0.18)",
-        background: active ? "rgba(147,180,240,0.16)" : "rgba(0,0,0,0.28)",
+        background: subtle ? "rgba(0,0,0,0.28)" : "rgba(147,180,240,0.16)",
         color: "#f3efe8",
         borderRadius: 999,
-        padding: "6px 12px",
-        fontSize: 12,
+        padding: "4px 10px",
+        fontSize: 11,
         fontWeight: 800,
         cursor: "pointer",
+        lineHeight: 1.1,
       }}
     >
-      {label}
+      {children}
     </button>
   );
 }
 
-function InlineTextEditor({ value, onChange, style = {}, placeholder = "", multiline = false, light = true }) {
-  const base = {
+function InlineField({
+  editing = false,
+  value = "",
+  onChange,
+  onStartEdit,
+  onStopEdit,
+  multiline = false,
+  display,
+  placeholder = "",
+  dark = true,
+  style = {},
+  displayStyle = {},
+}) {
+  if (!editing) {
+    return (
+      <div
+        onClick={onStartEdit}
+        style={{
+          cursor: "text",
+          ...displayStyle,
+        }}
+      >
+        {display ?? value ?? ""}
+      </div>
+    );
+  }
+
+  const baseStyle = {
     width: "100%",
-    background: light ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-    color: light ? "#f3efe8" : "#171717",
-    border: light ? "1px dashed rgba(255,255,255,0.24)" : "1px dashed rgba(0,0,0,0.18)",
-    padding: 10,
+    background: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+    color: dark ? "#f3efe8" : "#171717",
+    border: dark ? "1px dashed rgba(255,255,255,0.28)" : "1px dashed rgba(0,0,0,0.18)",
+    padding: 8,
     font: "inherit",
     ...style,
   };
+
   if (multiline) {
     return (
       <textarea
+        autoFocus
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onStopEdit}
         placeholder={placeholder}
-        style={{ ...base, minHeight: 72, resize: "vertical" }}
+        style={{ ...baseStyle, minHeight: 72, resize: "vertical" }}
       />
     );
   }
+
   return (
     <input
+      autoFocus
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
+      onBlur={onStopEdit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.currentTarget.blur();
+        }
+        if (e.key === "Escape") {
+          e.currentTarget.blur();
+        }
+      }}
       placeholder={placeholder}
-      style={base}
+      style={baseStyle}
     />
   );
 }
 
-function InlineStringListEditor({ title, items, onChange, limit = 6, itemPlaceholder = "Item", light = true }) {
-  const safe = Array.isArray(items) ? items.slice(0, limit) : [];
-  while (safe.length < limit) safe.push("");
-
-  return (
-    <div style={{ display: "grid", gap: 8 }}>
-      {title ? (
-        <div style={{ color: light ? "#8fa1ab" : "#555", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em" }}>
-          {title}
-        </div>
-      ) : null}
-      {safe.map((item, index) => (
-        <input
-          key={`${title || "item"}-${index}`}
-          value={item || ""}
-          onChange={(e) => {
-            const next = safe.map((x, i) => (i === index ? e.target.value : x)).map((x) => String(x || "").trimEnd());
-            onChange(next.filter((x) => x.trim()));
-          }}
-          placeholder={`${itemPlaceholder} ${index + 1}`}
-          style={{
-            width: "100%",
-            background: light ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-            color: light ? "#f3efe8" : "#171717",
-            border: light ? "1px dashed rgba(255,255,255,0.24)" : "1px dashed rgba(0,0,0,0.18)",
-            padding: 10,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function NavEditPanel({ links, onChange, visible }) {
-  if (!visible) return null;
-  const safe = Array.isArray(links) ? links.slice(0, 8) : [];
-  while (safe.length < 8) safe.push({ label: "", url: "" });
-
-  return (
-    <div style={{
-      position: "absolute",
-      top: 84,
-      left: 28,
-      zIndex: 4,
-      width: "min(720px, calc(100% - 56px))",
-      display: "grid",
-      gap: 8,
-      padding: 12,
-      background: "rgba(8,12,10,0.84)",
-      border: "1px solid rgba(255,255,255,0.12)",
-      backdropFilter: "blur(6px)",
-    }}>
-      <div style={{ color: "#d7ddd8", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em" }}>Top navigation</div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-        {safe.map((item, idx) => (
-          <React.Fragment key={`nav-${idx}`}>
-            <input
-              value={item.label || ""}
-              onChange={(e) => {
-                const next = safe.map((x, i) => (i === idx ? { ...x, label: e.target.value } : x));
-                onChange(next.filter((x) => x.label && x.url));
-              }}
-              placeholder={`Label ${idx + 1}`}
-              style={{ background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px dashed rgba(255,255,255,0.25)", padding: 8 }}
-            />
-            <input
-              value={item.url || ""}
-              onChange={(e) => {
-                const next = safe.map((x, i) => (i === idx ? { ...x, url: e.target.value } : x));
-                onChange(next.filter((x) => x.label && x.url));
-              }}
-              placeholder={`/${idx === 0 ? "" : "route"}`}
-              style={{ background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px dashed rgba(255,255,255,0.25)", padding: 8 }}
-            />
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Sticky({ title, text, rotate = '-1deg', tone = '#fff7a8', dark = false }) {
+function Sticky({ title, text, rotate = '-1deg', tone = '#fff7a8', dark = false, children = null }) {
   return (
     <div style={{
       background: tone,
@@ -194,7 +154,9 @@ function Sticky({ title, text, rotate = '-1deg', tone = '#fff7a8', dark = false 
       boxShadow: dark ? '0 12px 24px rgba(0,0,0,0.22)' : '0 12px 24px rgba(0,0,0,0.10)',
       transform: `rotate(${rotate})`,
       border: '1px solid rgba(0,0,0,0.08)',
+      position: "relative",
     }}>
+      {children}
       <div style={{
         fontSize: 15,
         fontWeight: 800,
@@ -218,7 +180,7 @@ function Sticky({ title, text, rotate = '-1deg', tone = '#fff7a8', dark = false 
   );
 }
 
-function NavBar({ links = [], editorMode = false }) {
+function NavBar({ links = [], editorMode = false, onOpenNavEditor }) {
   const items = Array.isArray(links) ? links : [];
   return (
     <nav style={{
@@ -251,6 +213,7 @@ function NavBar({ links = [], editorMode = false }) {
             {item?.label || ''}
           </a>
         ))}
+        {editorMode ? <EditChip onClick={onOpenNavEditor} subtle>Edit nav</EditChip> : null}
       </div>
 
       <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
@@ -272,6 +235,57 @@ function NavBar({ links = [], editorMode = false }) {
         </button>
       </div>
     </nav>
+  );
+}
+
+function NavEditPopover({ links, onChange, visible, onClose }) {
+  if (!visible) return null;
+  const safe = Array.isArray(links) ? links.slice(0, 8) : [];
+  while (safe.length < 8) safe.push({ label: "", url: "" });
+
+  return (
+    <div style={{
+      position: "absolute",
+      top: 84,
+      left: 28,
+      zIndex: 4,
+      width: "min(720px, calc(100% - 56px))",
+      display: "grid",
+      gap: 8,
+      padding: 12,
+      background: "rgba(8,12,10,0.90)",
+      border: "1px solid rgba(255,255,255,0.12)",
+      backdropFilter: "blur(6px)",
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+        <div style={{ color: "#d7ddd8", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em" }}>Top navigation</div>
+        <EditChip onClick={onClose} subtle>Done</EditChip>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        {safe.map((item, idx) => (
+          <React.Fragment key={`nav-${idx}`}>
+            <input
+              value={item.label || ""}
+              onChange={(e) => {
+                const next = safe.map((x, i) => (i === idx ? { ...x, label: e.target.value } : x));
+                onChange(next.filter((x) => x.label && x.url));
+              }}
+              placeholder={`Label ${idx + 1}`}
+              style={{ background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px dashed rgba(255,255,255,0.25)", padding: 8 }}
+            />
+            <input
+              value={item.url || ""}
+              onChange={(e) => {
+                const next = safe.map((x, i) => (i === idx ? { ...x, url: e.target.value } : x));
+                onChange(next.filter((x) => x.label && x.url));
+              }}
+              placeholder={`/${idx === 0 ? "" : "route"}`}
+              style={{ background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px dashed rgba(255,255,255,0.25)", padding: 8 }}
+            />
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -345,7 +359,8 @@ export default function DpgPublicHome() {
   const { config } = useDpgPublicSiteConfig();
   const [authState, setAuthState] = React.useState({ checked: false, authed: false });
   const [editorMode, setEditorMode] = React.useState(false);
-  const [activeSection, setActiveSection] = React.useState("");
+  const [activeField, setActiveField] = React.useState("");
+  const [navEditorOpen, setNavEditorOpen] = React.useState(false);
   const [draft, setDraft] = React.useState(null);
   const [savedOverride, setSavedOverride] = React.useState(null);
   const [saveBusy, setSaveBusy] = React.useState(false);
@@ -410,14 +425,16 @@ export default function DpgPublicHome() {
   const beginEditing = () => {
     setDraft(normalizeHomeConfig(baseConfig));
     setEditorMode(true);
-    setActiveSection("");
+    setActiveField("");
+    setNavEditorOpen(false);
     setSaveMsg("");
   };
 
   const cancelEditing = () => {
     setDraft(normalizeHomeConfig(baseConfig));
     setEditorMode(false);
-    setActiveSection("");
+    setActiveField("");
+    setNavEditorOpen(false);
     setSaveMsg("");
   };
 
@@ -493,6 +510,20 @@ export default function DpgPublicHome() {
   const heroSubheading = String(liveConfig?.hero_body || '').trim() || 'A gathering for learning, sharing, building, and reflection';
   const accent = String(liveConfig?.accent_color || "#385032").trim() || "#385032";
 
+  const setStickyField = (index, key, value) => {
+    const next = [...stickyCards];
+    while (next.length < 4) next.push({ title: "", text: "", tone: "#f3e28b" });
+    next[index] = { ...(next[index] || {}), [key]: value };
+    updateDraft("sticky_cards", next.filter((x) => x.title || x.text));
+  };
+
+  const setProgressField = (index, value) => {
+    const next = [...progressItems];
+    while (next.length < 8) next.push("");
+    next[index] = value;
+    updateDraft("progress_items", next.filter((x) => String(x || "").trim()));
+  };
+
   return (
     <div style={{ ...theme.page, fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}>
       {authState.authed ? (
@@ -537,16 +568,8 @@ export default function DpgPublicHome() {
           <div style={{ display: "grid", gap: 4 }}>
             <strong style={{ color: "#f3efe8" }}>Editor mode</strong>
             <span style={{ color: "#8fa1ab", fontSize: 13 }}>
-              Inline live editing on the real homepage.
+              Click the actual content to edit it in place.
             </span>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <SectionChip label="Edit nav" active={activeSection === "nav"} onClick={() => setActiveSection(activeSection === "nav" ? "" : "nav")} />
-            <SectionChip label="Edit hero" active={activeSection === "hero"} onClick={() => setActiveSection(activeSection === "hero" ? "" : "hero")} />
-            <SectionChip label="Edit featured" active={activeSection === "featured"} onClick={() => setActiveSection(activeSection === "featured" ? "" : "featured")} />
-            <SectionChip label="Edit notes" active={activeSection === "notes"} onClick={() => setActiveSection(activeSection === "notes" ? "" : "notes")} />
-            <SectionChip label="Edit progress" active={activeSection === "progress"} onClick={() => setActiveSection(activeSection === "progress" ? "" : "progress")} />
-            <SectionChip label="Edit organizer" active={activeSection === "organizer"} onClick={() => setActiveSection(activeSection === "organizer" ? "" : "organizer")} />
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             <label style={{ display: "flex", gap: 8, alignItems: "center", color: "#d7ddd8" }}>
@@ -575,15 +598,15 @@ export default function DpgPublicHome() {
           ? `linear-gradient(rgba(10,14,12,0.34), rgba(10,14,12,0.38)), url("${heroBackground}") center/cover no-repeat`
           : '#121715',
       }}>
-        <NavBar links={navLinks} editorMode={editorMode} />
-        <NavEditPanel links={navLinks} onChange={(next) => updateDraft("nav_links", next)} visible={editorMode && activeSection === "nav"} />
+        <NavBar links={navLinks} editorMode={editorMode} onOpenNavEditor={() => setNavEditorOpen((v) => !v)} />
+        <NavEditPopover links={navLinks} onChange={(next) => updateDraft("nav_links", next)} visible={editorMode && navEditorOpen} onClose={() => setNavEditorOpen(false)} />
 
         <div style={{
           position: 'relative',
           zIndex: 2,
           maxWidth: 1240,
           margin: '0 auto',
-          padding: editorMode && activeSection === "nav" ? '260px 28px 110px' : '180px 28px 110px',
+          padding: navEditorOpen ? '260px 28px 110px' : '180px 28px 110px',
           textAlign: 'center',
         }}>
           <div style={{
@@ -617,69 +640,65 @@ export default function DpgPublicHome() {
             />
           </div>
 
-          {editorMode ? (
+          {editorMode && !navEditorOpen ? (
             <div style={{ marginTop: 18 }}>
-              <SectionChip label="Hero section" active={activeSection === "hero"} onClick={() => setActiveSection(activeSection === "hero" ? "" : "hero")} />
+              <EditChip onClick={() => setActiveField("hero_body")}>Edit hero</EditChip>
             </div>
           ) : null}
 
           <div style={{ marginTop: 26 }}>
-            {editorMode && activeSection === "hero" ? (
-              <InlineTextEditor
-                value={heroSubheading}
-                onChange={(v) => updateDraft("hero_body", v)}
-                multiline
-                style={{
-                  maxWidth: 820,
-                  margin: "0 auto",
-                  textAlign: "center",
-                  fontSize: "clamp(1.4rem, 3vw, 2.2rem)",
-                  lineHeight: 1.2,
-                  fontFamily: 'Inter, system-ui, Arial, sans-serif',
-                  fontWeight: 500,
-                }}
-              />
-            ) : (
-              <div style={{
+            <InlineField
+              editing={editorMode && activeField === "hero_body"}
+              value={heroSubheading}
+              onChange={(v) => updateDraft("hero_body", v)}
+              onStartEdit={() => editorMode && setActiveField("hero_body")}
+              onStopEdit={() => setActiveField("")}
+              multiline
+              placeholder="Hero subheading"
+              style={{
+                maxWidth: 820,
+                margin: "0 auto",
+                textAlign: "center",
+                fontSize: "clamp(1.4rem, 3vw, 2.2rem)",
+                lineHeight: 1.2,
+                fontFamily: 'Inter, system-ui, Arial, sans-serif',
+                fontWeight: 500,
+              }}
+              displayStyle={{
                 color: '#ffffff',
                 fontSize: 'clamp(1.4rem, 3vw, 2.2rem)',
                 lineHeight: 1.2,
                 fontFamily: 'Inter, system-ui, Arial, sans-serif',
                 fontWeight: 500,
                 textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-              }}>
-                {heroSubheading}
-              </div>
-            )}
+              }}
+            />
           </div>
 
           <div style={{ marginTop: 18 }}>
-            {editorMode && activeSection === "hero" ? (
-              <InlineTextEditor
-                value={eyebrowText}
-                onChange={(v) => updateDraft("hero_title", v)}
-                style={{
-                  maxWidth: 760,
-                  margin: "0 auto",
-                  textAlign: "center",
-                  fontSize: 16,
-                }}
-              />
-            ) : (
-              String(eyebrowText).trim() ? (
-                <div style={{
-                  color: '#f3efe8',
-                  fontSize: 16,
-                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.45)',
-                }}>
-                  {eyebrowText}
-                </div>
-              ) : null
-            )}
+            <InlineField
+              editing={editorMode && activeField === "hero_title"}
+              value={eyebrowText}
+              onChange={(v) => updateDraft("hero_title", v)}
+              onStartEdit={() => editorMode && setActiveField("hero_title")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Eyebrow text"
+              style={{
+                maxWidth: 760,
+                margin: "0 auto",
+                textAlign: "center",
+                fontSize: 16,
+              }}
+              displayStyle={{
+                color: '#f3efe8',
+                fontSize: 16,
+                fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                textShadow: '0 1px 2px rgba(0,0,0,0.45)',
+              }}
+            />
           </div>
 
-          {editorMode && activeSection === "hero" ? (
+          {editorMode && activeField === "hero_bg" ? (
             <div style={{ marginTop: 16, maxWidth: 760, marginInline: "auto" }}>
               <InlineTextEditor
                 value={heroBackground}
@@ -688,17 +707,35 @@ export default function DpgPublicHome() {
               />
             </div>
           ) : null}
+
+          {editorMode ? (
+            <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
+              <EditChip onClick={() => setActiveField(activeField === "hero_bg" ? "" : "hero_bg")} subtle>
+                {activeField === "hero_bg" ? "Hide image URL" : "Edit hero image"}
+              </EditChip>
+            </div>
+          ) : null}
         </div>
       </section>
 
       <div style={{ maxWidth: 1240, margin: '0 auto', padding: '28px 28px 72px' }}>
+        <section style={{ display: 'grid', gap: 34, marginBottom: 42 }}>
+          {postsState.loading ? <div style={{ color: '#d7ddd8' }}>Loading featured posts…</div> : null}
+          {postsState.error ? <div style={{ color: 'crimson' }}>{postsState.error}</div> : null}
+          {featuredPosts.map((post, idx) => (
+            <FeaturedCard key={post.slug || idx} post={post} reverse={idx % 2 === 1} />
+          ))}
+        </section>
+
         {editorMode ? (
           <div style={{ marginBottom: 18, display: "flex", justifyContent: "center" }}>
-            <SectionChip label="Featured section" active={activeSection === "featured"} onClick={() => setActiveSection(activeSection === "featured" ? "" : "featured")} />
+            <EditChip onClick={() => setActiveField(activeField === "featured" ? "" : "featured")} subtle>
+              {activeField === "featured" ? "Hide featured slugs" : "Edit featured posts"}
+            </EditChip>
           </div>
         ) : null}
 
-        {editorMode && activeSection === "featured" ? (
+        {editorMode && activeField === "featured" ? (
           <section style={{ marginBottom: 26 }}>
             <InlineStringListEditor
               title="Featured post slugs"
@@ -710,82 +747,62 @@ export default function DpgPublicHome() {
           </section>
         ) : null}
 
-        <section style={{ display: 'grid', gap: 34, marginBottom: 42 }}>
-          {postsState.loading ? <div style={{ color: '#d7ddd8' }}>Loading featured posts…</div> : null}
-          {postsState.error ? <div style={{ color: 'crimson' }}>{postsState.error}</div> : null}
-          {featuredPosts.map((post, idx) => (
-            <FeaturedCard key={post.slug || idx} post={post} reverse={idx % 2 === 1} />
-          ))}
-        </section>
-
         {stickyCards.length ? (
           <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18, marginBottom: 26 }}>
-            {stickyCards.map((card, idx) => (
-              <Sticky
-                key={`${card?.title || 'card'}-${idx}`}
-                title={card?.title || ''}
-                text={card?.text || ''}
-                tone={card?.tone || '#f3e28b'}
-                rotate={['-2deg', '1.5deg', '-1deg', '2deg'][idx] || '-1deg'}
-                dark={true}
-              />
-            ))}
-          </section>
-        ) : null}
-
-        {editorMode ? (
-          <div style={{ marginBottom: 18, display: "flex", justifyContent: "center" }}>
-            <SectionChip label="Sticky notes" active={activeSection === "notes"} onClick={() => setActiveSection(activeSection === "notes" ? "" : "notes")} />
-          </div>
-        ) : null}
-
-        {editorMode && activeSection === "notes" ? (
-          <section style={{ marginBottom: 28, display: "grid", gap: 12 }}>
-            {Array.from({ length: 4 }).map((_, index) => {
-              const safe = Array.isArray(stickyCards) ? stickyCards : [];
-              const item = safe[index] || { title: "", text: "", tone: "#f3e28b" };
+            {stickyCards.map((card, idx) => {
+              const titleKey = `sticky_${idx}_title`;
+              const textKey = `sticky_${idx}_text`;
               return (
-                <div key={`sticky-edit-${index}`} style={{ padding: 12, border: "1px dashed rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.04)" }}>
-                  <div style={{ color: "#8fa1ab", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>
-                    Sticky note {index + 1}
-                  </div>
-                  <div style={{ display: "grid", gap: 8 }}>
-                    <input
-                      value={item.title || ""}
-                      onChange={(e) => {
-                        const next = [...safe];
-                        while (next.length < 4) next.push({ title: "", text: "", tone: "#f3e28b" });
-                        next[index] = { ...(next[index] || {}), title: e.target.value };
-                        updateDraft("sticky_cards", next.filter((x) => x.title || x.text));
+                <Sticky
+                  key={`${card?.title || 'card'}-${idx}`}
+                  title={
+                    <InlineField
+                      editing={editorMode && activeField === titleKey}
+                      value={card?.title || ''}
+                      onChange={(v) => setStickyField(idx, "title", v)}
+                      onStartEdit={() => editorMode && setActiveField(titleKey)}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Sticky title"
+                      dark={false}
+                      displayStyle={{
+                        cursor: editorMode ? "text" : "default",
+                        color: '#171717',
+                        fontSize: 15,
+                        fontWeight: 800,
+                        fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
                       }}
-                      placeholder="Title"
-                      style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.24)", padding: 10 }}
                     />
-                    <textarea
-                      rows={3}
-                      value={item.text || ""}
-                      onChange={(e) => {
-                        const next = [...safe];
-                        while (next.length < 4) next.push({ title: "", text: "", tone: "#f3e28b" });
-                        next[index] = { ...(next[index] || {}), text: e.target.value };
-                        updateDraft("sticky_cards", next.filter((x) => x.title || x.text));
+                  }
+                  text={
+                    <InlineField
+                      editing={editorMode && activeField === textKey}
+                      value={card?.text || ''}
+                      onChange={(v) => setStickyField(idx, "text", v)}
+                      onStartEdit={() => editorMode && setActiveField(textKey)}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Sticky text"
+                      multiline
+                      dark={false}
+                      displayStyle={{
+                        cursor: editorMode ? "text" : "default",
+                        color: '#171717',
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                        fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
                       }}
-                      placeholder="Text"
-                      style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.24)", padding: 10, resize: "vertical" }}
                     />
-                    <input
-                      value={item.tone || ""}
-                      onChange={(e) => {
-                        const next = [...safe];
-                        while (next.length < 4) next.push({ title: "", text: "", tone: "#f3e28b" });
-                        next[index] = { ...(next[index] || {}), tone: e.target.value };
-                        updateDraft("sticky_cards", next.filter((x) => x.title || x.text));
-                      }}
-                      placeholder="#f3e28b"
-                      style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.24)", padding: 10 }}
-                    />
-                  </div>
-                </div>
+                  }
+                  tone={card?.tone || '#f3e28b'}
+                  rotate={['-2deg', '1.5deg', '-1deg', '2deg'][idx] || '-1deg'}
+                  dark={true}
+                >
+                  {editorMode ? (
+                    <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 6 }}>
+                      <EditChip onClick={() => setActiveField(titleKey)} subtle>Title</EditChip>
+                      <EditChip onClick={() => setActiveField(textKey)} subtle>Body</EditChip>
+                    </div>
+                  ) : null}
+                </Sticky>
               );
             })}
           </section>
@@ -803,17 +820,24 @@ export default function DpgPublicHome() {
               }}>
                 What is in progress
               </h2>
-              {editorMode ? (
-                <SectionChip label="Edit progress" active={activeSection === "progress"} onClick={() => setActiveSection(activeSection === "progress" ? "" : "progress")} />
-              ) : null}
+              {editorMode ? <EditChip onClick={() => setActiveField(activeField === "progress" ? "" : "progress")} subtle>Edit</EditChip> : null}
             </div>
-            {editorMode && activeSection === "progress" ? (
-              <InlineStringListEditor
-                items={progressItems}
-                onChange={(items) => updateDraft("progress_items", items)}
-                limit={8}
-                itemPlaceholder="Progress item"
-              />
+
+            {editorMode && activeField === "progress" ? (
+              <div style={{ display: "grid", gap: 8 }}>
+                {Array.from({ length: 8 }).map((_, idx) => (
+                  <InlineField
+                    key={`progress-${idx}`}
+                    editing={true}
+                    value={progressItems[idx] || ""}
+                    onChange={(v) => setProgressField(idx, v)}
+                    onStartEdit={() => {}}
+                    onStopEdit={() => {}}
+                    placeholder={`Progress item ${idx + 1}`}
+                    dark={true}
+                  />
+                ))}
+              </div>
             ) : (
               <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7, color: '#f3efe8' }}>
                 {progressItems.map((item, idx) => <li key={`${item}-${idx}`} style={{ color: '#f3efe8' }}>{item}</li>)}
@@ -823,42 +847,41 @@ export default function DpgPublicHome() {
 
           <div style={{ ...theme.card, color: '#f3efe8' }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 8 }}>
-              {!editorMode || activeSection !== "organizer" ? (
-                <h2 style={{
-                  marginTop: 0,
-                  marginBottom: 0,
-                  color: '#f3efe8',
-                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
-                  fontWeight: 800,
-                }}>
-                  {liveConfig?.organizer_title || 'Organizer entry'}
-                </h2>
-              ) : <div />}
-              {editorMode ? (
-                <SectionChip label="Edit organizer" active={activeSection === "organizer"} onClick={() => setActiveSection(activeSection === "organizer" ? "" : "organizer")} />
-              ) : null}
-            </div>
-
-            {editorMode && activeSection === "organizer" ? (
-              <>
-                <InlineTextEditor
+              <div style={{ flex: 1 }}>
+                <InlineField
+                  editing={editorMode && activeField === "organizer_title"}
                   value={String(liveConfig?.organizer_title || '')}
                   onChange={(v) => updateDraft("organizer_title", v)}
-                  placeholder="Organizer card title"
-                  style={{ marginBottom: 10, fontWeight: 800 }}
+                  onStartEdit={() => editorMode && setActiveField("organizer_title")}
+                  onStopEdit={() => setActiveField("")}
+                  placeholder="Organizer title"
+                  display={liveConfig?.organizer_title || 'Organizer entry'}
+                  displayStyle={{
+                    color: '#f3efe8',
+                    fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                    fontWeight: 800,
+                    fontSize: 26,
+                  }}
                 />
-                <InlineTextEditor
-                  value={String(liveConfig?.organizer_body || '')}
-                  onChange={(v) => updateDraft("organizer_body", v)}
-                  placeholder="Organizer card body"
-                  multiline
-                />
-              </>
-            ) : (
-              <p style={{ marginTop: 0, lineHeight: 1.6, color: '#f3efe8' }}>
-                {liveConfig?.organizer_body || ''}
-              </p>
-            )}
+              </div>
+              {editorMode ? <EditChip onClick={() => setActiveField(activeField === "organizer_body" ? "" : "organizer_body")} subtle>Body</EditChip> : null}
+            </div>
+
+            <InlineField
+              editing={editorMode && activeField === "organizer_body"}
+              value={String(liveConfig?.organizer_body || '')}
+              onChange={(v) => updateDraft("organizer_body", v)}
+              onStartEdit={() => editorMode && setActiveField("organizer_body")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Organizer card body"
+              multiline
+              display={liveConfig?.organizer_body || ''}
+              displayStyle={{
+                marginTop: 0,
+                lineHeight: 1.6,
+                color: '#f3efe8',
+              }}
+            />
 
             <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
               <a href="/bulletin" style={{ ...theme.link, fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}>Read public bulletin</a>

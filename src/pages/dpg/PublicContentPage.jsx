@@ -291,6 +291,132 @@ function InlineField({
   );
 }
 
+function PageHero({
+  logo = true,
+  accent,
+  editorMode,
+  activeField,
+  setActiveField,
+  prefix,
+  content,
+  setContent,
+}) {
+  return (
+    <header
+      style={{
+        display: "grid",
+        gridTemplateColumns: logo ? "auto 1fr" : "1fr",
+        gap: 22,
+        alignItems: "center",
+        marginBottom: 28,
+      }}
+    >
+      {logo ? (
+        <img
+          src={DPG_BRAND.logoSrc}
+          alt={DPG_BRAND.logoAlt}
+          style={{
+            width: 84,
+            height: 84,
+            objectFit: "contain",
+            filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.22))",
+          }}
+        />
+      ) : null}
+      <div>
+        <InlineField
+          editorMode={editorMode}
+          editing={editorMode && activeField === `${prefix}_eyebrow`}
+          value={content.eyebrow}
+          onChange={(v) => setContent({ ...content, eyebrow: v })}
+          onStartEdit={() => setActiveField(`${prefix}_eyebrow`)}
+          onStopEdit={() => setActiveField("")}
+          placeholder="Eyebrow"
+          hint="Edit eyebrow"
+          display={content.eyebrow}
+          displayStyle={{
+            color: "#d7ddd8",
+            marginBottom: 10,
+            fontSize: 15,
+            borderRadius: 10,
+          }}
+        />
+        <InlineField
+          editorMode={editorMode}
+          editing={editorMode && activeField === `${prefix}_title`}
+          value={content.title}
+          onChange={(v) => setContent({ ...content, title: v })}
+          onStartEdit={() => setActiveField(`${prefix}_title`)}
+          onStopEdit={() => setActiveField("")}
+          placeholder="Title"
+          hint="Edit title"
+          display={content.title}
+          displayStyle={{
+            margin: 0,
+            color: accent,
+            fontSize: "clamp(2.6rem, 6vw, 5.4rem)",
+            lineHeight: 0.95,
+            fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+            textShadow: "0 1px 2px rgba(0,0,0,0.35)",
+            borderRadius: 14,
+          }}
+          style={{
+            fontSize: "clamp(2.6rem, 6vw, 5.4rem)",
+            lineHeight: 0.95,
+            fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+          }}
+        />
+        {"intro" in content ? (
+          <div style={{ marginTop: 14 }}>
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === `${prefix}_intro`}
+              value={content.intro}
+              onChange={(v) => setContent({ ...content, intro: v })}
+              onStartEdit={() => setActiveField(`${prefix}_intro`)}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Intro"
+              hint="Edit intro"
+              display={content.intro}
+              displayStyle={{
+                color: "#f3efe8",
+                fontSize: "1.12rem",
+                lineHeight: 1.55,
+                maxWidth: 860,
+                borderRadius: 12,
+              }}
+            />
+          </div>
+        ) : null}
+        {"hero_summary" in content ? (
+          <div style={{ marginTop: 14 }}>
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === `${prefix}_summary`}
+              value={content.hero_summary}
+              onChange={(v) => setContent({ ...content, hero_summary: v })}
+              onStartEdit={() => setActiveField(`${prefix}_summary`)}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Summary"
+              hint="Edit summary"
+              display={content.hero_summary}
+              displayStyle={{
+                color: "#f3efe8",
+                fontSize: "clamp(1.2rem, 2.2vw, 1.8rem)",
+                lineHeight: 1.2,
+                maxWidth: 840,
+                fontFamily: "Inter, system-ui, Arial, sans-serif",
+                fontWeight: 500,
+                borderRadius: 12,
+              }}
+            />
+          </div>
+        ) : null}
+      </div>
+    </header>
+  );
+}
+
 function normalizeAboutContent(src = {}) {
   return {
     eyebrow: String(src?.eyebrow || "Dual Power West"),
@@ -388,14 +514,40 @@ function normalizeFaqContent(src = {}, page = {}) {
   };
 }
 
-function AboutPageLayout({
-  accent,
-  editorMode = false,
-  activeField = "",
-  setActiveField = () => {},
-  content,
-  setContent = () => {},
-}) {
+function normalizeVolunteerContent(src = {}, page = {}) {
+  return {
+    eyebrow: String(src?.eyebrow || page?.eyebrow || "This only works if people actually help, tragic but true."),
+    title: String(src?.title || page?.title || "Volunteer"),
+    intro: String(src?.intro || "We need help before, during, and around the gathering. Not in the abstract. In the real world where someone has to actually do things."),
+    lead_title: String(src?.lead_title || "We need your help"),
+    lead_body: String(src?.lead_body || "We need all kinds of help in advance of and during the Western Dual Power Gathering to pull these events off."),
+    list_title: String(src?.list_title || "Current areas of need"),
+    needs: Array.isArray(src?.needs) && src.needs.length
+      ? src.needs.slice(0, 12).map((x) => String(x || "").trim()).filter(Boolean)
+      : [
+          "Food and kitchen support",
+          "Transportation",
+          "Childcare",
+          "Outreach and getting the word out",
+          "Camping gear sharing and sourcing",
+          "Fundraising",
+          "Facilitation",
+          "Organizing and logistics",
+          "Communications",
+          "Training, workshops, and session support",
+        ],
+    support_title: String(src?.support_title || "When help is needed"),
+    support_body: String(src?.support_body || "We are looking for people who want to help during the event as well as people who want to help plan and organize beforehand."),
+    contact_title: String(src?.contact_title || "Get involved"),
+    contact_body: String(src?.contact_body || "If you want to get involved, email dualpowergathering@proton.me."),
+    side_title: String(src?.side_title || "Good volunteer energy"),
+    side_body: String(src?.side_body || "People who can follow through, coordinate with others, notice what is missing, and help without turning every practical task into a personal manifesto."),
+    sticky_title: String(src?.sticky_title || "show up ready"),
+    sticky_body: String(src?.sticky_body || "clarity, communication, and follow through are more useful than hype."),
+  };
+}
+
+function AboutPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
   const updateSection = (index, key, value) => {
     const next = [...content.sections];
     next[index] = { ...(next[index] || {}), [key]: value };
@@ -417,36 +569,21 @@ function AboutPageLayout({
           gap: 22px;
           align-items: start;
         }
-
         .dpg-about-card {
-          background:
-            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
-            rgba(10,16,14,0.72);
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 24px;
           padding: 24px 24px 22px;
           box-shadow: 0 18px 42px rgba(0,0,0,0.16);
-          transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
         }
-
-        .dpg-about-card:hover {
-          transform: translateY(-2px);
-          border-color: rgba(255,255,255,0.14);
-          background:
-            linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02)),
-            rgba(10,16,14,0.78);
-        }
-
         .dpg-about-side {
           display: grid;
           gap: 18px;
         }
-
         .dpg-about-quote {
           position: relative;
           overflow: hidden;
         }
-
         .dpg-about-quote::before {
           content: "";
           position: absolute;
@@ -458,7 +595,6 @@ function AboutPageLayout({
           background: ${accent};
           opacity: 0.9;
         }
-
         .dpg-about-sticky {
           background: #f3e28b;
           color: #171717;
@@ -468,115 +604,25 @@ function AboutPageLayout({
           border: 1px solid rgba(0,0,0,0.08);
           box-shadow: 0 18px 36px rgba(0,0,0,0.16);
         }
-
         @media (max-width: 880px) {
-          .dpg-about-grid {
-            grid-template-columns: 1fr;
-          }
+          .dpg-about-grid { grid-template-columns: 1fr; }
         }
       `}</style>
 
-      <header
-        style={{
-          display: "grid",
-          gridTemplateColumns: "auto 1fr",
-          gap: 20,
-          alignItems: "center",
-          marginBottom: 28,
-        }}
-      >
-        <img
-          src={DPG_BRAND.logoSrc}
-          alt={DPG_BRAND.logoAlt}
-          style={{
-            width: 84,
-            height: 84,
-            objectFit: "contain",
-            filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.22))",
-          }}
-        />
-        <div>
-          <InlineField
-            editorMode={editorMode}
-            editing={editorMode && activeField === "about_eyebrow"}
-            value={content.eyebrow}
-            onChange={(v) => setContent({ ...content, eyebrow: v })}
-            onStartEdit={() => setActiveField("about_eyebrow")}
-            onStopEdit={() => setActiveField("")}
-            placeholder="Eyebrow"
-            hint="Edit eyebrow"
-            display={content.eyebrow}
-            displayStyle={{
-              color: "#d7ddd8",
-              marginBottom: 10,
-              fontSize: 15,
-              borderRadius: 10,
-            }}
-          />
-          <InlineField
-            editorMode={editorMode}
-            editing={editorMode && activeField === "about_title"}
-            value={content.title}
-            onChange={(v) => setContent({ ...content, title: v })}
-            onStartEdit={() => setActiveField("about_title")}
-            onStopEdit={() => setActiveField("")}
-            placeholder="Title"
-            hint="Edit title"
-            display={content.title}
-            displayStyle={{
-              margin: 0,
-              color: accent,
-              fontSize: "clamp(2.6rem, 6vw, 5.4rem)",
-              lineHeight: 0.95,
-              fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
-              textShadow: "0 1px 2px rgba(0,0,0,0.35)",
-              borderRadius: 14,
-            }}
-            style={{
-              fontSize: "clamp(2.6rem, 6vw, 5.4rem)",
-              lineHeight: 0.95,
-              fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
-            }}
-          />
-          <div style={{ marginTop: 14 }}>
-            <InlineField
-              editorMode={editorMode}
-              editing={editorMode && activeField === "about_summary"}
-              value={content.hero_summary}
-              onChange={(v) => setContent({ ...content, hero_summary: v })}
-              onStartEdit={() => setActiveField("about_summary")}
-              onStopEdit={() => setActiveField("")}
-              placeholder="Summary"
-              hint="Edit summary"
-              display={content.hero_summary}
-              displayStyle={{
-                color: "#f3efe8",
-                fontSize: "clamp(1.2rem, 2.2vw, 1.8rem)",
-                lineHeight: 1.2,
-                maxWidth: 840,
-                fontFamily: "Inter, system-ui, Arial, sans-serif",
-                fontWeight: 500,
-                borderRadius: 12,
-              }}
-              style={{
-                fontSize: "clamp(1.2rem, 2.2vw, 1.8rem)",
-                lineHeight: 1.2,
-                maxWidth: 840,
-                fontFamily: "Inter, system-ui, Arial, sans-serif",
-                fontWeight: 500,
-              }}
-            />
-          </div>
-        </div>
-      </header>
+      <PageHero
+        accent={accent}
+        editorMode={editorMode}
+        activeField={activeField}
+        setActiveField={setActiveField}
+        prefix="about"
+        content={content}
+        setContent={setContent}
+      />
 
       <section className="dpg-about-grid">
         <div style={{ display: "grid", gap: 18 }}>
           {content.sections.map((section, idx) => (
-            <article
-              key={`section-${idx}`}
-              className="dpg-about-card"
-            >
+            <article key={`section-${idx}`} className="dpg-about-card">
               <InlineField
                 editorMode={editorMode}
                 editing={editorMode && activeField === `section_${idx}_kicker`}
@@ -587,15 +633,7 @@ function AboutPageLayout({
                 placeholder="Section kicker"
                 hint="Edit kicker"
                 display={section.kicker}
-                displayStyle={{
-                  marginBottom: 10,
-                  color: accent,
-                  fontSize: 11,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  borderRadius: 10,
-                }}
+                displayStyle={{ marginBottom: 10, color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: 10 }}
               />
               <InlineField
                 editorMode={editorMode}
@@ -607,16 +645,7 @@ function AboutPageLayout({
                 placeholder="Section heading"
                 hint="Edit heading"
                 display={section.heading}
-                displayStyle={{
-                  margin: "0 0 12px",
-                  color: "#f3efe8",
-                  fontFamily: "Inter, system-ui, Arial, sans-serif",
-                  fontSize: "1.05rem",
-                  lineHeight: 1.1,
-                  fontWeight: 800,
-                  letterSpacing: "0.02em",
-                  borderRadius: 10,
-                }}
+                displayStyle={{ margin: "0 0 12px", color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontSize: "1.05rem", lineHeight: 1.1, fontWeight: 800, letterSpacing: "0.02em", borderRadius: 10 }}
               />
               <InlineField
                 editorMode={editorMode}
@@ -629,12 +658,7 @@ function AboutPageLayout({
                 multiline
                 hint="Edit body"
                 display={section.body}
-                displayStyle={{
-                  color: "#f3efe8",
-                  lineHeight: 1.72,
-                  fontSize: "1.06rem",
-                  borderRadius: 10,
-                }}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.72, fontSize: "1.06rem", borderRadius: 10 }}
               />
             </article>
           ))}
@@ -652,15 +676,7 @@ function AboutPageLayout({
               placeholder="Quote kicker"
               hint="Edit kicker"
               display={content.quote_kicker}
-              displayStyle={{
-                marginBottom: 10,
-                color: accent,
-                fontSize: 11,
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                borderRadius: 10,
-              }}
+              displayStyle={{ marginBottom: 10, color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: 10 }}
             />
             <InlineField
               editorMode={editorMode}
@@ -673,13 +689,7 @@ function AboutPageLayout({
               multiline
               hint="Edit quote"
               display={content.quote_text}
-              displayStyle={{
-                paddingLeft: 28,
-                color: "#f3efe8",
-                fontSize: "1.14rem",
-                lineHeight: 1.58,
-                borderRadius: 10,
-              }}
+              displayStyle={{ paddingLeft: 28, color: "#f3efe8", fontSize: "1.14rem", lineHeight: 1.58, borderRadius: 10 }}
             />
           </div>
 
@@ -696,14 +706,7 @@ function AboutPageLayout({
                   placeholder="Meta label"
                   hint="Edit label"
                   display={row.label}
-                  displayStyle={{
-                    color: accent,
-                    fontSize: 11,
-                    fontWeight: 800,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    borderRadius: 10,
-                  }}
+                  displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: 10 }}
                 />
                 <InlineField
                   editorMode={editorMode}
@@ -716,11 +719,7 @@ function AboutPageLayout({
                   multiline
                   hint="Edit value"
                   display={row.value}
-                  displayStyle={{
-                    color: "#f3efe8",
-                    lineHeight: 1.58,
-                    borderRadius: 10,
-                  }}
+                  displayStyle={{ color: "#f3efe8", lineHeight: 1.58, borderRadius: 10 }}
                 />
               </div>
             ))}
@@ -738,15 +737,7 @@ function AboutPageLayout({
               hint="Edit title"
               dark={false}
               display={content.sticky_title}
-              displayStyle={{
-                margin: "0 0 8px",
-                color: "#171717",
-                fontFamily: "Inter, system-ui, Arial, sans-serif",
-                fontSize: "1rem",
-                lineHeight: 1.1,
-                fontWeight: 800,
-                borderRadius: 10,
-              }}
+              displayStyle={{ margin: "0 0 8px", color: "#171717", fontFamily: "Inter, system-ui, Arial, sans-serif", fontSize: "1rem", lineHeight: 1.1, fontWeight: 800, borderRadius: 10 }}
             />
             <InlineField
               editorMode={editorMode}
@@ -760,12 +751,7 @@ function AboutPageLayout({
               hint="Edit note"
               dark={false}
               display={content.sticky_body}
-              displayStyle={{
-                color: "#171717",
-                lineHeight: 1.56,
-                fontSize: "0.98rem",
-                borderRadius: 10,
-              }}
+              displayStyle={{ color: "#171717", lineHeight: 1.56, fontSize: "0.98rem", borderRadius: 10 }}
             />
           </div>
         </aside>
@@ -774,14 +760,7 @@ function AboutPageLayout({
   );
 }
 
-function FaqPageLayout({
-  accent,
-  editorMode = false,
-  activeField = "",
-  setActiveField = () => {},
-  content,
-  setContent = () => {},
-}) {
+function FaqPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
   const [openIdx, setOpenIdx] = React.useState(0);
 
   const updateItem = (index, key, value) => {
@@ -796,46 +775,27 @@ function FaqPageLayout({
   return (
     <>
       <style>{`
-        .dpg-faq-shell {
-          display: grid;
-          gap: 24px;
-        }
-
-        .dpg-faq-hero {
-          display: grid;
-          grid-template-columns: auto 1fr;
-          gap: 22px;
-          align-items: center;
-        }
-
+        .dpg-faq-shell { display: grid; gap: 24px; }
         .dpg-faq-grid {
           display: grid;
           grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
           gap: 22px;
           align-items: start;
         }
-
         .dpg-faq-card {
-          background:
-            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
-            rgba(10,16,14,0.72);
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 24px;
           padding: 20px;
           box-shadow: 0 18px 42px rgba(0,0,0,0.16);
         }
-
         .dpg-faq-item {
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 18px;
           overflow: hidden;
           background: rgba(255,255,255,0.02);
         }
-
-        .dpg-faq-item + .dpg-faq-item {
-          margin-top: 12px;
-        }
-
+        .dpg-faq-item + .dpg-faq-item { margin-top: 12px; }
         .dpg-faq-trigger {
           width: 100%;
           display: grid;
@@ -849,22 +809,12 @@ function FaqPageLayout({
           text-align: left;
           cursor: pointer;
         }
-
         .dpg-faq-answer {
           padding: 0 18px 18px;
           color: #f3efe8;
           line-height: 1.72;
           font-size: 1.02rem;
         }
-
-        .dpg-faq-badge {
-          color: ${accent};
-          font-size: 11px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-
         .dpg-faq-side-note {
           background: #dce8d6;
           color: #171717;
@@ -873,91 +823,21 @@ function FaqPageLayout({
           box-shadow: 0 18px 36px rgba(0,0,0,0.16);
           border: 1px solid rgba(0,0,0,0.08);
         }
-
         @media (max-width: 920px) {
-          .dpg-faq-grid {
-            grid-template-columns: 1fr;
-          }
+          .dpg-faq-grid { grid-template-columns: 1fr; }
         }
       `}</style>
 
       <div className="dpg-faq-shell">
-        <header className="dpg-faq-hero">
-          <img
-            src={DPG_BRAND.logoSrc}
-            alt={DPG_BRAND.logoAlt}
-            style={{
-              width: 84,
-              height: 84,
-              objectFit: "contain",
-              filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.22))",
-            }}
-          />
-          <div>
-            <InlineField
-              editorMode={editorMode}
-              editing={editorMode && activeField === "faq_eyebrow"}
-              value={content.eyebrow}
-              onChange={(v) => setContent({ ...content, eyebrow: v })}
-              onStartEdit={() => setActiveField("faq_eyebrow")}
-              onStopEdit={() => setActiveField("")}
-              placeholder="Eyebrow"
-              hint="Edit eyebrow"
-              display={content.eyebrow}
-              displayStyle={{
-                color: "#d7ddd8",
-                marginBottom: 10,
-                fontSize: 15,
-                borderRadius: 10,
-              }}
-            />
-            <InlineField
-              editorMode={editorMode}
-              editing={editorMode && activeField === "faq_title"}
-              value={content.title}
-              onChange={(v) => setContent({ ...content, title: v })}
-              onStartEdit={() => setActiveField("faq_title")}
-              onStopEdit={() => setActiveField("")}
-              placeholder="Title"
-              hint="Edit title"
-              display={content.title}
-              displayStyle={{
-                margin: 0,
-                color: accent,
-                fontSize: "clamp(2.6rem, 6vw, 5.4rem)",
-                lineHeight: 0.95,
-                fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
-                textShadow: "0 1px 2px rgba(0,0,0,0.35)",
-                borderRadius: 14,
-              }}
-              style={{
-                fontSize: "clamp(2.6rem, 6vw, 5.4rem)",
-                lineHeight: 0.95,
-                fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
-              }}
-            />
-            <div style={{ marginTop: 14 }}>
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "faq_intro"}
-                value={content.intro}
-                onChange={(v) => setContent({ ...content, intro: v })}
-                onStartEdit={() => setActiveField("faq_intro")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="Intro"
-                hint="Edit intro"
-                display={content.intro}
-                displayStyle={{
-                  color: "#f3efe8",
-                  fontSize: "1.12rem",
-                  lineHeight: 1.55,
-                  maxWidth: 860,
-                  borderRadius: 12,
-                }}
-              />
-            </div>
-          </div>
-        </header>
+        <PageHero
+          accent={accent}
+          editorMode={editorMode}
+          activeField={activeField}
+          setActiveField={setActiveField}
+          prefix="faq"
+          content={content}
+          setContent={setContent}
+        />
 
         <section className="dpg-faq-grid">
           <div className="dpg-faq-card">
@@ -984,24 +864,9 @@ function FaqPageLayout({
                       placeholder={`Question ${idx + 1}`}
                       hint="Edit question"
                       display={item.q}
-                      displayStyle={{
-                        color: "#f3efe8",
-                        fontFamily: "Inter, system-ui, Arial, sans-serif",
-                        fontWeight: 800,
-                        fontSize: "1.08rem",
-                        lineHeight: 1.25,
-                        borderRadius: 10,
-                      }}
+                      displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1.08rem", lineHeight: 1.25, borderRadius: 10 }}
                     />
-                    <div
-                      style={{
-                        color: accent,
-                        fontSize: 22,
-                        lineHeight: 1,
-                        transform: open ? "rotate(45deg)" : "rotate(0deg)",
-                        transition: "transform 140ms ease",
-                      }}
-                    >
+                    <div style={{ color: accent, fontSize: 22, lineHeight: 1, transform: open ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 140ms ease" }}>
                       +
                     </div>
                   </button>
@@ -1019,12 +884,7 @@ function FaqPageLayout({
                         multiline
                         hint="Edit answer"
                         display={item.a}
-                        displayStyle={{
-                          color: "#f3efe8",
-                          lineHeight: 1.72,
-                          fontSize: "1.02rem",
-                          borderRadius: 10,
-                        }}
+                        displayStyle={{ color: "#f3efe8", lineHeight: 1.72, fontSize: "1.02rem", borderRadius: 10 }}
                       />
                     </div>
                   ) : null}
@@ -1035,12 +895,7 @@ function FaqPageLayout({
             {editorMode && content.items.length < 10 ? (
               <div style={{ marginTop: 14 }}>
                 <EditChip
-                  onClick={() =>
-                    setContent({
-                      ...content,
-                      items: [...content.items, { q: "New question", a: "New answer" }],
-                    })
-                  }
+                  onClick={() => setContent({ ...content, items: [...content.items, { q: "New question", a: "New answer" }] })}
                   subtle
                 >
                   Add question
@@ -1061,15 +916,7 @@ function FaqPageLayout({
                 placeholder="Side title"
                 hint="Edit label"
                 display={content.side_title}
-                displayStyle={{
-                  color: accent,
-                  fontSize: 11,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: ".08em",
-                  marginBottom: 10,
-                  borderRadius: 10,
-                }}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
               />
               <InlineField
                 editorMode={editorMode}
@@ -1082,11 +929,7 @@ function FaqPageLayout({
                 multiline
                 hint="Edit note"
                 display={content.side_body}
-                displayStyle={{
-                  color: "#f3efe8",
-                  lineHeight: 1.68,
-                  borderRadius: 10,
-                }}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
               />
             </div>
 
@@ -1099,6 +942,282 @@ function FaqPageLayout({
               </div>
             </div>
           </div>
+        </section>
+      </div>
+    </>
+  );
+}
+
+function VolunteerPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+  const updateNeed = (index, value) => {
+    const next = [...content.needs];
+    while (next.length < 12) next.push("");
+    next[index] = value;
+    setContent({ ...content, needs: next.filter((x) => String(x || "").trim()) });
+  };
+
+  return (
+    <>
+      <style>{`
+        .dpg-vol-shell { display: grid; gap: 24px; }
+        .dpg-vol-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+          gap: 22px;
+          align-items: start;
+        }
+        .dpg-vol-card {
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 24px;
+          padding: 22px;
+          box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+        }
+        .dpg-vol-needs {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 12px;
+          margin-top: 16px;
+        }
+        .dpg-vol-pill {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: 14px 14px;
+          color: #f3efe8;
+          min-height: 62px;
+          display: flex;
+          align-items: center;
+        }
+        .dpg-vol-side {
+          display: grid;
+          gap: 18px;
+        }
+        .dpg-vol-sticky {
+          background: #f3e28b;
+          color: #171717;
+          border-radius: 16px;
+          padding: 18px;
+          transform: rotate(1deg);
+          border: 1px solid rgba(0,0,0,0.08);
+          box-shadow: 0 18px 36px rgba(0,0,0,0.16);
+        }
+        .dpg-vol-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 14px 18px;
+          border-radius: 999px;
+          background: ${accent};
+          color: #121715;
+          text-decoration: none;
+          font-weight: 800;
+        }
+        @media (max-width: 920px) {
+          .dpg-vol-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div className="dpg-vol-shell">
+        <PageHero
+          accent={accent}
+          editorMode={editorMode}
+          activeField={activeField}
+          setActiveField={setActiveField}
+          prefix="vol"
+          content={content}
+          setContent={setContent}
+        />
+
+        <section className="dpg-vol-grid">
+          <div style={{ display: "grid", gap: 18 }}>
+            <article className="dpg-vol-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_lead_title"}
+                value={content.lead_title}
+                onChange={(v) => setContent({ ...content, lead_title: v })}
+                onStartEdit={() => setActiveField("vol_lead_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead title"
+                hint="Edit title"
+                display={content.lead_title}
+                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "2rem", lineHeight: 1.05, marginBottom: 14, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_lead_body"}
+                value={content.lead_body}
+                onChange={(v) => setContent({ ...content, lead_body: v })}
+                onStartEdit={() => setActiveField("vol_lead_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead body"
+                multiline
+                hint="Edit intro block"
+                display={content.lead_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, fontSize: "1.06rem", borderRadius: 10 }}
+              />
+            </article>
+
+            <article className="dpg-vol-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_list_title"}
+                value={content.list_title}
+                onChange={(v) => setContent({ ...content, list_title: v })}
+                onStartEdit={() => setActiveField("vol_list_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="List title"
+                hint="Edit section label"
+                display={content.list_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+
+              <div className="dpg-vol-needs">
+                {Array.from({ length: Math.max(content.needs.length, editorMode ? 10 : content.needs.length) }).map((_, idx) => {
+                  const value = content.needs[idx] || "";
+                  return (
+                    <div className="dpg-vol-pill" key={`need-${idx}`}>
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `vol_need_${idx}`}
+                        value={value}
+                        onChange={(v) => updateNeed(idx, v)}
+                        onStartEdit={() => setActiveField(`vol_need_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Need ${idx + 1}`}
+                        hint="Edit need"
+                        display={value || (editorMode ? "Empty need slot" : "")}
+                        displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+
+            <article className="dpg-vol-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_support_title"}
+                value={content.support_title}
+                onChange={(v) => setContent({ ...content, support_title: v })}
+                onStartEdit={() => setActiveField("vol_support_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Support title"
+                hint="Edit title"
+                display={content.support_title}
+                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1.2rem", lineHeight: 1.1, marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_support_body"}
+                value={content.support_body}
+                onChange={(v) => setContent({ ...content, support_body: v })}
+                onStartEdit={() => setActiveField("vol_support_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Support body"
+                multiline
+                hint="Edit body"
+                display={content.support_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </article>
+          </div>
+
+          <aside className="dpg-vol-side">
+            <div className="dpg-vol-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_contact_title"}
+                value={content.contact_title}
+                onChange={(v) => setContent({ ...content, contact_title: v })}
+                onStartEdit={() => setActiveField("vol_contact_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Contact title"
+                hint="Edit title"
+                display={content.contact_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_contact_body"}
+                value={content.contact_body}
+                onChange={(v) => setContent({ ...content, contact_body: v })}
+                onStartEdit={() => setActiveField("vol_contact_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Contact body"
+                multiline
+                hint="Edit contact"
+                display={content.contact_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
+              />
+              <a
+                href="mailto:dualpowergathering@proton.me"
+                className="dpg-vol-cta"
+              >
+                Email organizers
+              </a>
+            </div>
+
+            <div className="dpg-vol-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_side_title"}
+                value={content.side_title}
+                onChange={(v) => setContent({ ...content, side_title: v })}
+                onStartEdit={() => setActiveField("vol_side_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side title"
+                hint="Edit label"
+                display={content.side_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_side_body"}
+                value={content.side_body}
+                onChange={(v) => setContent({ ...content, side_body: v })}
+                onStartEdit={() => setActiveField("vol_side_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side body"
+                multiline
+                hint="Edit note"
+                display={content.side_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-vol-sticky">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_sticky_title"}
+                value={content.sticky_title}
+                onChange={(v) => setContent({ ...content, sticky_title: v })}
+                onStartEdit={() => setActiveField("vol_sticky_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky title"
+                hint="Edit title"
+                dark={false}
+                display={content.sticky_title}
+                displayStyle={{ color: "#171717", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.1, marginBottom: 8, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_sticky_body"}
+                value={content.sticky_body}
+                onChange={(v) => setContent({ ...content, sticky_body: v })}
+                onStartEdit={() => setActiveField("vol_sticky_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky body"
+                multiline
+                hint="Edit note"
+                dark={false}
+                display={content.sticky_body}
+                displayStyle={{ color: "#171717", lineHeight: 1.56, fontSize: "0.98rem", borderRadius: 10 }}
+              />
+            </div>
+          </aside>
         </section>
       </div>
     </>
@@ -1277,6 +1396,11 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
     ...(draftPages?.faq || {}),
   }, page);
 
+  const volunteerContent = normalizeVolunteerContent({
+    ...(contentPages?.volunteer || {}),
+    ...(draftPages?.volunteer || {}),
+  }, page);
+
   const beginEditing = () => {
     setDraftPages(contentPages || {});
     setEditorMode(true);
@@ -1316,17 +1440,15 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
   };
 
   const setAboutContent = (next) => {
-    setDraftPages((prev) => ({
-      ...(prev || {}),
-      about: next,
-    }));
+    setDraftPages((prev) => ({ ...(prev || {}), about: next }));
   };
 
   const setFaqContent = (next) => {
-    setDraftPages((prev) => ({
-      ...(prev || {}),
-      faq: next,
-    }));
+    setDraftPages((prev) => ({ ...(prev || {}), faq: next }));
+  };
+
+  const setVolunteerContent = (next) => {
+    setDraftPages((prev) => ({ ...(prev || {}), volunteer: next }));
   };
 
   if (!page) {
@@ -1429,6 +1551,15 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
             setActiveField={setActiveField}
             content={faqContent}
             setContent={setFaqContent}
+          />
+        ) : slug === "volunteer" ? (
+          <VolunteerPageLayout
+            accent={accent}
+            editorMode={editorMode}
+            activeField={activeField}
+            setActiveField={setActiveField}
+            content={volunteerContent}
+            setContent={setVolunteerContent}
           />
         ) : (
           <GenericPublicPage page={page} accent={accent} />

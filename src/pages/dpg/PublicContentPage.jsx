@@ -386,6 +386,38 @@ function PageHero({
   );
 }
 
+
+function normalizeRsvpContent(src = {}, page = {}) {
+  return {
+    eyebrow: String(src?.eyebrow || page?.eyebrow || "Planning is easier when humans tell us they are coming."),
+    title: String(src?.title || page?.title || "RSVP"),
+    intro: String(src?.intro || "Let organizers know you are interested, coming, or still figuring it out so planning is based on reality instead of divination."),
+    lead_title: String(src?.lead_title || "Tell us you are coming"),
+    lead_body: String(src?.lead_body || "Attendance is free. RSVPing helps organizers plan for food, space, accessibility, camping, and follow up communication."),
+    steps_title: String(src?.steps_title || "How this works"),
+    steps: Array.isArray(src?.steps) && src.steps.length
+      ? src.steps.slice(0, 6).map((x) => String(x || "").trim()).filter(Boolean)
+      : [
+          "Send a simple RSVP first so organizers know you are interested.",
+          "Expect a follow up with more detailed logistics questions.",
+          "Share access needs, camping needs, and other planning info early when you can.",
+          "If your plans change, update organizers so planning stays usable.",
+        ],
+    primary_title: String(src?.primary_title || "RSVP now"),
+    primary_body: String(src?.primary_body || "Use the main RSVP link to get yourself on the list and trigger follow up communication."),
+    primary_label: String(src?.primary_label || "Email RSVP"),
+    primary_url: String(src?.primary_url || "mailto:dualpowergathering@proton.me?subject=DPG%20RSVP"),
+    secondary_title: String(src?.secondary_title || "Need details first"),
+    secondary_body: String(src?.secondary_body || "If you are not ready to commit yet, read the FAQ, bulletin, and public updates first, then RSVP when you have what you need."),
+    secondary_label: String(src?.secondary_label || "Read the FAQ"),
+    secondary_url: String(src?.secondary_url || "/faq"),
+    side_title: String(src?.side_title || "What helps organizers most"),
+    side_body: String(src?.side_body || "A clear headcount is good. Early notice about accessibility, camping, travel, or childcare needs is even better."),
+    sticky_title: String(src?.sticky_title || "plans change"),
+    sticky_body: String(src?.sticky_body || "That is normal. Just update organizers when they do so the plan is not built on ghost attendance."),
+  };
+}
+
 function normalizePressContent(src = {}, page = {}) {
   return {
     eyebrow: String(src?.eyebrow || page?.eyebrow || "Media, roundtables, and traces left behind."),
@@ -734,6 +766,373 @@ function PressPageLayout({ accent, editorMode = false, activeField = "", setActi
   );
 }
 
+
+function RsvpPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+  const updateStep = (index, value) => {
+    const next = [...content.steps];
+    while (next.length < 6) next.push("");
+    next[index] = value;
+    setContent({ ...content, steps: next.filter((x) => String(x || "").trim()) });
+  };
+
+  return (
+    <>
+      <style>{`
+        .dpg-rsvp-shell { display: grid; gap: 24px; }
+        .dpg-rsvp-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+          gap: 22px;
+          align-items: start;
+        }
+        .dpg-rsvp-card {
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 24px;
+          padding: 22px;
+          box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+        }
+        .dpg-rsvp-steps {
+          display: grid;
+          gap: 12px;
+          margin-top: 16px;
+        }
+        .dpg-rsvp-step {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: 12px;
+          align-items: start;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 18px;
+          padding: 14px 16px;
+        }
+        .dpg-rsvp-num {
+          width: 30px;
+          height: 30px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: ${accent};
+          color: #121715;
+          font-weight: 900;
+          font-size: 13px;
+          margin-top: 2px;
+        }
+        .dpg-rsvp-side {
+          display: grid;
+          gap: 18px;
+        }
+        .dpg-rsvp-cta {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 15px 18px;
+          border-radius: 999px;
+          background: ${accent};
+          color: #121715;
+          text-decoration: none;
+          font-weight: 800;
+          box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+        }
+        .dpg-rsvp-ghost {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 14px 18px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.05);
+          color: #f3efe8;
+          text-decoration: none;
+          border: 1px solid rgba(255,255,255,0.10);
+          font-weight: 800;
+        }
+        .dpg-rsvp-sticky {
+          background: #f3e28b;
+          color: #171717;
+          border-radius: 16px;
+          padding: 18px;
+          transform: rotate(1deg);
+          border: 1px solid rgba(0,0,0,0.08);
+          box-shadow: 0 18px 36px rgba(0,0,0,0.16);
+        }
+        @media (max-width: 920px) {
+          .dpg-rsvp-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div className="dpg-rsvp-shell">
+        <PageHero
+          accent={accent}
+          editorMode={editorMode}
+          activeField={activeField}
+          setActiveField={setActiveField}
+          prefix="rsvp"
+          content={content}
+          setContent={setContent}
+        />
+
+        <section className="dpg-rsvp-grid">
+          <div style={{ display: "grid", gap: 18 }}>
+            <article className="dpg-rsvp-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_lead_title"}
+                value={content.lead_title}
+                onChange={(v) => setContent({ ...content, lead_title: v })}
+                onStartEdit={() => setActiveField("rsvp_lead_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead title"
+                hint="Edit title"
+                display={content.lead_title}
+                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "2rem", lineHeight: 1.05, marginBottom: 14, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_lead_body"}
+                value={content.lead_body}
+                onChange={(v) => setContent({ ...content, lead_body: v })}
+                onStartEdit={() => setActiveField("rsvp_lead_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead body"
+                multiline
+                hint="Edit intro block"
+                display={content.lead_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, fontSize: "1.06rem", borderRadius: 10 }}
+              />
+            </article>
+
+            <article className="dpg-rsvp-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_steps_title"}
+                value={content.steps_title}
+                onChange={(v) => setContent({ ...content, steps_title: v })}
+                onStartEdit={() => setActiveField("rsvp_steps_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Steps title"
+                hint="Edit section label"
+                display={content.steps_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+
+              <div className="dpg-rsvp-steps">
+                {Array.from({ length: Math.max(content.steps.length, editorMode ? 4 : content.steps.length) }).map((_, idx) => {
+                  const value = content.steps[idx] || "";
+                  return (
+                    <div className="dpg-rsvp-step" key={`step-${idx}`}>
+                      <div className="dpg-rsvp-num">{idx + 1}</div>
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `rsvp_step_${idx}`}
+                        value={value}
+                        onChange={(v) => updateStep(idx, v)}
+                        onStartEdit={() => setActiveField(`rsvp_step_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Step ${idx + 1}`}
+                        hint="Edit step"
+                        display={value || (editorMode ? "Empty step slot" : "")}
+                        displayStyle={{ color: "#f3efe8", lineHeight: 1.55, borderRadius: 10 }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          </div>
+
+          <aside className="dpg-rsvp-side">
+            <div className="dpg-rsvp-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_primary_title"}
+                value={content.primary_title}
+                onChange={(v) => setContent({ ...content, primary_title: v })}
+                onStartEdit={() => setActiveField("rsvp_primary_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Primary title"
+                hint="Edit title"
+                display={content.primary_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_primary_body"}
+                value={content.primary_body}
+                onChange={(v) => setContent({ ...content, primary_body: v })}
+                onStartEdit={() => setActiveField("rsvp_primary_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Primary body"
+                multiline
+                hint="Edit body"
+                display={content.primary_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
+              />
+
+              <div style={{ display: "grid", gap: 10 }}>
+                <InlineField
+                  editorMode={editorMode}
+                  editing={editorMode && activeField === "rsvp_primary_label"}
+                  value={content.primary_label}
+                  onChange={(v) => setContent({ ...content, primary_label: v })}
+                  onStartEdit={() => setActiveField("rsvp_primary_label")}
+                  onStopEdit={() => setActiveField("")}
+                  placeholder="Primary label"
+                  hint="Edit button label"
+                  display={content.primary_label}
+                  displayStyle={{ color: "#f3efe8", fontWeight: 800, borderRadius: 10 }}
+                />
+
+                {editorMode ? (
+                  <InlineField
+                    editorMode={editorMode}
+                    editing={editorMode && activeField === "rsvp_primary_url"}
+                    value={content.primary_url}
+                    onChange={(v) => setContent({ ...content, primary_url: v })}
+                    onStartEdit={() => setActiveField("rsvp_primary_url")}
+                    onStopEdit={() => setActiveField("")}
+                    placeholder="Primary URL"
+                    hint="Edit link"
+                    display={content.primary_url || "Set primary URL"}
+                    displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                  />
+                ) : null}
+
+                <a href={content.primary_url} className="dpg-rsvp-cta">
+                  {content.primary_label}
+                </a>
+              </div>
+            </div>
+
+            <div className="dpg-rsvp-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_secondary_title"}
+                value={content.secondary_title}
+                onChange={(v) => setContent({ ...content, secondary_title: v })}
+                onStartEdit={() => setActiveField("rsvp_secondary_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Secondary title"
+                hint="Edit title"
+                display={content.secondary_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_secondary_body"}
+                value={content.secondary_body}
+                onChange={(v) => setContent({ ...content, secondary_body: v })}
+                onStartEdit={() => setActiveField("rsvp_secondary_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Secondary body"
+                multiline
+                hint="Edit body"
+                display={content.secondary_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
+              />
+
+              <div style={{ display: "grid", gap: 10 }}>
+                <InlineField
+                  editorMode={editorMode}
+                  editing={editorMode && activeField === "rsvp_secondary_label"}
+                  value={content.secondary_label}
+                  onChange={(v) => setContent({ ...content, secondary_label: v })}
+                  onStartEdit={() => setActiveField("rsvp_secondary_label")}
+                  onStopEdit={() => setActiveField("")}
+                  placeholder="Secondary label"
+                  hint="Edit button label"
+                  display={content.secondary_label}
+                  displayStyle={{ color: "#f3efe8", fontWeight: 800, borderRadius: 10 }}
+                />
+
+                {editorMode ? (
+                  <InlineField
+                    editorMode={editorMode}
+                    editing={editorMode && activeField === "rsvp_secondary_url"}
+                    value={content.secondary_url}
+                    onChange={(v) => setContent({ ...content, secondary_url: v })}
+                    onStartEdit={() => setActiveField("rsvp_secondary_url")}
+                    onStopEdit={() => setActiveField("")}
+                    placeholder="Secondary URL"
+                    hint="Edit link"
+                    display={content.secondary_url || "Set secondary URL"}
+                    displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                  />
+                ) : null}
+
+                <a href={content.secondary_url} className="dpg-rsvp-ghost">
+                  {content.secondary_label}
+                </a>
+              </div>
+            </div>
+
+            <div className="dpg-rsvp-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_side_title"}
+                value={content.side_title}
+                onChange={(v) => setContent({ ...content, side_title: v })}
+                onStartEdit={() => setActiveField("rsvp_side_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side title"
+                hint="Edit label"
+                display={content.side_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_side_body"}
+                value={content.side_body}
+                onChange={(v) => setContent({ ...content, side_body: v })}
+                onStartEdit={() => setActiveField("rsvp_side_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side body"
+                multiline
+                hint="Edit note"
+                display={content.side_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-rsvp-sticky">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_sticky_title"}
+                value={content.sticky_title}
+                onChange={(v) => setContent({ ...content, sticky_title: v })}
+                onStartEdit={() => setActiveField("rsvp_sticky_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky title"
+                hint="Edit title"
+                dark={false}
+                display={content.sticky_title}
+                displayStyle={{ color: "#171717", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.1, marginBottom: 8, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "rsvp_sticky_body"}
+                value={content.sticky_body}
+                onChange={(v) => setContent({ ...content, sticky_body: v })}
+                onStartEdit={() => setActiveField("rsvp_sticky_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky body"
+                multiline
+                hint="Edit note"
+                dark={false}
+                display={content.sticky_body}
+                displayStyle={{ color: "#171717", lineHeight: 1.56, fontSize: "0.98rem", borderRadius: 10 }}
+              />
+            </div>
+          </aside>
+        </section>
+      </div>
+    </>
+  );
+}
+
 function GenericPublicPage({ page, accent }) {
   return (
     <>
@@ -901,6 +1300,11 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
     ...(draftPages?.press || {}),
   }, page);
 
+  const rsvpContent = normalizeRsvpContent({
+    ...(contentPages?.rsvp || {}),
+    ...(draftPages?.rsvp || {}),
+  }, page);
+
   const beginEditing = () => {
     setDraftPages(contentPages || {});
     setEditorMode(true);
@@ -941,6 +1345,10 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
 
   const setPressContent = (next) => {
     setDraftPages((prev) => ({ ...(prev || {}), press: next }));
+  };
+
+  const setRsvpContent = (next) => {
+    setDraftPages((prev) => ({ ...(prev || {}), rsvp: next }));
   };
 
   if (!page) {
@@ -1034,6 +1442,15 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
             setActiveField={setActiveField}
             content={pressContent}
             setContent={setPressContent}
+          />
+        ) : slug === "rsvp" ? (
+          <RsvpPageLayout
+            accent={accent}
+            editorMode={editorMode}
+            activeField={activeField}
+            setActiveField={setActiveField}
+            content={rsvpContent}
+            setContent={setRsvpContent}
           />
         ) : (
           <GenericPublicPage page={page} accent={accent} />

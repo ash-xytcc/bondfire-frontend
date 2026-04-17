@@ -614,6 +614,7 @@ export default function RedHarborHome() {
       join_intro: src.join_intro,
       contact_intro: src.contact_intro,
       events_intro: src.events_intro,
+      font_family: src.font_family,
       accent_color: src.accent_color,
       what_we_do: src.what_we_do,
       site_purpose_items: src.site_purpose_items,

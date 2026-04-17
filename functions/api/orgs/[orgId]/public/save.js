@@ -73,7 +73,7 @@ function normalizeSavedCfg(prev, body, slug) {
     join_intro: String(body.join_intro || "").trim(),
     contact_intro: String(body.contact_intro || "").trim(),
     events_intro: String(body.events_intro || "").trim(),
-    font_family: String(body.font_family || prev?.font_family || "system").trim(),
+    font_family: String(body.font_family || body.fontFamily || prev?.font_family || prev?.fontFamily || "system").trim(),
     accent_color: String(body.accent_color || "#6d5efc").trim(),
     theme_mode: "light",
     website_link: cleanLink(body.website_link),
@@ -122,7 +122,19 @@ export async function onRequestPost({ env, request, params }) {
     const cleaned = normalizeSavedCfg(prev, body, newSlug);
     await setPublicCfg(env, orgId, cleaned);
 
-    return Response.json({ ok: true, public: cleaned });
+    const persisted = await getPublicCfg(env, orgId);
+    const publicCfg = {
+      ...cleaned,
+      ...(persisted && typeof persisted === "object" ? persisted : {}),
+      font_family: String(
+        persisted?.font_family ||
+        persisted?.fontFamily ||
+        cleaned?.font_family ||
+        "system"
+      ).trim(),
+    };
+
+    return Response.json({ ok: true, public: publicCfg });
   } catch (err) {
     console.error("public/save failed", err);
     return Response.json({ ok: false, error: "INTERNAL", detail: String(err?.message || err || "") }, { status: 500 });

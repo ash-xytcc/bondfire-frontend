@@ -1,56 +1,4 @@
-import { getPublicCfg } from "../_lib/publicPageStore.js";
-
-async function getRedHarborCfg(env) {
-  if (!env?.BF_DB) return {};
-
-  await env.BF_DB
-    .prepare(`
-      CREATE TABLE IF NOT EXISTS public_site_configs (
-        org_id TEXT PRIMARY KEY,
-        slug TEXT UNIQUE,
-        cfg_json TEXT NOT NULL DEFAULT '{}',
-        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `)
-    .run();
-
-  const bySlug = await env.BF_DB
-    .prepare(`
-      SELECT org_id, slug, cfg_json, updated_at
-      FROM public_site_configs
-      WHERE lower(slug) = 'red-harbor'
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `)
-    .first();
-
-  if (bySlug?.cfg_json) {
-    try {
-      return JSON.parse(bySlug.cfg_json);
-    } catch {
-      return {};
-    }
-  }
-
-  const newest = await env.BF_DB
-    .prepare(`
-      SELECT org_id, slug, cfg_json, updated_at
-      FROM public_site_configs
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `)
-    .first();
-
-  if (newest?.cfg_json) {
-    try {
-      return JSON.parse(newest.cfg_json);
-    } catch {
-      return {};
-    }
-  }
-
-  return {};
-}
+import { getPublicCfg, resolveSlug } from "../_lib/publicPageStore.js";
 
 function normalizePublicCfg(cfg) {
   const src = cfg && typeof cfg === "object" ? cfg : {};
@@ -69,11 +17,32 @@ function normalizePublicCfg(cfg) {
     title: String(src.title || ""),
     location: String(src.location || ""),
     about: String(src.about || ""),
+    branch_label: String(src.branch_label || ""),
+    hero_headline: String(src.hero_headline || ""),
+    hero_text: String(src.hero_text || ""),
+    about_intro: String(src.about_intro || ""),
+    purpose_title: String(src.purpose_title || ""),
+    about_title: String(src.about_title || ""),
+    join_title: String(src.join_title || ""),
+    bulletin_title: String(src.bulletin_title || ""),
+    events_title: String(src.events_title || ""),
+    contact_title: String(src.contact_title || ""),
+    join_intro: String(src.join_intro || ""),
+    contact_intro: String(src.contact_intro || ""),
+    events_intro: String(src.events_intro || ""),
+    font_family: String(src.font_family || src.fontFamily || "system"),
     accent_color: String(src.accent_color || "#6d5efc"),
     theme_mode: String(src.theme_mode || "light"),
     website_link: src.website_link || null,
     meeting_rsvp_url: String(src.meeting_rsvp_url || ""),
     what_we_do: Array.isArray(src.what_we_do) ? src.what_we_do : [],
+    site_purpose_items: Array.isArray(src.site_purpose_items) ? src.site_purpose_items : [],
+    join_cards: Array.isArray(src.join_cards) ? src.join_cards : [],
+    events_items: Array.isArray(src.events_items) ? src.events_items : [],
+    contact_card_title: String(src.contact_card_title || ""),
+    contact_card_body: String(src.contact_card_body || ""),
+    member_access_title: String(src.member_access_title || ""),
+    member_access_body: String(src.member_access_body || ""),
     primary_actions: Array.isArray(src.primary_actions) ? src.primary_actions : [],
     get_involved_links: Array.isArray(src.get_involved_links) ? src.get_involved_links : [],
   };
@@ -81,10 +50,26 @@ function normalizePublicCfg(cfg) {
 
 export async function onRequestGet({ env }) {
   try {
-    const cfg = await getRedHarborCfg(env);
-    return Response.json({ ok: true, public: normalizePublicCfg(cfg) });
+    let cfg = await getPublicCfg(env, "red-harbor");
+
+    if (!cfg || !Object.keys(cfg).length) {
+      const slugOrgId = await resolveSlug(env, "red-harbor");
+      if (slugOrgId) {
+        cfg = await getPublicCfg(env, String(slugOrgId).trim());
+      }
+    }
+
+    return Response.json({
+      ok: true,
+      route_version: "red-harbor-public-home-v2",
+      public: normalizePublicCfg(cfg),
+    });
   } catch (err) {
     console.error("public-home/red-harbor failed", err);
-    return Response.json({ ok: true, public: normalizePublicCfg({}) });
+    return Response.json({
+      ok: true,
+      route_version: "red-harbor-public-home-v2",
+      public: normalizePublicCfg({}),
+    });
   }
 }

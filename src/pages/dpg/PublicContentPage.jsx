@@ -455,14 +455,119 @@ function normalizeSharesContent(src = {}, page = {}) {
   };
 }
 
+function normalizeBulletinPost(post = {}) {
+  return {
+    ...post,
+    slug: String(post?.slug || "").trim(),
+    title: String(post?.title || "").trim(),
+    excerpt: String(post?.excerpt || post?.summary || "").trim(),
+    publishedAt: post?.publishedAt || post?.published_at || post?.createdAt || post?.created_at || "",
+    featureImage: post?.featureImage || post?.feature_image || "",
+  };
+}
+
+function extractBulletinPosts(data) {
+  const raw =
+    (Array.isArray(data?.posts) && data.posts) ||
+    (Array.isArray(data?.items) && data.items) ||
+    (Array.isArray(data?.results) && data.results) ||
+    (Array.isArray(data) && data) ||
+    [];
+
+  return raw
+    .map(normalizeBulletinPost)
+    .filter((post) => post.slug && post.title);
+}
+
+async function fetchBulletinPostsForPress() {
+  const attempts = [
+    "/api/public/posts?org=dpg",
+    "/api/public/posts?org=dpg&limit=6",
+    "/api/public/bulletin?org=dpg",
+    "/api/public/bulletin?org=dpg&limit=6",
+  ];
+
+  for (const url of attempts) {
+    try {
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      const data = await res.json().catch(() => ({}));
+      const posts = extractBulletinPosts(data);
+      if (res.ok && data?.ok !== false && posts.length) return posts.slice(0, 6);
+      if (res.ok && data?.ok !== false && Array.isArray(posts)) return posts.slice(0, 6);
+    } catch {}
+  }
+
+  return [];
+}
+
+function BulletinFeedCard({ post }) {
+  const dateText = post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : "Public note";
+  return (
+    <a
+      href={`/bulletin/${post.slug}`}
+      style={{
+        display: "grid",
+        gap: 10,
+        textDecoration: "none",
+        color: "inherit",
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 18,
+        padding: 16,
+      }}
+    >
+      {post.featureImage ? (
+        <img
+          src={post.featureImage}
+          alt={post.title}
+          style={{
+            width: "100%",
+            aspectRatio: "16 / 9",
+            objectFit: "cover",
+            display: "block",
+            borderRadius: 14,
+          }}
+        />
+      ) : null}
+
+      <div style={{ color: "#93b4f0", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
+        {dateText}
+      </div>
+
+      <div
+        style={{
+          color: "#f3efe8",
+          fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+          fontSize: "1.5rem",
+          lineHeight: 0.98,
+        }}
+      >
+        {post.title}
+      </div>
+
+      {post.excerpt ? (
+        <div style={{ color: "#f3efe8", lineHeight: 1.6, fontSize: "0.98rem" }}>
+          {post.excerpt}
+        </div>
+      ) : null}
+
+      <div style={{ color: "#d7ddd8", fontWeight: 800, fontSize: 14 }}>
+        Read update →
+      </div>
+    </a>
+  );
+}
+
 function normalizePressContent(src = {}, page = {}) {
   return {
     eyebrow: String(src?.eyebrow || page?.eyebrow || "Media, roundtables, and traces left behind."),
     title: String(src?.title || page?.title || "Press"),
-    intro: String(src?.intro || "Listen, watch, and read coverage connected to Dual Power West without dumping people into a sad link graveyard."),
+    intro: String(src?.intro || "Listen, watch, read, and track public material connected to Dual Power West in one place."),
     featured_title: String(src?.featured_title || "Featured media"),
+    updates_title: String(src?.updates_title || "From us"),
+    updates_body: String(src?.updates_body || "Public notes, logistics, statements, and updates published directly by DPG."),
     side_title: String(src?.side_title || "What this section is for"),
-    side_body: String(src?.side_body || "A place to collect audio, video, interviews, and writeups that help people understand the gathering and what it produced."),
+    side_body: String(src?.side_body || "A place to collect both outside coverage and DPG’s own published material so people do not have to guess which tab contains the signal."),
     sticky_title: String(src?.sticky_title || "archive the signal"),
     sticky_body: String(src?.sticky_body || "media matters most when people can actually find it again later."),
     items: Array.isArray(src?.items) && src.items.length
@@ -500,6 +605,23 @@ function normalizePressContent(src = {}, page = {}) {
 }
 
 function PressPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+  const [bulletinState, setBulletinState] = React.useState({ loading: true, posts: [], error: "" });
+
+  React.useEffect(() => {
+    let dead = false;
+    (async () => {
+      try {
+        const posts = await fetchBulletinPostsForPress();
+        if (dead) return;
+        setBulletinState({ loading: false, posts, error: "" });
+      } catch (e) {
+        if (dead) return;
+        setBulletinState({ loading: false, posts: [], error: String(e?.message || e) });
+      }
+    })();
+    return () => { dead = true; };
+  }, []);
+
   const updateItem = (index, key, value) => {
     const next = [...content.items];
     next[index] = { ...(next[index] || {}), [key]: value };
@@ -733,6 +855,59 @@ function PressPageLayout({ accent, editorMode = false, activeField = "", setActi
                   >
                     Add media item
                   </EditChip>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="dpg-press-card" id="updates">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "press_updates_title"}
+                value={content.updates_title}
+                onChange={(v) => setContent({ ...content, updates_title: v })}
+                onStartEdit={() => setActiveField("press_updates_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Updates title"
+                hint="Edit section label"
+                display={content.updates_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "press_updates_body"}
+                value={content.updates_body}
+                onChange={(v) => setContent({ ...content, updates_body: v })}
+                onStartEdit={() => setActiveField("press_updates_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Updates body"
+                multiline
+                hint="Edit intro"
+                display={content.updates_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
+              />
+
+              {bulletinState.loading ? (
+                <div style={{ color: "#d7ddd8" }}>Loading updates…</div>
+              ) : null}
+
+              {!bulletinState.loading && !bulletinState.posts.length ? (
+                <div style={{ color: bulletinState.error ? "#ffb8b8" : "#d7ddd8" }}>
+                  {bulletinState.error || "No public updates yet."}
+                </div>
+              ) : null}
+
+              {bulletinState.posts.length ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                    gap: 14,
+                  }}
+                >
+                  {bulletinState.posts.map((post) => (
+                    <BulletinFeedCard key={post.slug} post={post} />
+                  ))}
                 </div>
               ) : null}
             </div>
@@ -1667,8 +1842,7 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
           { label: "Volunteer", url: "/volunteer" },
           { label: "Donate", url: "/donate" },
           { label: "Press", url: "/press" },
-          { label: "Bulletin", url: "/bulletin" },
-          { label: "DPG Shares", url: "/dpg-shares" },
+                    { label: "DPG Shares", url: "/dpg-shares" },
           { label: "RSVP", url: "/rsvp" },
         ];
 

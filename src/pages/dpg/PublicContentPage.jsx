@@ -1521,6 +1521,28 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
   const videos = Array.isArray(content.videos) ? content.videos : [];
   const visibleCards = Math.max(videos.length, editorMode ? 6 : videos.length);
   const showComposer = authed && !editorMode && shareDraft;
+  const [shareQuery, setShareQuery] = React.useState("");
+  const [activeTag, setActiveTag] = React.useState("All");
+
+  const sourceVideos = videos.map((video, idx) => ({ ...video, __idx: idx }));
+  const editorVideos = Array.from({ length: visibleCards }).map((_, idx) => ({ ...(videos[idx] || {}), __idx: idx }));
+  const availableTags = ["All", ...Array.from(new Set(sourceVideos.map((video) => String(video?.tag || "").trim()).filter(Boolean)))];
+  const normalizedQuery = String(shareQuery || "").trim().toLowerCase();
+
+  const filteredVideos = sourceVideos.filter((video) => {
+    const tagPass = activeTag === "All" || String(video?.tag || "").trim() === activeTag;
+    const haystack = [
+      video?.title || "",
+      video?.description || "",
+      video?.meta || "",
+      video?.tag || "",
+      video?.duration || "",
+    ].join(" ").toLowerCase();
+    const queryPass = !normalizedQuery || haystack.includes(normalizedQuery);
+    return tagPass && queryPass;
+  });
+
+  const gridVideos = editorMode ? editorVideos : filteredVideos;
 
   return (
     <>
@@ -2151,11 +2173,64 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
                 display={content.grid_body}
                 displayStyle={{ color: "#d7ddd8", lineHeight: 1.66, maxWidth: 760, borderRadius: 10 }}
               />
+
+              {!editorMode ? (
+                <div style={{ display: "grid", gap: 12, marginTop: 8 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                    <input
+                      value={shareQuery}
+                      onChange={(e) => setShareQuery(e.target.value)}
+                      placeholder="Search sessions"
+                      style={{
+                        minWidth: 240,
+                        flex: "1 1 280px",
+                        background: "rgba(255,255,255,0.08)",
+                        color: "#f3efe8",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        padding: 10,
+                        font: "inherit",
+                        borderRadius: 12,
+                      }}
+                    />
+                    <div style={{ color: "#8fa1ab", fontSize: 13 }}>
+                      {filteredVideos.length} session{filteredVideos.length === 1 ? "" : "s"}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {availableTags.map((tag) => (
+                      <EditChip
+                        key={tag}
+                        onClick={() => setActiveTag(tag)}
+                        subtle
+                        active={activeTag === tag}
+                      >
+                        {tag}
+                      </EditChip>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
+            {!editorMode && !sharesLoading && !sharesError && !gridVideos.length ? (
+              <div
+                style={{
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 18,
+                  padding: 18,
+                  color: "#d7ddd8",
+                  background: "rgba(255,255,255,0.03)",
+                  marginBottom: 14,
+                }}
+              >
+                No sessions match the current search or tag filter.
+              </div>
+            ) : null}
+
             <div className="dpg-shares-videos">
-              {Array.from({ length: visibleCards }).map((_, idx) => {
-                const video = videos[idx] || {};
+              {gridVideos.map((video, gridIdx) => {
+                const idx = Number.isInteger(video?.__idx) ? video.__idx : gridIdx;
                 const hasContent =
                   String(video?.title || "").trim() ||
                   String(video?.description || "").trim() ||
@@ -2601,6 +2676,18 @@ React.useEffect(() => {
   }, [slugProp]);
 
   const basePage = getDpgPublicPage(slug);
+
+  React.useEffect(() => {
+    const pageName = slug
+      ? slug
+          .split("-")
+          .map((part) => part ? part.charAt(0).toUpperCase() + part.slice(1) : "")
+          .join(" ")
+      : "";
+    document.title = pageName && pageName !== "Home"
+      ? `Dual Power West • ${pageName}`
+      : "Dual Power West";
+  }, [slug]);
 
   const navLinks =
     Array.isArray(config?.nav_links) && config.nav_links.length

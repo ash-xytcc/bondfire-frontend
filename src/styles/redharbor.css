@@ -546,3 +546,21 @@ body.rh-body {
 .rh-photo-card {
   min-height: 250px;
 }
+
+
+.rh-photo-card-logo {
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), transparent 18%),
+    linear-gradient(180deg, rgba(36,49,57,0.94), rgba(44,58,67,0.92));
+  padding: 20px;
+}
+
+.rh-photo-logo {
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.35));
+}

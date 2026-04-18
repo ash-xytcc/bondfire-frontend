@@ -342,6 +342,14 @@ fetch("/api/orgs", { credentials: "include" })
   .catch(() => {});
 
     document.body.dataset.app = appMode;
+
+    try {
+      const savedFont = String(localStorage.getItem("rh_font_family") || "system").trim() || "system";
+      document.body.dataset.rhFont = savedFont;
+    } catch {
+      document.body.dataset.rhFont = "system";
+    }
+
     document.title = redHarborMode ? "" : "Bondfire";
   }, [appMode, redHarborMode]);
 	return (

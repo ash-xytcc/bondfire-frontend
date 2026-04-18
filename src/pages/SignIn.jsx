@@ -34,7 +34,15 @@ export default function SignIn() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (redHarborMode) document.body.classList.add("rh-body");
+    if (redHarborMode) {
+      document.body.classList.add("rh-body");
+      try {
+        const savedFont = String(localStorage.getItem("rh_font_family") || "system").trim() || "system";
+        document.body.dataset.rhFont = savedFont;
+      } catch {
+        document.body.dataset.rhFont = "system";
+      }
+    }
     return () => document.body.classList.remove("rh-body");
   }, [redHarborMode]);
 

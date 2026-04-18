@@ -1,3 +1,92 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=IBM+Plex+Sans:wght@400;600;700&family=Source+Serif+4:wght@400;600&family=Space+Grotesk:wght@400;600;700&family=Cormorant+Garamond:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Archivo:wght@400;600;700&family=Bebas+Neue&family=Oswald:wght@400;500;600&family=Playfair+Display:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap');
+
+@font-face {
+  font-family: "Alte Haas Grotesk Regular";
+  src: url("/fonts/AlteHaasGroteskRegular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Alte Haas Grotesk Bold";
+  src: url("/fonts/AlteHaasGroteskBold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --rh-ui-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --rh-ui-font-display: Georgia, "Times New Roman", serif;
+}
+
+body[data-rh-font="system"] {
+  --rh-ui-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --rh-ui-font-display: Georgia, "Times New Roman", serif;
+}
+
+body[data-rh-font="inter"] {
+  --rh-ui-font: "Inter", sans-serif;
+  --rh-ui-font-display: "Inter", sans-serif;
+}
+
+body[data-rh-font="plex"] {
+  --rh-ui-font: "IBM Plex Sans", sans-serif;
+  --rh-ui-font-display: "IBM Plex Sans", sans-serif;
+}
+
+body[data-rh-font="manrope"] {
+  --rh-ui-font: "Manrope", sans-serif;
+  --rh-ui-font-display: "Manrope", sans-serif;
+}
+
+body[data-rh-font="archivo"] {
+  --rh-ui-font: "Archivo", sans-serif;
+  --rh-ui-font-display: "Archivo", sans-serif;
+}
+
+body[data-rh-font="space"] {
+  --rh-ui-font: "Space Grotesk", sans-serif;
+  --rh-ui-font-display: "Space Grotesk", sans-serif;
+}
+
+body[data-rh-font="oswald"] {
+  --rh-ui-font: "Oswald", sans-serif;
+  --rh-ui-font-display: "Oswald", sans-serif;
+}
+
+body[data-rh-font="bebas"] {
+  --rh-ui-font: "Bebas Neue", sans-serif;
+  --rh-ui-font-display: "Bebas Neue", sans-serif;
+}
+
+body[data-rh-font="serif"] {
+  --rh-ui-font: "Source Serif 4", serif;
+  --rh-ui-font-display: "Source Serif 4", serif;
+}
+
+body[data-rh-font="playfair"] {
+  --rh-ui-font: "Playfair Display", serif;
+  --rh-ui-font-display: "Playfair Display", serif;
+}
+
+body[data-rh-font="fraunces"] {
+  --rh-ui-font: "Fraunces", serif;
+  --rh-ui-font-display: "Fraunces", serif;
+}
+
+body[data-rh-font="cormorant"] {
+  --rh-ui-font: "Cormorant Garamond", serif;
+  --rh-ui-font-display: "Cormorant Garamond", serif;
+}
+
+body[data-rh-font="altehaas"] {
+  --rh-ui-font: "Alte Haas Grotesk Regular", sans-serif;
+  --rh-ui-font-display: "Alte Haas Grotesk Bold", sans-serif;
+}
+
 :root {
   --rh-bg: #11191e;
   --rh-bg-2: #1c2a31;
@@ -23,6 +112,7 @@ body.rh-body {
     radial-gradient(circle at 84% 10%, rgba(120, 145, 155, 0.14), transparent 28%),
     linear-gradient(180deg, var(--rh-bg) 0%, var(--rh-bg-2) 100%);
   color: var(--rh-text);
+  font-family: var(--rh-ui-font);
 }
 
 .rh-page {
@@ -167,7 +257,7 @@ body.rh-body {
 
 .rh-note-title {
   margin: 0 0 16px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--rh-ui-font-display);
   font-size: clamp(2rem, 4vw, 3.4rem);
   line-height: 0.95;
   letter-spacing: -0.03em;
@@ -204,7 +294,7 @@ body.rh-body {
 
 .rh-mini-note h3 {
   margin: 0 0 10px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--rh-ui-font-display);
   font-size: 1.15rem;
   line-height: 1.05;
 }
@@ -249,7 +339,7 @@ body.rh-body {
 
 .rh-metal-brand {
   margin: 0 0 8px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--rh-ui-font-display);
   font-size: clamp(2.4rem, 5vw, 4.5rem);
   line-height: 0.92;
   letter-spacing: -0.04em;
@@ -276,7 +366,7 @@ body.rh-body {
 
 .rh-auth-title {
   margin: 0 0 8px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--rh-ui-font-display);
   font-size: clamp(2rem, 4vw, 3.3rem);
   line-height: 0.96;
   letter-spacing: -0.03em;
@@ -349,7 +439,7 @@ body.rh-body {
 
 .rh-landing-title {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--rh-ui-font-display);
   font-size: clamp(3rem, 7vw, 6.2rem);
   line-height: 0.92;
   letter-spacing: -0.05em;
@@ -411,7 +501,7 @@ body.rh-body {
 
 .rh-section-title {
   margin: 0 0 14px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--rh-ui-font-display);
   font-size: clamp(1.8rem, 4vw, 2.9rem);
   line-height: 0.98;
   letter-spacing: -0.03em;
@@ -563,4 +653,35 @@ body.rh-body {
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 10px 18px rgba(0,0,0,0.35));
+}
+
+
+body.rh-body,
+body.rh-body .rh-note,
+body.rh-body .rh-mini-note,
+body.rh-body .rh-auth-copy,
+body.rh-body .rh-auth-note,
+body.rh-body .rh-input,
+body.rh-body .rh-btn,
+body.rh-body .rh-metal-sub,
+body.rh-body .rh-note-sub {
+  font-family: var(--rh-ui-font);
+}
+
+body.rh-body .rh-note-title,
+body.rh-body .rh-auth-title,
+body.rh-body .rh-metal-brand,
+body.rh-body .rh-mini-note h3 {
+  font-family: var(--rh-ui-font-display);
+}
+
+body.rh-body[data-rh-font="altehaas"] .rh-note-title,
+body.rh-body[data-rh-font="altehaas"] .rh-auth-title,
+body.rh-body[data-rh-font="altehaas"] .rh-metal-brand,
+body.rh-body[data-rh-font="altehaas"] .rh-mini-note h3,
+body.rh-body[data-rh-font="altehaas"] .rh-btn,
+body.rh-body[data-rh-font="altehaas"] strong,
+body.rh-body[data-rh-font="altehaas"] b {
+  font-family: "Alte Haas Grotesk Bold", sans-serif;
+  font-weight: 700;
 }

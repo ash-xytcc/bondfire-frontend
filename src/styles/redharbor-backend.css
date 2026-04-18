@@ -1,3 +1,92 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=IBM+Plex+Sans:wght@400;600;700&family=Source+Serif+4:wght@400;600&family=Space+Grotesk:wght@400;600;700&family=Cormorant+Garamond:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Archivo:wght@400;600;700&family=Bebas+Neue&family=Oswald:wght@400;500;600&family=Playfair+Display:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap');
+
+@font-face {
+  font-family: "Alte Haas Grotesk Regular";
+  src: url("/fonts/AlteHaasGroteskRegular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Alte Haas Grotesk Bold";
+  src: url("/fonts/AlteHaasGroteskBold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --rh-ui-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --rh-ui-font-display: Georgia, "Times New Roman", serif;
+}
+
+body[data-rh-font="system"] {
+  --rh-ui-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --rh-ui-font-display: Georgia, "Times New Roman", serif;
+}
+
+body[data-rh-font="inter"] {
+  --rh-ui-font: "Inter", sans-serif;
+  --rh-ui-font-display: "Inter", sans-serif;
+}
+
+body[data-rh-font="plex"] {
+  --rh-ui-font: "IBM Plex Sans", sans-serif;
+  --rh-ui-font-display: "IBM Plex Sans", sans-serif;
+}
+
+body[data-rh-font="manrope"] {
+  --rh-ui-font: "Manrope", sans-serif;
+  --rh-ui-font-display: "Manrope", sans-serif;
+}
+
+body[data-rh-font="archivo"] {
+  --rh-ui-font: "Archivo", sans-serif;
+  --rh-ui-font-display: "Archivo", sans-serif;
+}
+
+body[data-rh-font="space"] {
+  --rh-ui-font: "Space Grotesk", sans-serif;
+  --rh-ui-font-display: "Space Grotesk", sans-serif;
+}
+
+body[data-rh-font="oswald"] {
+  --rh-ui-font: "Oswald", sans-serif;
+  --rh-ui-font-display: "Oswald", sans-serif;
+}
+
+body[data-rh-font="bebas"] {
+  --rh-ui-font: "Bebas Neue", sans-serif;
+  --rh-ui-font-display: "Bebas Neue", sans-serif;
+}
+
+body[data-rh-font="serif"] {
+  --rh-ui-font: "Source Serif 4", serif;
+  --rh-ui-font-display: "Source Serif 4", serif;
+}
+
+body[data-rh-font="playfair"] {
+  --rh-ui-font: "Playfair Display", serif;
+  --rh-ui-font-display: "Playfair Display", serif;
+}
+
+body[data-rh-font="fraunces"] {
+  --rh-ui-font: "Fraunces", serif;
+  --rh-ui-font-display: "Fraunces", serif;
+}
+
+body[data-rh-font="cormorant"] {
+  --rh-ui-font: "Cormorant Garamond", serif;
+  --rh-ui-font-display: "Cormorant Garamond", serif;
+}
+
+body[data-rh-font="altehaas"] {
+  --rh-ui-font: "Alte Haas Grotesk Regular", sans-serif;
+  --rh-ui-font-display: "Alte Haas Grotesk Bold", sans-serif;
+}
+
 /* Red Harbor backend theme
    Scoped to app mode only so DPG and normal Bondfire stay untouched.
 */
@@ -23,6 +112,7 @@ body[data-app="red-harbor"] {
     radial-gradient(circle at 88% 10%, rgba(116,140,150,0.12), transparent 28%),
     linear-gradient(180deg, var(--rhb-bg) 0%, var(--rhb-bg-2) 100%);
   color: var(--rhb-text);
+  font-family: var(--rh-ui-font);
 }
 
 /* App header and nav */
@@ -37,10 +127,11 @@ body[data-app="red-harbor"] .bf-brand,
 body[data-app="red-harbor"] .bf-brand-org,
 body[data-app="red-harbor"] .bf-org-name {
   color: var(--rhb-text);
+  font-family: var(--rh-ui-font);
 }
 
 body[data-app="red-harbor"] .bf-brand {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--rh-ui-font-display);
   font-size: 1.08rem;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -80,6 +171,7 @@ body[data-app="red-harbor"] .bf-drawer-panel {
 body[data-app="red-harbor"] .main,
 body[data-app="red-harbor"] .page-shell {
   color: var(--rhb-text);
+  font-family: var(--rh-ui-font);
 }
 
 /* Cards and panel surfaces */
@@ -94,6 +186,7 @@ body[data-app="red-harbor"] .bf-modal-shell {
   border-radius: 12px;
   box-shadow: var(--rhb-shadow);
   color: var(--rhb-text);
+  font-family: var(--rh-ui-font);
 }
 
 /* Typography */
@@ -102,9 +195,10 @@ body[data-app="red-harbor"] h2,
 body[data-app="red-harbor"] h3,
 body[data-app="red-harbor"] .kpi .value,
 body[data-app="red-harbor"] .bf-stat-value {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--rh-ui-font-display);
   letter-spacing: -0.02em;
   color: var(--rhb-text);
+  font-family: var(--rh-ui-font);
 }
 
 body[data-app="red-harbor"] .helper,
@@ -191,6 +285,7 @@ body[data-app="red-harbor"] .bf-textarea:focus {
 body[data-app="red-harbor"] .table,
 body[data-app="red-harbor"] .pledges-table {
   color: var(--rhb-text);
+  font-family: var(--rh-ui-font);
 }
 
 body[data-app="red-harbor"] .table th,
@@ -231,8 +326,9 @@ body[data-app="red-harbor"] .bf-modal-footer {
 
 /* Mobile cards */
 body[data-app="red-harbor"] .bf-rowcard-title {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--rh-ui-font-display);
   color: var(--rhb-text);
+  font-family: var(--rh-ui-font);
 }
 
 /* Links */
@@ -259,3 +355,55 @@ body[data-app="red-harbor"] .bf-org-logo {
   border-radius: 0 !important;
 }
 
+
+
+body[data-app="red-harbor"] .bf-appHeader,
+body[data-app="red-harbor"] .bf-appnav-link,
+body[data-app="red-harbor"] .bf-logout,
+body[data-app="red-harbor"] .bf-hamburger,
+body[data-app="red-harbor"] .bf-drawer-close,
+body[data-app="red-harbor"] .card,
+body[data-app="red-harbor"] .kpi,
+body[data-app="red-harbor"] .bf-rowcard,
+body[data-app="red-harbor"] .bf-modal-shell,
+body[data-app="red-harbor"] .btn,
+body[data-app="red-harbor"] .linkbtn,
+body[data-app="red-harbor"] input,
+body[data-app="red-harbor"] select,
+body[data-app="red-harbor"] textarea,
+body[data-app="red-harbor"] .input,
+body[data-app="red-harbor"] .bf-input,
+body[data-app="red-harbor"] .bf-textarea,
+body[data-app="red-harbor"] .table,
+body[data-app="red-harbor"] .pledges-table,
+body[data-app="red-harbor"] .tag,
+body[data-app="red-harbor"] .bf-badge,
+body[data-app="red-harbor"] .bf-orgPill,
+body[data-app="red-harbor"] .orgpill {
+  font-family: var(--rh-ui-font);
+}
+
+body[data-app="red-harbor"] h1,
+body[data-app="red-harbor"] h2,
+body[data-app="red-harbor"] h3,
+body[data-app="red-harbor"] .kpi .value,
+body[data-app="red-harbor"] .bf-stat-value,
+body[data-app="red-harbor"] .bf-brand,
+body[data-app="red-harbor"] .bf-rowcard-title {
+  font-family: var(--rh-ui-font-display);
+}
+
+body[data-app="red-harbor"][data-rh-font="altehaas"] h1,
+body[data-app="red-harbor"][data-rh-font="altehaas"] h2,
+body[data-app="red-harbor"][data-rh-font="altehaas"] h3,
+body[data-app="red-harbor"][data-rh-font="altehaas"] .kpi .value,
+body[data-app="red-harbor"][data-rh-font="altehaas"] .bf-stat-value,
+body[data-app="red-harbor"][data-rh-font="altehaas"] .bf-brand,
+body[data-app="red-harbor"][data-rh-font="altehaas"] .bf-rowcard-title,
+body[data-app="red-harbor"][data-rh-font="altehaas"] .btn,
+body[data-app="red-harbor"][data-rh-font="altehaas"] .linkbtn,
+body[data-app="red-harbor"][data-rh-font="altehaas"] strong,
+body[data-app="red-harbor"][data-rh-font="altehaas"] b {
+  font-family: "Alte Haas Grotesk Bold", sans-serif;
+  font-weight: 700;
+}

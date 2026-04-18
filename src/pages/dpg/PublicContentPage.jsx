@@ -388,6 +388,1179 @@ function PageHero({
 }
 
 
+
+function normalizeAboutContent(src = {}) {
+  return {
+    eyebrow: String(src?.eyebrow || "Dual Power West"),
+    title: String(src?.title || "About"),
+    hero_summary: String(src?.hero_summary || "a gathering for learning, sharing, building, and reflection"),
+    sections: Array.isArray(src?.sections) && src.sections.length
+      ? src.sections.slice(0, 3).map((x, i) => ({
+          kicker: String(x?.kicker || ["What this is", "What we value", "How it works"][i] || ""),
+          heading: String(x?.heading || ""),
+          body: String(x?.body || ""),
+        }))
+      : [
+          {
+            kicker: "What this is",
+            heading: "a gathering, not a performance",
+            body: "Dual Power West is a gathering for learning, sharing, building, and reflection across anti authoritarian and anti capitalist movements.",
+          },
+          {
+            kicker: "What we value",
+            heading: "trust, courage, and practical capacity",
+            body: "We are building a space for trust, skill sharing, solidarity, and collective exploration. The point is not polished conference culture. The point is relationships, courage, and practical capacity.",
+          },
+          {
+            kicker: "How it works",
+            heading: "public front door, private organizer tools",
+            body: "This public site is the front door. Organizer tools, internal logistics, and planning live behind sign in.",
+          },
+        ],
+    quote_kicker: String(src?.quote_kicker || "Why this exists"),
+    quote_text: String(src?.quote_text || "this is not a conference. it is a practice."),
+    meta_rows: Array.isArray(src?.meta_rows) && src.meta_rows.length
+      ? src.meta_rows.slice(0, 3).map((x, i) => ({
+          label: String(x?.label || ["Structure", "Purpose", "Orientation"][i] || ""),
+          value: String(x?.value || ""),
+        }))
+      : [
+          {
+            label: "Structure",
+            value: "participant shaped, organizer supported, movement rooted",
+          },
+          {
+            label: "Purpose",
+            value: "build stronger relationships, sharper skills, and more durable forms of collective power",
+          },
+          {
+            label: "Orientation",
+            value: "anti authoritarian, anti capitalist, practical, collaborative",
+          },
+        ],
+    sticky_title: String(src?.sticky_title || "come build something with us"),
+    sticky_body: String(src?.sticky_body || "the goal is not polish. the goal is that people leave more connected, more capable, and more ready to act together."),
+  };
+}
+
+function normalizeFaqContent(src = {}, page = {}) {
+  const defaults = [
+    {
+      q: "What is Dual Power?",
+      a: "Dual power is the project of building self determination, mutual aid, solidarity, and direct democracy in our communities by creating spaces that empower us all and from which new emancipatory institutions can emerge.",
+    },
+    {
+      q: "Who is organizing Dual Power West?",
+      a: "Dual Power West is an autonomous event being organized by a developing network of tenants, workers, and activists participating in Symbiosis Federation, Autonomous Tenants Union Network, the Industrial Workers of the World, and independent dual power projects across the country. We are not affiliated with any political party.",
+    },
+    {
+      q: "Why do we think this is important?",
+      a: "We come together from across the spectrum of anti authoritarian and anti capitalist tendencies, traditions, and organizations. We want a space where people can build trusting relationships, construct bridges, share ideas, and strengthen each other.",
+    },
+    {
+      q: "What kind of event is this?",
+      a: "The gathering uses an unconference structure. That means participants help create the agenda, shape sessions, and bring their own ideas, skills, and questions into the space.",
+    },
+    {
+      q: "Will it be child friendly?",
+      a: "Several core organizers have children and they will be part of the event. Child friendly planning is part of the event culture, not an afterthought.",
+    },
+    {
+      q: "What happens after the gathering?",
+      a: "We are not imposing a predetermined outcome. What comes next will be defined locally, and the networks built through the gathering will help inform, grow, and articulate the movements that emerge from it.",
+    },
+  ];
+
+  return {
+    eyebrow: String(src?.eyebrow || page?.eyebrow || "Questions people keep asking because apparently reading minds is still not a feature."),
+    title: String(src?.title || page?.title || "FAQ"),
+    intro: String(src?.intro || "Answers, context, and basic orientation without making people dig through a wall of text."),
+    side_title: String(src?.side_title || "Quick read"),
+    side_body: String(src?.side_body || "Start here if you want the shape of the thing before you decide whether to show up, volunteer, or send this to somebody else."),
+    items: Array.isArray(src?.items) && src.items.length
+      ? src.items.slice(0, 10).map((x) => ({
+          q: String(x?.q || "").trim(),
+          a: String(x?.a || "").trim(),
+        })).filter((x) => x.q || x.a)
+      : defaults,
+  };
+}
+
+function normalizeVolunteerContent(src = {}, page = {}) {
+  return {
+    eyebrow: String(src?.eyebrow || page?.eyebrow || "This only works if people actually help, tragic but true."),
+    title: String(src?.title || page?.title || "Volunteer"),
+    intro: String(src?.intro || "We need help before, during, and around the gathering. Not in the abstract. In the real world where someone has to actually do things."),
+    lead_title: String(src?.lead_title || "We need your help"),
+    lead_body: String(src?.lead_body || "We need all kinds of help in advance of and during the Western Dual Power Gathering to pull these events off."),
+    list_title: String(src?.list_title || "Current areas of need"),
+    needs: Array.isArray(src?.needs) && src.needs.length
+      ? src.needs.slice(0, 12).map((x) => String(x || "").trim()).filter(Boolean)
+      : [
+          "Food and kitchen support",
+          "Transportation",
+          "Childcare",
+          "Outreach and getting the word out",
+          "Camping gear sharing and sourcing",
+          "Fundraising",
+          "Facilitation",
+          "Organizing and logistics",
+          "Communications",
+          "Training, workshops, and session support",
+        ],
+    support_title: String(src?.support_title || "When help is needed"),
+    support_body: String(src?.support_body || "We are looking for people who want to help during the event as well as people who want to help plan and organize beforehand."),
+    contact_title: String(src?.contact_title || "Get involved"),
+    contact_body: String(src?.contact_body || "If you want to get involved, email dualpowergathering@proton.me."),
+    side_title: String(src?.side_title || "Good volunteer energy"),
+    side_body: String(src?.side_body || "People who can follow through, coordinate with others, notice what is missing, and help without turning every practical task into a personal manifesto."),
+    sticky_title: String(src?.sticky_title || "show up ready"),
+    sticky_body: String(src?.sticky_body || "clarity, communication, and follow through are more useful than hype."),
+  };
+}
+
+function normalizeDonateContent(src = {}, page = {}) {
+  return {
+    eyebrow: String(src?.eyebrow || page?.eyebrow || "Money is fake and yet unfortunately still useful."),
+    title: String(src?.title || page?.title || "Donate"),
+    intro: String(src?.intro || "The gathering is free to attend, but making it real still costs actual money in the cursed material world."),
+    lead_title: String(src?.lead_title || "Help cover the real costs"),
+    lead_body: String(src?.lead_body || "Dual Power West is free for anyone to attend, but holding the gathering still costs money. Campsites, food, equipment, accessibility support, and travel all add up."),
+    support_title: String(src?.support_title || "What donations support"),
+    support_items: Array.isArray(src?.support_items) && src.support_items.length
+      ? src.support_items.slice(0, 8).map((x) => String(x || "").trim()).filter(Boolean)
+      : [
+          "Campsites and shared infrastructure",
+          "Food and kitchen costs",
+          "Accessibility support",
+          "Travel help for organizers and participants",
+          "Equipment and event logistics",
+          "Supplies that make the gathering actually function",
+        ],
+    impact_title: String(src?.impact_title || "Why it matters"),
+    impact_body: String(src?.impact_body || "Donations help make the event more accessible, more materially stable, and less dependent on the personal sacrifice of whoever is already carrying too much."),
+    cta_title: String(src?.cta_title || "Give what you can"),
+    cta_body: String(src?.cta_body || "If you or someone you know would like to support the gathering, donations make the event more accessible and materially sustainable."),
+    cta_url: String(src?.cta_url || "https://hcb.hackclub.com/donations/start/dual-power-gathering"),
+    cta_label: String(src?.cta_label || "Donate to Dual Power Gathering"),
+    receipt_title: String(src?.receipt_title || "Receipts and questions"),
+    receipt_body: String(src?.receipt_body || "If you need a receipt or have questions, reach out through the organizer contacts."),
+    side_title: String(src?.side_title || "Keep it usable"),
+    side_body: String(src?.side_body || "The point is not luxury. The point is making the gathering materially possible without pricing people out or burning organizers down."),
+    sticky_title: String(src?.sticky_title || "small amounts matter"),
+    sticky_body: String(src?.sticky_body || "A lot of real support looks like many people giving what they can, not one mythical donor descending from the heavens."),
+  };
+}
+
+function AboutPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+  const updateSection = (index, key, value) => {
+    const next = [...content.sections];
+    next[index] = { ...(next[index] || {}), [key]: value };
+    setContent({ ...content, sections: next });
+  };
+
+  const updateMeta = (index, key, value) => {
+    const next = [...content.meta_rows];
+    next[index] = { ...(next[index] || {}), [key]: value };
+    setContent({ ...content, meta_rows: next });
+  };
+
+  return (
+    <>
+      <style>{`
+        .dpg-about-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+          gap: 22px;
+          align-items: start;
+        }
+        .dpg-about-card {
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 24px;
+          padding: 24px 24px 22px;
+          box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+        }
+        .dpg-about-side {
+          display: grid;
+          gap: 18px;
+        }
+        .dpg-about-quote {
+          position: relative;
+          overflow: hidden;
+        }
+        .dpg-about-quote::before {
+          content: "";
+          position: absolute;
+          left: 18px;
+          top: 22px;
+          bottom: 22px;
+          width: 3px;
+          border-radius: 999px;
+          background: ${accent};
+          opacity: 0.9;
+        }
+        .dpg-about-sticky {
+          background: #f3e28b;
+          color: #171717;
+          border-radius: 16px;
+          padding: 18px;
+          transform: rotate(1.2deg);
+          border: 1px solid rgba(0,0,0,0.08);
+          box-shadow: 0 18px 36px rgba(0,0,0,0.16);
+        }
+        @media (max-width: 880px) {
+          .dpg-about-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <PageHero
+        accent={accent}
+        editorMode={editorMode}
+        activeField={activeField}
+        setActiveField={setActiveField}
+        prefix="about"
+        content={content}
+        setContent={setContent}
+      />
+
+      <section className="dpg-about-grid">
+        <div style={{ display: "grid", gap: 18 }}>
+          {content.sections.map((section, idx) => (
+            <article key={`section-${idx}`} className="dpg-about-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === `section_${idx}_kicker`}
+                value={section.kicker}
+                onChange={(v) => updateSection(idx, "kicker", v)}
+                onStartEdit={() => setActiveField(`section_${idx}_kicker`)}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Section kicker"
+                hint="Edit kicker"
+                display={section.kicker}
+                displayStyle={{ marginBottom: 10, color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === `section_${idx}_heading`}
+                value={section.heading}
+                onChange={(v) => updateSection(idx, "heading", v)}
+                onStartEdit={() => setActiveField(`section_${idx}_heading`)}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Section heading"
+                hint="Edit heading"
+                display={section.heading}
+                displayStyle={{ margin: "0 0 12px", color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontSize: "1.05rem", lineHeight: 1.1, fontWeight: 800, letterSpacing: "0.02em", borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === `section_${idx}_body`}
+                value={section.body}
+                onChange={(v) => updateSection(idx, "body", v)}
+                onStartEdit={() => setActiveField(`section_${idx}_body`)}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Section body"
+                multiline
+                hint="Edit body"
+                display={section.body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.72, fontSize: "1.06rem", borderRadius: 10 }}
+              />
+            </article>
+          ))}
+        </div>
+
+        <aside className="dpg-about-side">
+          <div className="dpg-about-card dpg-about-quote">
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "quote_kicker"}
+              value={content.quote_kicker}
+              onChange={(v) => setContent({ ...content, quote_kicker: v })}
+              onStartEdit={() => setActiveField("quote_kicker")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Quote kicker"
+              hint="Edit kicker"
+              display={content.quote_kicker}
+              displayStyle={{ marginBottom: 10, color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: 10 }}
+            />
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "quote_text"}
+              value={content.quote_text}
+              onChange={(v) => setContent({ ...content, quote_text: v })}
+              onStartEdit={() => setActiveField("quote_text")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Quote text"
+              multiline
+              hint="Edit quote"
+              display={content.quote_text}
+              displayStyle={{ paddingLeft: 28, color: "#f3efe8", fontSize: "1.14rem", lineHeight: 1.58, borderRadius: 10 }}
+            />
+          </div>
+
+          <div className="dpg-about-card" style={{ display: "grid", gap: 14 }}>
+            {content.meta_rows.map((row, idx) => (
+              <div key={`meta-${idx}`} style={{ display: "grid", gap: 4 }}>
+                <InlineField
+                  editorMode={editorMode}
+                  editing={editorMode && activeField === `meta_${idx}_label`}
+                  value={row.label}
+                  onChange={(v) => updateMeta(idx, "label", v)}
+                  onStartEdit={() => setActiveField(`meta_${idx}_label`)}
+                  onStopEdit={() => setActiveField("")}
+                  placeholder="Meta label"
+                  hint="Edit label"
+                  display={row.label}
+                  displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: 10 }}
+                />
+                <InlineField
+                  editorMode={editorMode}
+                  editing={editorMode && activeField === `meta_${idx}_value`}
+                  value={row.value}
+                  onChange={(v) => updateMeta(idx, "value", v)}
+                  onStartEdit={() => setActiveField(`meta_${idx}_value`)}
+                  onStopEdit={() => setActiveField("")}
+                  placeholder="Meta value"
+                  multiline
+                  hint="Edit value"
+                  display={row.value}
+                  displayStyle={{ color: "#f3efe8", lineHeight: 1.58, borderRadius: 10 }}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="dpg-about-sticky">
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "sticky_title"}
+              value={content.sticky_title}
+              onChange={(v) => setContent({ ...content, sticky_title: v })}
+              onStartEdit={() => setActiveField("sticky_title")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Sticky title"
+              hint="Edit title"
+              dark={false}
+              display={content.sticky_title}
+              displayStyle={{ margin: "0 0 8px", color: "#171717", fontFamily: "Inter, system-ui, Arial, sans-serif", fontSize: "1rem", lineHeight: 1.1, fontWeight: 800, borderRadius: 10 }}
+            />
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "sticky_body"}
+              value={content.sticky_body}
+              onChange={(v) => setContent({ ...content, sticky_body: v })}
+              onStartEdit={() => setActiveField("sticky_body")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Sticky body"
+              multiline
+              hint="Edit note"
+              dark={false}
+              display={content.sticky_body}
+              displayStyle={{ color: "#171717", lineHeight: 1.56, fontSize: "0.98rem", borderRadius: 10 }}
+            />
+          </div>
+        </aside>
+      </section>
+    </>
+  );
+}
+
+function FaqPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+  const [openIdx, setOpenIdx] = React.useState(0);
+
+  const updateItem = (index, key, value) => {
+    const next = [...content.items];
+    next[index] = { ...(next[index] || {}), [key]: value };
+    setContent({
+      ...content,
+      items: next.filter((x) => String(x?.q || "").trim() || String(x?.a || "").trim()),
+    });
+  };
+
+  return (
+    <>
+      <style>{`
+        .dpg-faq-shell { display: grid; gap: 24px; }
+        .dpg-faq-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+          gap: 22px;
+          align-items: start;
+        }
+        .dpg-faq-card {
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 24px;
+          padding: 20px;
+          box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+        }
+        .dpg-faq-item {
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 18px;
+          overflow: hidden;
+          background: rgba(255,255,255,0.02);
+        }
+        .dpg-faq-item + .dpg-faq-item { margin-top: 12px; }
+        .dpg-faq-trigger {
+          width: 100%;
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 14px;
+          align-items: center;
+          padding: 18px 18px 16px;
+          background: transparent;
+          border: 0;
+          color: #f3efe8;
+          text-align: left;
+          cursor: pointer;
+        }
+        .dpg-faq-answer {
+          padding: 0 18px 18px;
+          color: #f3efe8;
+          line-height: 1.72;
+          font-size: 1.02rem;
+        }
+        .dpg-faq-side-note {
+          background: #dce8d6;
+          color: #171717;
+          border-radius: 18px;
+          padding: 18px;
+          box-shadow: 0 18px 36px rgba(0,0,0,0.16);
+          border: 1px solid rgba(0,0,0,0.08);
+        }
+        @media (max-width: 920px) {
+          .dpg-faq-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div className="dpg-faq-shell">
+        <PageHero
+          accent={accent}
+          editorMode={editorMode}
+          activeField={activeField}
+          setActiveField={setActiveField}
+          prefix="faq"
+          content={content}
+          setContent={setContent}
+        />
+
+        <section className="dpg-faq-grid">
+          <div className="dpg-faq-card">
+            <div style={{ marginBottom: 16, color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
+              Common questions
+            </div>
+
+            {content.items.map((item, idx) => {
+              const open = openIdx === idx;
+              return (
+                <div className="dpg-faq-item" key={`faq-item-${idx}`}>
+                  <button
+                    type="button"
+                    className="dpg-faq-trigger"
+                    onClick={() => setOpenIdx(open ? -1 : idx)}
+                  >
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === `faq_q_${idx}`}
+                      value={item.q}
+                      onChange={(v) => updateItem(idx, "q", v)}
+                      onStartEdit={() => setActiveField(`faq_q_${idx}`)}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder={`Question ${idx + 1}`}
+                      hint="Edit question"
+                      display={item.q}
+                      displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1.08rem", lineHeight: 1.25, borderRadius: 10 }}
+                    />
+                    <div style={{ color: accent, fontSize: 22, lineHeight: 1, transform: open ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 140ms ease" }}>
+                      +
+                    </div>
+                  </button>
+
+                  {open ? (
+                    <div className="dpg-faq-answer">
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `faq_a_${idx}`}
+                        value={item.a}
+                        onChange={(v) => updateItem(idx, "a", v)}
+                        onStartEdit={() => setActiveField(`faq_a_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Answer ${idx + 1}`}
+                        multiline
+                        hint="Edit answer"
+                        display={item.a}
+                        displayStyle={{ color: "#f3efe8", lineHeight: 1.72, fontSize: "1.02rem", borderRadius: 10 }}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+
+            {editorMode && content.items.length < 10 ? (
+              <div style={{ marginTop: 14 }}>
+                <EditChip
+                  onClick={() => setContent({ ...content, items: [...content.items, { q: "New question", a: "New answer" }] })}
+                  subtle
+                >
+                  Add question
+                </EditChip>
+              </div>
+            ) : null}
+          </div>
+
+          <div style={{ display: "grid", gap: 18 }}>
+            <div className="dpg-faq-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "faq_side_title"}
+                value={content.side_title}
+                onChange={(v) => setContent({ ...content, side_title: v })}
+                onStartEdit={() => setActiveField("faq_side_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side title"
+                hint="Edit label"
+                display={content.side_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "faq_side_body"}
+                value={content.side_body}
+                onChange={(v) => setContent({ ...content, side_body: v })}
+                onStartEdit={() => setActiveField("faq_side_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side body"
+                multiline
+                hint="Edit note"
+                display={content.side_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-faq-side-note">
+              <div style={{ color: "#171717", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
+                Shortcut
+              </div>
+              <div style={{ color: "#171717", lineHeight: 1.58 }}>
+                RSVP if you know you are coming. Volunteer if you want to help shape the thing. Send the FAQ to the person who is asking you six separate questions in a row.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </>
+  );
+}
+
+function VolunteerPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+  const updateNeed = (index, value) => {
+    const next = [...content.needs];
+    while (next.length < 12) next.push("");
+    next[index] = value;
+    setContent({ ...content, needs: next.filter((x) => String(x || "").trim()) });
+  };
+
+  return (
+    <>
+      <style>{`
+        .dpg-vol-shell { display: grid; gap: 24px; }
+        .dpg-vol-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+          gap: 22px;
+          align-items: start;
+        }
+        .dpg-vol-card {
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 24px;
+          padding: 22px;
+          box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+        }
+        .dpg-vol-needs {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 12px;
+          margin-top: 16px;
+        }
+        .dpg-vol-pill {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: 14px 14px;
+          color: #f3efe8;
+          min-height: 62px;
+          display: flex;
+          align-items: center;
+        }
+        .dpg-vol-side {
+          display: grid;
+          gap: 18px;
+        }
+        .dpg-vol-sticky {
+          background: #f3e28b;
+          color: #171717;
+          border-radius: 16px;
+          padding: 18px;
+          transform: rotate(1deg);
+          border: 1px solid rgba(0,0,0,0.08);
+          box-shadow: 0 18px 36px rgba(0,0,0,0.16);
+        }
+        .dpg-vol-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 14px 18px;
+          border-radius: 999px;
+          background: ${accent};
+          color: #121715;
+          text-decoration: none;
+          font-weight: 800;
+        }
+        @media (max-width: 920px) {
+          .dpg-vol-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div className="dpg-vol-shell">
+        <PageHero
+          accent={accent}
+          editorMode={editorMode}
+          activeField={activeField}
+          setActiveField={setActiveField}
+          prefix="vol"
+          content={content}
+          setContent={setContent}
+        />
+
+        <section className="dpg-vol-grid">
+          <div style={{ display: "grid", gap: 18 }}>
+            <article className="dpg-vol-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_lead_title"}
+                value={content.lead_title}
+                onChange={(v) => setContent({ ...content, lead_title: v })}
+                onStartEdit={() => setActiveField("vol_lead_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead title"
+                hint="Edit title"
+                display={content.lead_title}
+                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "2rem", lineHeight: 1.05, marginBottom: 14, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_lead_body"}
+                value={content.lead_body}
+                onChange={(v) => setContent({ ...content, lead_body: v })}
+                onStartEdit={() => setActiveField("vol_lead_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead body"
+                multiline
+                hint="Edit intro block"
+                display={content.lead_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, fontSize: "1.06rem", borderRadius: 10 }}
+              />
+            </article>
+
+            <article className="dpg-vol-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_list_title"}
+                value={content.list_title}
+                onChange={(v) => setContent({ ...content, list_title: v })}
+                onStartEdit={() => setActiveField("vol_list_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="List title"
+                hint="Edit section label"
+                display={content.list_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+
+              <div className="dpg-vol-needs">
+                {Array.from({ length: Math.max(content.needs.length, editorMode ? 10 : content.needs.length) }).map((_, idx) => {
+                  const value = content.needs[idx] || "";
+                  return (
+                    <div className="dpg-vol-pill" key={`need-${idx}`}>
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `vol_need_${idx}`}
+                        value={value}
+                        onChange={(v) => updateNeed(idx, v)}
+                        onStartEdit={() => setActiveField(`vol_need_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Need ${idx + 1}`}
+                        hint="Edit need"
+                        display={value || (editorMode ? "Empty need slot" : "")}
+                        displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+
+            <article className="dpg-vol-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_support_title"}
+                value={content.support_title}
+                onChange={(v) => setContent({ ...content, support_title: v })}
+                onStartEdit={() => setActiveField("vol_support_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Support title"
+                hint="Edit title"
+                display={content.support_title}
+                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1.2rem", lineHeight: 1.1, marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_support_body"}
+                value={content.support_body}
+                onChange={(v) => setContent({ ...content, support_body: v })}
+                onStartEdit={() => setActiveField("vol_support_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Support body"
+                multiline
+                hint="Edit body"
+                display={content.support_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </article>
+          </div>
+
+          <aside className="dpg-vol-side">
+            <div className="dpg-vol-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_contact_title"}
+                value={content.contact_title}
+                onChange={(v) => setContent({ ...content, contact_title: v })}
+                onStartEdit={() => setActiveField("vol_contact_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Contact title"
+                hint="Edit title"
+                display={content.contact_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_contact_body"}
+                value={content.contact_body}
+                onChange={(v) => setContent({ ...content, contact_body: v })}
+                onStartEdit={() => setActiveField("vol_contact_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Contact body"
+                multiline
+                hint="Edit contact"
+                display={content.contact_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
+              />
+              <a href="mailto:dualpowergathering@proton.me" className="dpg-vol-cta">
+                Email organizers
+              </a>
+            </div>
+
+            <div className="dpg-vol-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_side_title"}
+                value={content.side_title}
+                onChange={(v) => setContent({ ...content, side_title: v })}
+                onStartEdit={() => setActiveField("vol_side_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side title"
+                hint="Edit label"
+                display={content.side_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_side_body"}
+                value={content.side_body}
+                onChange={(v) => setContent({ ...content, side_body: v })}
+                onStartEdit={() => setActiveField("vol_side_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side body"
+                multiline
+                hint="Edit note"
+                display={content.side_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-vol-sticky">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_sticky_title"}
+                value={content.sticky_title}
+                onChange={(v) => setContent({ ...content, sticky_title: v })}
+                onStartEdit={() => setActiveField("vol_sticky_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky title"
+                hint="Edit title"
+                dark={false}
+                display={content.sticky_title}
+                displayStyle={{ color: "#171717", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.1, marginBottom: 8, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "vol_sticky_body"}
+                value={content.sticky_body}
+                onChange={(v) => setContent({ ...content, sticky_body: v })}
+                onStartEdit={() => setActiveField("vol_sticky_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky body"
+                multiline
+                hint="Edit note"
+                dark={false}
+                display={content.sticky_body}
+                displayStyle={{ color: "#171717", lineHeight: 1.56, fontSize: "0.98rem", borderRadius: 10 }}
+              />
+            </div>
+          </aside>
+        </section>
+      </div>
+    </>
+  );
+}
+
+function DonatePageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+  const updateSupportItem = (index, value) => {
+    const next = [...content.support_items];
+    while (next.length < 8) next.push("");
+    next[index] = value;
+    setContent({ ...content, support_items: next.filter((x) => String(x || "").trim()) });
+  };
+
+  return (
+    <>
+      <style>{`
+        .dpg-donate-shell { display: grid; gap: 24px; }
+        .dpg-donate-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+          gap: 22px;
+          align-items: start;
+        }
+        .dpg-donate-card {
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 24px;
+          padding: 22px;
+          box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+        }
+        .dpg-donate-support {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 12px;
+          margin-top: 16px;
+        }
+        .dpg-donate-pill {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: 14px;
+          color: #f3efe8;
+          min-height: 62px;
+          display: flex;
+          align-items: center;
+        }
+        .dpg-donate-side {
+          display: grid;
+          gap: 18px;
+        }
+        .dpg-donate-cta {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 15px 18px;
+          border-radius: 999px;
+          background: ${accent};
+          color: #121715;
+          text-decoration: none;
+          font-weight: 800;
+          box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+        }
+        .dpg-donate-sticky {
+          background: #f3e28b;
+          color: #171717;
+          border-radius: 16px;
+          padding: 18px;
+          transform: rotate(1deg);
+          border: 1px solid rgba(0,0,0,0.08);
+          box-shadow: 0 18px 36px rgba(0,0,0,0.16);
+        }
+        @media (max-width: 920px) {
+          .dpg-donate-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div className="dpg-donate-shell">
+        <PageHero
+          accent={accent}
+          editorMode={editorMode}
+          activeField={activeField}
+          setActiveField={setActiveField}
+          prefix="donate"
+          content={content}
+          setContent={setContent}
+        />
+
+        <section className="dpg-donate-grid">
+          <div style={{ display: "grid", gap: 18 }}>
+            <article className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_lead_title"}
+                value={content.lead_title}
+                onChange={(v) => setContent({ ...content, lead_title: v })}
+                onStartEdit={() => setActiveField("donate_lead_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead title"
+                hint="Edit title"
+                display={content.lead_title}
+                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "2rem", lineHeight: 1.05, marginBottom: 14, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_lead_body"}
+                value={content.lead_body}
+                onChange={(v) => setContent({ ...content, lead_body: v })}
+                onStartEdit={() => setActiveField("donate_lead_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead body"
+                multiline
+                hint="Edit intro block"
+                display={content.lead_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, fontSize: "1.06rem", borderRadius: 10 }}
+              />
+            </article>
+
+            <article className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_support_title"}
+                value={content.support_title}
+                onChange={(v) => setContent({ ...content, support_title: v })}
+                onStartEdit={() => setActiveField("donate_support_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Support title"
+                hint="Edit section label"
+                display={content.support_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+
+              <div className="dpg-donate-support">
+                {Array.from({ length: Math.max(content.support_items.length, editorMode ? 6 : content.support_items.length) }).map((_, idx) => {
+                  const value = content.support_items[idx] || "";
+                  return (
+                    <div className="dpg-donate-pill" key={`support-${idx}`}>
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `donate_support_${idx}`}
+                        value={value}
+                        onChange={(v) => updateSupportItem(idx, v)}
+                        onStartEdit={() => setActiveField(`donate_support_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Support item ${idx + 1}`}
+                        hint="Edit item"
+                        display={value || (editorMode ? "Empty support slot" : "")}
+                        displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+
+            <article className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_impact_title"}
+                value={content.impact_title}
+                onChange={(v) => setContent({ ...content, impact_title: v })}
+                onStartEdit={() => setActiveField("donate_impact_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Impact title"
+                hint="Edit title"
+                display={content.impact_title}
+                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1.2rem", lineHeight: 1.1, marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_impact_body"}
+                value={content.impact_body}
+                onChange={(v) => setContent({ ...content, impact_body: v })}
+                onStartEdit={() => setActiveField("donate_impact_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Impact body"
+                multiline
+                hint="Edit body"
+                display={content.impact_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </article>
+          </div>
+
+          <aside className="dpg-donate-side">
+            <div className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_cta_title"}
+                value={content.cta_title}
+                onChange={(v) => setContent({ ...content, cta_title: v })}
+                onStartEdit={() => setActiveField("donate_cta_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="CTA title"
+                hint="Edit title"
+                display={content.cta_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_cta_body"}
+                value={content.cta_body}
+                onChange={(v) => setContent({ ...content, cta_body: v })}
+                onStartEdit={() => setActiveField("donate_cta_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="CTA body"
+                multiline
+                hint="Edit body"
+                display={content.cta_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
+              />
+
+              <div style={{ display: "grid", gap: 10 }}>
+                <InlineField
+                  editorMode={editorMode}
+                  editing={editorMode && activeField === "donate_cta_label"}
+                  value={content.cta_label}
+                  onChange={(v) => setContent({ ...content, cta_label: v })}
+                  onStartEdit={() => setActiveField("donate_cta_label")}
+                  onStopEdit={() => setActiveField("")}
+                  placeholder="CTA label"
+                  hint="Edit button label"
+                  display={content.cta_label}
+                  displayStyle={{ color: "#f3efe8", fontWeight: 800, borderRadius: 10 }}
+                />
+
+                {editorMode ? (
+                  <InlineField
+                    editorMode={editorMode}
+                    editing={editorMode && activeField === "donate_cta_url"}
+                    value={content.cta_url}
+                    onChange={(v) => setContent({ ...content, cta_url: v })}
+                    onStartEdit={() => setActiveField("donate_cta_url")}
+                    onStopEdit={() => setActiveField("")}
+                    placeholder="CTA URL"
+                    hint="Edit link"
+                    display={content.cta_url}
+                    displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                  />
+                ) : null}
+
+                <a href={content.cta_url} target="_blank" rel="noreferrer" className="dpg-donate-cta">
+                  {content.cta_label}
+                </a>
+              </div>
+            </div>
+
+            <div className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_receipt_title"}
+                value={content.receipt_title}
+                onChange={(v) => setContent({ ...content, receipt_title: v })}
+                onStartEdit={() => setActiveField("donate_receipt_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Receipt title"
+                hint="Edit label"
+                display={content.receipt_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_receipt_body"}
+                value={content.receipt_body}
+                onChange={(v) => setContent({ ...content, receipt_body: v })}
+                onStartEdit={() => setActiveField("donate_receipt_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Receipt body"
+                multiline
+                hint="Edit note"
+                display={content.receipt_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-donate-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_side_title"}
+                value={content.side_title}
+                onChange={(v) => setContent({ ...content, side_title: v })}
+                onStartEdit={() => setActiveField("donate_side_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side title"
+                hint="Edit label"
+                display={content.side_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_side_body"}
+                value={content.side_body}
+                onChange={(v) => setContent({ ...content, side_body: v })}
+                onStartEdit={() => setActiveField("donate_side_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side body"
+                multiline
+                hint="Edit note"
+                display={content.side_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-donate-sticky">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_sticky_title"}
+                value={content.sticky_title}
+                onChange={(v) => setContent({ ...content, sticky_title: v })}
+                onStartEdit={() => setActiveField("donate_sticky_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky title"
+                hint="Edit title"
+                dark={false}
+                display={content.sticky_title}
+                displayStyle={{ color: "#171717", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.1, marginBottom: 8, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "donate_sticky_body"}
+                value={content.sticky_body}
+                onChange={(v) => setContent({ ...content, sticky_body: v })}
+                onStartEdit={() => setActiveField("donate_sticky_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky body"
+                multiline
+                hint="Edit note"
+                dark={false}
+                display={content.sticky_body}
+                displayStyle={{ color: "#171717", lineHeight: 1.56, fontSize: "0.98rem", borderRadius: 10 }}
+              />
+            </div>
+          </aside>
+        </section>
+      </div>
+    </>
+  );
+}
+
+
 function normalizeRsvpContent(src = {}, page = {}) {
   return {
     eyebrow: String(src?.eyebrow || page?.eyebrow || "Planning is easier when humans tell us they are coming."),
@@ -2724,6 +3897,26 @@ React.useEffect(() => {
   const currentPageOverride = restoredBaseSlugs.has(slug) ? {} : (contentPages?.[slug] || {});
   const page = basePage ? { ...basePage, ...currentPageOverride } : null;
 
+  const aboutContent = normalizeAboutContent({
+    ...(contentPages?.about || {}),
+    ...(draftPages?.about || {}),
+  });
+
+  const faqContent = normalizeFaqContent({
+    ...(contentPages?.faq || {}),
+    ...(draftPages?.faq || {}),
+  }, page);
+
+  const volunteerContent = normalizeVolunteerContent({
+    ...(contentPages?.volunteer || {}),
+    ...(draftPages?.volunteer || {}),
+  }, page);
+
+  const donateContent = normalizeDonateContent({
+    ...(contentPages?.donate || {}),
+    ...(draftPages?.donate || {}),
+  }, page);
+
   const pressContent = normalizePressContent({
     ...(contentPages?.press || {}),
     ...(draftPages?.press || {}),
@@ -2805,6 +3998,22 @@ React.useEffect(() => {
     } finally {
       setSaveBusy(false);
     }
+  };
+
+  const setAboutContent = (next) => {
+    setDraftPages((prev) => ({ ...(prev || {}), about: next }));
+  };
+
+  const setFaqContent = (next) => {
+    setDraftPages((prev) => ({ ...(prev || {}), faq: next }));
+  };
+
+  const setVolunteerContent = (next) => {
+    setDraftPages((prev) => ({ ...(prev || {}), volunteer: next }));
+  };
+
+  const setDonateContent = (next) => {
+    setDraftPages((prev) => ({ ...(prev || {}), donate: next }));
   };
 
   const setPressContent = (next) => {
@@ -2944,10 +4153,46 @@ React.useEffect(() => {
         </div>
       ) : null}
 
-      <div style={{ maxWidth: 1160, margin: "0 auto", padding: "32px 20px 80px" }}>
+      <div style={{ maxWidth: slug === "about" ? 1240 : 1160, margin: "0 auto", padding: "32px 20px 80px" }}>
         <PublicNav links={navLinks} authed={authState.authed} accent={accent} />
 
-        {slug === "press" ? (
+        {slug === "about" ? (
+          <AboutPageLayout
+            accent={accent}
+            editorMode={editorMode}
+            activeField={activeField}
+            setActiveField={setActiveField}
+            content={aboutContent}
+            setContent={setAboutContent}
+          />
+        ) : slug === "faq" ? (
+          <FaqPageLayout
+            accent={accent}
+            editorMode={editorMode}
+            activeField={activeField}
+            setActiveField={setActiveField}
+            content={faqContent}
+            setContent={setFaqContent}
+          />
+        ) : slug === "volunteer" ? (
+          <VolunteerPageLayout
+            accent={accent}
+            editorMode={editorMode}
+            activeField={activeField}
+            setActiveField={setActiveField}
+            content={volunteerContent}
+            setContent={setVolunteerContent}
+          />
+        ) : slug === "donate" ? (
+          <DonatePageLayout
+            accent={accent}
+            editorMode={editorMode}
+            activeField={activeField}
+            setActiveField={setActiveField}
+            content={donateContent}
+            setContent={setDonateContent}
+          />
+        ) : slug === "press" ? (
           <PressPageLayout
             accent={accent}
             editorMode={editorMode}

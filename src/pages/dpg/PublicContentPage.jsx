@@ -418,6 +418,43 @@ function normalizeRsvpContent(src = {}, page = {}) {
   };
 }
 
+
+function normalizeSharesContent(src = {}, page = {}) {
+  return {
+    eyebrow: String(src?.eyebrow || page?.eyebrow || "A session archive, media commons, and public memory bank for DPG."),
+    title: String(src?.title || page?.title || "DPG Shares"),
+    intro: String(src?.intro || "A native video and media platform for session recordings, interviews, skill shares, and movement memory."),
+    lead_title: String(src?.lead_title || "Build the archive, not just the moment"),
+    lead_body: String(src?.lead_body || "DPG Shares is meant to become the place where session recordings, interviews, roundtables, trainings, and movement media can live natively instead of being scattered across other platforms."),
+    vision_title: String(src?.vision_title || "What this platform should do"),
+    vision_items: Array.isArray(src?.vision_items) && src.vision_items.length
+      ? src.vision_items.slice(0, 8).map((x) => String(x || "").trim()).filter(Boolean)
+      : [
+          "Upload and host videos natively inside the DPG site",
+          "Organize sessions into collections, tracks, and event years",
+          "Support captions, descriptions, tags, and speaker metadata",
+          "Make sessions searchable instead of burying them in a feed",
+          "Highlight featured recordings on the public front end",
+          "Preserve movement media without outsourcing the archive",
+        ],
+    build_title: String(src?.build_title || "Build phases"),
+    build_items: Array.isArray(src?.build_items) && src.build_items.length
+      ? src.build_items.slice(0, 6).map((x) => String(x || "").trim()).filter(Boolean)
+      : [
+          "Phase 1: public product page and platform framing",
+          "Phase 2: uploader, database records, and hosted video storage",
+          "Phase 3: collections, tags, thumbnails, and featured sessions",
+          "Phase 4: permissions, moderation, and contributor workflows",
+        ],
+    cta_title: String(src?.cta_title || "What belongs here"),
+    cta_body: String(src?.cta_body || "Session recordings, interviews, roundtables, workshop clips, organizer explainers, and media that would otherwise disappear into algorithmic landfill."),
+    side_title: String(src?.side_title || "Why make this at all"),
+    side_body: String(src?.side_body || "Because a movement archive should not depend entirely on corporate platforms, broken links, or whoever still has the password six months later."),
+    sticky_title: String(src?.sticky_title || "own the archive"),
+    sticky_body: String(src?.sticky_body || "If the gathering matters, the record of it should live somewhere we can shape, maintain, and keep."),
+  };
+}
+
 function normalizePressContent(src = {}, page = {}) {
   return {
     eyebrow: String(src?.eyebrow || page?.eyebrow || "Media, roundtables, and traces left behind."),
@@ -1133,6 +1170,350 @@ function RsvpPageLayout({ accent, editorMode = false, activeField = "", setActiv
   );
 }
 
+
+function SharesPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+  const updateVisionItem = (index, value) => {
+    const next = [...content.vision_items];
+    while (next.length < 8) next.push("");
+    next[index] = value;
+    setContent({ ...content, vision_items: next.filter((x) => String(x || "").trim()) });
+  };
+
+  const updateBuildItem = (index, value) => {
+    const next = [...content.build_items];
+    while (next.length < 6) next.push("");
+    next[index] = value;
+    setContent({ ...content, build_items: next.filter((x) => String(x || "").trim()) });
+  };
+
+  return (
+    <>
+      <style>{`
+        .dpg-shares-shell { display: grid; gap: 24px; }
+        .dpg-shares-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.12fr) minmax(260px, 0.88fr);
+          gap: 22px;
+          align-items: start;
+        }
+        .dpg-shares-main { display: grid; gap: 18px; }
+        .dpg-shares-card {
+          background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 24px;
+          padding: 22px;
+          box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+        }
+        .dpg-shares-gridlist {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 12px;
+          margin-top: 16px;
+        }
+        .dpg-shares-tile {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 18px;
+          padding: 14px;
+          color: #f3efe8;
+          min-height: 70px;
+          display: flex;
+          align-items: center;
+        }
+        .dpg-shares-phase {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: 12px;
+          align-items: start;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 18px;
+          padding: 14px 16px;
+        }
+        .dpg-shares-num {
+          width: 30px;
+          height: 30px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: ${accent};
+          color: #121715;
+          font-weight: 900;
+          font-size: 13px;
+          margin-top: 2px;
+        }
+        .dpg-shares-side { display: grid; gap: 18px; }
+        .dpg-shares-sticky {
+          background: #f3e28b;
+          color: #171717;
+          border-radius: 16px;
+          padding: 18px;
+          transform: rotate(1deg);
+          border: 1px solid rgba(0,0,0,0.08);
+          box-shadow: 0 18px 36px rgba(0,0,0,0.16);
+        }
+        .dpg-shares-demo {
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          border-radius: 18px;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 20% 20%, rgba(147,180,240,0.24), transparent 35%),
+            radial-gradient(circle at 80% 30%, rgba(243,226,139,0.18), transparent 30%),
+            linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
+            rgba(7,10,9,0.85);
+          border: 1px solid rgba(255,255,255,0.08);
+          display: grid;
+          place-items: center;
+          position: relative;
+        }
+        .dpg-shares-play {
+          width: 74px;
+          height: 74px;
+          border-radius: 999px;
+          background: ${accent};
+          color: #121715;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          font-weight: 900;
+          box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+        }
+        .dpg-shares-caption {
+          position: absolute;
+          left: 18px;
+          right: 18px;
+          bottom: 16px;
+          color: #f3efe8;
+          font-size: 14px;
+          line-height: 1.4;
+        }
+        @media (max-width: 920px) {
+          .dpg-shares-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div className="dpg-shares-shell">
+        <PageHero
+          accent={accent}
+          editorMode={editorMode}
+          activeField={activeField}
+          setActiveField={setActiveField}
+          prefix="shares"
+          content={content}
+          setContent={setContent}
+        />
+
+        <section className="dpg-shares-grid">
+          <div className="dpg-shares-main">
+            <article className="dpg-shares-card">
+              <div className="dpg-shares-demo">
+                <div className="dpg-shares-play">▶</div>
+                <div className="dpg-shares-caption">
+                  DPG Shares wants to become a native session archive, not just another outbound link pile.
+                </div>
+              </div>
+            </article>
+
+            <article className="dpg-shares-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_lead_title"}
+                value={content.lead_title}
+                onChange={(v) => setContent({ ...content, lead_title: v })}
+                onStartEdit={() => setActiveField("shares_lead_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead title"
+                hint="Edit title"
+                display={content.lead_title}
+                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "2rem", lineHeight: 1.05, marginBottom: 14, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_lead_body"}
+                value={content.lead_body}
+                onChange={(v) => setContent({ ...content, lead_body: v })}
+                onStartEdit={() => setActiveField("shares_lead_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Lead body"
+                multiline
+                hint="Edit intro block"
+                display={content.lead_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, fontSize: "1.06rem", borderRadius: 10 }}
+              />
+            </article>
+
+            <article className="dpg-shares-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_vision_title"}
+                value={content.vision_title}
+                onChange={(v) => setContent({ ...content, vision_title: v })}
+                onStartEdit={() => setActiveField("shares_vision_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Vision title"
+                hint="Edit section label"
+                display={content.vision_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+
+              <div className="dpg-shares-gridlist">
+                {Array.from({ length: Math.max(content.vision_items.length, editorMode ? 6 : content.vision_items.length) }).map((_, idx) => {
+                  const value = content.vision_items[idx] || "";
+                  return (
+                    <div className="dpg-shares-tile" key={`vision-${idx}`}>
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `shares_vision_${idx}`}
+                        value={value}
+                        onChange={(v) => updateVisionItem(idx, v)}
+                        onStartEdit={() => setActiveField(`shares_vision_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Vision item ${idx + 1}`}
+                        hint="Edit item"
+                        display={value || (editorMode ? "Empty vision slot" : "")}
+                        displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+
+            <article className="dpg-shares-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_build_title"}
+                value={content.build_title}
+                onChange={(v) => setContent({ ...content, build_title: v })}
+                onStartEdit={() => setActiveField("shares_build_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Build title"
+                hint="Edit section label"
+                display={content.build_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+
+              <div style={{ display: "grid", gap: 12 }}>
+                {Array.from({ length: Math.max(content.build_items.length, editorMode ? 4 : content.build_items.length) }).map((_, idx) => {
+                  const value = content.build_items[idx] || "";
+                  return (
+                    <div className="dpg-shares-phase" key={`phase-${idx}`}>
+                      <div className="dpg-shares-num">{idx + 1}</div>
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `shares_build_${idx}`}
+                        value={value}
+                        onChange={(v) => updateBuildItem(idx, v)}
+                        onStartEdit={() => setActiveField(`shares_build_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Phase ${idx + 1}`}
+                        hint="Edit phase"
+                        display={value || (editorMode ? "Empty phase slot" : "")}
+                        displayStyle={{ color: "#f3efe8", lineHeight: 1.55, borderRadius: 10 }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          </div>
+
+          <aside className="dpg-shares-side">
+            <div className="dpg-shares-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_cta_title"}
+                value={content.cta_title}
+                onChange={(v) => setContent({ ...content, cta_title: v })}
+                onStartEdit={() => setActiveField("shares_cta_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="CTA title"
+                hint="Edit label"
+                display={content.cta_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_cta_body"}
+                value={content.cta_body}
+                onChange={(v) => setContent({ ...content, cta_body: v })}
+                onStartEdit={() => setActiveField("shares_cta_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="CTA body"
+                multiline
+                hint="Edit body"
+                display={content.cta_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-shares-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_side_title"}
+                value={content.side_title}
+                onChange={(v) => setContent({ ...content, side_title: v })}
+                onStartEdit={() => setActiveField("shares_side_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side title"
+                hint="Edit label"
+                display={content.side_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_side_body"}
+                value={content.side_body}
+                onChange={(v) => setContent({ ...content, side_body: v })}
+                onStartEdit={() => setActiveField("shares_side_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side body"
+                multiline
+                hint="Edit note"
+                display={content.side_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-shares-sticky">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_sticky_title"}
+                value={content.sticky_title}
+                onChange={(v) => setContent({ ...content, sticky_title: v })}
+                onStartEdit={() => setActiveField("shares_sticky_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky title"
+                hint="Edit title"
+                dark={false}
+                display={content.sticky_title}
+                displayStyle={{ color: "#171717", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.1, marginBottom: 8, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_sticky_body"}
+                value={content.sticky_body}
+                onChange={(v) => setContent({ ...content, sticky_body: v })}
+                onStartEdit={() => setActiveField("shares_sticky_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Sticky body"
+                multiline
+                hint="Edit note"
+                dark={false}
+                display={content.sticky_body}
+                displayStyle={{ color: "#171717", lineHeight: 1.56, fontSize: "0.98rem", borderRadius: 10 }}
+              />
+            </div>
+          </aside>
+        </section>
+      </div>
+    </>
+  );
+}
+
 function GenericPublicPage({ page, accent }) {
   return (
     <>
@@ -1286,7 +1667,8 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
           { label: "Volunteer", url: "/volunteer" },
           { label: "Donate", url: "/donate" },
           { label: "Press", url: "/press" },
-          { label: "DPG Shares", url: "/bulletin" },
+          { label: "Bulletin", url: "/bulletin" },
+          { label: "DPG Shares", url: "/dpg-shares" },
           { label: "RSVP", url: "/rsvp" },
         ];
 
@@ -1298,6 +1680,11 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
   const pressContent = normalizePressContent({
     ...(contentPages?.press || {}),
     ...(draftPages?.press || {}),
+  }, page);
+
+  const sharesContent = normalizeSharesContent({
+    ...(contentPages?.["dpg-shares"] || {}),
+    ...(draftPages?.["dpg-shares"] || {}),
   }, page);
 
   const rsvpContent = normalizeRsvpContent({
@@ -1345,6 +1732,10 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
 
   const setPressContent = (next) => {
     setDraftPages((prev) => ({ ...(prev || {}), press: next }));
+  };
+
+  const setSharesContent = (next) => {
+    setDraftPages((prev) => ({ ...(prev || {}), "dpg-shares": next }));
   };
 
   const setRsvpContent = (next) => {
@@ -1453,7 +1844,18 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
             setContent={setRsvpContent}
           />
         ) : (
+          slug === "dpg-shares" ? (
+          <SharesPageLayout
+            accent={accent}
+            editorMode={editorMode}
+            activeField={activeField}
+            setActiveField={setActiveField}
+            content={sharesContent}
+            setContent={setSharesContent}
+          />
+        ) : (
           <GenericPublicPage page={page} accent={accent} />
+        )
         )}
       </div>
     </div>

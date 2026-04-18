@@ -5,9 +5,9 @@ export const DPG_PUBLIC_PAGES = {
     eyebrow: "Dual Power West",
     featureImage: "",
     html: `
-      <p>Dual Power West is a gathering for learning, sharing, building, and reflection across anti authoritarian and anti capitalist movements.</p>
+      <p>Dual Power West is a gathering for learning, sharing, building, and reflection across anti-authoritarian and anti-capitalist movements.</p>
       <p>We are building a space for trust, skill sharing, solidarity, and collective exploration. The point is not polished conference culture. The point is relationships, courage, and practical capacity.</p>
-      <p>This public site is the front door. Organizer tools, internal logistics, and planning live behind sign in.</p>
+      <p>This public site is the front door. Organizer tools, internal logistics, and planning live behind sign-in.</p>
     `,
   },
 

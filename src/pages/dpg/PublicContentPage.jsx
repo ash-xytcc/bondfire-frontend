@@ -713,6 +713,38 @@ function PressPageLayout({ accent, editorMode = false, activeField = "", setActi
     return () => { dead = true; };
   }, []);
 
+  React.useEffect(() => {
+    if (slug !== "dpg-shares") return;
+
+    let dead = false;
+    setSharesState((prev) => ({ ...prev, loading: true, error: "" }));
+
+    (async () => {
+      try {
+        const res = await fetch("/api/public/shares?org=dpg&limit=12", {
+          headers: { Accept: "application/json" },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (dead) return;
+        if (!res.ok || data?.ok === false) {
+          setSharesState({ loading: false, items: [], featured: null, error: data?.error || `HTTP ${res.status}` });
+          return;
+        }
+        setSharesState({
+          loading: false,
+          items: Array.isArray(data?.items) ? data.items : [],
+          featured: data?.featured || null,
+          error: "",
+        });
+      } catch (e) {
+        if (dead) return;
+        setSharesState({ loading: false, items: [], featured: null, error: String(e?.message || e) });
+      }
+    })();
+
+    return () => { dead = true; };
+  }, [slug]);
+
   const updateItem = (index, key, value) => {
     const next = [...content.items];
     next[index] = { ...(next[index] || {}), [key]: value };
@@ -1436,7 +1468,7 @@ function RsvpPageLayout({ accent, editorMode = false, activeField = "", setActiv
 }
 
 
-function SharesPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+function SharesPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {}, authed = false, sharesLoading = false, sharesError = "", shareDraft = null, setShareDraft = () => {}, shareCreateBusy = false, shareCreateMsg = "", onPublishShare = null }) {
   const updateVisionItem = (index, value) => {
     const next = [...content.vision_items];
     while (next.length < 8) next.push("");
@@ -1520,6 +1552,7 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
   const featured = content.featured || {};
   const videos = Array.isArray(content.videos) ? content.videos : [];
   const visibleCards = Math.max(videos.length, editorMode ? 6 : videos.length);
+  const showComposer = authed && !editorMode && shareDraft;
 
   return (
     <>
@@ -2060,11 +2093,66 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           </aside>
         </section>
 
-        <section className="dpg-shares-wide-stack">
-          <article className="dpg-shares-card">
-            <InlineField
-              editorMode={editorMode}
-              editing={editorMode && activeField === "shares_grid_title"}
+
+<section className="dpg-shares-wide-stack">
+  {showComposer ? (
+    <article className="dpg-shares-card">
+      <div style={{ display: "grid", gap: 14 }}>
+        <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
+          Publish live video entry
+        </div>
+        <div style={{ color: "#d7ddd8", lineHeight: 1.62, maxWidth: 860 }}>
+          This is the first real Shares write path. Paste hosted video and thumbnail URLs, add metadata, and the card will publish into the live public grid below.
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+          <input value={shareDraft.title || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, title: e.target.value }))} placeholder="Title" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+          <input value={shareDraft.videoUrl || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, videoUrl: e.target.value }))} placeholder="Video URL" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+          <input value={shareDraft.thumbnailUrl || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, thumbnailUrl: e.target.value }))} placeholder="Thumbnail URL" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+          <input value={shareDraft.tags || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, tags: e.target.value }))} placeholder="Tags, comma separated" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+          <input value={shareDraft.durationText || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, durationText: e.target.value }))} placeholder="Duration text" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+          <input value={shareDraft.metaText || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, metaText: e.target.value }))} placeholder="Meta text" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+        </div>
+
+        <textarea value={shareDraft.description || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, description: e.target.value }))} placeholder="Description" style={{ width: "100%", minHeight: 110, resize: "vertical", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 10, color: "#f3efe8", fontWeight: 700 }}>
+          <input type="checkbox" checked={!!shareDraft.featured} onChange={(e) => setShareDraft((prev) => ({ ...prev, featured: e.target.checked }))} />
+          Mark as featured
+        </label>
+
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={onPublishShare}
+            disabled={shareCreateBusy}
+            style={{
+              border: 0,
+              borderRadius: 999,
+              padding: "12px 16px",
+              background: accent,
+              color: "#121715",
+              fontWeight: 800,
+              cursor: shareCreateBusy ? "default" : "pointer",
+            }}
+          >
+            {shareCreateBusy ? "Publishing…" : "Publish video entry"}
+          </button>
+
+          {shareCreateMsg ? (
+            <span style={{ color: shareCreateMsg.includes("published") ? "#9fd3ab" : "#ffb8b8", fontSize: 13 }}>
+              {shareCreateMsg}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  ) : null}
+
+  <article className="dpg-shares-card">
+    <InlineField
+      editorMode={editorMode}
+      editing={editorMode && activeField === "shares_grid_title"}
               value={content.grid_title}
               onChange={(v) => setContent({ ...content, grid_title: v })}
               onStartEdit={() => setActiveField("shares_grid_title")}
@@ -2076,6 +2164,12 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
             />
 
             <div className="dpg-shares-grid-header">
+              {sharesLoading ? (
+                <div style={{ color: "#d7ddd8" }}>Loading live sessions…</div>
+              ) : null}
+              {!sharesLoading && sharesError ? (
+                <div style={{ color: "#ffb8b8" }}>{sharesError}</div>
+              ) : null}
               <InlineField
                 editorMode={editorMode}
                 editing={editorMode && activeField === "shares_grid_body"}
@@ -2447,6 +2541,19 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
   const [savedPagesOverride, setSavedPagesOverride] = React.useState(null);
   const [saveBusy, setSaveBusy] = React.useState(false);
   const [saveMsg, setSaveMsg] = React.useState("");
+  const [sharesState, setSharesState] = React.useState({ loading: false, items: [], featured: null, error: "" });
+  const [shareCreateBusy, setShareCreateBusy] = React.useState(false);
+  const [shareCreateMsg, setShareCreateMsg] = React.useState("");
+  const [shareDraft, setShareDraft] = React.useState({
+    title: "",
+    description: "",
+    videoUrl: "",
+    thumbnailUrl: "",
+    tags: "",
+    durationText: "",
+    metaText: "",
+    featured: false,
+  });
   const theme = getDpgPublicTheme(config);
 
   React.useEffect(() => {
@@ -2516,6 +2623,36 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
     ...(draftPages?.["dpg-shares"] || {}),
   }, page);
 
+  const sharesVideos = Array.isArray(sharesState.items) && sharesState.items.length
+    ? sharesState.items.map((item) => ({
+        tag: Array.isArray(item?.tags) && item.tags.length ? item.tags[0] : "Session",
+        title: item?.title || "",
+        description: item?.description || "",
+        duration: item?.durationText || "",
+        meta: item?.metaText || "",
+        thumb: item?.thumbnailUrl || "",
+        href: item?.videoUrl || "#",
+      }))
+    : sharesContent.videos;
+
+  const sharesFeatured = sharesState.featured
+    ? {
+        tag: Array.isArray(sharesState.featured?.tags) && sharesState.featured.tags.length ? sharesState.featured.tags[0] : "Featured",
+        title: sharesState.featured?.title || "",
+        description: sharesState.featured?.description || "",
+        duration: sharesState.featured?.durationText || "",
+        meta: sharesState.featured?.metaText || "",
+        thumb: sharesState.featured?.thumbnailUrl || "",
+        href: sharesState.featured?.videoUrl || "#",
+      }
+    : sharesContent.featured;
+
+  const mergedSharesContent = {
+    ...sharesContent,
+    videos: sharesVideos,
+    featured: sharesFeatured,
+  };
+
   const rsvpContent = normalizeRsvpContent({
     ...(contentPages?.rsvp || {}),
     ...(draftPages?.rsvp || {}),
@@ -2569,6 +2706,51 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
 
   const setRsvpContent = (next) => {
     setDraftPages((prev) => ({ ...(prev || {}), rsvp: next }));
+  };
+
+  const publishShare = async () => {
+    setShareCreateBusy(true);
+    setShareCreateMsg("");
+    try {
+      await authFetch("/api/orgs/dpg/shares", {
+        method: "POST",
+        body: {
+          ...shareDraft,
+          tags: String(shareDraft.tags || "")
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean),
+          status: "published",
+        },
+      });
+
+      setShareDraft({
+        title: "",
+        description: "",
+        videoUrl: "",
+        thumbnailUrl: "",
+        tags: "",
+        durationText: "",
+        metaText: "",
+        featured: false,
+      });
+      setShareCreateMsg("Video entry published.");
+
+      const res = await fetch("/api/public/shares?org=dpg&limit=12", {
+        headers: { Accept: "application/json" },
+      });
+      const fresh = await res.json().catch(() => ({}));
+      setSharesState({
+        loading: false,
+        items: Array.isArray(fresh?.items) ? fresh.items : [],
+        featured: fresh?.featured || null,
+        error: "",
+      });
+    } catch (e) {
+      setShareCreateMsg(String(e?.message || e || "Failed to publish video entry"));
+    } finally {
+      setShareCreateBusy(false);
+    }
   };
 
   if (!page) {
@@ -2679,8 +2861,16 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
             editorMode={editorMode}
             activeField={activeField}
             setActiveField={setActiveField}
-            content={sharesContent}
+            content={mergedSharesContent}
             setContent={setSharesContent}
+            authed={authState.authed}
+            sharesLoading={sharesState.loading}
+            sharesError={sharesState.error}
+            shareDraft={shareDraft}
+            setShareDraft={setShareDraft}
+            shareCreateBusy={shareCreateBusy}
+            shareCreateMsg={shareCreateMsg}
+            onPublishShare={publishShare}
           />
         ) : (
           <GenericPublicPage page={page} accent={accent} />

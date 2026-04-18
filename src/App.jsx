@@ -353,8 +353,30 @@ function AdminApp() {
 }
 
 export default function App() {
-  const browserPath = typeof window !== "undefined" ? (window.location.pathname || "/") : "/";
-  const adminHash = typeof window !== "undefined" ? (window.location.hash || "") : "";
+  const [browserPath, setBrowserPath] = React.useState(
+    typeof window !== "undefined" ? (window.location.pathname || "/") : "/"
+  );
+  const [adminHash, setAdminHash] = React.useState(
+    typeof window !== "undefined" ? (window.location.hash || "") : ""
+  );
+
+  React.useEffect(() => {
+    const syncLocation = () => {
+      setBrowserPath(window.location.pathname || "/");
+      setAdminHash(window.location.hash || "");
+    };
+
+    window.addEventListener("popstate", syncLocation);
+    window.addEventListener("hashchange", syncLocation);
+    window.addEventListener("bf-public-nav", syncLocation);
+
+    return () => {
+      window.removeEventListener("popstate", syncLocation);
+      window.removeEventListener("hashchange", syncLocation);
+      window.removeEventListener("bf-public-nav", syncLocation);
+    };
+  }, []);
+
   const isAdminPath = browserPath === "/admin" || browserPath.startsWith("/admin/");
   const isSignInHash = adminHash === "#/signin" || adminHash.startsWith("#/signin?");
   const isAnyHashAppRoute = adminHash.startsWith("#/");

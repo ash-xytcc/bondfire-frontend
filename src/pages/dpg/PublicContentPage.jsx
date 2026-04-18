@@ -31,6 +31,19 @@ function authFetch(path, opts = {}) {
 
 function PublicNav({ links = [], authed = false, accent = "#93b4f0" }) {
   const items = Array.isArray(links) ? links : [];
+
+  const handlePublicNav = (e, href) => {
+    if (!href) return;
+    const url = String(href || "").trim();
+    if (!url.startsWith("/")) {
+      window.location.href = url;
+      return;
+    }
+    e.preventDefault();
+    window.history.pushState({}, "", url);
+    window.dispatchEvent(new Event("bf-public-nav"));
+  };
+
   return (
     <nav
       style={{
@@ -47,6 +60,7 @@ function PublicNav({ links = [], authed = false, accent = "#93b4f0" }) {
           <a
             key={`${item?.label || "nav"}-${idx}`}
             href={item?.url || "/"}
+            onClick={(e) => handlePublicNav(e, item?.url || "/")}
             style={{
               color: "#f3efe8",
               textDecoration: "none",
@@ -2689,7 +2703,7 @@ React.useEffect(() => {
       : "Dual Power West";
   }, [slug]);
 
-  const navLinks =
+  const navLinksRaw =
     Array.isArray(config?.nav_links) && config.nav_links.length
       ? config.nav_links
       : [
@@ -2699,9 +2713,23 @@ React.useEffect(() => {
           { label: "Volunteer", url: "/volunteer" },
           { label: "Donate", url: "/donate" },
           { label: "Press", url: "/press" },
-                    { label: "DPG Shares", url: "/dpg-shares" },
+          { label: "DPG Shares", url: "/dpg-shares" },
           { label: "RSVP", url: "/rsvp" },
         ];
+
+  const navLinks = navLinksRaw.map((item) => {
+    const label = String(item?.label || "").trim().toLowerCase();
+    if (label === "home") return { ...item, url: "/" };
+    if (label === "about") return { ...item, url: "/about" };
+    if (label === "faq") return { ...item, url: "/faq" };
+    if (label === "volunteer") return { ...item, url: "/volunteer" };
+    if (label === "donate") return { ...item, url: "/donate" };
+    if (label === "press") return { ...item, url: "/press" };
+    if (label === "dpg shares" || label === "shares") return { ...item, url: "/dpg-shares" };
+    if (label === "rsvp") return { ...item, url: "/rsvp" };
+    if (label === "bulletin") return { ...item, url: "/press#updates" };
+    return item;
+  });
 
   const accent = String(config?.accent_color || "#93b4f0").trim() || "#93b4f0";
   const contentPages = savedPagesOverride || config?.content_pages || {};

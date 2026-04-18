@@ -487,3 +487,62 @@ body.rh-body {
     width: 100%;
   }
 }
+
+
+/* sign in cleanup pass */
+.rh-signin-scene {
+  min-height: 700px;
+  gap: 14px;
+}
+
+.rh-board,
+.rh-metal {
+  border-radius: 22px;
+}
+
+.rh-board {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.02), transparent 22%),
+    linear-gradient(180deg, #5f4b3c 0%, #574536 100%);
+}
+
+.rh-metal {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), transparent 14%),
+    linear-gradient(180deg, #3e5560 0%, #314750 100%);
+}
+
+.rh-note,
+.rh-mini-note,
+.rh-photo-card {
+  border-radius: 16px;
+}
+
+.rh-note-title,
+.rh-auth-title,
+.rh-metal-brand {
+  text-wrap: balance;
+}
+
+.rh-auth-copy,
+.rh-auth-note,
+.rh-note-copy,
+.rh-mini-note p {
+  max-width: 52ch;
+}
+
+.rh-error {
+  margin: 4px 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(155, 62, 55, 0.18);
+  border: 1px solid rgba(155, 62, 55, 0.35);
+}
+
+.rh-auth-form .rh-btn-primary {
+  width: 100%;
+}
+
+.rh-photo-card {
+  min-height: 250px;
+}

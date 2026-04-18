@@ -76,7 +76,7 @@ export default function SignIn() {
       }
 
       if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || (mode === "register" ? "Register failed" : "Login failed"));
+        throw new Error(data?.error || (mode === "register" ? "Account creation failed" : "Sign in failed"));
       }
 
       const meRes = await fetch("/api/auth/me", { credentials: "include" });
@@ -117,7 +117,6 @@ export default function SignIn() {
 
       fireAuthChanged();
 
-      // Red Harbor: skip org picker, go straight into first branch
       try {
         const orgsRes = await fetch("/api/orgs", { credentials: "include" });
         const orgsData = await orgsRes.json().catch(() => ({}));
@@ -146,7 +145,7 @@ export default function SignIn() {
         recovery_code: mfaRecovery,
       });
       if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || "MFA failed");
+        throw new Error(data?.error || "Verification failed");
       }
 
       const meRes = await fetch("/api/auth/me", { credentials: "include" });
@@ -169,7 +168,7 @@ export default function SignIn() {
       fireAuthChanged();
       navigate("/orgs", { replace: true });
     } catch (e2) {
-      setErr(typeof e2 === "string" ? e2 : e2?.message || "MFA failed");
+      setErr(typeof e2 === "string" ? e2 : e2?.message || "Verification failed");
     } finally {
       setBusy(false);
     }
@@ -194,33 +193,31 @@ export default function SignIn() {
             <div className="rh-board-grid">
               <div>
                 <div className="rh-note">
-                  
-                  <div className="rh-note-sub">Members Access</div>
-                  <h1 className="rh-note-title">Enter the Backend</h1>
+                  <div className="rh-note-sub">Members and invited organizers</div>
+                  <h1 className="rh-note-title">Sign in to the branch</h1>
                   <p className="rh-note-copy">
-                    Sign in to access the internal branch workspace for coordination, records, documents,
-                    and operations. Public information belongs on the front door. Working information
-                    belongs behind it.
+                    This side of the site is for branch members and trusted working groups. Sign in to
+                    reach notes, records, planning, and internal coordination.
                   </p>
                   <ul className="rh-note-list">
-                    <li>Internal coordination</li>
-                    <li>Meeting notes and records</li>
-                    <li>Roles and responsibilities</li>
-                    <li>Private operations</li>
+                    <li>Meeting notes and branch records</li>
+                    <li>Organizing follow up and internal discussion</li>
+                    <li>Documents and working materials</li>
+                    <li>Member only updates</li>
                   </ul>
                   <a className="rh-btn" href="/?app=red-harbor#/red-harbor">
-                    Back to Front Door
+                    Back to public site
                   </a>
                 </div>
 
                 <div className="rh-poster-stack">
                   <div className="rh-mini-note">
-                    <h3>Internal Coordination</h3>
-                    <p>Branch operations, follow up, and shared working context.</p>
+                    <h3>Member side</h3>
+                    <p>For branch work, planning, follow up, and internal communication.</p>
                   </div>
                   <div className="rh-mini-note">
-                    <h3>Records and Documents</h3>
-                    <p>Meeting notes, records, and internal files that are not for public circulation.</p>
+                    <h3>Need access?</h3>
+                    <p>If you were invited in, use your account and optional invite code to enter the branch space.</p>
                   </div>
                 </div>
               </div>
@@ -234,8 +231,8 @@ export default function SignIn() {
                 />
                 <div className="rh-poster-stack">
                   <div className="rh-mini-note">
-                    <h3>Private Operations</h3>
-                    <p>Not for public distribution. Internal branch work only.</p>
+                    <h3>Private branch space</h3>
+                    <p>Not indexed, not public, and not meant for outreach copy. This is the working side of the branch.</p>
                   </div>
                 </div>
               </div>
@@ -245,19 +242,19 @@ export default function SignIn() {
           <section className="rh-metal">
             <div className="rh-metal-header">
               <h2 className="rh-metal-brand">Red Harbor</h2>
-              <div className="rh-metal-sub">Internal Use Only</div>
+              <div className="rh-metal-sub">Member sign in</div>
             </div>
 
             <div className="rh-auth-head">
               <h1 className="rh-auth-title">
-                {mfaStep ? "Verify Access" : mode === "register" ? "Create Access" : "Sign In"}
+                {mfaStep ? "Verify your sign in" : mode === "register" ? "Create your account" : "Sign in"}
               </h1>
               <p className="rh-auth-copy">
                 {mfaStep
-                  ? "Complete multi factor verification to enter the Red Harbor backend."
+                  ? "Enter your authentication code to finish signing in."
                   : mode === "register"
-                    ? "Create your account and your first Red Harbor workspace."
-                    : "Use your account to access internal coordination, records, and operations."}
+                    ? "Create your account to access the branch workspace."
+                    : "Use your email and password to enter the member side of Red Harbor."}
               </p>
             </div>
 
@@ -271,7 +268,7 @@ export default function SignIn() {
                 }}
                 disabled={busy || !!mfaStep}
               >
-                Sign In
+                Sign in
               </button>
               <button
                 type="button"
@@ -282,7 +279,7 @@ export default function SignIn() {
                 }}
                 disabled={busy || !!mfaStep}
               >
-                Create Account
+                Create account
               </button>
               <button
                 type="button"
@@ -290,7 +287,7 @@ export default function SignIn() {
                 onClick={() => startDemo(navigate)}
                 disabled={busy}
               >
-                Try Demo
+                Try demo
               </button>
             </div>
 
@@ -301,7 +298,7 @@ export default function SignIn() {
                 <input
                   className="rh-input"
                   type="text"
-                  placeholder="Authenticator code"
+                  placeholder="Authentication code"
                   value={mfaCode}
                   onChange={(e) => setMfaCode(e.target.value)}
                   autoFocus
@@ -309,13 +306,13 @@ export default function SignIn() {
                 <input
                   className="rh-input"
                   type="text"
-                  placeholder="Recovery code optional"
+                  placeholder="Recovery code"
                   value={mfaRecovery}
                   onChange={(e) => setMfaRecovery(e.target.value)}
                 />
                 <div className="rh-auth-toolbar">
                   <button className="rh-btn rh-btn-primary" disabled={busy}>
-                    {busy ? "Verifying…" : "Verify Access"}
+                    {busy ? "Verifying…" : "Verify sign in"}
                   </button>
                   <button
                     type="button"
@@ -338,14 +335,14 @@ export default function SignIn() {
                     <input
                       className="rh-input"
                       type="text"
-                      placeholder="Name"
+                      placeholder="Your name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                     />
                     <input
                       className="rh-input"
                       type="text"
-                      placeholder="Org name"
+                      placeholder="Organization name"
                       value={orgName}
                       onChange={(e) => setOrgName(e.target.value)}
                     />
@@ -355,7 +352,7 @@ export default function SignIn() {
                 <input
                   className="rh-input"
                   type="email"
-                  placeholder="Email"
+                  placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoFocus
@@ -372,24 +369,24 @@ export default function SignIn() {
                   <input
                     className="rh-input"
                     type="text"
-                    placeholder="Invite code optional"
+                    placeholder="Invite code"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
                   />
                 </div>
 
                 <button className="rh-btn rh-btn-primary" disabled={busy}>
-                  {busy ? "Working…" : mode === "register" ? "Create Account" : "Sign In"}
+                  {busy ? "Working…" : mode === "register" ? "Create account" : "Sign in"}
                 </button>
               </form>
             )}
 
             <div className="rh-auth-footer">
               <div className="rh-auth-note">
-                Public side for outreach. Private side for branch work.
+                Public pages are for outreach. This sign in is for member work and internal branch access.
               </div>
               <a className="rh-btn" href="/?app=red-harbor#/red-harbor">
-                Back to Front Door
+                Back to public site
               </a>
             </div>
           </section>

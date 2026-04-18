@@ -170,6 +170,89 @@ export async function createShare(env, orgId, userId, input) {
 }
 
 
+
+export async function listOrgShares(env, orgId = "dpg", limit = 50) {
+  await ensureDpgSharesSchema(env);
+  const db = getDb(env);
+
+  const res = await db.prepare(
+    `SELECT *
+     FROM dpg_shares_videos
+     WHERE org_id = ?
+     ORDER BY updated_at DESC, created_at DESC
+     LIMIT ?`
+  ).bind(orgId, Number(limit || 50)).all();
+
+  return (res.results || []).map(rowToShare);
+}
+
+export async function updateShare(env, orgId, shareId, input) {
+  await ensureDpgSharesSchema(env);
+  const db = getDb(env);
+  const t = now();
+
+  const existing = await db.prepare(
+    `SELECT * FROM dpg_shares_videos WHERE id = ? AND org_id = ? LIMIT 1`
+  ).bind(String(shareId || ""), String(orgId || "")).first();
+
+  if (!existing) throw new Error("SHARE_NOT_FOUND");
+
+  const nextTitle = input.title || String(existing.title || "");
+  const nextSlug = await uniqueShareSlug(env, orgId, nextTitle || "share", String(shareId || ""));
+  const prevStatus = String(existing.status || "draft");
+  const nextStatus = input.status || prevStatus;
+  const nextPublishedAt =
+    nextStatus === "published"
+      ? (Number(existing.published_at || 0) || t)
+      : null;
+
+  if (input.featured) {
+    await db.prepare(
+      `UPDATE dpg_shares_videos
+       SET featured = 0, updated_at = ?
+       WHERE org_id = ?`
+    ).bind(t, orgId).run();
+  }
+
+  await db.prepare(
+    `UPDATE dpg_shares_videos
+     SET slug = ?,
+         title = ?,
+         description = ?,
+         video_url = ?,
+         thumbnail_url = ?,
+         tags = ?,
+         duration_text = ?,
+         meta_text = ?,
+         featured = ?,
+         status = ?,
+         updated_at = ?,
+         published_at = ?
+     WHERE id = ? AND org_id = ?`
+  ).bind(
+    nextSlug,
+    nextTitle,
+    input.description,
+    input.videoUrl,
+    input.thumbnailUrl,
+    input.tags.join(", "),
+    input.durationText,
+    input.metaText,
+    input.featured ? 1 : 0,
+    nextStatus,
+    t,
+    nextPublishedAt,
+    String(shareId || ""),
+    String(orgId || "")
+  ).run();
+
+  const row = await db.prepare(
+    `SELECT * FROM dpg_shares_videos WHERE id = ? AND org_id = ? LIMIT 1`
+  ).bind(String(shareId || ""), String(orgId || "")).first();
+
+  return rowToShare(row || {});
+}
+
 export async function getPublicShareBySlug(env, orgId = "dpg", slug = "") {
   await ensureDpgSharesSchema(env);
   const db = getDb(env);

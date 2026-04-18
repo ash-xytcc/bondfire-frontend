@@ -1223,3 +1223,26 @@
     height: 42px;
   }
 }
+
+
+.rh-newsletter-card {
+  display: grid;
+  gap: 14px;
+}
+
+.rh-newsletter-head h3 {
+  margin: 0 0 8px;
+}
+
+.rh-newsletter-form {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .rh-newsletter-form {
+    grid-template-columns: 1fr;
+  }
+}

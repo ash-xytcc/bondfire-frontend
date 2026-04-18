@@ -69,7 +69,7 @@ const defaultHome = {
   show_what_we_do: true,
   show_get_involved: true,
   show_meetings: true,
-  show_newsletter_card: false,
+  show_newsletter_card: true,
   show_website_button: false,
   website_link: null,
   what_we_do: [
@@ -744,6 +744,11 @@ export default function RedHarborHome() {
   const [saveMsg, setSaveMsg] = React.useState("")
   const [isDirty, setIsDirty] = React.useState(false)
   const [currentOrgId, setCurrentOrgId] = React.useState("")
+  const [isSignedIn, setIsSignedIn] = React.useState(false)
+  const [newsletterName, setNewsletterName] = React.useState("")
+  const [newsletterEmail, setNewsletterEmail] = React.useState("")
+  const [newsletterBusy, setNewsletterBusy] = React.useState(false)
+  const [newsletterMsg, setNewsletterMsg] = React.useState("")
 
   React.useEffect(() => {
     let ignore = false
@@ -793,11 +798,14 @@ export default function RedHarborHome() {
         })
         const data = await res.json().catch(() => ({}))
         if (!ignore) {
-          setEditorAvailable(!!(res.ok && data?.ok))
+          const authed = !!(res.ok && data?.ok)
+          setEditorAvailable(authed)
+          setIsSignedIn(authed)
         }
       } catch {
         if (!ignore) {
           setEditorAvailable(false)
+          setIsSignedIn(false)
         }
       }
     }
@@ -827,6 +835,8 @@ export default function RedHarborHome() {
 
   const accent = liveHome.accent_color || defaultHome.accent_color
   const accentDark = darkenHex(accent, 0.22)
+
+  const memberAreaHref = currentOrgId ? `/org/${encodeURIComponent(currentOrgId)}` : "/orgs"
 
   const heroStyle = React.useMemo(() => {
     const url = String(liveHome.hero_image_url || "").trim()
@@ -920,6 +930,41 @@ export default function RedHarborHome() {
     window.addEventListener("beforeunload", handler)
     return () => window.removeEventListener("beforeunload", handler)
   }, [editorMode, isDirty])
+
+  const submitNewsletter = React.useCallback(async (e) => {
+    e?.preventDefault?.()
+    const email = String(newsletterEmail || "").trim()
+    const name = String(newsletterName || "").trim()
+
+    if (!email) {
+      setNewsletterMsg("Please enter your email.")
+      return
+    }
+
+    setNewsletterBusy(true)
+    setNewsletterMsg("")
+    try {
+      const res = await fetch(`/api/p/${ORG_SLUG}/newsletter/subscribe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email, name }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || data?.message || "Could not sign up for newsletter")
+      }
+      setNewsletterName("")
+      setNewsletterEmail("")
+      setNewsletterMsg("You’re on the list.")
+    } catch (err) {
+      setNewsletterMsg(String(err?.message || err || "Could not sign up for newsletter"))
+    } finally {
+      setNewsletterBusy(false)
+    }
+  }, [newsletterEmail, newsletterName])
 
   const saveDraft = React.useCallback(async () => {
     console.log("RH SAVE CLICK", {
@@ -1097,7 +1142,9 @@ export default function RedHarborHome() {
               Edit page
             </button>
           ) : null}
-          <Link to="/signin" className="rh-signin-link">Member Sign In</Link>
+          <Link to={isSignedIn ? memberAreaHref : "/signin"} className="rh-signin-link">
+            {isSignedIn ? "Member Area" : "Member Sign In"}
+          </Link>
         </nav>
       </header>
 
@@ -1258,9 +1305,12 @@ export default function RedHarborHome() {
                         : "rh-btn rh-btn-ghost"
 
                   if (String(action.url || "").startsWith("/")) {
+                    const isMemberLink = String(action.url || "") === "/signin"
+                    const to = isMemberLink && isSignedIn ? memberAreaHref : action.url
+                    const label = isMemberLink && isSignedIn ? "Member Area" : action.label
                     return (
-                      <Link key={`${action.label}-${index}`} to={action.url} className={cls}>
-                        {action.label}
+                      <Link key={`${label}-${index}`} to={to} className={cls}>
+                        {label}
                       </Link>
                     )
                   }
@@ -1392,7 +1442,12 @@ export default function RedHarborHome() {
                   />
                   {action ? (
                     String(action.url || "").startsWith("/") ? (
-                      <Link to={action.url} className="rh-inline-link">{action.label}</Link>
+                      <Link
+                        to={String(action.url || "") === "/signin" && isSignedIn ? memberAreaHref : action.url}
+                        className="rh-inline-link"
+                      >
+                        {String(action.url || "") === "/signin" && isSignedIn ? "Member Area" : action.label}
+                      </Link>
                     ) : (
                       <button
                         type="button"
@@ -1529,15 +1584,47 @@ export default function RedHarborHome() {
                 onBodyChange={(value) => updateDraft("member_access_body", value)}
                 editorMode={editorMode}
               />
-              <Link to="/signin" className="rh-btn rh-btn-primary">Go to Member Sign In</Link>
+              <Link to={isSignedIn ? memberAreaHref : "/signin"} className="rh-btn rh-btn-primary">
+                {isSignedIn ? "Go to Member Area" : "Go to Member Sign In"}
+              </Link>
             </div>
           </div>
 
           {liveHome.show_newsletter_card ? (
             <div className="rh-note-wrap" style={{ marginTop: 16 }}>
-              <p className="rh-note">
-                Newsletter visibility is enabled in Site settings. The next pass can wire the actual signup block directly into this home page.
-              </p>
+              <div className="rh-card rh-newsletter-card">
+                <div className="rh-newsletter-head">
+                  <p className="rh-section-kicker">Newsletter</p>
+                  <h3>Stay in the loop</h3>
+                  <p className="rh-section-copy">
+                    Get branch updates, public announcements, bulletin releases, and upcoming event notices by email.
+                  </p>
+                </div>
+
+                <form className="rh-newsletter-form" onSubmit={submitNewsletter}>
+                  <input
+                    className="rh-inline-editor"
+                    value={newsletterName}
+                    onChange={(e) => setNewsletterName(e.target.value)}
+                    placeholder="Name"
+                  />
+                  <input
+                    className="rh-inline-editor"
+                    type="email"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    placeholder="Email address"
+                    required
+                  />
+                  <button type="submit" className="rh-btn rh-btn-primary" disabled={newsletterBusy}>
+                    {newsletterBusy ? "Joining..." : "Join newsletter"}
+                  </button>
+                </form>
+
+                {newsletterMsg ? (
+                  <p className="rh-note" style={{ marginTop: 12 }}>{newsletterMsg}</p>
+                ) : null}
+              </div>
             </div>
           ) : null}
         </section>
@@ -1554,7 +1641,9 @@ export default function RedHarborHome() {
           <SectionLink id="bulletin" className="rh-footer-link-button">Bulletin</SectionLink>
           {liveHome.show_meetings ? <SectionLink id="events" className="rh-footer-link-button">Events</SectionLink> : null}
           <SectionLink id="contact" className="rh-footer-link-button">Contact</SectionLink>
-          <Link to="/signin">Member Sign In</Link>
+          <Link to={isSignedIn ? memberAreaHref : "/signin"}>
+            {isSignedIn ? "Member Area" : "Member Sign In"}
+          </Link>
         </div>
       </footer>
     </div>

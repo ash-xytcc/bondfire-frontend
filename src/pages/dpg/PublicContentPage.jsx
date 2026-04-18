@@ -60,7 +60,6 @@ function PublicNav({ links = [], authed = false, accent = "#93b4f0" }) {
           <a
             key={`${item?.label || "nav"}-${idx}`}
             href={item?.url || "/"}
-            onClick={(e) => handlePublicNav(e, item?.url || "/")}
             style={{
               color: "#f3efe8",
               textDecoration: "none",

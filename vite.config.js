@@ -37,8 +37,13 @@ export default defineConfig({
         // and SW-controlled HTML is what causes the "blink/reset" + stale builds.
         navigateFallback: undefined,
 
-        // Only precache immutable hashed assets. NO html.
-        globPatterns: ["**/*.{js,css,ico,png,svg,webmanifest}"],
+        // Precache only app shell assets. Do NOT precache the labor archive images or PDFs.
+        globPatterns: ["**/*.{js,css,ico,svg,webmanifest,png}"],
+        globIgnores: [
+          "**/archive/**",
+          "**/archive-pdfs/**",
+        ],
+        maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
 
         // Keep update behavior conservative. No surprise takeovers mid-session.
         clientsClaim: false,

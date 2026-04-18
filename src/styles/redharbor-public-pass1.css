@@ -1075,3 +1075,37 @@
   font-family: "Alte Haas Grotesk Bold", sans-serif !important;
   font-weight: 700 !important;
 }
+
+
+.rh-hero-has-image {
+  border: 1px solid var(--rh-line);
+  box-shadow: var(--rh-shadow);
+}
+
+.rh-hero-has-image .rh-hero-copy,
+.rh-hero-has-image .rh-hero-card {
+  position: relative;
+  z-index: 1;
+}
+
+.rh-hero-has-image .rh-hero-card {
+  background: rgba(8, 12, 15, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.rh-editor-image {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--rh-line);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.03);
+  font-size: 13px;
+}
+
+.rh-editor-image input[type="file"] {
+  max-width: 220px;
+  font: inherit;
+  color: var(--rh-text);
+}

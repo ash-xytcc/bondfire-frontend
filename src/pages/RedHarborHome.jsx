@@ -29,6 +29,7 @@ const defaultHome = {
     "Reach out for branch contact, organizing support, membership questions, or public inquiries.",
   events_intro:
     "Meetings, branch activity, and public events will appear here as the public side develops.",
+  hero_image_url: "",
   font_family: "system",
   accent_color: "#a11f1f",
   show_action_strip: true,
@@ -218,6 +219,7 @@ function normalizeHome(raw) {
     join_intro: String(base.join_intro || defaultHome.join_intro).trim(),
     contact_intro: String(base.contact_intro || defaultHome.contact_intro).trim(),
     events_intro: String(base.events_intro || defaultHome.events_intro).trim(),
+    hero_image_url: String(base.hero_image_url || "").trim(),
     accent_color: String(base.accent_color || defaultHome.accent_color).trim(),
     what_we_do: cleanStringArray(base.what_we_do, 12).length
       ? cleanStringArray(base.what_we_do, 12)
@@ -286,6 +288,48 @@ function readCurrentOrgId() {
     return String(parsed?.id || "").trim()
   } catch {
     return ""
+  }
+}
+
+
+async function fileToOptimizedDataUrl(file) {
+  if (!file) return ""
+  if (!file.type || !file.type.startsWith("image/")) {
+    throw new Error("Please choose an image file.")
+  }
+
+  const objectUrl = URL.createObjectURL(file)
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const el = new Image()
+      el.onload = () => resolve(el)
+      el.onerror = () => reject(new Error("Could not read image."))
+      el.src = objectUrl
+    })
+
+    const maxWidth = 1800
+    const scale = Math.min(1, maxWidth / img.width)
+    const width = Math.max(1, Math.round(img.width * scale))
+    const height = Math.max(1, Math.round(img.height * scale))
+
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext("2d")
+    if (!ctx) throw new Error("Could not process image.")
+
+    ctx.drawImage(img, 0, 0, width, height)
+
+    let dataUrl = canvas.toDataURL("image/jpeg", 0.82)
+    if (dataUrl.length > 900000) {
+      dataUrl = canvas.toDataURL("image/jpeg", 0.68)
+    }
+    if (dataUrl.length > 1400000) {
+      throw new Error("Image is still too large after compression. Try a smaller image.")
+    }
+    return dataUrl
+  } finally {
+    URL.revokeObjectURL(objectUrl)
   }
 }
 
@@ -670,6 +714,23 @@ export default function RedHarborHome() {
   const accent = liveHome.accent_color || defaultHome.accent_color
   const accentDark = darkenHex(accent, 0.22)
 
+  const heroStyle = React.useMemo(() => {
+    const url = String(liveHome.hero_image_url || "").trim()
+    if (!url) return undefined
+    return {
+      backgroundImage: `linear-gradient(rgba(13, 20, 23, 0.68), rgba(13, 20, 23, 0.82)), url("${url}")`,
+      backgroundSize: "cover",
+      backgroundPosition: "center center",
+      backgroundRepeat: "no-repeat",
+      borderRadius: "28px",
+      paddingTop: "56px",
+      paddingBottom: "40px",
+      paddingLeft: "28px",
+      paddingRight: "28px",
+      marginTop: "18px",
+    }
+  }, [liveHome.hero_image_url])
+
   const startEditing = React.useCallback(() => {
     setDraft(normalizeHome({ ...home }))
     setEditorMode(true)
@@ -720,6 +781,17 @@ export default function RedHarborHome() {
       return normalizeHome({ ...src, [key]: cleaned })
     })
   }, [home])
+
+  const handleHeroImageUpload = React.useCallback(async (file) => {
+    try {
+      setSaveMsg("")
+      const dataUrl = await fileToOptimizedDataUrl(file)
+      updateDraft("hero_image_url", dataUrl)
+    } catch (err) {
+      setSaveMsg(String(err?.message || err || "Failed to load image"))
+    }
+  }, [updateDraft])
+
 
 
   React.useEffect(() => {
@@ -789,6 +861,7 @@ export default function RedHarborHome() {
         join_intro: src.join_intro,
         contact_intro: src.contact_intro,
         events_intro: src.events_intro,
+        hero_image_url: src.hero_image_url,
         font_family: src.font_family,
         accent_color: src.accent_color,
         what_we_do: src.what_we_do,
@@ -952,6 +1025,30 @@ export default function RedHarborHome() {
                   onChange={(e) => updateDraft("accent_color", e.target.value)}
                 />
               </label>
+
+              <label className="rh-editor-image">
+                <span>Hero image</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files && e.target.files[0]
+                    if (file) await handleHeroImageUpload(file)
+                    e.target.value = ""
+                  }}
+                />
+              </label>
+
+              {liveHome.hero_image_url ? (
+                <button
+                  type="button"
+                  className="rh-btn rh-btn-ghost"
+                  onClick={() => updateDraft("hero_image_url", "")}
+                  disabled={saveBusy}
+                >
+                  Remove image
+                </button>
+              ) : null}
               {saveMsg ? <span className={saveMsg.includes("Saved") ? "rh-editor-success" : "rh-editor-error"}>{saveMsg}</span> : null}
               <button
                 type="button"
@@ -1008,7 +1105,7 @@ export default function RedHarborHome() {
       ) : null}
 
       <main>
-        <section className="rh-hero">
+        <section className={`rh-hero ${liveHome.hero_image_url ? "rh-hero-has-image" : ""}`} style={heroStyle}>
           <div className="rh-hero-copy">
             <InlineTextEdit
               tag="p"

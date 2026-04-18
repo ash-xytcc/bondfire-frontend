@@ -38,6 +38,7 @@ function normalizePublicCfg(cfg) {
     join_intro: String(src.join_intro || ""),
     contact_intro: String(src.contact_intro || ""),
     events_intro: String(src.events_intro || ""),
+    hero_image_url: String(src.hero_image_url || ""),
     font_family: String(src.font_family || "system"),
     accent_color: String(src.accent_color || "#6d5efc"),
     theme_mode: String(src.theme_mode || "light"),

@@ -420,10 +420,99 @@ function normalizeRsvpContent(src = {}, page = {}) {
 
 
 function normalizeSharesContent(src = {}, page = {}) {
+  const defaultVideos = [
+    {
+      tag: "Featured session",
+      title: "Building durable mutual aid infrastructure",
+      description: "A long form session on logistics, continuity, and making projects survive beyond the event that birthed them.",
+      duration: "48 min",
+      meta: "DPG West 2026",
+      thumb: "",
+      href: "#",
+    },
+    {
+      tag: "Interview",
+      title: "Kitchen as infrastructure",
+      description: "Movement kitchens as logistics hubs, relationship engines, and one of the few things nobody forgets to show up for.",
+      duration: "23 min",
+      meta: "Field interview",
+      thumb: "",
+      href: "#",
+    },
+    {
+      tag: "Workshop",
+      title: "Security culture for ordinary humans",
+      description: "Practical habits, not theater. The boring stuff that actually keeps projects usable and people safer.",
+      duration: "36 min",
+      meta: "Recorded training",
+      thumb: "",
+      href: "#",
+    },
+    {
+      tag: "Roundtable",
+      title: "What we learned after the gathering",
+      description: "Organizers and participants reflect on what worked, what broke, and what should exist next time on purpose.",
+      duration: "57 min",
+      meta: "Post event debrief",
+      thumb: "",
+      href: "#",
+    },
+    {
+      tag: "Skill share",
+      title: "Conflict, accountability, and repair",
+      description: "A recorded conversation on how projects stay coherent when humans, inevitably, continue being humans.",
+      duration: "31 min",
+      meta: "Community session",
+      thumb: "",
+      href: "#",
+    },
+    {
+      tag: "Archive",
+      title: "Field notes from the edges",
+      description: "Fragments, clips, and small recordings that still matter even when they are not polished enough for platform cosplay.",
+      duration: "12 min",
+      meta: "Clips and fragments",
+      thumb: "",
+      href: "#",
+    },
+  ];
+
+  const normalizeVideo = (item = {}, fallback = {}) => ({
+    tag: String(item?.tag || fallback?.tag || "").trim(),
+    title: String(item?.title || fallback?.title || "").trim(),
+    description: String(item?.description || fallback?.description || "").trim(),
+    duration: String(item?.duration || fallback?.duration || "").trim(),
+    meta: String(item?.meta || fallback?.meta || "").trim(),
+    thumb: String(item?.thumb || item?.thumbnail || fallback?.thumb || "").trim(),
+    href: String(item?.href || item?.url || fallback?.href || "").trim(),
+  });
+
+  const rawVideos = Array.isArray(src?.videos) && src.videos.length
+    ? src.videos.slice(0, 12).map((item, idx) => normalizeVideo(item, defaultVideos[idx] || {}))
+    : defaultVideos.map((item) => ({ ...item }));
+
+  const videos = rawVideos.filter((item) =>
+    item.title || item.description || item.tag || item.duration || item.meta || item.thumb || item.href
+  );
+
+  const featuredSource =
+    src?.featured && typeof src.featured === "object"
+      ? src.featured
+      : videos[0] || defaultVideos[0];
+
+  const featured = normalizeVideo(featuredSource, defaultVideos[0]);
+
   return {
     eyebrow: String(src?.eyebrow || page?.eyebrow || "A session archive, media commons, and public memory bank for DPG."),
     title: String(src?.title || page?.title || "DPG Shares"),
     intro: String(src?.intro || "A native video and media platform for session recordings, interviews, skill shares, and movement memory."),
+    featured_label: String(src?.featured_label || "Featured session"),
+    featured_title: String(src?.featured_title || "Watch what this platform is for"),
+    featured_body: String(src?.featured_body || "This page should feel like the front door to a real media platform: featured sessions up top, browseable recordings underneath, and enough structure that the archive stays usable instead of dissolving into link compost."),
+    featured: featured,
+    grid_title: String(src?.grid_title || "Featured sessions"),
+    grid_body: String(src?.grid_body || "Mock sessions for now, real archive surface next. Thumbnails, tags, durations, and enough visual weight to make the platform legible."),
+    videos,
     lead_title: String(src?.lead_title || "Build the archive, not just the moment"),
     lead_body: String(src?.lead_body || "DPG Shares is meant to become the place where session recordings, interviews, roundtables, trainings, and movement media can live natively instead of being scattered across other platforms."),
     vision_title: String(src?.vision_title || "What this platform should do"),
@@ -1362,13 +1451,83 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
     setContent({ ...content, build_items: next.filter((x) => String(x || "").trim()) });
   };
 
+  const updateFeatured = (key, value) => {
+    setContent({
+      ...content,
+      featured: {
+        ...(content.featured || {}),
+        [key]: value,
+      },
+    });
+  };
+
+  const updateVideo = (index, key, value) => {
+    const next = [...(content.videos || [])];
+    while (next.length <= index) {
+      next.push({
+        tag: "",
+        title: "",
+        description: "",
+        duration: "",
+        meta: "",
+        thumb: "",
+        href: "",
+      });
+    }
+    next[index] = {
+      ...(next[index] || {}),
+      [key]: value,
+    };
+    setContent({
+      ...content,
+      videos: next.filter((item) =>
+        String(item?.title || "").trim() ||
+        String(item?.description || "").trim() ||
+        String(item?.tag || "").trim() ||
+        String(item?.duration || "").trim() ||
+        String(item?.meta || "").trim() ||
+        String(item?.thumb || "").trim() ||
+        String(item?.href || "").trim()
+      ),
+    });
+  };
+
+  const addVideo = () => {
+    setContent({
+      ...content,
+      videos: [
+        ...(content.videos || []),
+        {
+          tag: "New session",
+          title: "Untitled session",
+          description: "",
+          duration: "",
+          meta: "",
+          thumb: "",
+          href: "#",
+        },
+      ],
+    });
+  };
+
+  const removeVideo = (index) => {
+    setContent({
+      ...content,
+      videos: (content.videos || []).filter((_, i) => i !== index),
+    });
+  };
+
+  const featured = content.featured || {};
+  const videos = Array.isArray(content.videos) ? content.videos : [];
+  const visibleCards = Math.max(videos.length, editorMode ? 6 : videos.length);
+
   return (
     <>
       <style>{`
         .dpg-shares-shell { display: grid; gap: 24px; }
         .dpg-shares-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1.12fr) minmax(260px, 0.88fr);
+          grid-template-columns: minmax(0, 1.18fr) minmax(280px, 0.82fr);
           gap: 22px;
           align-items: start;
         }
@@ -1379,6 +1538,230 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           border-radius: 24px;
           padding: 22px;
           box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+        }
+        .dpg-shares-feature {
+          display: grid;
+          grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+          gap: 20px;
+          align-items: stretch;
+        }
+        .dpg-shares-feature-media {
+          position: relative;
+          min-height: 320px;
+          border-radius: 22px;
+          overflow: hidden;
+          background:
+            linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.38)),
+            radial-gradient(circle at 20% 20%, rgba(147,180,240,0.28), transparent 35%),
+            radial-gradient(circle at 82% 18%, rgba(243,226,139,0.16), transparent 26%),
+            linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
+            rgba(7,10,9,0.92);
+          border: 1px solid rgba(255,255,255,0.08);
+          display: block;
+          text-decoration: none;
+          color: inherit;
+        }
+        .dpg-shares-feature-media.has-thumb {
+          background-size: cover;
+          background-position: center;
+        }
+        .dpg-shares-feature-scrim {
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(180deg, rgba(7,10,9,0.04) 0%, rgba(7,10,9,0.18) 38%, rgba(7,10,9,0.78) 100%);
+        }
+        .dpg-shares-feature-topline {
+          position: absolute;
+          top: 16px;
+          left: 16px;
+          right: 16px;
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          align-items: center;
+          z-index: 1;
+        }
+        .dpg-shares-chip {
+          display: inline-flex;
+          align-items: center;
+          padding: 7px 10px;
+          border-radius: 999px;
+          background: rgba(7,10,9,0.72);
+          border: 1px solid rgba(255,255,255,0.14);
+          color: #f3efe8;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: .06em;
+          text-transform: uppercase;
+        }
+        .dpg-shares-duration {
+          display: inline-flex;
+          align-items: center;
+          padding: 7px 10px;
+          border-radius: 999px;
+          background: rgba(7,10,9,0.72);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: #d7ddd8;
+          font-size: 12px;
+          font-weight: 700;
+        }
+        .dpg-shares-feature-bottom {
+          position: absolute;
+          left: 18px;
+          right: 18px;
+          bottom: 18px;
+          z-index: 1;
+          display: grid;
+          gap: 10px;
+        }
+        .dpg-shares-feature-title {
+          color: #f3efe8;
+          font-family: Inter, system-ui, Arial, sans-serif;
+          font-size: clamp(1.6rem, 3vw, 2.5rem);
+          font-weight: 900;
+          line-height: 1.02;
+          max-width: 14ch;
+        }
+        .dpg-shares-feature-desc {
+          color: #d7ddd8;
+          font-size: 0.98rem;
+          line-height: 1.58;
+          max-width: 56ch;
+        }
+        .dpg-shares-feature-meta {
+          color: #f3efe8;
+          font-weight: 800;
+          font-size: 0.92rem;
+        }
+        .dpg-shares-play {
+          width: 82px;
+          height: 82px;
+          border-radius: 999px;
+          background: rgba(147,180,240,0.96);
+          color: #121715;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 30px;
+          font-weight: 900;
+          box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+        }
+        .dpg-shares-feature-copy {
+          display: grid;
+          gap: 12px;
+          align-content: start;
+        }
+        .dpg-shares-copy-kicker {
+          color: ${accent};
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: .08em;
+        }
+        .dpg-shares-grid-header {
+          display: grid;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+        .dpg-shares-videos {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 14px;
+        }
+        .dpg-shares-video-card {
+          display: grid;
+          gap: 12px;
+          align-content: start;
+        }
+        .dpg-shares-thumb {
+          position: relative;
+          display: block;
+          aspect-ratio: 16 / 9;
+          border-radius: 18px;
+          overflow: hidden;
+          background:
+            linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.38)),
+            radial-gradient(circle at 18% 20%, rgba(147,180,240,0.28), transparent 32%),
+            radial-gradient(circle at 82% 18%, rgba(243,226,139,0.16), transparent 24%),
+            linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
+            rgba(7,10,9,0.86);
+          border: 1px solid rgba(255,255,255,0.08);
+          text-decoration: none;
+        }
+        .dpg-shares-thumb.has-thumb {
+          background-size: cover;
+          background-position: center;
+        }
+        .dpg-shares-thumb::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(7,10,9,0.02), rgba(7,10,9,0.14) 45%, rgba(7,10,9,0.72));
+        }
+        .dpg-shares-thumb-play {
+          position: absolute;
+          left: 14px;
+          bottom: 14px;
+          z-index: 1;
+          width: 52px;
+          height: 52px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: ${accent};
+          color: #121715;
+          font-size: 18px;
+          font-weight: 900;
+          box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+        }
+        .dpg-shares-thumb-duration {
+          position: absolute;
+          right: 12px;
+          bottom: 12px;
+          z-index: 1;
+          padding: 6px 8px;
+          border-radius: 999px;
+          background: rgba(7,10,9,0.78);
+          color: #f3efe8;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: .04em;
+        }
+        .dpg-shares-thumb-tag {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          z-index: 1;
+          padding: 6px 8px;
+          border-radius: 999px;
+          background: rgba(7,10,9,0.78);
+          border: 1px solid rgba(255,255,255,0.10);
+          color: #d7ddd8;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: .07em;
+          text-transform: uppercase;
+        }
+        .dpg-shares-card-title {
+          color: #f3efe8;
+          font-family: Inter, system-ui, Arial, sans-serif;
+          font-weight: 800;
+          font-size: 1.08rem;
+          line-height: 1.18;
+        }
+        .dpg-shares-card-meta {
+          color: #93b4f0;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: .04em;
+          text-transform: uppercase;
+        }
+        .dpg-shares-card-desc {
+          color: #d7ddd8;
+          line-height: 1.58;
+          font-size: 0.95rem;
         }
         .dpg-shares-gridlist {
           display: grid;
@@ -1429,45 +1812,10 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           border: 1px solid rgba(0,0,0,0.08);
           box-shadow: 0 18px 36px rgba(0,0,0,0.16);
         }
-        .dpg-shares-demo {
-          width: 100%;
-          aspect-ratio: 16 / 9;
-          border-radius: 18px;
-          overflow: hidden;
-          background:
-            radial-gradient(circle at 20% 20%, rgba(147,180,240,0.24), transparent 35%),
-            radial-gradient(circle at 80% 30%, rgba(243,226,139,0.18), transparent 30%),
-            linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
-            rgba(7,10,9,0.85);
-          border: 1px solid rgba(255,255,255,0.08);
-          display: grid;
-          place-items: center;
-          position: relative;
-        }
-        .dpg-shares-play {
-          width: 74px;
-          height: 74px;
-          border-radius: 999px;
-          background: ${accent};
-          color: #121715;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 28px;
-          font-weight: 900;
-          box-shadow: 0 18px 40px rgba(0,0,0,0.25);
-        }
-        .dpg-shares-caption {
-          position: absolute;
-          left: 18px;
-          right: 18px;
-          bottom: 16px;
-          color: #f3efe8;
-          font-size: 14px;
-          line-height: 1.4;
-        }
         @media (max-width: 920px) {
           .dpg-shares-grid { grid-template-columns: 1fr; }
+          .dpg-shares-feature { grid-template-columns: 1fr; }
+          .dpg-shares-feature-media { min-height: 280px; }
         }
       `}</style>
 
@@ -1485,12 +1833,339 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
         <section className="dpg-shares-grid">
           <div className="dpg-shares-main">
             <article className="dpg-shares-card">
-              <div className="dpg-shares-demo">
-                <div className="dpg-shares-play">▶</div>
-                <div className="dpg-shares-caption">
-                  DPG Shares wants to become a native session archive, not just another outbound link pile.
+              <div className="dpg-shares-feature">
+                <a
+                  href={featured.href || "#"}
+                  className={`dpg-shares-feature-media${featured.thumb ? " has-thumb" : ""}`}
+                  style={featured.thumb ? { backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.44)), url("${featured.thumb}")` } : undefined}
+                >
+                  <div className="dpg-shares-scrim" />
+                  <div className="dpg-shares-feature-topline">
+                    <span className="dpg-shares-chip">{featured.tag || "Featured"}</span>
+                    <span className="dpg-shares-duration">{featured.duration || "Session"}</span>
+                  </div>
+                  <div className="dpg-shares-feature-bottom">
+                    <div className="dpg-shares-play">▶</div>
+                    <div className="dpg-shares-feature-title">{featured.title || "Featured session"}</div>
+                    <div className="dpg-shares-feature-desc">{featured.description || "A highlighted recording lives here."}</div>
+                    <div className="dpg-shares-feature-meta">{featured.meta || "DPG Shares preview"}</div>
+                  </div>
+                </a>
+
+                <div className="dpg-shares-feature-copy">
+                  <InlineField
+                    editorMode={editorMode}
+                    editing={editorMode && activeField === "shares_featured_label"}
+                    value={content.featured_label}
+                    onChange={(v) => setContent({ ...content, featured_label: v })}
+                    onStartEdit={() => setActiveField("shares_featured_label")}
+                    onStopEdit={() => setActiveField("")}
+                    placeholder="Featured label"
+                    hint="Edit section label"
+                    display={content.featured_label}
+                    displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", borderRadius: 10 }}
+                  />
+
+                  <InlineField
+                    editorMode={editorMode}
+                    editing={editorMode && activeField === "shares_featured_title"}
+                    value={content.featured_title}
+                    onChange={(v) => setContent({ ...content, featured_title: v })}
+                    onStartEdit={() => setActiveField("shares_featured_title")}
+                    onStopEdit={() => setActiveField("")}
+                    placeholder="Featured title"
+                    hint="Edit title"
+                    display={content.featured_title}
+                    displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 900, fontSize: "1.9rem", lineHeight: 1.04, borderRadius: 10 }}
+                  />
+
+                  <InlineField
+                    editorMode={editorMode}
+                    editing={editorMode && activeField === "shares_featured_body"}
+                    value={content.featured_body}
+                    onChange={(v) => setContent({ ...content, featured_body: v })}
+                    onStartEdit={() => setActiveField("shares_featured_body")}
+                    onStopEdit={() => setActiveField("")}
+                    placeholder="Featured body"
+                    multiline
+                    hint="Edit intro"
+                    display={content.featured_body}
+                    displayStyle={{ color: "#d7ddd8", lineHeight: 1.66, borderRadius: 10 }}
+                  />
+
+                  <div style={{ display: "grid", gap: 10, marginTop: 4 }}>
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === "shares_featured_tag"}
+                      value={featured.tag || ""}
+                      onChange={(v) => updateFeatured("tag", v)}
+                      onStartEdit={() => setActiveField("shares_featured_tag")}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Featured tag"
+                      hint="Edit tag"
+                      display={featured.tag || (editorMode ? "Featured tag" : "")}
+                      displayStyle={{ color: "#f3efe8", fontWeight: 800, borderRadius: 10 }}
+                    />
+
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === "shares_featured_media_title"}
+                      value={featured.title || ""}
+                      onChange={(v) => updateFeatured("title", v)}
+                      onStartEdit={() => setActiveField("shares_featured_media_title")}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Featured media title"
+                      hint="Edit card title"
+                      display={featured.title || (editorMode ? "Featured media title" : "")}
+                      displayStyle={{ color: "#f3efe8", fontWeight: 800, borderRadius: 10 }}
+                    />
+
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === "shares_featured_desc"}
+                      value={featured.description || ""}
+                      onChange={(v) => updateFeatured("description", v)}
+                      onStartEdit={() => setActiveField("shares_featured_desc")}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Featured description"
+                      multiline
+                      hint="Edit card body"
+                      display={featured.description || (editorMode ? "Featured description" : "")}
+                      displayStyle={{ color: "#d7ddd8", lineHeight: 1.58, borderRadius: 10 }}
+                    />
+
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === "shares_featured_meta"}
+                      value={featured.meta || ""}
+                      onChange={(v) => updateFeatured("meta", v)}
+                      onStartEdit={() => setActiveField("shares_featured_meta")}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Featured meta"
+                      hint="Edit metadata"
+                      display={featured.meta || (editorMode ? "Featured metadata" : "")}
+                      displayStyle={{ color: "#93b4f0", fontSize: 13, fontWeight: 800, borderRadius: 10 }}
+                    />
+
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === "shares_featured_duration"}
+                      value={featured.duration || ""}
+                      onChange={(v) => updateFeatured("duration", v)}
+                      onStartEdit={() => setActiveField("shares_featured_duration")}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Featured duration"
+                      hint="Edit duration"
+                      display={featured.duration || (editorMode ? "Featured duration" : "")}
+                      displayStyle={{ color: "#d7ddd8", fontSize: 13, borderRadius: 10 }}
+                    />
+
+                    {editorMode ? (
+                      <>
+                        <InlineField
+                          editorMode={editorMode}
+                          editing={editorMode && activeField === "shares_featured_thumb"}
+                          value={featured.thumb || ""}
+                          onChange={(v) => updateFeatured("thumb", v)}
+                          onStartEdit={() => setActiveField("shares_featured_thumb")}
+                          onStopEdit={() => setActiveField("")}
+                          placeholder="Featured thumbnail URL"
+                          hint="Edit thumbnail"
+                          display={featured.thumb || "Set featured thumbnail URL"}
+                          displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                        />
+                        <InlineField
+                          editorMode={editorMode}
+                          editing={editorMode && activeField === "shares_featured_href"}
+                          value={featured.href || ""}
+                          onChange={(v) => updateFeatured("href", v)}
+                          onStartEdit={() => setActiveField("shares_featured_href")}
+                          onStopEdit={() => setActiveField("")}
+                          placeholder="Featured link URL"
+                          hint="Edit link"
+                          display={featured.href || "Set featured link URL"}
+                          displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                        />
+                      </>
+                    ) : null}
+                  </div>
                 </div>
               </div>
+            </article>
+
+            <article className="dpg-shares-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_grid_title"}
+                value={content.grid_title}
+                onChange={(v) => setContent({ ...content, grid_title: v })}
+                onStartEdit={() => setActiveField("shares_grid_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Grid title"
+                hint="Edit section label"
+                display={content.grid_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", borderRadius: 10 }}
+              />
+
+              <div className="dpg-shares-grid-header">
+                <InlineField
+                  editorMode={editorMode}
+                  editing={editorMode && activeField === "shares_grid_body"}
+                  value={content.grid_body}
+                  onChange={(v) => setContent({ ...content, grid_body: v })}
+                  onStartEdit={() => setActiveField("shares_grid_body")}
+                  onStopEdit={() => setActiveField("")}
+                  placeholder="Grid intro"
+                  multiline
+                  hint="Edit intro"
+                  display={content.grid_body}
+                  displayStyle={{ color: "#d7ddd8", lineHeight: 1.66, maxWidth: 760, borderRadius: 10 }}
+                />
+              </div>
+
+              <div className="dpg-shares-videos">
+                {Array.from({ length: visibleCards }).map((_, idx) => {
+                  const video = videos[idx] || {};
+                  const hasContent =
+                    String(video?.title || "").trim() ||
+                    String(video?.description || "").trim() ||
+                    String(video?.tag || "").trim() ||
+                    String(video?.duration || "").trim() ||
+                    String(video?.meta || "").trim() ||
+                    String(video?.thumb || "").trim() ||
+                    String(video?.href || "").trim();
+
+                  if (!hasContent && !editorMode) return null;
+
+                  return (
+                    <div className="dpg-shares-video-card" key={`share-video-${idx}`}>
+                      <a
+                        href={video.href || "#"}
+                        className={`dpg-shares-thumb${video.thumb ? " has-thumb" : ""}`}
+                        style={video.thumb ? { backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.42)), url("${video.thumb}")` } : undefined}
+                      >
+                        <span className="dpg-shares-thumb-tag">{video.tag || "Session"}</span>
+                        <span className="dpg-shares-thumb-play">▶</span>
+                        <span className="dpg-shares-thumb-duration">{video.duration || "Preview"}</span>
+                      </a>
+
+                      <div style={{ display: "grid", gap: 8 }}>
+                        {editorMode ? (
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            <EditChip onClick={() => removeVideo(idx)} subtle>
+                              Remove card
+                            </EditChip>
+                          </div>
+                        ) : null}
+
+                        <InlineField
+                          editorMode={editorMode}
+                          editing={editorMode && activeField == `shares_video_tag_${idx}`}
+                          value={video.tag || ""}
+                          onChange={(v) => updateVideo(idx, "tag", v)}
+                          onStartEdit={() => setActiveField(`shares_video_tag_${idx}`)}
+                          onStopEdit={() => setActiveField("")}
+                          placeholder={`Tag ${idx + 1}`}
+                          hint="Edit tag"
+                          display={video.tag || (editorMode ? "Session tag" : "")}
+                          displayStyle={{ color: "#93b4f0", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".06em", borderRadius: 10 }}
+                        />
+
+                        <InlineField
+                          editorMode={editorMode}
+                          editing={editorMode && activeField === `shares_video_title_${idx}`}
+                          value={video.title || ""}
+                          onChange={(v) => updateVideo(idx, "title", v)}
+                          onStartEdit={() => setActiveField(`shares_video_title_${idx}`)}
+                          onStopEdit={() => setActiveField("")}
+                          placeholder={`Video title ${idx + 1}`}
+                          hint="Edit title"
+                          display={video.title || (editorMode ? "Untitled session" : "")}
+                          displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1.08rem", lineHeight: 1.18, borderRadius: 10 }}
+                        />
+
+                        <InlineField
+                          editorMode={editorMode}
+                          editing={editorMode && activeField === `shares_video_meta_${idx}`}
+                          value={video.meta || ""}
+                          onChange={(v) => updateVideo(idx, "meta", v)}
+                          onStartEdit={() => setActiveField(`shares_video_meta_${idx}`)}
+                          onStopEdit={() => setActiveField("")}
+                          placeholder={`Metadata ${idx + 1}`}
+                          hint="Edit metadata"
+                          display={video.meta || (editorMode ? "Session metadata" : "")}
+                          displayStyle={{ color: "#93b4f0", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".04em", borderRadius: 10 }}
+                        />
+
+                        <InlineField
+                          editorMode={editorMode}
+                          editing={editorMode && activeField === `shares_video_desc_${idx}`}
+                          value={video.description || ""}
+                          onChange={(v) => updateVideo(idx, "description", v)}
+                          onStartEdit={() => setActiveField(`shares_video_desc_${idx}`)}
+                          onStopEdit={() => setActiveField("")}
+                          placeholder={`Description ${idx + 1}`}
+                          multiline
+                          hint="Edit description"
+                          display={video.description || (editorMode ? "Session description" : "")}
+                          displayStyle={{ color: "#d7ddd8", lineHeight: 1.58, fontSize: "0.95rem", borderRadius: 10 }}
+                        />
+
+                        <InlineField
+                          editorMode={editorMode}
+                          editing={editorMode && activeField === `shares_video_duration_${idx}`}
+                          value={video.duration || ""}
+                          onChange={(v) => updateVideo(idx, "duration", v)}
+                          onStartEdit={() => setActiveField(`shares_video_duration_${idx}`)}
+                          onStopEdit={() => setActiveField("")}
+                          placeholder={`Duration ${idx + 1}`}
+                          hint="Edit duration"
+                          display={video.duration || (editorMode ? "Duration" : "")}
+                          displayStyle={{ color: "#d7ddd8", fontSize: 13, borderRadius: 10 }}
+                        />
+
+                        {editorMode ? (
+                          <>
+                            <InlineField
+                              editorMode={editorMode}
+                              editing={editorMode && activeField === `shares_video_thumb_${idx}`}
+                              value={video.thumb || ""}
+                              onChange={(v) => updateVideo(idx, "thumb", v)}
+                              onStartEdit={() => setActiveField(`shares_video_thumb_${idx}`)}
+                              onStopEdit={() => setActiveField("")}
+                              placeholder={`Thumbnail URL ${idx + 1}`}
+                              hint="Edit thumbnail"
+                              display={video.thumb || "Set thumbnail URL"}
+                              displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                            />
+
+                            <InlineField
+                              editorMode={editorMode}
+                              editing={editorMode && activeField === `shares_video_href_${idx}`}
+                              value={video.href || ""}
+                              onChange={(v) => updateVideo(idx, "href", v)}
+                              onStartEdit={() => setActiveField(`shares_video_href_${idx}`)}
+                              onStopEdit={() => setActiveField("")}
+                              placeholder={`Link URL ${idx + 1}`}
+                              hint="Edit link"
+                              display={video.href || "Set link URL"}
+                              displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                            />
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {editorMode && videos.length < 12 ? (
+                <div style={{ marginTop: 18 }}>
+                  <EditChip onClick={addVideo} subtle>
+                    Add video card
+                  </EditChip>
+                </div>
+              ) : null}
             </article>
 
             <article className="dpg-shares-card">

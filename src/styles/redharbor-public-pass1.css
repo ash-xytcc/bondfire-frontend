@@ -1033,3 +1033,45 @@
 .rh-public blockquote {
   font-family: var(--rh-font);
 }
+
+
+/* hard-force live rendered Alte Haas on public page */
+.rh-public.rh-font-altehaas,
+.rh-public.rh-font-altehaas p,
+.rh-public.rh-font-altehaas li,
+.rh-public.rh-font-altehaas a,
+.rh-public.rh-font-altehaas span,
+.rh-public.rh-font-altehaas label,
+.rh-public.rh-font-altehaas input,
+.rh-public.rh-font-altehaas textarea,
+.rh-public.rh-font-altehaas select,
+.rh-public.rh-font-altehaas blockquote,
+.rh-public.rh-font-altehaas .rh-lead,
+.rh-public.rh-font-altehaas .rh-section-copy,
+.rh-public.rh-font-altehaas .rh-note,
+.rh-public.rh-font-altehaas .rh-inline-link,
+.rh-public.rh-font-altehaas .rh-nav-link,
+.rh-public.rh-font-altehaas .rh-footer-link-button,
+.rh-public.rh-font-altehaas .rh-signin-link,
+.rh-public.rh-font-altehaas .rh-public-kicker,
+.rh-public.rh-font-altehaas .rh-section-kicker,
+.rh-public.rh-font-altehaas .rh-bulletin-home-date,
+.rh-public.rh-font-altehaas .rh-article-tag,
+.rh-public.rh-font-altehaas .rh-article-date,
+.rh-public.rh-font-altehaas .rh-article-list-meta {
+  font-family: "Alte Haas Grotesk Regular", sans-serif !important;
+}
+
+.rh-public.rh-font-altehaas h1,
+.rh-public.rh-font-altehaas h2,
+.rh-public.rh-font-altehaas h3,
+.rh-public.rh-font-altehaas h4,
+.rh-public.rh-font-altehaas h5,
+.rh-public.rh-font-altehaas h6,
+.rh-public.rh-font-altehaas .rh-public-title,
+.rh-public.rh-font-altehaas .rh-btn,
+.rh-public.rh-font-altehaas strong,
+.rh-public.rh-font-altehaas b {
+  font-family: "Alte Haas Grotesk Bold", sans-serif !important;
+  font-weight: 700 !important;
+}

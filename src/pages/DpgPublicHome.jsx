@@ -9,6 +9,18 @@ const DPG_BRAND = {
   logoAlt: "Dual Power West",
 };
 
+const PUBLIC_NAV_LINKS = [
+  { label: "Home", url: "/" },
+  { label: "About", url: "/about" },
+  { label: "FAQ", url: "/faq" },
+  { label: "Volunteer", url: "/volunteer" },
+  { label: "Donate", url: "/donate" },
+  { label: "Press", url: "/press" },
+  { label: "DPG Shares", url: "/dpg-shares" },
+  { label: "Sessions", url: "/sessions" },
+  { label: "RSVP", url: "/rsvp" },
+];
+
 function normalizeHomeConfig(src = {}) {
   return {
     enabled: true,
@@ -748,19 +760,7 @@ export default function DpgPublicHome() {
 
   const stickyCards = Array.isArray(liveConfig?.sticky_cards) ? liveConfig.sticky_cards.slice(0, 4) : [];
   const progressItems = Array.isArray(liveConfig?.progress_items) ? liveConfig.progress_items : [];
-  const navLinks =
-    Array.isArray(liveConfig?.nav_links) && liveConfig.nav_links.length
-      ? liveConfig.nav_links
-      : [
-          { label: "Home", url: "/" },
-          { label: "About", url: "/about" },
-          { label: "FAQ", url: "/faq" },
-          { label: "Volunteer", url: "/volunteer" },
-          { label: "Donate", url: "/donate" },
-          { label: "Press", url: "/press" },
-          { label: "DPG Shares", url: "/bulletin" },
-          { label: "RSVP", url: "/rsvp" },
-        ];
+  const navLinks = PUBLIC_NAV_LINKS;
 
   const heroBackground = String(liveConfig?.hero_background_url || '').trim();
 

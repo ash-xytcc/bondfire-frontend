@@ -51,6 +51,7 @@ export async function onRequestGet({ env, request, params }) {
     hero_background_url: String(cfg?.hero_background_url || ""),
     featured_post_slugs: Array.isArray(cfg?.featured_post_slugs) ? cfg.featured_post_slugs : [],
     nav_links: Array.isArray(cfg?.nav_links) ? cfg.nav_links : [],
+    content_pages: (cfg?.content_pages && typeof cfg.content_pages === "object") ? cfg.content_pages : {},
   };
 
   return Response.json({ ok: true, public: cleaned });

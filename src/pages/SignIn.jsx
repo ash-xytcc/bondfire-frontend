@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { isRedHarborMode } from "../lib/appMode";
-import steamboatImg from "../assets/redharbor/steamboat.jpg";
 import "../styles/redharbor.css";
 
 function fireAuthChanged() {
@@ -223,12 +222,17 @@ export default function SignIn() {
               </div>
 
               <div>
-                <div
-                  className="rh-photo-card"
-                  style={{
-                    backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.06), transparent 18%), linear-gradient(180deg, rgba(24,40,48,0.58), rgba(24,40,48,0.70)), url(${steamboatImg})`
-                  }}
-                />
+                <div className="rh-photo-card rh-photo-card-logo">
+                  <img
+                    src="/red-harbor-logo.png"
+                    alt="Red Harbor logo"
+                    className="rh-photo-logo"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+
                 <div className="rh-poster-stack">
                   <div className="rh-mini-note">
                     <h3>Private branch space</h3>

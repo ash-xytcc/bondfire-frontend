@@ -41,6 +41,7 @@ import DemoBoot from "./pages/DemoBoot.jsx";
 import { isDemoMode, disableDemoMode } from "./demo/demoMode.js";
 import RedHarborHome from "./pages/RedHarborHome";
 import BranchBoard from "./pages/BranchBoard";
+import LaborHistoryPage from "./pages/LaborHistoryPage";
 
 
 /* -------------------------------- Error Boundary ------------------------------- */
@@ -245,7 +246,7 @@ fetch("/api/orgs", { credentials: "include" })
 			: (state.authed ? <Navigate to="/orgs" replace /> : <Navigate to="/signin" replace />);
 
 	// Hide the header on public routes
-	const hideHeader = path === "/" || path.startsWith("/p/") || path === "/signin" || path === "/demo";
+	const hideHeader = path === "/" || path.startsWith("/p/") || path === "/signin" || path === "/demo" || path === "/labor-history";
 
 	return (
 		<AuthCtx.Provider value={ctxValue}>
@@ -268,6 +269,7 @@ fetch("/api/orgs", { credentials: "include" })
 				<Route path="/" element={<RedHarborHome />} />
   <Route path="/bulletin" element={<BulletinIndexPage />} />
   <Route path="/bulletin/:slug" element={<BulletinArticlePage />} />
+  <Route path="/labor-history" element={<LaborHistoryPage />} />
 
 				{/* Orgs list */}
 				<Route

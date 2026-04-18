@@ -1,0 +1,410 @@
+.lha-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(161,31,31,0.10), transparent 24%),
+    radial-gradient(circle at 90% 10%, rgba(117,145,158,0.12), transparent 28%),
+    linear-gradient(180deg, #10191e 0%, #152128 100%);
+  color: #e7eef0;
+}
+
+.lha-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  background: rgba(8, 13, 16, 0.82);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.lha-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lha-brand img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.lha-brand-kicker {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(231,238,240,0.72);
+}
+
+.lha-brand-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.lha-header-nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lha-header-nav a {
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 700;
+}
+
+.lha-layout {
+  max-width: 1700px;
+  margin: 0 auto;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.lha-sidebar {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 28px;
+  background: rgba(255,255,255,0.06);
+  padding: 18px;
+  backdrop-filter: blur(8px);
+  min-height: 0;
+}
+
+.lha-sidebar-top h1 {
+  margin: 0;
+  font-size: 1.9rem;
+}
+
+.lha-sidebar-top p {
+  color: rgba(231,238,240,0.74);
+  line-height: 1.6;
+}
+
+.lha-kicker {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(231,238,240,0.62);
+  margin-bottom: 8px;
+}
+
+.lha-search-wrap {
+  display: block;
+  margin: 18px 0;
+}
+
+.lha-search-wrap span {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(231,238,240,0.62);
+}
+
+.lha-search {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.94);
+  color: #1c1c1a;
+  padding: 12px 14px;
+}
+
+.lha-sidebar-list {
+  max-height: calc(100vh - 260px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.lha-sidebar-group h2 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(231,238,240,0.56);
+}
+
+.lha-sidebar-items {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.lha-sidebar-item {
+  width: 100%;
+  text-align: left;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: inherit;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.lha-sidebar-item.is-active {
+  background: rgba(255,255,255,0.92);
+  color: #171614;
+  border-color: rgba(255,255,255,0.75);
+}
+
+.lha-sidebar-item strong,
+.lha-sidebar-item span {
+  display: block;
+}
+
+.lha-sidebar-item span {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.lha-main {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 28px;
+  background: rgba(245, 238, 224, 0.98);
+  color: #1d1c18;
+  padding: 18px;
+  box-shadow: 0 18px 44px rgba(0,0,0,0.28);
+}
+
+.lha-main-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: end;
+  border-bottom: 1px solid rgba(0,0,0,0.10);
+  padding-bottom: 16px;
+  margin-bottom: 12px;
+}
+
+.lha-main-head h2 {
+  margin: 8px 0 0;
+  font-size: 2rem;
+}
+
+.lha-main-head p {
+  max-width: 900px;
+  line-height: 1.65;
+  color: rgba(29,28,24,0.78);
+}
+
+.lha-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lha-tag {
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(0,0,0,0.08);
+  font-size: 12px;
+}
+
+.lha-tag.is-dark {
+  background: #151412;
+  color: #fff;
+}
+
+.lha-btn-primary {
+  border: 1px solid rgba(161,31,31,0.8);
+  background: linear-gradient(180deg, #b13f35 0%, #8e3028 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lha-flip-wrap {
+  display: flex;
+  min-height: 72vh;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 10px 8px;
+}
+
+.lha-flip-slot,
+.lha-flip-page {
+  height: 100%;
+  width: 100%;
+}
+
+.lha-flip-page {
+  position: relative;
+  cursor: zoom-in;
+  background: #fff;
+}
+
+.lha-flip-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.lha-flip-loading {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  background: #ece7db;
+  color: #7a756a;
+}
+
+.lha-page-badge {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.58);
+  color: #fff;
+  padding: 10px 12px;
+  font-size: 12px;
+  backdrop-filter: blur(6px);
+}
+
+.lha-empty,
+.lha-empty-state {
+  border-radius: 22px;
+  border: 1px dashed rgba(255,255,255,0.18);
+  padding: 16px;
+  color: rgba(231,238,240,0.7);
+}
+
+.lha-empty-state {
+  min-height: 65vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(29,28,24,0.6);
+  border-color: rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.40);
+}
+
+.lha-reader {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(0,0,0,0.95);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.lha-reader-top,
+.lha-reader-footer {
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(8px);
+  padding: 14px 16px;
+}
+
+.lha-reader-footer {
+  border-bottom: 0;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lha-reader-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.lha-reader-kicker {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.68);
+}
+
+.lha-reader-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.lha-reader-sub {
+  color: rgba(255,255,255,0.74);
+  margin-top: 4px;
+}
+
+.lha-reader-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lha-reader-actions button,
+.lha-reader-footer button {
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.lha-reader-actions button.is-primary,
+.lha-reader-footer button.is-active {
+  background: #fff;
+  color: #141311;
+}
+
+.lha-reader-stage {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  background: #050505;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  padding: 12px;
+}
+
+.lha-reader-image {
+  display: block;
+  width: 100%;
+  max-width: 1400px;
+  height: auto;
+  background: #fff;
+  box-shadow: 0 20px 70px rgba(0,0,0,0.4);
+}
+
+@media (max-width: 1100px) {
+  .lha-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .lha-sidebar-list {
+    max-height: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .lha-header,
+  .lha-main-head,
+  .lha-reader-top {
+    display: grid;
+  }
+
+  .lha-reader-title {
+    font-size: 1.35rem;
+  }
+}

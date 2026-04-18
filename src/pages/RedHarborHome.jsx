@@ -685,6 +685,9 @@ function ArchiveCarousel({
         <p className="rh-section-kicker">Archive</p>
         <h2>{title}</h2>
         <p className="rh-section-copy">{intro}</p>
+        <div className="rh-bulletin-home-actions" style={{ marginTop: 12 }}>
+          <Link to="/labor-history" className="rh-btn rh-btn-secondary">Open full labor archive</Link>
+        </div>
       </div>
 
       <div className="rh-archive-shell">
@@ -1135,6 +1138,7 @@ export default function RedHarborHome() {
           <SectionLink id="about" className="rh-nav-link">About</SectionLink>
           <SectionLink id="join" className="rh-nav-link">Join</SectionLink>
           <SectionLink id="bulletin" className="rh-nav-link">Bulletin</SectionLink>
+          <Link to="/labor-history" className="rh-nav-link">Labor History</Link>
           {liveHome.show_meetings ? <SectionLink id="events" className="rh-nav-link">Events</SectionLink> : null}
           <SectionLink id="contact" className="rh-nav-link">Contact</SectionLink>
           {editorAvailable && !editorMode ? (
@@ -1639,6 +1643,7 @@ export default function RedHarborHome() {
           <SectionLink id="about" className="rh-footer-link-button">About</SectionLink>
           <SectionLink id="join" className="rh-footer-link-button">Join</SectionLink>
           <SectionLink id="bulletin" className="rh-footer-link-button">Bulletin</SectionLink>
+          <Link to="/labor-history">Labor History</Link>
           {liveHome.show_meetings ? <SectionLink id="events" className="rh-footer-link-button">Events</SectionLink> : null}
           <SectionLink id="contact" className="rh-footer-link-button">Contact</SectionLink>
           <Link to={isSignedIn ? memberAreaHref : "/signin"}>

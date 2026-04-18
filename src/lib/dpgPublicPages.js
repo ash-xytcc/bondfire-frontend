@@ -5,9 +5,9 @@ export const DPG_PUBLIC_PAGES = {
     eyebrow: "Dual Power West",
     featureImage: "",
     html: `
-      <p>Dual Power West is a gathering for learning, sharing, building, and reflection across anti-authoritarian and anti-capitalist movements.</p>
+      <p>Dual Power West is a gathering for learning, sharing, building, and reflection across anti authoritarian and anti capitalist movements.</p>
       <p>We are building a space for trust, skill sharing, solidarity, and collective exploration. The point is not polished conference culture. The point is relationships, courage, and practical capacity.</p>
-      <p>This public site is the front door. Organizer tools, internal logistics, and planning live behind sign-in.</p>
+      <p>This public site is the front door. Organizer tools, internal logistics, and planning live behind sign in.</p>
     `,
   },
 
@@ -93,6 +93,17 @@ export const DPG_PUBLIC_PAGES = {
       </ul>
 
       <p>More media, interviews, and reports can be migrated in later once you decide how much of the old archive should live here versus the bulletin feed.</p>
+    `,
+  },
+
+  "dpg-shares": {
+    slug: "dpg-shares",
+    title: "DPG Shares",
+    eyebrow: "A session archive, media commons, and public memory bank for DPG.",
+    featureImage: "",
+    html: `
+      <p>DPG Shares is the future home for uploaded session recordings, interviews, roundtables, and movement media connected to the gathering.</p>
+      <p>The goal is not just a page of links. The goal is a usable public archive with native hosting, collections, and long term access.</p>
     `,
   },
 

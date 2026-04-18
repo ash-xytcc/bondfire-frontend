@@ -23,7 +23,8 @@ const DEFAULTS = {
     { label: "Volunteer", url: "/volunteer" },
     { label: "Donate", url: "/donate" },
     { label: "Press", url: "/press" },
-    { label: "DPG Shares", url: "/bulletin" },
+    { label: "Bulletin", url: "/bulletin" },
+    { label: "DPG Shares", url: "/dpg-shares" },
     { label: "RSVP", url: "/rsvp" }
   ],
   sticky_cards: [

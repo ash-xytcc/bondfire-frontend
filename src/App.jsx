@@ -367,7 +367,7 @@ export default function App() {
     return <PublicBulletinPost />;
   }
 
-  if (["/about", "/faq", "/volunteer", "/donate", "/press", "/rsvp"].includes(browserPath)) {
+  if (["/about", "/faq", "/volunteer", "/donate", "/press", "/rsvp", "/dpg-shares"].includes(browserPath)) {
     return <PublicContentPage />;
   }
 

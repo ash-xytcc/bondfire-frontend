@@ -2720,7 +2720,8 @@ React.useEffect(() => {
 
   const accent = String(config?.accent_color || "#93b4f0").trim() || "#93b4f0";
   const contentPages = savedPagesOverride || config?.content_pages || {};
-  const currentPageOverride = contentPages?.[slug] || {};
+  const restoredBaseSlugs = new Set(["about", "faq", "volunteer", "donate"]);
+  const currentPageOverride = restoredBaseSlugs.has(slug) ? {} : (contentPages?.[slug] || {});
   const page = basePage ? { ...basePage, ...currentPageOverride } : null;
 
   const pressContent = normalizePressContent({

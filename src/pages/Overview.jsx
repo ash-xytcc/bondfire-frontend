@@ -652,18 +652,18 @@ export default function Overview() {
       };
     };
     return [
-      mk("people", "People", "👥", countsNormalized.people, "members", "people"),
-      mk("inventory", "Inventory", "📦", countsNormalized.inventory, "items", "inventory"),
-      mk("needsOpen", "Needs", "🧾", countsNormalized.needsOpen, "open", "needs"),
+      mk("people", "Members", "👥", countsNormalized.people, "members", "people"),
+      mk("inventory", "Supplies", "📦", countsNormalized.inventory, "items", "inventory"),
+      mk("needsOpen", "Requests", "🧾", countsNormalized.needsOpen, "open", "needs"),
       mk("meetingsUpcoming", "Meetings", "📅", countsNormalized.meetingsUpcoming, "upcoming", "meetings"),
-      mk("pledgesActive", "Pledges", "🤝", countsNormalized.pledgesActive, "active", "settings?tab=pledges"),
-      mk("subsTotal", "New Subs", "📰", countsNormalized.subsTotal, "total", "settings?tab=newsletter"),
-      mk("publicInbox", "Inbox", "📨", countsNormalized.publicInbox, "open items", "settings?tab=public-inbox"),
+      mk("pledgesActive", "Support Pledges", "🤝", countsNormalized.pledgesActive, "active", "settings?tab=pledges"),
+      mk("subsTotal", "Newsletter", "📰", countsNormalized.subsTotal, "subscribers", "settings?tab=newsletter"),
+      mk("publicInbox", "Public Intake", "📨", countsNormalized.publicInbox, "open items", "settings?tab=public-inbox"),
     ];
   }, [countsNormalized, deltas, historySeries]);
 
   const inboxPanel = panelWrap(
-    "Inbox",
+    "Public Intake",
     <button className="btn" type="button" onClick={() => go("settings?tab=public-inbox")}>Manage</button>,
     publicInboxSorted.length ? (
       <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
@@ -796,7 +796,7 @@ export default function Overview() {
   );
 
   const pledgesPanel = panelWrap(
-    "Recent Pledges",
+    "Support Pledges",
     <button className="btn" type="button" onClick={() => go("settings?tab=pledges")}>View all</button>,
     pledgesSorted.length ? (
       <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
@@ -866,42 +866,21 @@ export default function Overview() {
           <SectionCardSkeleton rows={3} />
           <SectionCardSkeleton rows={3} />
         </div>
-      ) : isNarrow ? (
-        <div className="bfDashMobileStack">
-          {inboxPanel}
-          {meetingsPanel}
-          {inventoryPanel}
-          {needsPanel}
-          {pledgesPanel}
-        </div>
       ) : (
-        <div ref={gridWrapRef} className="bfDashGridWrap">
-          {gridWidth > 0 ? (
-            <Responsive
-              className="layout"
-              width={gridWidth}
-              layouts={dashLayouts}
-              breakpoints={{ lg: 1200, md: 996, sm: 0 }}
-              cols={{ lg: 14, md: 12, sm: 1 }}
-              rowHeight={34}
-              margin={[12, 12]}
-              containerPadding={[0, 0]}
-              isDraggable={!isNarrow}
-              isResizable={!isNarrow}
-              draggableHandle=".bfDashGrab"
-              onLayoutChange={handleLayoutChange}
-              compactType="vertical"
-              preventCollision={false}
-              measureBeforeMount={false}
-              useCSSTransforms={true}
-            >
-              <div key="inbox">{inboxPanel}</div>
-              <div key="meetings">{meetingsPanel}</div>
-              <div key="inventory">{inventoryPanel}</div>
-              <div key="needs">{needsPanel}</div>
-              <div key="pledges">{pledgesPanel}</div>
-            </Responsive>
-          ) : null}
+        <div
+          className="bfDashMobileStack"
+          style={{
+            display: "grid",
+            gridTemplateColumns: isNarrow ? "1fr" : "repeat(3, minmax(0, 1fr))",
+            gap: 12,
+            alignItems: "start",
+          }}
+        >
+          <div style={{ minWidth: 0 }}>{inboxPanel}</div>
+          <div style={{ minWidth: 0 }}>{meetingsPanel}</div>
+          <div style={{ minWidth: 0 }}>{inventoryPanel}</div>
+          <div style={{ minWidth: 0 }}>{needsPanel}</div>
+          <div style={{ minWidth: 0 }}>{pledgesPanel}</div>
         </div>
       )}
     </div>

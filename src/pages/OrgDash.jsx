@@ -1,40 +1,13 @@
 // src/pages/OrgDash.jsx
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { isDemoMode } from "../demo/demoMode.js";
-import { ensureDemoOrgList, resetDemoState } from "../demo/demoStore.js";
-import { STARTER_PACKS, applyOrgPack } from "../lib/orgPacks.js";
+import { ensureDemoOrgList } from "../demo/demoStore.js";
 import { getAppMode } from "../lib/appMode";
 
-/* ---------- API helper ---------- */
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 
-function useIsMobile(maxWidthPx = 720) {
-  const [isMobile, setIsMobile] = React.useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia && window.matchMedia(`(max-width: ${maxWidthPx}px)`).matches;
-  });
-
-  React.useEffect(() => {
-    if (!window.matchMedia) return;
-    const mq = window.matchMedia(`(max-width: ${maxWidthPx}px)`);
-    const onChange = () => setIsMobile(mq.matches);
-    onChange();
-    try {
-      mq.addEventListener("change", onChange);
-      return () => mq.removeEventListener("change", onChange);
-    } catch {
-      mq.addListener(onChange);
-      return () => mq.removeListener(onChange);
-    }
-  }, [maxWidthPx]);
-
-  return isMobile;
-}
-
 function getToken() {
-  // Back-compat: older builds stored a JWT in storage.
-  // Newer cookie-session builds won't have this, and that's OK.
   return localStorage.getItem("bf_auth_token") || sessionStorage.getItem("bf_auth_token") || "";
 }
 
@@ -104,63 +77,11 @@ async function authFetch(path, opts = {}) {
 export default function OrgDash() {
   const nav = useNavigate();
   const demoMode = isDemoMode();
-  const isMobile = useIsMobile(720);
   const isRedHarbor = getAppMode() === "red-harbor";
-  const nouns = isRedHarbor
-    ? {
-        singular: "branch",
-        plural: "branches",
-        dashboard: "Branch Dashboard",
-        create: "Create a new branch",
-        createBtn: "Create Branch",
-        join: "Join with an invite code",
-        joinBtn: "Join Branch",
-        yours: "Your branches",
-        openBtn: "Enter Branch",
-        orgName: "Branch name",
-        choose: "Choose a branch to enter its workspace, or create or join one.",
-      }
-    : {
-        singular: "org",
-        plural: "orgs",
-        dashboard: "Org Dashboard",
-        create: "Create a new org",
-        createBtn: "Create",
-        join: "Join with an invite code",
-        joinBtn: "Join",
-        yours: "Your orgs",
-        openBtn: "Open",
-        orgName: "Organization name",
-        choose: "Choose an organization to enter its workspace, or create or join one.",
-      };
 
   const [orgs, setOrgs] = React.useState([]);
   const [busy, setBusy] = React.useState(false);
   const [msg, setMsg] = React.useState("");
-
-  const [newOrgName, setNewOrgName] = React.useState("");
-  const [starterPack, setStarterPack] = React.useState("union-branch");
-  const [inviteCode, setInviteCode] = React.useState("");
-  const deleteOrg = async (org) => {
-    const id = org?.id;
-    if (!id) return;
-
-    const name = org?.name || id;
-    const ok = window.confirm(`Delete org "${name}"?\n\nThis cannot be undone.`);
-    if (!ok) return;
-
-    setBusy(true);
-    setMsg("");
-    try {
-      await authFetch(`/api/orgs/${encodeURIComponent(id)}`, { method: "DELETE" });
-      await load();
-      setMsg(`Deleted "${name}".`);
-    } catch (e) {
-      setMsg(e?.message || "Failed to delete org");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const load = React.useCallback(async () => {
     setMsg("");
@@ -173,7 +94,7 @@ export default function OrgDash() {
       const r = await authFetch("/api/orgs", { method: "GET" });
       setOrgs(Array.isArray(r.orgs) ? r.orgs : []);
     } catch (e) {
-      setMsg(e.message || "Failed to load orgs");
+      setMsg(e.message || "Failed to load branches");
     }
   }, [demoMode]);
 
@@ -181,205 +102,92 @@ export default function OrgDash() {
     load();
   }, [load]);
 
-  const createOrg = async (e) => {
-    e?.preventDefault();
-    const name = (newOrgName || "").trim();
-    if (!name) return;
-    setBusy(true);
-    setMsg("");
-    try {
-      if (demoMode) {
-        setMsg("Demo mode uses a seeded org. Use Reset Demo to start fresh.");
-        return;
-      }
-      const r = await authFetch("/api/orgs/create", { method: "POST", body: { name } });
-      setNewOrgName("");
-      if (r?.org?.id) {
-        await applyOrgPack(r.org, starterPack);
-        setOrgs((prev) => {
-          const exists = prev.some((o) => o?.id === r.org.id);
-          return exists ? prev : [r.org, ...prev];
-        });
-        const chosen = STARTER_PACKS.find((p) => p.id === starterPack);
-        setMsg(`Created "${r.org.name || r.org.id}" with ${chosen?.label || "starter pack"}.`);
-      } else {
-        setMsg("Created.");
-      }
-      await load();
-    } catch (e2) {
-      setMsg(e2.message || "Failed to create org");
-    } finally {
-      setBusy(false);
+  React.useEffect(() => {
+    if (!isRedHarbor) return;
+    if (!orgs.length) return;
+    const first = orgs[0];
+    if (first?.id) {
+      nav(`/org/${encodeURIComponent(first.id)}`, { replace: true });
     }
-  };
+  }, [isRedHarbor, orgs, nav]);
 
-  const joinWithInvite = async (e) => {
-    e?.preventDefault();
-    const code = (inviteCode || "").trim().toUpperCase();
-    if (!code) return;
-    setBusy(true);
-    setMsg("");
-    try {
-      if (demoMode) {
-        setMsg("Invite join is disabled in demo mode.");
-        return;
-      }
-      const r = await authFetch("/api/invites/redeem", { method: "POST", body: { code } });
-      setInviteCode("");
-      await load();
-      if (r?.org?.id) nav(`/org/${encodeURIComponent(r.org.id)}`);
-      else setMsg("Joined.");
-    } catch (e2) {
-      setMsg(e2.message || "Failed to join");
-    } finally {
-      setBusy(false);
-    }
-  };
+  if (!isRedHarbor) {
+    return (
+      <div style={{ padding: 16 }}>
+        <h1 style={{ marginTop: 0 }}>Org Dashboard</h1>
+        <p className="helper">This build is not using the legacy org picker.</p>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 16 }}>
-      <h1 style={{ marginTop: 0 }}>{nouns.dashboard}</h1>
-      <p className="helper">{nouns.choose}</p>
+    <div style={{ padding: 16, maxWidth: 980 }}>
+      <div className="card" style={{ padding: 20 }}>
+        <h1 style={{ marginTop: 0, marginBottom: 10 }}>Branch access</h1>
+        <p className="helper" style={{ marginTop: 0 }}>
+          This Red Harbor build goes straight into the branch workspace. The old create and join org page is not used here.
+        </p>
 
-      {demoMode ? (
-        <div className="card" style={{ padding: 12, marginBottom: 16, background: "rgba(255,255,255,0.03)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <div style={{ fontWeight: 800, flex: 1 }}>Demo Mode is active. Changes are saved only in this browser.</div>
-            <button className="btn" type="button" onClick={() => { resetDemoState(); ensureDemoOrgList(); load(); setMsg("Demo reset."); try { window.dispatchEvent(new Event("bf-demo-tour-open")); } catch {} }}>
-              Reset Demo
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      <div
-        className="grid"
-        style={{
-          gap: 16,
-          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-        }}
-      >
-        <div className="card" style={{ padding: 16 }}>
-          <h2 style={{ marginTop: 0 }}>{nouns.create}</h2>
-          <form onSubmit={createOrg} className="grid" style={{ gap: 10 }}>
-            <label className="grid" style={{ gap: 6 }}>
-              <span className="helper">{nouns.orgName}</span>
-              <input
-                className="input"
-                value={newOrgName}
-                onChange={(e) => setNewOrgName(e.target.value)}
-                placeholder={isRedHarbor ? "e.g. " : "e.g. My Organization"}
-              />
-            </label>
-            <label className="grid" style={{ gap: 6 }}>
-              <span className="helper">Starter pack</span>
-              <select
-                className="input"
-                value={starterPack}
-                onChange={(e) => setStarterPack(e.target.value)}
-              >
-                {STARTER_PACKS.map((pack) => (
-                  <option key={pack.id} value={pack.id}>
-                    {pack.label}
-                  </option>
-                ))}
-              </select>
-              <span className="helper">
-                {(STARTER_PACKS.find((p) => p.id === starterPack) || {}).description || ""}
-              </span>
-            </label>
-            <button className="btn-red" disabled={busy || !newOrgName.trim()}>
-              {nouns.createBtn}
-            </button>
-          </form>
-        </div>
-
-        <div className="card" style={{ padding: 16 }}>
-          <h2 style={{ marginTop: 0 }}>{nouns.join}</h2>
-          <form onSubmit={joinWithInvite} className="grid" style={{ gap: 10 }}>
-            <label className="grid" style={{ gap: 6 }}>
-              <span className="helper">Invite code</span>
-              <input
-                className="input"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-                placeholder="Paste invite code"
-                autoCapitalize="characters"
-                autoCorrect="off"
-              />
-            </label>
-            <button className="btn-red" disabled={busy || !inviteCode.trim()}>
-              {nouns.joinBtn}
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <div className="card" style={{ padding: 16, marginTop: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <h2 style={{ margin: 0, flex: 1, minWidth: 140 }}>{nouns.yours}</h2>
-          <button className="btn" style={{ whiteSpace: "nowrap" }} onClick={load} disabled={busy}>
-            Refresh
-          </button>
-        </div>
-
-        {msg && (
-          <div className={msg.toLowerCase().includes("fail") ? "error" : "helper"} style={{ marginTop: 10 }}>
+        {msg ? (
+          <div className="helper" style={{ color: "tomato", marginTop: 10 }}>
             {msg}
           </div>
-        )}
+        ) : null}
 
-        {orgs.length === 0 ? (
-          <div className="helper" style={{ marginTop: 12 }}>
-            {isRedHarbor ? "No branches yet." : "No orgs yet."}
+        {busy ? (
+          <div className="helper" style={{ marginTop: 12 }}>Loading…</div>
+        ) : null}
+
+        {!busy && orgs.length === 0 ? (
+          <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
+            <div className="card" style={{ padding: 16 }}>
+              <h2 style={{ marginTop: 0 }}>No branch found</h2>
+              <p className="helper" style={{ marginTop: 0 }}>
+                You are signed in, but no Red Harbor branch workspace was returned for this account.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button className="btn" type="button" onClick={load}>
+                Refresh
+              </button>
+              <Link className="btn-red" to="/">
+                Go to public homepage
+              </Link>
+            </div>
           </div>
-        ) : (
-          <div style={{ marginTop: 12 }}>
+        ) : null}
+
+        {!busy && orgs.length > 1 ? (
+          <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
+            <div className="helper">Multiple branch entries were returned. Choose one:</div>
             {orgs.map((o) => (
               <div
                 key={o.id}
-                className="row"
+                className="card"
                 style={{
+                  padding: 14,
+                  display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "10px 0",
-                  borderTop: "1px solid #222",
                   gap: 12,
                   flexWrap: "wrap",
                 }}
               >
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {o.name || o.id}
-                  </div>
+                <div>
+                  <div style={{ fontWeight: 800 }}>{o.name || o.id}</div>
                   <div className="helper">Role: {o.role || "member"}</div>
                 </div>
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <button
-                    className="btn-red"
-                    data-tour="demo-org-open"
-                    style={{ whiteSpace: "nowrap" }}
-                    onClick={() => nav(`/org/${encodeURIComponent(o.id)}`)}
-                    disabled={busy}
-                  >
-                    {nouns.openBtn}
-                  </button>
-
-                  <button
-                    className="btn"
-                    style={{ whiteSpace: "nowrap" }}
-                    onClick={() => deleteOrg(o)}
-                    disabled={busy}
-                    title="Delete this org"
-                  >
-                    Delete
-                  </button>
-                </div>
-
+                <button
+                  className="btn-red"
+                  type="button"
+                  onClick={() => nav(`/org/${encodeURIComponent(o.id)}`)}
+                >
+                  Enter branch
+                </button>
               </div>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

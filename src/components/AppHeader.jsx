@@ -3,8 +3,6 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { getOrgModules } from "../lib/orgPacks.js";
 import { getAppMode } from "../lib/appMode";
 
-const homeHref = "/orgs";
-
 function useOrgIdFromPath() {
   const loc = useLocation();
   const pathname = loc.pathname || "";
@@ -73,6 +71,7 @@ const Brand = ({ orgId, logoSrc }) => {
   }, [inferredOrgId]);
 
   const appMode = getAppMode();
+  const homeHref = appMode === "red-harbor" ? "/" : "/orgs";
   const brandLabel = appMode === "red-harbor" ? "IWW RED HARBOR" : "Bondfire";
   const secondaryLabel = String(orgName || "").trim();
   const showSecondary =
@@ -234,7 +233,7 @@ function OrgNav({ variant = "drawer" }) {
 
   const items = base
     ? defs
-        .filter(([key]) => isRedHarbor ? (key === "bulletin" || enabled.includes(key)) : enabled.includes(key))
+        .filter(([key]) => (isRedHarbor ? enabled.includes(key) : enabled.includes(key)))
         .map(([, label, to, tourId]) => [label, to, tourId])
     : [];
 

@@ -18,6 +18,7 @@ const PUBLIC_NAV_LINKS = [
   { label: "Donate", url: "/donate" },
   { label: "Press", url: "/press" },
   { label: "DPG Shares", url: "/dpg-shares" },
+  { label: "Sessions", url: "/sessions" },
   { label: "RSVP", url: "/rsvp" },
 ];
 
@@ -3211,6 +3212,26 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
                 display={content.cta_body}
                 displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
               />
+              {!editorMode ? (
+                <a
+                  href="/sessions"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginTop: 16,
+                    padding: "14px 18px",
+                    borderRadius: 999,
+                    background: accent,
+                    color: "#121715",
+                    textDecoration: "none",
+                    fontWeight: 800,
+                    boxShadow: "0 12px 28px rgba(0,0,0,0.18)",
+                  }}
+                >
+                  Open session commons
+                </a>
+              ) : null}
             </div>
 
             <div className="dpg-shares-card">

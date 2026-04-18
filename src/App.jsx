@@ -31,6 +31,7 @@ import PublicBulletinIndex from "./pages/dpg/PublicBulletinIndex.jsx";
 import PublicBulletinPost from "./pages/dpg/PublicBulletinPost.jsx";
 import PublicContentPage from "./pages/dpg/PublicContentPage.jsx";
 import PublicShareDetail from "./pages/dpg/PublicShareDetail.jsx";
+import PublicSessionsPage from "./pages/dpg/PublicSessionsPage.jsx";
 import SiteEditor from "./pages/SiteEditor.jsx";
 
 // COMPONENTS
@@ -375,6 +376,10 @@ export default function App() {
   if (/^\/dpg-shares\/.+/.test(browserPath)) {
     const slug = browserPath.split("/").filter(Boolean)[1] || "";
     return <PublicShareDetail key={browserPath} slug={slug} />;
+  }
+
+  if (browserPath === "/sessions") {
+    return <PublicSessionsPage key="public-sessions" />;
   }
 
   const publicSlugMap = {

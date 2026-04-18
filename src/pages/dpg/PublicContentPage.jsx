@@ -558,6 +558,7 @@ function BulletinFeedCard({ post }) {
   );
 }
 
+
 function normalizePressContent(src = {}, page = {}) {
   return {
     eyebrow: String(src?.eyebrow || page?.eyebrow || "Media, roundtables, and traces left behind."),
@@ -603,6 +604,7 @@ function normalizePressContent(src = {}, page = {}) {
         ],
   };
 }
+
 
 function PressPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
   const [bulletinState, setBulletinState] = React.useState({ loading: true, posts: [], error: "" });
@@ -977,7 +979,6 @@ function PressPageLayout({ accent, editorMode = false, activeField = "", setActi
     </>
   );
 }
-
 
 function RsvpPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
   const updateStep = (index, value) => {

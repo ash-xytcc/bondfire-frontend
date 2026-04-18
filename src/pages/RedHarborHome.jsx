@@ -5,6 +5,24 @@ import "../styles/redharbor-public-pass1.css"
 const ORG_ID = "red-harbor"
 const ORG_SLUG = "red-harbor"
 
+const ARCHIVE_SLIDES = [
+  {
+    src: "/archive/iww-1.jpg",
+    title: "iww archive photo 1",
+    caption: "replace this with a real caption, year, location, or source note.",
+  },
+  {
+    src: "/archive/iww-2.jpg",
+    title: "iww archive photo 2",
+    caption: "replace this with a real caption, year, location, or source note.",
+  },
+  {
+    src: "/archive/iww-3.jpg",
+    title: "iww archive photo 3",
+    caption: "replace this with a real caption, year, location, or source note.",
+  },
+]
+
 const defaultHome = {
   branch_label: "Red Harbor Branch",
   hero_headline: "Building worker power on the harbor and beyond.",
@@ -618,6 +636,87 @@ function InlineActionListEditor({
   )
 }
 
+
+function ArchiveCarousel({
+  slides,
+  title = "from the archive",
+  intro = "historical images from the longer struggle. replace the sample files with your real IWW photos.",
+}) {
+  const safeSlides = Array.isArray(slides) ? slides.filter(Boolean) : []
+  const [index, setIndex] = React.useState(0)
+  const [broken, setBroken] = React.useState({})
+
+  React.useEffect(() => {
+    if (!safeSlides.length) return
+    if (index > safeSlides.length - 1) setIndex(0)
+  }, [index, safeSlides.length])
+
+  if (!safeSlides.length) return null
+
+  const current = safeSlides[index] || safeSlides[0]
+  const currentBroken = !!broken[current.src]
+
+  function prev() {
+    setIndex((i) => (i - 1 + safeSlides.length) % safeSlides.length)
+  }
+
+  function next() {
+    setIndex((i) => (i + 1) % safeSlides.length)
+  }
+
+  return (
+    <section className="rh-section rh-archive-band" aria-label="Historical archive carousel">
+      <div className="rh-archive-head">
+        <p className="rh-section-kicker">Archive</p>
+        <h2>{title}</h2>
+        <p className="rh-section-copy">{intro}</p>
+      </div>
+
+      <div className="rh-archive-shell">
+        <button type="button" className="rh-archive-nav" onClick={prev} aria-label="Previous archive image">
+          ←
+        </button>
+
+        <article className="rh-archive-stage">
+          {!currentBroken ? (
+            <img
+              src={current.src}
+              alt={current.title || "Historical archive image"}
+              className="rh-archive-image"
+              onError={() => setBroken((prevMap) => ({ ...prevMap, [current.src]: true }))}
+            />
+          ) : (
+            <div className="rh-archive-image rh-archive-placeholder">
+              <strong>{current.title || "missing archive image"}</strong>
+              <p>{current.src}</p>
+            </div>
+          )}
+
+          <div className="rh-archive-caption">
+            <h3>{current.title}</h3>
+            {current.caption ? <p>{current.caption}</p> : null}
+          </div>
+        </article>
+
+        <button type="button" className="rh-archive-nav" onClick={next} aria-label="Next archive image">
+          →
+        </button>
+      </div>
+
+      <div className="rh-archive-dots" aria-hidden="true">
+        {safeSlides.map((slide, i) => (
+          <button
+            key={`${slide.src}-${i}`}
+            type="button"
+            className={`rh-archive-dot ${i === index ? "is-active" : ""}`}
+            onClick={() => setIndex(i)}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function RedHarborHome() {
   const [home, setHome] = React.useState(defaultHome)
   const [draft, setDraft] = React.useState(null)
@@ -1105,7 +1204,7 @@ export default function RedHarborHome() {
       ) : null}
 
       <main>
-        <section className={`rh-hero ${liveHome.hero_image_url ? "rh-hero-has-image" : ""}`} style={heroStyle}>
+        <section className={`rh-hero rh-hero-wide ${liveHome.hero_image_url ? "rh-hero-has-image" : ""}`} style={heroStyle}>
           <div className="rh-hero-copy">
             <InlineTextEdit
               tag="p"
@@ -1166,29 +1265,9 @@ export default function RedHarborHome() {
             ) : null}
           </div>
 
-          <aside className="rh-hero-card">
-            <InlineTextEdit
-              tag="h2"
-              className=""
-              editorMode={editorMode}
-              value={liveHome.purpose_title || defaultHome.purpose_title}
-              onChange={(value) => updateDraft("purpose_title", value)}
-              placeholder="What this site is for"
-            />
-            <InlineStringListEditor
-              items={purposeItems}
-              onChange={(items) => updateDraft("site_purpose_items", items)}
-              editorMode={editorMode}
-              itemPlaceholder="Purpose item"
-              rows={6}
-            />
-            {siteError ? (
-              <p className="rh-note" style={{ marginTop: 12 }}>
-                {siteError}
-              </p>
-            ) : null}
-          </aside>
         </section>
+
+        <ArchiveCarousel slides={ARCHIVE_SLIDES} />
 
         <section id="about" className="rh-section">
           <div className="rh-section-head">

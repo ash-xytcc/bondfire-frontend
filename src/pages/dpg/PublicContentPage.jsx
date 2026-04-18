@@ -32,18 +32,6 @@ function authFetch(path, opts = {}) {
 function PublicNav({ links = [], authed = false, accent = "#93b4f0" }) {
   const items = Array.isArray(links) ? links : [];
 
-  const handlePublicNav = (e, href) => {
-    if (!href) return;
-    const url = String(href || "").trim();
-    if (!url.startsWith("/")) {
-      window.location.href = url;
-      return;
-    }
-    e.preventDefault();
-    window.history.pushState({}, "", url);
-    window.dispatchEvent(new Event("bf-public-nav"));
-  };
-
   return (
     <nav
       style={{

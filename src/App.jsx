@@ -353,48 +353,36 @@ function AdminApp() {
 }
 
 export default function App() {
-  const [browserPath, setBrowserPath] = React.useState(
-    typeof window !== "undefined" ? (window.location.pathname || "/") : "/"
-  );
-  const [adminHash, setAdminHash] = React.useState(
-    typeof window !== "undefined" ? (window.location.hash || "") : ""
-  );
-
-  React.useEffect(() => {
-    const syncLocation = () => {
-      setBrowserPath(window.location.pathname || "/");
-      setAdminHash(window.location.hash || "");
-    };
-
-    window.addEventListener("popstate", syncLocation);
-    window.addEventListener("hashchange", syncLocation);
-    window.addEventListener("bf-public-nav", syncLocation);
-
-    return () => {
-      window.removeEventListener("popstate", syncLocation);
-      window.removeEventListener("hashchange", syncLocation);
-      window.removeEventListener("bf-public-nav", syncLocation);
-    };
-  }, []);
-
+  const browserPath = typeof window !== "undefined" ? (window.location.pathname || "/") : "/";
+  const adminHash = typeof window !== "undefined" ? (window.location.hash || "") : "";
   const isAdminPath = browserPath === "/admin" || browserPath.startsWith("/admin/");
   const isSignInHash = adminHash === "#/signin" || adminHash.startsWith("#/signin?");
   const isAnyHashAppRoute = adminHash.startsWith("#/");
 
   if (browserPath === "/bulletin" || browserPath === "/bulletin/") {
-    return <PublicBulletinIndex />;
+    return <PublicBulletinIndex key="bulletin-index" />;
   }
 
   if (/^\/bulletin\/.+/.test(browserPath)) {
-    return <PublicBulletinPost />;
-  }
-
-  if (["/about", "/faq", "/volunteer", "/donate", "/press", "/rsvp", "/dpg-shares"].includes(browserPath)) {
-    return <PublicContentPage />;
+    return <PublicBulletinPost key={browserPath} />;
   }
 
   if (browserPath === "/" && !isAnyHashAppRoute) {
-    return <DpgPublicHome />;
+    return <DpgPublicHome key="public-home" />;
+  }
+
+  const publicSlugMap = {
+    "/about": "about",
+    "/faq": "faq",
+    "/volunteer": "volunteer",
+    "/donate": "donate",
+    "/press": "press",
+    "/rsvp": "rsvp",
+    "/dpg-shares": "dpg-shares",
+  };
+
+  if (publicSlugMap[browserPath]) {
+    return <PublicContentPage key={publicSlugMap[browserPath]} slug={publicSlugMap[browserPath]} />;
   }
 
   if (isSignInHash || isAdminPath || isAnyHashAppRoute) {

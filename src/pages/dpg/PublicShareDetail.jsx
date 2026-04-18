@@ -9,6 +9,17 @@ const DPG_BRAND = {
   logoAlt: "Dual Power West",
 };
 
+const PUBLIC_NAV_LINKS = [
+  { label: "Home", url: "/" },
+  { label: "About", url: "/about" },
+  { label: "FAQ", url: "/faq" },
+  { label: "Volunteer", url: "/volunteer" },
+  { label: "Donate", url: "/donate" },
+  { label: "Press", url: "/press" },
+  { label: "DPG Shares", url: "/dpg-shares" },
+  { label: "RSVP", url: "/rsvp" },
+];
+
 function PublicNav({ links = [], authed = false, accent = "#93b4f0" }) {
   const items = Array.isArray(links) ? links : [];
   return (
@@ -110,6 +121,7 @@ export default function PublicShareDetail({ slug: slugProp = "" }) {
   const theme = getDpgPublicTheme(config);
   const [authState, setAuthState] = React.useState({ checked: false, authed: false });
   const [state, setState] = React.useState({ loading: true, share: null, error: "" });
+  const [relatedState, setRelatedState] = React.useState({ loading: true, items: [] });
 
   React.useEffect(() => {
     try {
@@ -175,33 +187,30 @@ export default function PublicShareDetail({ slug: slugProp = "" }) {
     document.title = title;
   }, [state.share]);
 
-  const navLinksRaw =
-    Array.isArray(config?.nav_links) && config.nav_links.length
-      ? config.nav_links
-      : [
-          { label: "Home", url: "/" },
-          { label: "About", url: "/about" },
-          { label: "FAQ", url: "/faq" },
-          { label: "Volunteer", url: "/volunteer" },
-          { label: "Donate", url: "/donate" },
-          { label: "Press", url: "/press" },
-          { label: "DPG Shares", url: "/dpg-shares" },
-          { label: "RSVP", url: "/rsvp" },
-        ];
+  React.useEffect(() => {
+    let dead = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/public/shares?org=dpg&limit=4", {
+          headers: { Accept: "application/json" },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (dead) return;
+        const items = Array.isArray(data?.items) ? data.items : [];
+        setRelatedState({
+          loading: false,
+          items: items.filter((item) => String(item?.slug || "") !== String(slug || "")).slice(0, 3),
+        });
+      } catch {
+        if (dead) return;
+        setRelatedState({ loading: false, items: [] });
+      }
+    })();
+    return () => { dead = true; };
+  }, [slug]);
 
-  const navLinks = navLinksRaw.map((item) => {
-    const label = String(item?.label || "").trim().toLowerCase();
-    if (label === "home") return { ...item, url: "/" };
-    if (label === "about") return { ...item, url: "/about" };
-    if (label === "faq") return { ...item, url: "/faq" };
-    if (label === "volunteer") return { ...item, url: "/volunteer" };
-    if (label === "donate") return { ...item, url: "/donate" };
-    if (label === "press") return { ...item, url: "/press" };
-    if (label === "dpg shares" || label === "shares") return { ...item, url: "/dpg-shares" };
-    if (label === "rsvp") return { ...item, url: "/rsvp" };
-    if (label === "bulletin") return { ...item, url: "/press#updates" };
-    return item;
-  });
+
+  const navLinks = PUBLIC_NAV_LINKS;
 
   const accent = String(config?.accent_color || "#93b4f0").trim() || "#93b4f0";
   const share = state.share;
@@ -293,6 +302,21 @@ export default function PublicShareDetail({ slug: slugProp = "" }) {
                 text-decoration: none;
                 font-weight: 800;
                 box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+              }
+              .dpg-share-related-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 14px;
+              }
+              .dpg-share-related-card {
+                display: grid;
+                gap: 8px;
+                text-decoration: none;
+                color: inherit;
+                background: rgba(255,255,255,0.03);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 18px;
+                padding: 16px;
               }
               @media (max-width: 920px) {
                 .dpg-share-detail-grid { grid-template-columns: 1fr; }
@@ -398,6 +422,32 @@ export default function PublicShareDetail({ slug: slugProp = "" }) {
                 </div>
               </aside>
             </section>
+
+            {!relatedState.loading && relatedState.items.length ? (
+              <section style={{ marginTop: 26 }}>
+                <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 12 }}>
+                  More sessions
+                </div>
+                <div className="dpg-share-related-grid">
+                  {relatedState.items.map((item) => (
+                    <a key={item.slug} href={`/dpg-shares/${item.slug}`} className="dpg-share-related-card">
+                      <div style={{ color: "#93b4f0", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
+                        {Array.isArray(item.tags) && item.tags.length ? item.tags[0] : "Session"}
+                      </div>
+                      <div style={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1.02rem", lineHeight: 1.18 }}>
+                        {item.title}
+                      </div>
+                      <div style={{ color: "#d7ddd8", lineHeight: 1.55, fontSize: "0.95rem" }}>
+                        {item.description || "Open session details."}
+                      </div>
+                      <div style={{ color: accent, fontWeight: 800, fontSize: 14 }}>
+                        View session →
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </>
         )}
       </div>

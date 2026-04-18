@@ -10,6 +10,17 @@ const DPG_BRAND = {
   logoAlt: "Dual Power West",
 };
 
+const PUBLIC_NAV_LINKS = [
+  { label: "Home", url: "/" },
+  { label: "About", url: "/about" },
+  { label: "FAQ", url: "/faq" },
+  { label: "Volunteer", url: "/volunteer" },
+  { label: "Donate", url: "/donate" },
+  { label: "Press", url: "/press" },
+  { label: "DPG Shares", url: "/dpg-shares" },
+  { label: "RSVP", url: "/rsvp" },
+];
+
 function authFetch(path, opts = {}) {
   const headers = {
     "Content-Type": "application/json",
@@ -3023,6 +3034,11 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
                     <div className="dpg-shares-feature-title">{featured.title || "Featured session"}</div>
                     <div className="dpg-shares-feature-desc">{featured.description || "A highlighted recording lives here."}</div>
                     <div className="dpg-shares-feature-meta">{featured.meta || "DPG Shares preview"}</div>
+                    {featured.href ? (
+                      <div style={{ color: "#f3efe8", fontWeight: 800, fontSize: "0.96rem" }}>
+                        Open session →
+                      </div>
+                    ) : null}
                   </div>
                 </a>
 
@@ -3429,6 +3445,19 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
                     </a>
 
                     <div style={{ display: "grid", gap: 8 }}>
+                      {!editorMode && video.href ? (
+                        <a
+                          href={video.href}
+                          style={{
+                            color: accent,
+                            textDecoration: "none",
+                            fontWeight: 800,
+                            fontSize: 14,
+                          }}
+                        >
+                          View session →
+                        </a>
+                      ) : null}
                       {editorMode ? (
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                           <EditChip onClick={() => removeVideo(idx)} subtle>
@@ -3863,33 +3892,7 @@ React.useEffect(() => {
       : "Dual Power West";
   }, [slug]);
 
-  const navLinksRaw =
-    Array.isArray(config?.nav_links) && config.nav_links.length
-      ? config.nav_links
-      : [
-          { label: "Home", url: "/" },
-          { label: "About", url: "/about" },
-          { label: "FAQ", url: "/faq" },
-          { label: "Volunteer", url: "/volunteer" },
-          { label: "Donate", url: "/donate" },
-          { label: "Press", url: "/press" },
-          { label: "DPG Shares", url: "/dpg-shares" },
-          { label: "RSVP", url: "/rsvp" },
-        ];
-
-  const navLinks = navLinksRaw.map((item) => {
-    const label = String(item?.label || "").trim().toLowerCase();
-    if (label === "home") return { ...item, url: "/" };
-    if (label === "about") return { ...item, url: "/about" };
-    if (label === "faq") return { ...item, url: "/faq" };
-    if (label === "volunteer") return { ...item, url: "/volunteer" };
-    if (label === "donate") return { ...item, url: "/donate" };
-    if (label === "press") return { ...item, url: "/press" };
-    if (label === "dpg shares" || label === "shares") return { ...item, url: "/dpg-shares" };
-    if (label === "rsvp") return { ...item, url: "/rsvp" };
-    if (label === "bulletin") return { ...item, url: "/press#updates" };
-    return item;
-  });
+  const navLinks = PUBLIC_NAV_LINKS;
 
   const accent = String(config?.accent_color || "#93b4f0").trim() || "#93b4f0";
   const contentPages = savedPagesOverride || config?.content_pages || {};

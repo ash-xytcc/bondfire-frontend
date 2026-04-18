@@ -3935,7 +3935,7 @@ React.useEffect(() => {
         duration: item?.durationText || "",
         meta: item?.metaText || "",
         thumb: item?.thumbnailUrl || "",
-        href: item?.videoUrl || "#",
+        href: item?.slug ? `/dpg-shares/${item.slug}` : (item?.videoUrl || "#"),
       }))
     : sharesContent.videos;
 
@@ -3947,7 +3947,7 @@ React.useEffect(() => {
         duration: sharesState.featured?.durationText || "",
         meta: sharesState.featured?.metaText || "",
         thumb: sharesState.featured?.thumbnailUrl || "",
-        href: sharesState.featured?.videoUrl || "#",
+        href: sharesState.featured?.slug ? `/dpg-shares/${sharesState.featured.slug}` : (sharesState.featured?.videoUrl || "#"),
       }
     : sharesContent.featured;
 

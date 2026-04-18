@@ -30,6 +30,7 @@ import DpgPublicHome from "./pages/DpgPublicHome.jsx";
 import PublicBulletinIndex from "./pages/dpg/PublicBulletinIndex.jsx";
 import PublicBulletinPost from "./pages/dpg/PublicBulletinPost.jsx";
 import PublicContentPage from "./pages/dpg/PublicContentPage.jsx";
+import PublicShareDetail from "./pages/dpg/PublicShareDetail.jsx";
 import SiteEditor from "./pages/SiteEditor.jsx";
 
 // COMPONENTS
@@ -369,6 +370,11 @@ export default function App() {
 
   if (browserPath === "/" && !isAnyHashAppRoute) {
     return <DpgPublicHome key="public-home" />;
+  }
+
+  if (/^\/dpg-shares\/.+/.test(browserPath)) {
+    const slug = browserPath.split("/").filter(Boolean)[1] || "";
+    return <PublicShareDetail key={browserPath} slug={slug} />;
   }
 
   const publicSlugMap = {

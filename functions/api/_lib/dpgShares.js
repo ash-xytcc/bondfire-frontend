@@ -169,6 +169,21 @@ export async function createShare(env, orgId, userId, input) {
   return rowToShare(row || {});
 }
 
+
+export async function getPublicShareBySlug(env, orgId = "dpg", slug = "") {
+  await ensureDpgSharesSchema(env);
+  const db = getDb(env);
+
+  const row = await db.prepare(
+    `SELECT *
+     FROM dpg_shares_videos
+     WHERE org_id = ? AND slug = ? AND status = 'published'
+     LIMIT 1`
+  ).bind(orgId, String(slug || "").trim()).first();
+
+  return row ? rowToShare(row) : null;
+}
+
 export async function listPublicShares(env, orgId = "dpg", limit = 12) {
   await ensureDpgSharesSchema(env);
   const db = getDb(env);

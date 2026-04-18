@@ -713,38 +713,6 @@ function PressPageLayout({ accent, editorMode = false, activeField = "", setActi
     return () => { dead = true; };
   }, []);
 
-  React.useEffect(() => {
-    if (slug !== "dpg-shares") return;
-
-    let dead = false;
-    setSharesState((prev) => ({ ...prev, loading: true, error: "" }));
-
-    (async () => {
-      try {
-        const res = await fetch("/api/public/shares?org=dpg&limit=12", {
-          headers: { Accept: "application/json" },
-        });
-        const data = await res.json().catch(() => ({}));
-        if (dead) return;
-        if (!res.ok || data?.ok === false) {
-          setSharesState({ loading: false, items: [], featured: null, error: data?.error || `HTTP ${res.status}` });
-          return;
-        }
-        setSharesState({
-          loading: false,
-          items: Array.isArray(data?.items) ? data.items : [],
-          featured: data?.featured || null,
-          error: "",
-        });
-      } catch (e) {
-        if (dead) return;
-        setSharesState({ loading: false, items: [], featured: null, error: String(e?.message || e) });
-      }
-    })();
-
-    return () => { dead = true; };
-  }, [slug]);
-
   const updateItem = (index, key, value) => {
     const next = [...content.items];
     next[index] = { ...(next[index] || {}), [key]: value };
@@ -2583,6 +2551,46 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
     })();
     return () => { dead = true; };
   }, []);
+
+
+
+React.useEffect(() => {
+  const currentSlug = slugProp
+    ? String(slugProp).trim().toLowerCase()
+    : String(window.location.pathname || "/")
+        .split("/")
+        .filter(Boolean)[0] || "";
+
+  if (currentSlug !== "dpg-shares") return;
+
+  let dead = false;
+  setSharesState((prev) => ({ ...prev, loading: true, error: "" }));
+
+  (async () => {
+    try {
+      const res = await fetch("/api/public/shares?org=dpg&limit=12", {
+        headers: { Accept: "application/json" },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (dead) return;
+      if (!res.ok || data?.ok === false) {
+        setSharesState({ loading: false, items: [], featured: null, error: data?.error || `HTTP ${res.status}` });
+        return;
+      }
+      setSharesState({
+        loading: false,
+        items: Array.isArray(data?.items) ? data.items : [],
+        featured: data?.featured || null,
+        error: "",
+      });
+    } catch (e) {
+      if (dead) return;
+      setSharesState({ loading: false, items: [], featured: null, error: String(e?.message || e) });
+    }
+  })();
+
+  return () => { dead = true; };
+}, [slugProp]);
 
   const slug = React.useMemo(() => {
     if (slugProp) return slugProp;

@@ -2622,7 +2622,7 @@ function RsvpPageLayout({ accent, editorMode = false, activeField = "", setActiv
 }
 
 
-function SharesPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {}, authed = false, sharesLoading = false, sharesError = "", shareDraft = null, setShareDraft = () => {}, shareCreateBusy = false, shareCreateMsg = "", onPublishShare = null }) {
+function SharesPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {}, authed = false, sharesLoading = false, sharesError = "", sharesAdminState = { loading: false, items: [], error: "" }, editingShareId = "", shareDraft = null, setShareDraft = () => {}, shareCreateBusy = false, shareCreateMsg = "", onPublishShare = null, onBeginEditShare = null, onUnpublishShare = null, onResetShareEditor = null }) {
   const updateVisionItem = (index, value) => {
     const next = [...content.vision_items];
     while (next.length < 8) next.push("");
@@ -3300,7 +3300,7 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
     <article className="dpg-shares-card">
       <div style={{ display: "grid", gap: 14 }}>
         <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
-          Publish live video entry
+          {editingShareId ? "Edit live video entry" : "Publish live video entry"}
         </div>
         <div style={{ color: "#d7ddd8", lineHeight: 1.62, maxWidth: 860 }}>
           This is the first real Shares write path. Paste hosted video and thumbnail URLs, add metadata, and the card will publish into the live public grid below.
@@ -3337,8 +3337,27 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
               cursor: shareCreateBusy ? "default" : "pointer",
             }}
           >
-            {shareCreateBusy ? "Publishing…" : "Publish video entry"}
+            {shareCreateBusy ? "Saving…" : (editingShareId ? "Save share changes" : "Publish video entry")}
           </button>
+
+          {editingShareId ? (
+            <button
+              type="button"
+              onClick={onResetShareEditor}
+              disabled={shareCreateBusy}
+              style={{
+                border: "1px solid rgba(255,255,255,0.14)",
+                borderRadius: 999,
+                padding: "12px 16px",
+                background: "rgba(255,255,255,0.04)",
+                color: "#f3efe8",
+                fontWeight: 800,
+                cursor: shareCreateBusy ? "default" : "pointer",
+              }}
+            >
+              Cancel edit
+            </button>
+          ) : null}
 
           {shareCreateMsg ? (
             <span style={{ color: shareCreateMsg.includes("published") ? "#9fd3ab" : "#ffb8b8", fontSize: 13 }}>
@@ -3346,6 +3365,92 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
             </span>
           ) : null}
         </div>
+      </div>
+    </article>
+  ) : null}
+
+  {authed && !editorMode ? (
+    <article className="dpg-shares-card">
+      <div style={{ display: "grid", gap: 14 }}>
+        <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
+          Manage published shares
+        </div>
+
+        {sharesAdminState.loading ? (
+          <div style={{ color: "#d7ddd8" }}>Loading share records…</div>
+        ) : null}
+
+        {!sharesAdminState.loading && sharesAdminState.error ? (
+          <div style={{ color: "#ffb8b8" }}>{sharesAdminState.error}</div>
+        ) : null}
+
+        {!sharesAdminState.loading && !sharesAdminState.error && !sharesAdminState.items.length ? (
+          <div style={{ color: "#d7ddd8" }}>No share records yet.</div>
+        ) : null}
+
+        {!sharesAdminState.loading && sharesAdminState.items.length ? (
+          <div style={{ display: "grid", gap: 10 }}>
+            {sharesAdminState.items.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  display: "grid",
+                  gap: 8,
+                  padding: 14,
+                  borderRadius: 16,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+                  <div style={{ display: "grid", gap: 4 }}>
+                    <div style={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.15 }}>
+                      {item.title}
+                    </div>
+                    <div style={{ color: "#8fa1ab", fontSize: 13 }}>
+                      {item.status} • {item.slug || "no-slug"}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={() => onBeginEditShare(item)}
+                      style={{
+                        border: "1px solid rgba(255,255,255,0.14)",
+                        borderRadius: 999,
+                        padding: "8px 12px",
+                        background: "rgba(255,255,255,0.04)",
+                        color: "#f3efe8",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Edit
+                    </button>
+                    {item.status === "published" ? (
+                      <button
+                        type="button"
+                        onClick={() => onUnpublishShare(item)}
+                        style={{
+                          border: "1px solid rgba(255,255,255,0.14)",
+                          borderRadius: 999,
+                          padding: "8px 12px",
+                          background: "rgba(255,255,255,0.04)",
+                          color: "#f3efe8",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Unpublish
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
     </article>
   ) : null}
@@ -3809,6 +3914,8 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
   const [saveBusy, setSaveBusy] = React.useState(false);
   const [saveMsg, setSaveMsg] = React.useState("");
   const [sharesState, setSharesState] = React.useState({ loading: false, items: [], featured: null, error: "" });
+  const [sharesAdminState, setSharesAdminState] = React.useState({ loading: false, items: [], error: "" });
+  const [editingShareId, setEditingShareId] = React.useState("");
   const [shareCreateBusy, setShareCreateBusy] = React.useState(false);
   const [shareCreateMsg, setShareCreateMsg] = React.useState("");
   const [shareDraft, setShareDraft] = React.useState({
@@ -3890,6 +3997,43 @@ React.useEffect(() => {
 
   return () => { dead = true; };
 }, [slugProp]);
+
+  React.useEffect(() => {
+    const currentSlug = slugProp
+      ? String(slugProp).trim().toLowerCase()
+      : String(window.location.pathname || "/")
+          .split("/")
+          .filter(Boolean)[0] || "";
+
+    if (currentSlug !== "dpg-shares" || !authState.authed) return;
+
+    let dead = false;
+    setSharesAdminState({ loading: true, items: [], error: "" });
+
+    (async () => {
+      try {
+        const data = await authFetch("/api/orgs/dpg/shares", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        });
+        if (dead) return;
+        setSharesAdminState({
+          loading: false,
+          items: Array.isArray(data?.shares) ? data.shares : [],
+          error: "",
+        });
+      } catch (e) {
+        if (dead) return;
+        setSharesAdminState({
+          loading: false,
+          items: [],
+          error: String(e?.message || e),
+        });
+      }
+    })();
+
+    return () => { dead = true; };
+  }, [slugProp, authState.authed]);
 
   const slug = React.useMemo(() => {
     if (slugProp) return slugProp;
@@ -4052,44 +4196,118 @@ React.useEffect(() => {
     setDraftPages((prev) => ({ ...(prev || {}), rsvp: next }));
   };
 
+  const beginEditShare = (item) => {
+    setEditingShareId(String(item?.id || ""));
+    setShareDraft({
+      title: item?.title || "",
+      description: item?.description || "",
+      videoUrl: item?.videoUrl || "",
+      thumbnailUrl: item?.thumbnailUrl || "",
+      tags: Array.isArray(item?.tags) ? item.tags.join(", ") : "",
+      durationText: item?.durationText || "",
+      metaText: item?.metaText || "",
+      featured: !!item?.featured,
+    });
+    setShareCreateMsg("Editing existing share.");
+  };
+
+  const resetShareEditor = () => {
+    setEditingShareId("");
+    setShareDraft({
+      title: "",
+      description: "",
+      videoUrl: "",
+      thumbnailUrl: "",
+      tags: "",
+      durationText: "",
+      metaText: "",
+      featured: false,
+    });
+  };
+
+  const refreshShares = async () => {
+    const [fresh, adminData] = await Promise.all([
+      fetch("/api/public/shares?org=dpg&limit=12", {
+        headers: { Accept: "application/json" },
+      }).then((r) => r.json().catch(() => ({}))),
+      authFetch("/api/orgs/dpg/shares", {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      }),
+    ]);
+
+    setSharesState({
+      loading: false,
+      items: Array.isArray(fresh?.items) ? fresh.items : [],
+      featured: fresh?.featured || null,
+      error: "",
+    });
+    setSharesAdminState({
+      loading: false,
+      items: Array.isArray(adminData?.shares) ? adminData.shares : [],
+      error: "",
+    });
+  };
+
+  const unpublishShare = async (item) => {
+    try {
+      setShareCreateBusy(true);
+      setShareCreateMsg("");
+      await authFetch("/api/orgs/dpg/shares", {
+        method: "PATCH",
+        body: {
+          id: item?.id,
+          title: item?.title || "",
+          description: item?.description || "",
+          videoUrl: item?.videoUrl || "",
+          thumbnailUrl: item?.thumbnailUrl || "",
+          tags: Array.isArray(item?.tags) ? item.tags : [],
+          durationText: item?.durationText || "",
+          metaText: item?.metaText || "",
+          featured: false,
+          status: "draft",
+        },
+      });
+
+      await refreshShares();
+      if (String(editingShareId || "") === String(item?.id || "")) resetShareEditor();
+      setShareCreateMsg("Share unpublished.");
+    } catch (e) {
+      setShareCreateMsg(String(e?.message || e || "Failed to unpublish share"));
+    } finally {
+      setShareCreateBusy(false);
+    }
+  };
+
   const publishShare = async () => {
     setShareCreateBusy(true);
     setShareCreateMsg("");
     try {
-      await authFetch("/api/orgs/dpg/shares", {
-        method: "POST",
-        body: {
-          ...shareDraft,
-          tags: String(shareDraft.tags || "")
-            .split(",")
-            .map((x) => x.trim())
-            .filter(Boolean),
-          status: "published",
-        },
-      });
+      const body = {
+        ...shareDraft,
+        tags: String(shareDraft.tags || "")
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean),
+        status: "published",
+      };
 
-      setShareDraft({
-        title: "",
-        description: "",
-        videoUrl: "",
-        thumbnailUrl: "",
-        tags: "",
-        durationText: "",
-        metaText: "",
-        featured: false,
-      });
-      setShareCreateMsg("Video entry published.");
+      if (editingShareId) {
+        await authFetch("/api/orgs/dpg/shares", {
+          method: "PATCH",
+          body: { id: editingShareId, ...body },
+        });
+      } else {
+        await authFetch("/api/orgs/dpg/shares", {
+          method: "POST",
+          body,
+        });
+      }
 
-      const res = await fetch("/api/public/shares?org=dpg&limit=12", {
-        headers: { Accept: "application/json" },
-      });
-      const fresh = await res.json().catch(() => ({}));
-      setSharesState({
-        loading: false,
-        items: Array.isArray(fresh?.items) ? fresh.items : [],
-        featured: fresh?.featured || null,
-        error: "",
-      });
+      const wasEditing = !!editingShareId;
+      resetShareEditor();
+      await refreshShares();
+      setShareCreateMsg(wasEditing ? "Share updated." : "Video entry published.");
     } catch (e) {
       setShareCreateMsg(String(e?.message || e || "Failed to publish video entry"));
     } finally {
@@ -4246,11 +4464,16 @@ React.useEffect(() => {
             authed={authState.authed}
             sharesLoading={sharesState.loading}
             sharesError={sharesState.error}
+            sharesAdminState={sharesAdminState}
+            editingShareId={editingShareId}
             shareDraft={shareDraft}
             setShareDraft={setShareDraft}
             shareCreateBusy={shareCreateBusy}
             shareCreateMsg={shareCreateMsg}
             onPublishShare={publishShare}
+            onBeginEditShare={beginEditShare}
+            onUnpublishShare={unpublishShare}
+            onResetShareEditor={resetShareEditor}
           />
         ) : (
           <GenericPublicPage page={page} accent={accent} />

@@ -2,6 +2,18 @@ import React from "react";
 
 const STORAGE_KEY = "dpg_sessions_v2";
 
+const SESSION_THEME = {
+  bg: "transparent",
+  bgElev: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72)",
+  border: "rgba(255,255,255,0.08)",
+  text: "#f3efe8",
+  muted: "#d7ddd8",
+  accent: "#93b4f0",
+  inputBg: "rgba(255,255,255,0.06)",
+  inputText: "#f3efe8",
+};
+
+
 const seed = {
   anchors: [
     {
@@ -124,7 +136,8 @@ function cardStyle(bg) {
     borderRadius: 18,
     padding: 18,
     minHeight: 170,
-    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.10)",
+    boxShadow: "0 18px 42px rgba(0,0,0,0.16)",
+    border: "1px solid var(--border)",
     display: "flex",
     flexDirection: "column",
     gap: 10,
@@ -137,7 +150,7 @@ function buttonStyle(active = false) {
     borderRadius: 999,
     padding: "8px 12px",
     cursor: "pointer",
-    background: active ? "var(--accent)" : "rgba(255,255,255,0.04)",
+    background: active ? "var(--accent)" : "rgba(255,255,255,0.05)",
     color: active ? "#121715" : "var(--text)",
     fontWeight: 700,
     fontSize: 14,
@@ -484,8 +497,16 @@ export default function DpgSessionsPage() {
   return (
     <div
       style={{
-        padding: 24,
-        background: "var(--bg)",
+        "--bg": SESSION_THEME.bg,
+        "--bg-elev": SESSION_THEME.bgElev,
+        "--border": SESSION_THEME.border,
+        "--text": SESSION_THEME.text,
+        "--muted": SESSION_THEME.muted,
+        "--accent": SESSION_THEME.accent,
+        "--input-bg": SESSION_THEME.inputBg,
+        "--input-text": SESSION_THEME.inputText,
+        padding: 0,
+        background: "transparent",
         minHeight: "100%",
         color: "var(--text)",
       }}
@@ -493,16 +514,17 @@ export default function DpgSessionsPage() {
       <div
         style={{
           border: "1px solid var(--border)",
-          borderRadius: 28,
+          borderRadius: 24,
           padding: 22,
           background: "var(--bg-elev)",
+          boxShadow: "0 18px 42px rgba(0,0,0,0.16)",
           marginBottom: 20,
         }}
       >
         <h1
           style={{
             margin: 0,
-            fontSize: 56,
+            fontSize: "clamp(2.6rem, 6vw, 5.4rem)",
             lineHeight: 0.95,
             color: "var(--accent)",
             textTransform: "lowercase",
@@ -541,6 +563,7 @@ export default function DpgSessionsPage() {
             border: "1px solid var(--border)",
             borderRadius: 24,
             padding: 18,
+            boxShadow: "0 18px 42px rgba(0,0,0,0.16)",
             display: "grid",
             gap: 12,
           }}
@@ -647,6 +670,7 @@ export default function DpgSessionsPage() {
             border: "1px solid var(--border)",
             borderRadius: 24,
             padding: 18,
+            boxShadow: "0 18px 42px rgba(0,0,0,0.16)",
             display: "grid",
             gap: 12,
           }}

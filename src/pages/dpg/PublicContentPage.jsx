@@ -1525,13 +1525,12 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
     <>
       <style>{`
         .dpg-shares-shell { display: grid; gap: 24px; }
-        .dpg-shares-grid {
+        .dpg-shares-topgrid {
           display: grid;
           grid-template-columns: minmax(0, 1.18fr) minmax(280px, 0.82fr);
           gap: 22px;
           align-items: start;
         }
-        .dpg-shares-main { display: grid; gap: 18px; }
         .dpg-shares-card {
           background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72);
           border: 1px solid rgba(255,255,255,0.08);
@@ -1539,6 +1538,9 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           padding: 22px;
           box-shadow: 0 18px 42px rgba(0,0,0,0.16);
         }
+        .dpg-shares-main { display: grid; gap: 18px; }
+        .dpg-shares-side { display: grid; gap: 18px; }
+        .dpg-shares-wide-stack { display: grid; gap: 18px; }
         .dpg-shares-feature {
           display: grid;
           grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
@@ -1565,7 +1567,7 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           background-size: cover;
           background-position: center;
         }
-        .dpg-shares-feature-scrim {
+        .dpg-shares-scrim {
           position: absolute;
           inset: 0;
           background:
@@ -1652,13 +1654,6 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           gap: 12px;
           align-content: start;
         }
-        .dpg-shares-copy-kicker {
-          color: ${accent};
-          font-size: 11px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: .08em;
-        }
         .dpg-shares-grid-header {
           display: grid;
           gap: 8px;
@@ -1666,8 +1661,9 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
         }
         .dpg-shares-videos {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 14px;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 16px;
+          align-items: start;
         }
         .dpg-shares-video-card {
           display: grid;
@@ -1744,28 +1740,9 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           letter-spacing: .07em;
           text-transform: uppercase;
         }
-        .dpg-shares-card-title {
-          color: #f3efe8;
-          font-family: Inter, system-ui, Arial, sans-serif;
-          font-weight: 800;
-          font-size: 1.08rem;
-          line-height: 1.18;
-        }
-        .dpg-shares-card-meta {
-          color: #93b4f0;
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: .04em;
-          text-transform: uppercase;
-        }
-        .dpg-shares-card-desc {
-          color: #d7ddd8;
-          line-height: 1.58;
-          font-size: 0.95rem;
-        }
         .dpg-shares-gridlist {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
           gap: 12px;
           margin-top: 16px;
         }
@@ -1802,7 +1779,6 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           font-size: 13px;
           margin-top: 2px;
         }
-        .dpg-shares-side { display: grid; gap: 18px; }
         .dpg-shares-sticky {
           background: #f3e28b;
           color: #171717;
@@ -1813,9 +1789,10 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           box-shadow: 0 18px 36px rgba(0,0,0,0.16);
         }
         @media (max-width: 920px) {
-          .dpg-shares-grid { grid-template-columns: 1fr; }
+          .dpg-shares-topgrid { grid-template-columns: 1fr; }
           .dpg-shares-feature { grid-template-columns: 1fr; }
           .dpg-shares-feature-media { min-height: 280px; }
+          .dpg-shares-videos { grid-template-columns: 1fr; }
         }
       `}</style>
 
@@ -1830,7 +1807,7 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           setContent={setContent}
         />
 
-        <section className="dpg-shares-grid">
+        <section className="dpg-shares-topgrid">
           <div className="dpg-shares-main">
             <article className="dpg-shares-card">
               <div className="dpg-shares-feature">
@@ -1992,284 +1969,6 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
                 </div>
               </div>
             </article>
-
-            <article className="dpg-shares-card">
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "shares_grid_title"}
-                value={content.grid_title}
-                onChange={(v) => setContent({ ...content, grid_title: v })}
-                onStartEdit={() => setActiveField("shares_grid_title")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="Grid title"
-                hint="Edit section label"
-                display={content.grid_title}
-                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", borderRadius: 10 }}
-              />
-
-              <div className="dpg-shares-grid-header">
-                <InlineField
-                  editorMode={editorMode}
-                  editing={editorMode && activeField === "shares_grid_body"}
-                  value={content.grid_body}
-                  onChange={(v) => setContent({ ...content, grid_body: v })}
-                  onStartEdit={() => setActiveField("shares_grid_body")}
-                  onStopEdit={() => setActiveField("")}
-                  placeholder="Grid intro"
-                  multiline
-                  hint="Edit intro"
-                  display={content.grid_body}
-                  displayStyle={{ color: "#d7ddd8", lineHeight: 1.66, maxWidth: 760, borderRadius: 10 }}
-                />
-              </div>
-
-              <div className="dpg-shares-videos">
-                {Array.from({ length: visibleCards }).map((_, idx) => {
-                  const video = videos[idx] || {};
-                  const hasContent =
-                    String(video?.title || "").trim() ||
-                    String(video?.description || "").trim() ||
-                    String(video?.tag || "").trim() ||
-                    String(video?.duration || "").trim() ||
-                    String(video?.meta || "").trim() ||
-                    String(video?.thumb || "").trim() ||
-                    String(video?.href || "").trim();
-
-                  if (!hasContent && !editorMode) return null;
-
-                  return (
-                    <div className="dpg-shares-video-card" key={`share-video-${idx}`}>
-                      <a
-                        href={video.href || "#"}
-                        className={`dpg-shares-thumb${video.thumb ? " has-thumb" : ""}`}
-                        style={video.thumb ? { backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.42)), url("${video.thumb}")` } : undefined}
-                      >
-                        <span className="dpg-shares-thumb-tag">{video.tag || "Session"}</span>
-                        <span className="dpg-shares-thumb-play">▶</span>
-                        <span className="dpg-shares-thumb-duration">{video.duration || "Preview"}</span>
-                      </a>
-
-                      <div style={{ display: "grid", gap: 8 }}>
-                        {editorMode ? (
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                            <EditChip onClick={() => removeVideo(idx)} subtle>
-                              Remove card
-                            </EditChip>
-                          </div>
-                        ) : null}
-
-                        <InlineField
-                          editorMode={editorMode}
-                          editing={editorMode && activeField == `shares_video_tag_${idx}`}
-                          value={video.tag || ""}
-                          onChange={(v) => updateVideo(idx, "tag", v)}
-                          onStartEdit={() => setActiveField(`shares_video_tag_${idx}`)}
-                          onStopEdit={() => setActiveField("")}
-                          placeholder={`Tag ${idx + 1}`}
-                          hint="Edit tag"
-                          display={video.tag || (editorMode ? "Session tag" : "")}
-                          displayStyle={{ color: "#93b4f0", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".06em", borderRadius: 10 }}
-                        />
-
-                        <InlineField
-                          editorMode={editorMode}
-                          editing={editorMode && activeField === `shares_video_title_${idx}`}
-                          value={video.title || ""}
-                          onChange={(v) => updateVideo(idx, "title", v)}
-                          onStartEdit={() => setActiveField(`shares_video_title_${idx}`)}
-                          onStopEdit={() => setActiveField("")}
-                          placeholder={`Video title ${idx + 1}`}
-                          hint="Edit title"
-                          display={video.title || (editorMode ? "Untitled session" : "")}
-                          displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1.08rem", lineHeight: 1.18, borderRadius: 10 }}
-                        />
-
-                        <InlineField
-                          editorMode={editorMode}
-                          editing={editorMode && activeField === `shares_video_meta_${idx}`}
-                          value={video.meta || ""}
-                          onChange={(v) => updateVideo(idx, "meta", v)}
-                          onStartEdit={() => setActiveField(`shares_video_meta_${idx}`)}
-                          onStopEdit={() => setActiveField("")}
-                          placeholder={`Metadata ${idx + 1}`}
-                          hint="Edit metadata"
-                          display={video.meta || (editorMode ? "Session metadata" : "")}
-                          displayStyle={{ color: "#93b4f0", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".04em", borderRadius: 10 }}
-                        />
-
-                        <InlineField
-                          editorMode={editorMode}
-                          editing={editorMode && activeField === `shares_video_desc_${idx}`}
-                          value={video.description || ""}
-                          onChange={(v) => updateVideo(idx, "description", v)}
-                          onStartEdit={() => setActiveField(`shares_video_desc_${idx}`)}
-                          onStopEdit={() => setActiveField("")}
-                          placeholder={`Description ${idx + 1}`}
-                          multiline
-                          hint="Edit description"
-                          display={video.description || (editorMode ? "Session description" : "")}
-                          displayStyle={{ color: "#d7ddd8", lineHeight: 1.58, fontSize: "0.95rem", borderRadius: 10 }}
-                        />
-
-                        <InlineField
-                          editorMode={editorMode}
-                          editing={editorMode && activeField === `shares_video_duration_${idx}`}
-                          value={video.duration || ""}
-                          onChange={(v) => updateVideo(idx, "duration", v)}
-                          onStartEdit={() => setActiveField(`shares_video_duration_${idx}`)}
-                          onStopEdit={() => setActiveField("")}
-                          placeholder={`Duration ${idx + 1}`}
-                          hint="Edit duration"
-                          display={video.duration || (editorMode ? "Duration" : "")}
-                          displayStyle={{ color: "#d7ddd8", fontSize: 13, borderRadius: 10 }}
-                        />
-
-                        {editorMode ? (
-                          <>
-                            <InlineField
-                              editorMode={editorMode}
-                              editing={editorMode && activeField === `shares_video_thumb_${idx}`}
-                              value={video.thumb || ""}
-                              onChange={(v) => updateVideo(idx, "thumb", v)}
-                              onStartEdit={() => setActiveField(`shares_video_thumb_${idx}`)}
-                              onStopEdit={() => setActiveField("")}
-                              placeholder={`Thumbnail URL ${idx + 1}`}
-                              hint="Edit thumbnail"
-                              display={video.thumb || "Set thumbnail URL"}
-                              displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
-                            />
-
-                            <InlineField
-                              editorMode={editorMode}
-                              editing={editorMode && activeField === `shares_video_href_${idx}`}
-                              value={video.href || ""}
-                              onChange={(v) => updateVideo(idx, "href", v)}
-                              onStartEdit={() => setActiveField(`shares_video_href_${idx}`)}
-                              onStopEdit={() => setActiveField("")}
-                              placeholder={`Link URL ${idx + 1}`}
-                              hint="Edit link"
-                              display={video.href || "Set link URL"}
-                              displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
-                            />
-                          </>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {editorMode && videos.length < 12 ? (
-                <div style={{ marginTop: 18 }}>
-                  <EditChip onClick={addVideo} subtle>
-                    Add video card
-                  </EditChip>
-                </div>
-              ) : null}
-            </article>
-
-            <article className="dpg-shares-card">
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "shares_lead_title"}
-                value={content.lead_title}
-                onChange={(v) => setContent({ ...content, lead_title: v })}
-                onStartEdit={() => setActiveField("shares_lead_title")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="Lead title"
-                hint="Edit title"
-                display={content.lead_title}
-                displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "2rem", lineHeight: 1.05, marginBottom: 14, borderRadius: 10 }}
-              />
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "shares_lead_body"}
-                value={content.lead_body}
-                onChange={(v) => setContent({ ...content, lead_body: v })}
-                onStartEdit={() => setActiveField("shares_lead_body")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="Lead body"
-                multiline
-                hint="Edit intro block"
-                display={content.lead_body}
-                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, fontSize: "1.06rem", borderRadius: 10 }}
-              />
-            </article>
-
-            <article className="dpg-shares-card">
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "shares_vision_title"}
-                value={content.vision_title}
-                onChange={(v) => setContent({ ...content, vision_title: v })}
-                onStartEdit={() => setActiveField("shares_vision_title")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="Vision title"
-                hint="Edit section label"
-                display={content.vision_title}
-                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
-              />
-
-              <div className="dpg-shares-gridlist">
-                {Array.from({ length: Math.max(content.vision_items.length, editorMode ? 6 : content.vision_items.length) }).map((_, idx) => {
-                  const value = content.vision_items[idx] || "";
-                  return (
-                    <div className="dpg-shares-tile" key={`vision-${idx}`}>
-                      <InlineField
-                        editorMode={editorMode}
-                        editing={editorMode && activeField === `shares_vision_${idx}`}
-                        value={value}
-                        onChange={(v) => updateVisionItem(idx, v)}
-                        onStartEdit={() => setActiveField(`shares_vision_${idx}`)}
-                        onStopEdit={() => setActiveField("")}
-                        placeholder={`Vision item ${idx + 1}`}
-                        hint="Edit item"
-                        display={value || (editorMode ? "Empty vision slot" : "")}
-                        displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </article>
-
-            <article className="dpg-shares-card">
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "shares_build_title"}
-                value={content.build_title}
-                onChange={(v) => setContent({ ...content, build_title: v })}
-                onStartEdit={() => setActiveField("shares_build_title")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="Build title"
-                hint="Edit section label"
-                display={content.build_title}
-                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
-              />
-
-              <div style={{ display: "grid", gap: 12 }}>
-                {Array.from({ length: Math.max(content.build_items.length, editorMode ? 4 : content.build_items.length) }).map((_, idx) => {
-                  const value = content.build_items[idx] || "";
-                  return (
-                    <div className="dpg-shares-phase" key={`phase-${idx}`}>
-                      <div className="dpg-shares-num">{idx + 1}</div>
-                      <InlineField
-                        editorMode={editorMode}
-                        editing={editorMode && activeField === `shares_build_${idx}`}
-                        value={value}
-                        onChange={(v) => updateBuildItem(idx, v)}
-                        onStartEdit={() => setActiveField(`shares_build_${idx}`)}
-                        onStopEdit={() => setActiveField("")}
-                        placeholder={`Phase ${idx + 1}`}
-                        hint="Edit phase"
-                        display={value || (editorMode ? "Empty phase slot" : "")}
-                        displayStyle={{ color: "#f3efe8", lineHeight: 1.55, borderRadius: 10 }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </article>
           </div>
 
           <aside className="dpg-shares-side">
@@ -2359,6 +2058,286 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
               />
             </div>
           </aside>
+        </section>
+
+        <section className="dpg-shares-wide-stack">
+          <article className="dpg-shares-card">
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "shares_grid_title"}
+              value={content.grid_title}
+              onChange={(v) => setContent({ ...content, grid_title: v })}
+              onStartEdit={() => setActiveField("shares_grid_title")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Grid title"
+              hint="Edit section label"
+              display={content.grid_title}
+              displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", borderRadius: 10 }}
+            />
+
+            <div className="dpg-shares-grid-header">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "shares_grid_body"}
+                value={content.grid_body}
+                onChange={(v) => setContent({ ...content, grid_body: v })}
+                onStartEdit={() => setActiveField("shares_grid_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Grid intro"
+                multiline
+                hint="Edit intro"
+                display={content.grid_body}
+                displayStyle={{ color: "#d7ddd8", lineHeight: 1.66, maxWidth: 760, borderRadius: 10 }}
+              />
+            </div>
+
+            <div className="dpg-shares-videos">
+              {Array.from({ length: visibleCards }).map((_, idx) => {
+                const video = videos[idx] || {};
+                const hasContent =
+                  String(video?.title || "").trim() ||
+                  String(video?.description || "").trim() ||
+                  String(video?.tag || "").trim() ||
+                  String(video?.duration || "").trim() ||
+                  String(video?.meta || "").trim() ||
+                  String(video?.thumb || "").trim() ||
+                  String(video?.href || "").trim();
+
+                if (!hasContent && !editorMode) return null;
+
+                return (
+                  <div className="dpg-shares-video-card" key={`share-video-${idx}`}>
+                    <a
+                      href={video.href || "#"}
+                      className={`dpg-shares-thumb${video.thumb ? " has-thumb" : ""}`}
+                      style={video.thumb ? { backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.42)), url("${video.thumb}")` } : undefined}
+                    >
+                      <span className="dpg-shares-thumb-tag">{video.tag || "Session"}</span>
+                      <span className="dpg-shares-thumb-play">▶</span>
+                      <span className="dpg-shares-thumb-duration">{video.duration || "Preview"}</span>
+                    </a>
+
+                    <div style={{ display: "grid", gap: 8 }}>
+                      {editorMode ? (
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <EditChip onClick={() => removeVideo(idx)} subtle>
+                            Remove card
+                          </EditChip>
+                        </div>
+                      ) : null}
+
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField == `shares_video_tag_${idx}`}
+                        value={video.tag || ""}
+                        onChange={(v) => updateVideo(idx, "tag", v)}
+                        onStartEdit={() => setActiveField(`shares_video_tag_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Tag ${idx + 1}`}
+                        hint="Edit tag"
+                        display={video.tag || (editorMode ? "Session tag" : "")}
+                        displayStyle={{ color: "#93b4f0", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".06em", borderRadius: 10 }}
+                      />
+
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `shares_video_title_${idx}`}
+                        value={video.title || ""}
+                        onChange={(v) => updateVideo(idx, "title", v)}
+                        onStartEdit={() => setActiveField(`shares_video_title_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Video title ${idx + 1}`}
+                        hint="Edit title"
+                        display={video.title || (editorMode ? "Untitled session" : "")}
+                        displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1.08rem", lineHeight: 1.18, borderRadius: 10 }}
+                      />
+
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `shares_video_meta_${idx}`}
+                        value={video.meta || ""}
+                        onChange={(v) => updateVideo(idx, "meta", v)}
+                        onStartEdit={() => setActiveField(`shares_video_meta_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Metadata ${idx + 1}`}
+                        hint="Edit metadata"
+                        display={video.meta || (editorMode ? "Session metadata" : "")}
+                        displayStyle={{ color: "#93b4f0", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".04em", borderRadius: 10 }}
+                      />
+
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `shares_video_desc_${idx}`}
+                        value={video.description || ""}
+                        onChange={(v) => updateVideo(idx, "description", v)}
+                        onStartEdit={() => setActiveField(`shares_video_desc_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Description ${idx + 1}`}
+                        multiline
+                        hint="Edit description"
+                        display={video.description || (editorMode ? "Session description" : "")}
+                        displayStyle={{ color: "#d7ddd8", lineHeight: 1.58, fontSize: "0.95rem", borderRadius: 10 }}
+                      />
+
+                      <InlineField
+                        editorMode={editorMode}
+                        editing={editorMode && activeField === `shares_video_duration_${idx}`}
+                        value={video.duration || ""}
+                        onChange={(v) => updateVideo(idx, "duration", v)}
+                        onStartEdit={() => setActiveField(`shares_video_duration_${idx}`)}
+                        onStopEdit={() => setActiveField("")}
+                        placeholder={`Duration ${idx + 1}`}
+                        hint="Edit duration"
+                        display={video.duration || (editorMode ? "Duration" : "")}
+                        displayStyle={{ color: "#d7ddd8", fontSize: 13, borderRadius: 10 }}
+                      />
+
+                      {editorMode ? (
+                        <>
+                          <InlineField
+                            editorMode={editorMode}
+                            editing={editorMode && activeField === `shares_video_thumb_${idx}`}
+                            value={video.thumb || ""}
+                            onChange={(v) => updateVideo(idx, "thumb", v)}
+                            onStartEdit={() => setActiveField(`shares_video_thumb_${idx}`)}
+                            onStopEdit={() => setActiveField("")}
+                            placeholder={`Thumbnail URL ${idx + 1}`}
+                            hint="Edit thumbnail"
+                            display={video.thumb || "Set thumbnail URL"}
+                            displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                          />
+
+                          <InlineField
+                            editorMode={editorMode}
+                            editing={editorMode && activeField === `shares_video_href_${idx}`}
+                            value={video.href || ""}
+                            onChange={(v) => updateVideo(idx, "href", v)}
+                            onStartEdit={() => setActiveField(`shares_video_href_${idx}`)}
+                            onStopEdit={() => setActiveField("")}
+                            placeholder={`Link URL ${idx + 1}`}
+                            hint="Edit link"
+                            display={video.href || "Set link URL"}
+                            displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                          />
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {editorMode && videos.length < 12 ? (
+              <div style={{ marginTop: 18 }}>
+                <EditChip onClick={addVideo} subtle>
+                  Add video card
+                </EditChip>
+              </div>
+            ) : null}
+          </article>
+
+          <article className="dpg-shares-card">
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "shares_lead_title"}
+              value={content.lead_title}
+              onChange={(v) => setContent({ ...content, lead_title: v })}
+              onStartEdit={() => setActiveField("shares_lead_title")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Lead title"
+              hint="Edit title"
+              display={content.lead_title}
+              displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "2rem", lineHeight: 1.05, marginBottom: 14, borderRadius: 10 }}
+            />
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "shares_lead_body"}
+              value={content.lead_body}
+              onChange={(v) => setContent({ ...content, lead_body: v })}
+              onStartEdit={() => setActiveField("shares_lead_body")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Lead body"
+              multiline
+              hint="Edit intro block"
+              display={content.lead_body}
+              displayStyle={{ color: "#f3efe8", lineHeight: 1.68, fontSize: "1.06rem", borderRadius: 10 }}
+            />
+          </article>
+
+          <article className="dpg-shares-card">
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "shares_vision_title"}
+              value={content.vision_title}
+              onChange={(v) => setContent({ ...content, vision_title: v })}
+              onStartEdit={() => setActiveField("shares_vision_title")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Vision title"
+              hint="Edit section label"
+              display={content.vision_title}
+              displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+            />
+
+            <div className="dpg-shares-gridlist">
+              {Array.from({ length: Math.max(content.vision_items.length, editorMode ? 6 : content.vision_items.length) }).map((_, idx) => {
+                const value = content.vision_items[idx] || "";
+                return (
+                  <div className="dpg-shares-tile" key={`vision-${idx}`}>
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === `shares_vision_${idx}`}
+                      value={value}
+                      onChange={(v) => updateVisionItem(idx, v)}
+                      onStartEdit={() => setActiveField(`shares_vision_${idx}`)}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder={`Vision item ${idx + 1}`}
+                      hint="Edit item"
+                      display={value || (editorMode ? "Empty vision slot" : "")}
+                      displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </article>
+
+          <article className="dpg-shares-card">
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "shares_build_title"}
+              value={content.build_title}
+              onChange={(v) => setContent({ ...content, build_title: v })}
+              onStartEdit={() => setActiveField("shares_build_title")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Build title"
+              hint="Edit section label"
+              display={content.build_title}
+              displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+            />
+
+            <div style={{ display: "grid", gap: 12 }}>
+              {Array.from({ length: Math.max(content.build_items.length, editorMode ? 4 : content.build_items.length) }).map((_, idx) => {
+                const value = content.build_items[idx] || "";
+                return (
+                  <div className="dpg-shares-phase" key={`phase-${idx}`}>
+                    <div className="dpg-shares-num">{idx + 1}</div>
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === `shares_build_${idx}`}
+                      value={value}
+                      onChange={(v) => updateBuildItem(idx, v)}
+                      onStartEdit={() => setActiveField(`shares_build_${idx}`)}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder={`Phase ${idx + 1}`}
+                      hint="Edit phase"
+                      display={value || (editorMode ? "Empty phase slot" : "")}
+                      displayStyle={{ color: "#f3efe8", lineHeight: 1.55, borderRadius: 10 }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </article>
         </section>
       </div>
     </>

@@ -116,7 +116,7 @@ const Brand = ({ orgId, logoSrc }) => {
               loading="lazy"
               decoding="async"
             />
-          ) : null}
+          )}
           <span className="bf-org-name">{label}</span>
         </span>
       ) : dpg ? null : null}
@@ -230,7 +230,7 @@ function OrgNav({ variant = "desktop" }) {
         >
           All Orgs
         </NavLink>
-      ) : null}
+      )}
 
       {items.map(([label, to, tourId]) => (
         <NavLink
@@ -373,36 +373,11 @@ export default function AppHeader({ onLogout, showLogout }) {
             width: isCompactNav ? "auto" : undefined,
           }}
         >
-          {!isCompactNav ? (
-            <div
-              className="bf-nav-desktop"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                overflow: "hidden",
-                flexWrap: "wrap",
-                minWidth: 0,
-                justifyContent: "flex-end",
-                flex: "1 1 auto",
-              }}
-            >
-              <OrgNav variant="desktop" />
-            </div>
-          ) : null}
+          
 
-          {!isCompactNav && showLogout ? (
-            <button
-              className="bf-logout"
-              type="button"
-              onClick={onLogout}
-              title="Logout"
-            >
-              Logout
-            </button>
-          ) : null}
+          
 
-          {isCompactNav ? (
+          {(
             <button
               className="bf-hamburger"
               type="button"
@@ -413,7 +388,7 @@ export default function AppHeader({ onLogout, showLogout }) {
             >
               <span aria-hidden="true">☰</span>
             </button>
-          ) : null}
+          )}
         </div>
       </header>
 
@@ -464,11 +439,11 @@ export default function AppHeader({ onLogout, showLogout }) {
             >
               Logout
             </button>
-          ) : null}
+          )}
 
           {brand.footerLabel ? (
             <div className="bf-powered-by">{brand.footerLabel}</div>
-          ) : null}
+          )}
         </div>
       </div>
 
@@ -476,7 +451,7 @@ export default function AppHeader({ onLogout, showLogout }) {
         <pre style={debugOverlayStyle}>
           {JSON.stringify({ pathname: loc.pathname, hash: loc.hash, variant: dpg ? "dpg" : "bondfire" }, null, 2)}
         </pre>
-      ) : null}
+      )}
     </>
   );
 }

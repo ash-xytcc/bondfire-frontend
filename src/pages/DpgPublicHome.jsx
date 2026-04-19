@@ -21,6 +21,53 @@ const PUBLIC_NAV_LINKS = [
   { label: "RSVP", url: "/rsvp" },
 ];
 
+const HOME_MOBILE_CSS = `
+  @media (max-width: 820px) {
+    .dpg-home-nav {
+      left: 16px !important;
+      right: 16px !important;
+      top: 16px !important;
+      gap: 12px !important;
+      align-items: stretch !important;
+    }
+    .dpg-home-nav-links {
+      width: 100%;
+      gap: 12px !important;
+      row-gap: 10px !important;
+    }
+    .dpg-home-nav-cta-wrap {
+      width: 100%;
+      justify-content: flex-start !important;
+    }
+    .dpg-home-nav-cta {
+      width: 100%;
+      justify-content: center;
+    }
+    .dpg-home-hero-inner {
+      padding: 148px 16px 72px !important;
+    }
+    .dpg-home-feature-card {
+      grid-template-columns: 1fr !important;
+      gap: 16px !important;
+      padding: 14px !important;
+    }
+    .dpg-home-feature-media {
+      min-height: 220px !important;
+      order: 1 !important;
+    }
+    .dpg-home-feature-copy {
+      order: 2 !important;
+    }
+    .dpg-home-lower-shell {
+      padding: 26px 16px 72px !important;
+    }
+    .dpg-home-lower-grid {
+      grid-template-columns: 1fr !important;
+      gap: 16px !important;
+    }
+  }
+`;
+
 function normalizeHomeConfig(src = {}) {
   return {
     enabled: true,
@@ -392,6 +439,7 @@ function NavBar({ links = [], editorMode = false, onOpenNavEditor, authed = fals
 
   return (
     <nav
+      className="dpg-home-nav"
       style={{
         position: 'absolute',
         top: 22,
@@ -405,7 +453,7 @@ function NavBar({ links = [], editorMode = false, onOpenNavEditor, authed = fals
         flexWrap: 'wrap',
       }}
     >
-      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="dpg-home-nav-links" style={{ display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'center' }}>
         {items.map((item, idx) => (
           <a
             key={`${item?.label || 'nav'}-${idx}`}
@@ -427,8 +475,9 @@ function NavBar({ links = [], editorMode = false, onOpenNavEditor, authed = fals
         {editorMode ? <EditChip onClick={onOpenNavEditor} subtle>Edit nav</EditChip> : null}
       </div>
 
-      <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+      <div className="dpg-home-nav-cta-wrap" style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
         <button
+          className="dpg-home-nav-cta"
           type="button"
           onClick={() => {
             window.location.href = authed ? "/?app=dpg#/org/dpg/overview" : DPG_BRAND.adminSignInHref;
@@ -526,6 +575,7 @@ function FeaturedCard({ post, reverse = false }) {
 
   return (
     <a
+      className="dpg-home-feature-card"
       href={href}
       style={{
         display: 'grid',
@@ -540,7 +590,7 @@ function FeaturedCard({ post, reverse = false }) {
         padding: 18,
       }}
     >
-      <div style={{ order: reverse ? 2 : 1 }}>
+      <div className="dpg-home-feature-copy" style={{ order: reverse ? 2 : 1 }}>
         <h2
           style={{
             margin: 0,
@@ -579,6 +629,7 @@ function FeaturedCard({ post, reverse = false }) {
       </div>
 
       <div
+        className="dpg-home-feature-media"
         style={{
           order: reverse ? 1 : 2,
           minHeight: 280,
@@ -800,6 +851,7 @@ export default function DpgPublicHome() {
 
   return (
     <div style={{ ...theme.page, fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}>
+      <style>{HOME_MOBILE_CSS}</style>
       {authState.authed ? (
         <button
           type="button"
@@ -904,6 +956,9 @@ export default function DpgPublicHome() {
             maxWidth: 1240,
             margin: '0 auto',
             padding: navEditorOpen ? '260px 28px 110px' : '180px 28px 110px',
+            }}
+            className='dpg-home-hero-inner'
+          >
             textAlign: 'center',
           }}
         >
@@ -1039,7 +1094,7 @@ export default function DpgPublicHome() {
         </div>
       </section>
 
-      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '34px 28px 80px' }}>
+      <div className='dpg-home-lower-shell' style={{ maxWidth: 1240, margin: '0 auto', padding: '34px 28px 80px' }}>
         <section style={{ display: 'grid', gap: 24, marginBottom: 42 }}>
           {postsState.loading ? <div style={{ color: '#d7ddd8' }}>Loading featured posts…</div> : null}
           {postsState.error ? <div style={{ color: 'crimson' }}>{postsState.error}</div> : null}
@@ -1146,6 +1201,7 @@ export default function DpgPublicHome() {
         ) : null}
 
         <section
+          className='dpg-home-lower-grid'
           style={{
             display: 'grid',
             gridTemplateColumns: '1.2fr .8fr',

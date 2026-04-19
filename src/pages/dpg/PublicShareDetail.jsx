@@ -20,10 +20,35 @@ const PUBLIC_NAV_LINKS = [
   { label: "RSVP", url: "/rsvp" },
 ];
 
+const SHARE_DETAIL_MOBILE_CSS = `
+  @media (max-width: 820px) {
+    .dpg-public-nav {
+      gap: 12px !important;
+      align-items: stretch !important;
+      margin-bottom: 22px !important;
+    }
+    .dpg-public-nav-links {
+      width: 100%;
+      gap: 12px !important;
+      row-gap: 10px !important;
+    }
+    .dpg-public-nav-cta {
+      width: 100%;
+      justify-content: center;
+    }
+    .dpg-share-detail-shell {
+      padding: 24px 16px 72px !important;
+    }
+  }
+`;
+
 function PublicNav({ links = [], authed = false, accent = "#93b4f0" }) {
   const items = Array.isArray(links) ? links : [];
   return (
-    <nav
+    <>
+      <style>{SHARE_DETAIL_MOBILE_CSS}</style>
+      <nav
+        className="dpg-public-nav"
       style={{
         display: "flex",
         alignItems: "center",
@@ -33,7 +58,7 @@ function PublicNav({ links = [], authed = false, accent = "#93b4f0" }) {
         marginBottom: 34,
       }}
     >
-      <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center" }}>
+      <div className="dpg-public-nav-links" style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center" }}>
         {items.map((item, idx) => (
           <a
             key={`${item?.label || "nav"}-${idx}`}
@@ -53,6 +78,7 @@ function PublicNav({ links = [], authed = false, accent = "#93b4f0" }) {
       </div>
 
       <button
+        className="dpg-public-nav-cta"
         type="button"
         onClick={() => {
           window.location.href = authed ? "/?app=dpg#/org/dpg/overview" : DPG_BRAND.adminSignInHref;
@@ -72,6 +98,7 @@ function PublicNav({ links = [], authed = false, accent = "#93b4f0" }) {
         {authed ? "Organizer area" : "Organizer sign in"}
       </button>
     </nav>
+    </>
   );
 }
 
@@ -219,7 +246,7 @@ export default function PublicShareDetail({ slug: slugProp = "" }) {
 
   return (
     <div style={{ ...theme.page, fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)' }}>
-      <div style={{ maxWidth: 1160, margin: "0 auto", padding: "32px 20px 80px" }}>
+      <div className="dpg-share-detail-shell" style={{ maxWidth: 1160, margin: "0 auto", padding: "32px 20px 80px" }}>
         <PublicNav links={navLinks} authed={authState.authed} accent={accent} />
 
         <a

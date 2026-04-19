@@ -13,6 +13,27 @@ const SESSION_THEME = {
   inputText: "#f3efe8",
 };
 
+const SESSIONS_MOBILE_CSS = `
+  @media (max-width: 820px) {
+    .dpg-sessions-top-grid {
+      grid-template-columns: 1fr !important;
+      gap: 14px !important;
+    }
+    .dpg-sessions-form-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .dpg-sessions-title {
+      font-size: clamp(2.4rem, 12vw, 4rem) !important;
+    }
+    .dpg-sessions-subcopy {
+      font-size: 18px !important;
+    }
+    .dpg-sessions-card-title {
+      font-size: 24px !important;
+    }
+  }
+`;
+
 
 const seed = {
   anchors: [
@@ -164,6 +185,7 @@ function SessionCard({ item, color, onVote, onClaimLead, onClearLeads, onRemoveL
     <div style={cardStyle(color)}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
         <h3
+          className="dpg-sessions-card-title"
           style={{
             margin: 0,
             fontSize: 28,
@@ -496,6 +518,7 @@ export default function DpgSessionsPage() {
 
   return (
     <div
+      className="dpg-sessions-root"
       style={{
         "--bg": SESSION_THEME.bg,
         "--bg-elev": SESSION_THEME.bgElev,
@@ -511,6 +534,7 @@ export default function DpgSessionsPage() {
         color: "var(--text)",
       }}
     >
+      <style>{SESSIONS_MOBILE_CSS}</style>
       <div
         style={{
           border: "1px solid var(--border)",
@@ -522,6 +546,7 @@ export default function DpgSessionsPage() {
         }}
       >
         <h1
+          className="dpg-sessions-title"
           style={{
             margin: 0,
             fontSize: "clamp(2.6rem, 6vw, 5.4rem)",
@@ -534,6 +559,7 @@ export default function DpgSessionsPage() {
         </h1>
 
         <p
+          className="dpg-sessions-subcopy"
           style={{
             margin: "16px 0 0",
             fontSize: 20,
@@ -549,6 +575,7 @@ export default function DpgSessionsPage() {
       </div>
 
       <div
+        className="dpg-sessions-top-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "1.2fr 1fr",
@@ -614,6 +641,7 @@ export default function DpgSessionsPage() {
           />
 
           <div
+            className="dpg-sessions-form-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",

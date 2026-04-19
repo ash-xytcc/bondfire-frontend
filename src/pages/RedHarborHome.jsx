@@ -1590,27 +1590,32 @@ export default function RedHarborHome() {
                     {BRANCH_EMAIL_LABEL}
                   </a>
 
-                  {liveHome.show_newsletter_card ? (
-                    <form className="rh-newsletter-form" onSubmit={submitNewsletter}>
-                      <input
-                        className="rh-inline-editor"
-                        value={newsletterName}
-                        onChange={(e) => setNewsletterName(e.target.value)}
-                        placeholder="Name"
-                      />
-                      <input
-                        className="rh-inline-editor"
-                        type="email"
-                        value={newsletterEmail}
-                        onChange={(e) => setNewsletterEmail(e.target.value)}
-                        placeholder="Email address"
-                        required
-                      />
-                      <button type="submit" className="rh-btn rh-btn-primary" disabled={newsletterBusy}>
-                        {newsletterBusy ? "Joining..." : "Join newsletter"}
-                      </button>
-                    </form>
-                  ) : null}
+                  <div className="rh-newsletter-head" style={{ marginTop: 4 }}>
+                    <p className="rh-section-kicker">Newsletter</p>
+                    <p className="rh-section-copy" style={{ marginBottom: 0 }}>
+                      Get branch updates, public announcements, bulletin releases, and upcoming event notices by email.
+                    </p>
+                  </div>
+
+                  <form className="rh-newsletter-form" onSubmit={submitNewsletter}>
+                    <input
+                      className="rh-inline-editor"
+                      value={newsletterName}
+                      onChange={(e) => setNewsletterName(e.target.value)}
+                      placeholder="Name"
+                    />
+                    <input
+                      className="rh-inline-editor"
+                      type="email"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      placeholder="Email address"
+                      required
+                    />
+                    <button type="submit" className="rh-btn rh-btn-primary" disabled={newsletterBusy}>
+                      {newsletterBusy ? "Joining..." : "Join newsletter"}
+                    </button>
+                  </form>
 
                   {newsletterMsg ? (
                     <p className="rh-note" style={{ marginTop: 0 }}>{newsletterMsg}</p>

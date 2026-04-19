@@ -950,15 +950,13 @@ export default function DpgPublicHome() {
         />
 
         <div
+          className="dpg-home-hero-inner"
           style={{
             position: 'relative',
             zIndex: 2,
             maxWidth: 1240,
             margin: '0 auto',
             padding: navEditorOpen ? '260px 28px 110px' : '180px 28px 110px',
-            }}
-            className='dpg-home-hero-inner'
-          >
             textAlign: 'center',
           }}
         >

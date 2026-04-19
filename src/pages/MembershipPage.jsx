@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "../styles/redharbor-public-pass1.css";
+import "../styles/redharbor-membership.css";
 
 const REDCARD_URL = "https://redcard.iww.org/";
 
@@ -31,7 +32,7 @@ const reasons = [
 
 export default function MembershipPage() {
   return (
-    <div className="rh-public">
+    <div className="rh-public rh-membership-page">
       <header className="rh-public-header">
         <div className="rh-public-brand">
           <img
@@ -55,22 +56,22 @@ export default function MembershipPage() {
       </header>
 
       <main>
-        <section className="rh-section rh-membership-stack">
-          <div className="rh-section-head">
+        <section className="rh-section rh-membership-shell">
+          <div className="rh-membership-intro">
             <p className="rh-section-kicker">Membership</p>
-            <h1 className="rh-membership-stack-title">Join the IWW through Red Harbor</h1>
-            <p className="rh-section-copy rh-membership-stack-copy">
+            <h1 className="rh-membership-heading">Join the IWW through Red Harbor</h1>
+            <p className="rh-section-copy">
               Join the One Big Union, connect with a local branch, and plug into workplace organizing,
               political education, and worker solidarity on the harbor and beyond.
             </p>
           </div>
 
-          <div className="rh-card rh-membership-stack-card">
+          <div className="rh-card rh-membership-start-card">
             <h3>Start here</h3>
             <p>
               New memberships are handled through Redcard. Join there, then connect back into Red Harbor and branch life.
             </p>
-            <div className="rh-membership-stack-actions">
+            <div className="rh-membership-buttons">
               <a href={REDCARD_URL} className="rh-btn rh-btn-primary" target="_blank" rel="noopener noreferrer">
                 Join now
               </a>
@@ -92,7 +93,7 @@ export default function MembershipPage() {
             </p>
           </div>
 
-          <div className="rh-membership-grid-two">
+          <div className="rh-membership-two">
             <div className="rh-card">
               <h3>Who this includes</h3>
               <ul className="rh-event-list">
@@ -122,7 +123,7 @@ export default function MembershipPage() {
             </p>
           </div>
 
-          <div className="rh-membership-grid-two">
+          <div className="rh-membership-two">
             {reasons.map((item) => (
               <article className="rh-card" key={item.title}>
                 <h3>{item.title}</h3>
@@ -141,7 +142,7 @@ export default function MembershipPage() {
             </p>
           </div>
 
-          <div className="rh-membership-grid-three">
+          <div className="rh-membership-three">
             {duesTiers.map((tier) => (
               <article className="rh-card rh-dues-card" key={tier.name}>
                 <p className="rh-section-kicker">{tier.name}</p>
@@ -153,13 +154,13 @@ export default function MembershipPage() {
         </section>
 
         <section className="rh-section rh-section-band">
-          <div className="rh-card rh-membership-stack-card">
+          <div className="rh-card rh-membership-start-card">
             <p className="rh-section-kicker">Join the IWW</p>
             <h2>Ready to get your red card?</h2>
             <p className="rh-section-copy">
               Redcard handles the membership sign up. Once you are in, Red Harbor can be part of where that membership actually lives.
             </p>
-            <div className="rh-membership-stack-actions">
+            <div className="rh-membership-buttons">
               <a href={REDCARD_URL} className="rh-btn rh-btn-primary" target="_blank" rel="noopener noreferrer">
                 Join via Redcard
               </a>

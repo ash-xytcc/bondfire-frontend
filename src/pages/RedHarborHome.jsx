@@ -1437,15 +1437,15 @@ export default function RedHarborHome() {
             />
           </div>
 
-          <div className="rh-card rh-home-join-cta-card">
-            <div className="rh-home-join-cta-copy">
+          <div className="rh-card rh-home-membership-card">
+            <div className="rh-home-membership-copy">
               <h3>IWW membership</h3>
               <p>
                 Learn how membership works, what dues look like, and join through the official Redcard sign up.
               </p>
             </div>
 
-            <div className="rh-membership-actions">
+            <div className="rh-home-membership-actions">
               <Link to="/membership" className="rh-btn rh-btn-secondary">
                 Learn about membership
               </Link>

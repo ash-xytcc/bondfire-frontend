@@ -116,7 +116,7 @@ const Brand = ({ orgId, logoSrc }) => {
               loading="lazy"
               decoding="async"
             />
-          )}
+          ) : null}
           <span className="bf-org-name">{label}</span>
         </span>
       ) : dpg ? null : null}
@@ -354,10 +354,10 @@ export default function AppHeader({ onLogout, showLogout }) {
           alignItems: "center",
           justifyContent: "space-between",
           gap: 12,
-          flexWrap: "wrap",
+          flexWrap: "nowrap",
         }}
       >
-        <div className="bf-appHeader-left" style={{ minWidth: 0, flex: "1 1 260px" }}>
+        <div className="bf-appHeader-left" style={{ minWidth: 0, flex: "1 1 auto" }}>
           <Brand />
         </div>
 
@@ -366,11 +366,10 @@ export default function AppHeader({ onLogout, showLogout }) {
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: isCompactNav ? "flex-end" : "flex-end",
+            justifyContent: "flex-end",
             gap: 8,
-            flex: isCompactNav ? "0 1 auto" : "1 1 520px",
+            flex: "0 0 auto",
             minWidth: 0,
-            width: isCompactNav ? "auto" : undefined,
           }}
         >
           

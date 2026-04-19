@@ -4,7 +4,7 @@ import "../styles/redharbor-public-pass1.css"
 
 const ORG_ID = "red-harbor"
 const ORG_SLUG = "red-harbor"
-const BRANCH_EMAIL = "REPLACE_ME@redharbor.org"
+const BRANCH_EMAIL = "redharboriww@gmail.com"
 const BRANCH_EMAIL_LABEL = BRANCH_EMAIL
 
 const ARCHIVE_SLIDES = [

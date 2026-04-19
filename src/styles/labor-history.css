@@ -408,3 +408,172 @@
     font-size: 1.35rem;
   }
 }
+
+/* mobile pass 1: labor archive */
+html, body {
+  overflow-x: hidden;
+}
+
+.lha-page,
+.lha-page * {
+  box-sizing: border-box;
+}
+
+@media (max-width: 1100px) {
+  .lha-layout {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .lha-main {
+    padding: 14px;
+  }
+
+  .lha-main-head h2 {
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+  }
+
+  .lha-main-head p {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 820px) {
+  .lha-header {
+    position: static;
+    padding: 14px;
+  }
+
+  .lha-brand-title {
+    font-size: 1rem;
+  }
+
+  .lha-brand-kicker {
+    font-size: 10px;
+  }
+
+  .lha-header-nav {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .lha-header-nav a {
+    flex: 1 1 100%;
+    text-align: center;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lha-layout {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .lha-sidebar,
+  .lha-main {
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .lha-sidebar-top h1 {
+    font-size: 1.45rem;
+  }
+
+  .lha-sidebar-top p {
+    font-size: 14px;
+  }
+
+  .lha-sidebar-list {
+    max-height: none;
+  }
+
+  .lha-search {
+    min-height: 44px;
+  }
+
+  .lha-sidebar-item {
+    min-height: 52px;
+    padding: 12px;
+  }
+
+  .lha-main-head {
+    display: grid;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .lha-main-actions,
+  .lha-main-actions .lha-btn-primary {
+    width: 100%;
+  }
+
+  .lha-btn-primary {
+    min-height: 46px;
+    width: 100%;
+  }
+
+  .lha-flip-wrap {
+    min-height: auto;
+    padding: 12px 0 4px;
+  }
+
+  .lha-page-badge {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    font-size: 11px;
+  }
+
+  .lha-reader-top,
+  .lha-reader-footer {
+    padding: 12px;
+  }
+
+  .lha-reader-actions,
+  .lha-reader-footer {
+    gap: 6px;
+  }
+
+  .lha-reader-actions button,
+  .lha-reader-footer button {
+    min-height: 42px;
+  }
+
+  .lha-reader-image {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .lha-header,
+  .lha-sidebar,
+  .lha-main {
+    padding: 12px;
+  }
+
+  .lha-brand img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .lha-brand-title {
+    font-size: 0.95rem;
+  }
+
+  .lha-main-head h2 {
+    font-size: 1.35rem;
+  }
+
+  .lha-main-head p,
+  .lha-sidebar-top p {
+    font-size: 14px;
+  }
+
+  .lha-tag {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+}

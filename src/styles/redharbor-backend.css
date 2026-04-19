@@ -407,3 +407,140 @@ body[data-app="red-harbor"][data-rh-font="altehaas"] b {
   font-family: "Alte Haas Grotesk Bold", sans-serif;
   font-weight: 700;
 }
+
+/* mobile pass 1: backend shell */
+html, body {
+  overflow-x: hidden;
+}
+
+body[data-app="red-harbor"] *,
+body[data-app="red-harbor"] *::before,
+body[data-app="red-harbor"] *::after {
+  box-sizing: border-box;
+}
+
+body[data-app="red-harbor"] .main,
+body[data-app="red-harbor"] .page-shell,
+body[data-app="red-harbor"] .bb-shell {
+  width: 100%;
+  max-width: 100%;
+}
+
+body[data-app="red-harbor"] .table-wrap,
+body[data-app="red-harbor"] .tableWrap,
+body[data-app="red-harbor"] .table-shell,
+body[data-app="red-harbor"] .bf-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1000px) {
+  body[data-app="red-harbor"] .bf-appHeader {
+    gap: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  body[data-app="red-harbor"] .bf-brand {
+    font-size: 0.95rem;
+  }
+
+  body[data-app="red-harbor"] .card,
+  body[data-app="red-harbor"] .kpi,
+  body[data-app="red-harbor"] .bf-rowcard,
+  body[data-app="red-harbor"] .bf-modal-shell {
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 780px) {
+  body[data-app="red-harbor"] .bf-appHeader {
+    align-items: center;
+  }
+
+  body[data-app="red-harbor"] .bf-brand {
+    max-width: calc(100vw - 140px);
+    font-size: 0.9rem;
+    line-height: 1.05;
+  }
+
+  body[data-app="red-harbor"] .bf-org-logo {
+    width: 28px !important;
+    height: 28px !important;
+    margin-right: 8px !important;
+  }
+
+  body[data-app="red-harbor"] .bf-hamburger,
+  body[data-app="red-harbor"] .bf-logout,
+  body[data-app="red-harbor"] .btn,
+  body[data-app="red-harbor"] .linkbtn,
+  body[data-app="red-harbor"] .btn-red,
+  body[data-app="red-harbor"] a.btn,
+  body[data-app="red-harbor"] button.btn {
+    min-height: 42px;
+  }
+
+  body[data-app="red-harbor"] input,
+  body[data-app="red-harbor"] select,
+  body[data-app="red-harbor"] textarea,
+  body[data-app="red-harbor"] .input,
+  body[data-app="red-harbor"] .bf-input,
+  body[data-app="red-harbor"] .bf-textarea {
+    min-height: 42px;
+    font-size: 16px;
+  }
+
+  body[data-app="red-harbor"] textarea,
+  body[data-app="red-harbor"] .bf-textarea {
+    min-height: 110px;
+  }
+
+  body[data-app="red-harbor"] .card,
+  body[data-app="red-harbor"] .kpi,
+  body[data-app="red-harbor"] .bf-rowcard,
+  body[data-app="red-harbor"] .bf-modal-shell {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  body[data-app="red-harbor"] .main,
+  body[data-app="red-harbor"] .page-shell,
+  body[data-app="red-harbor"] .bb-shell {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  body[data-app="red-harbor"] h1 {
+    font-size: 1.7rem;
+  }
+
+  body[data-app="red-harbor"] h2 {
+    font-size: 1.35rem;
+  }
+
+  body[data-app="red-harbor"] h3 {
+    font-size: 1.15rem;
+  }
+
+  body[data-app="red-harbor"] .helper,
+  body[data-app="red-harbor"] .bf-field-label,
+  body[data-app="red-harbor"] .bf-note,
+  body[data-app="red-harbor"] .bf-empty {
+    font-size: 14px;
+  }
+
+  body[data-app="red-harbor"] .bf-drawer-panel {
+    width: min(92vw, 340px) !important;
+    padding: 12px !important;
+  }
+
+  body[data-app="red-harbor"] .table th,
+  body[data-app="red-harbor"] .table td,
+  body[data-app="red-harbor"] .pledges-table th,
+  body[data-app="red-harbor"] .pledges-table td {
+    white-space: nowrap;
+  }
+}

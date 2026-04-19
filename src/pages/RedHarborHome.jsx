@@ -1592,53 +1592,49 @@ export default function RedHarborHome() {
                   >
                     {BRANCH_EMAIL_LABEL}
                   </a>
-
-                  <div className="rh-newsletter-head" style={{ marginTop: 4 }}>
-                    <p className="rh-section-kicker">Newsletter</p>
-                    <p className="rh-section-copy" style={{ marginBottom: 0 }}>
-                      Get branch updates, public announcements, bulletin releases, and upcoming event notices by email.
-                    </p>
-                  </div>
-
-                  <form className="rh-newsletter-form" onSubmit={submitNewsletter}>
-                    <input
-                      className="rh-inline-editor"
-                      value={newsletterName}
-                      onChange={(e) => setNewsletterName(e.target.value)}
-                      placeholder="Name"
-                    />
-                    <input
-                      className="rh-inline-editor"
-                      type="email"
-                      value={newsletterEmail}
-                      onChange={(e) => setNewsletterEmail(e.target.value)}
-                      placeholder="Email address"
-                      required
-                    />
-                    <button type="submit" className="rh-btn rh-btn-primary" disabled={newsletterBusy}>
-                      {newsletterBusy ? "Joining..." : "Join newsletter"}
-                    </button>
-                  </form>
-
-                  {newsletterMsg ? (
-                    <p className="rh-note" style={{ marginTop: 0 }}>{newsletterMsg}</p>
-                  ) : null}
                 </div>
               ) : null}
             </div>
 
             <div className="rh-card">
-              <InlineCardBlockEditor
-                title={editorMode ? "Member access card" : ""}
-                cardTitle={liveHome.member_access_title || defaultHome.member_access_title}
-                cardBody={liveHome.member_access_body || defaultHome.member_access_body}
-                onTitleChange={(value) => updateDraft("member_access_title", value)}
-                onBodyChange={(value) => updateDraft("member_access_body", value)}
-                editorMode={editorMode}
-              />
-              <Link to={isSignedIn ? memberAreaHref : "/signin"} className="rh-btn rh-btn-primary">
-                {isSignedIn ? "Go to Member Area" : "Go to Member Sign In"}
-              </Link>
+              <div className="rh-newsletter-head">
+                <h3>Newsletter</h3>
+                <p>
+                  Get branch updates, public announcements, bulletin releases, and upcoming event notices by email.
+                </p>
+              </div>
+
+              <form className="rh-newsletter-form" onSubmit={submitNewsletter}>
+                <label className="rh-newsletter-field">
+                  <span>Name</span>
+                  <input
+                    className="rh-inline-editor"
+                    value={newsletterName}
+                    onChange={(e) => setNewsletterName(e.target.value)}
+                    placeholder="Your name"
+                  />
+                </label>
+
+                <label className="rh-newsletter-field">
+                  <span>Email</span>
+                  <input
+                    className="rh-inline-editor"
+                    type="email"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    placeholder="you@example.org"
+                    required
+                  />
+                </label>
+
+                <button type="submit" className="rh-btn rh-btn-primary" disabled={newsletterBusy}>
+                  {newsletterBusy ? "Joining..." : "Join newsletter"}
+                </button>
+              </form>
+
+              {newsletterMsg ? (
+                <p className="rh-note" style={{ marginTop: 12 }}>{newsletterMsg}</p>
+              ) : null}
             </div>
           </div>
 

@@ -1489,3 +1489,47 @@ html, body {
     font-size: 15px;
   }
 }
+
+/* contact + newsletter split cards */
+.rh-newsletter-head h3 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.rh-newsletter-head p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.rh-newsletter-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 14px;
+}
+
+.rh-newsletter-field {
+  display: grid;
+  gap: 6px;
+}
+
+.rh-newsletter-field span {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+@media (max-width: 780px) {
+  .rh-newsletter-form {
+    grid-template-columns: 1fr;
+  }
+
+  .rh-newsletter-form .rh-btn {
+    width: 100%;
+  }
+}

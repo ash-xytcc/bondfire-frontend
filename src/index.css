@@ -234,7 +234,7 @@ input[type="file"]{padding:6px}
 }
 
 .bf-hamburger{
-  display: none;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 40px;
@@ -253,7 +253,6 @@ input[type="file"]{padding:6px}
 
 @media (max-width: 840px){
   .bf-nav-desktop{ display: none; }
-  .bf-hamburger{ display: inline-flex; }
 
   /* Drawer scaffold */
   .bf-drawer{

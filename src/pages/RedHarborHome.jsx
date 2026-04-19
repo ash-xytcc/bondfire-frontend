@@ -7,32 +7,32 @@ const ORG_SLUG = "red-harbor"
 
 const ARCHIVE_SLIDES = [
   {
-    src: "/archive/iww-1.jpg",
+    src: "/home-archive/iww-1.jpg",
     title: "Finn Hall",
     caption: "'Red' Finn Hall in Aberdeen, the main meeting place for lumber strikers during the first 4 decades of the 20th century. Courtesy Aaron Goings collection.",
   },
   {
-    src: "/archive/iww-2.jpg",
+    src: "/home-archive/iww-2.jpg",
     title: "1912 Grays Harbor Lumber Strike",
     caption: "Men, women, and children during a strike parade on April 7, 1912. The massive 1912 Grays Harbor Lumber Strike drew a great deal of support from the local community. Photo courtesy of Polson Museum, Hoquiam, Washington",
   },
   {
-    src: "/archive/iww-3.jpg",
+    src: "/home-archive/iww-3.jpg",
     title: "Everett Massacre Memorial",
     caption: "IWW supporters honor Everett Massacre victims, Mount Pleasant Cemetery, Seattle, May 1, 1917.",
   },
   {
-    src: "/archive/iww-4.jpg",
+    src: "/home-archive/iww-4.jpg",
     title: "Headquarters",
     caption: "IWW headquarters probably in Seattle (Courtesy UW Libraries Special Collections).",
   },
   {
-    src: "/archive/iww-5.jpg",
+    src: "/home-archive/iww-5.jpg",
     title: "IWW Gathering",
     caption: "Members of the Aberdeen IWW gather.",
   },
   {
-    src: "/archive/iww-6.jpg",
+    src: "/home-archive/iww-6.jpg",
     title: "Hoquiam Strike March",
     caption: "Strikers march through Hoquiam during the 1912 Grays Harbor Lumber Strike. Led by the IWW, the strike spread from Grays Harbor to mills and logging camps in Pacific County and the Puget Sound. Photo courtesy of Polson Museum, Hoquiam, Washington.",
   },

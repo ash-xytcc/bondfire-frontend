@@ -119,7 +119,7 @@ const Brand = ({ orgId, logoSrc }) => {
           ) : null}
           <span className="bf-org-name">{label}</span>
         </span>
-      ) : dpg ? null : null}
+      ) : null}
     </div>
   );
 };
@@ -230,7 +230,7 @@ function OrgNav({ variant = "desktop" }) {
         >
           All Orgs
         </NavLink>
-      )}
+      ) : null}
 
       {items.map(([label, to, tourId]) => (
         <NavLink
@@ -376,8 +376,7 @@ export default function AppHeader({ onLogout, showLogout }) {
 
           
 
-          {(
-            <button
+          <button
               className="bf-hamburger"
               type="button"
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
@@ -387,7 +386,6 @@ export default function AppHeader({ onLogout, showLogout }) {
             >
               <span aria-hidden="true">☰</span>
             </button>
-          )}
         </div>
       </header>
 

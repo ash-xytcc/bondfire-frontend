@@ -4,6 +4,8 @@ import "../styles/redharbor-public-pass1.css"
 
 const ORG_ID = "red-harbor"
 const ORG_SLUG = "red-harbor"
+const BRANCH_EMAIL = "REPLACE_ME@redharbor.org"
+const BRANCH_EMAIL_LABEL = BRANCH_EMAIL
 
 const ARCHIVE_SLIDES = [
   {
@@ -105,7 +107,7 @@ const defaultHome = {
   ],
   contact_card_title: "Branch contact",
   contact_card_body:
-    "Use this section for your public email, intake form, or branch contact instructions. This is the next obvious thing to wire once the homepage editor is in place.",
+    "For branch contact, organizing support, membership questions, or public inquiries, email the branch directly.",
   member_access_title: "Member access",
   member_access_body:
     "Existing members can use the private branch board for internal updates, documents, meetings, and announcements.",
@@ -1577,6 +1579,44 @@ export default function RedHarborHome() {
                 onBodyChange={(value) => updateDraft("contact_card_body", value)}
                 editorMode={editorMode}
               />
+
+              {!editorMode ? (
+                <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
+                  <a
+                    href={`mailto:${BRANCH_EMAIL}`}
+                    className="rh-inline-link"
+                    style={{ wordBreak: "break-word" }}
+                  >
+                    {BRANCH_EMAIL_LABEL}
+                  </a>
+
+                  {liveHome.show_newsletter_card ? (
+                    <form className="rh-newsletter-form" onSubmit={submitNewsletter}>
+                      <input
+                        className="rh-inline-editor"
+                        value={newsletterName}
+                        onChange={(e) => setNewsletterName(e.target.value)}
+                        placeholder="Name"
+                      />
+                      <input
+                        className="rh-inline-editor"
+                        type="email"
+                        value={newsletterEmail}
+                        onChange={(e) => setNewsletterEmail(e.target.value)}
+                        placeholder="Email address"
+                        required
+                      />
+                      <button type="submit" className="rh-btn rh-btn-primary" disabled={newsletterBusy}>
+                        {newsletterBusy ? "Joining..." : "Join newsletter"}
+                      </button>
+                    </form>
+                  ) : null}
+
+                  {newsletterMsg ? (
+                    <p className="rh-note" style={{ marginTop: 0 }}>{newsletterMsg}</p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
             <div className="rh-card">
@@ -1594,43 +1634,7 @@ export default function RedHarborHome() {
             </div>
           </div>
 
-          {liveHome.show_newsletter_card ? (
-            <div className="rh-note-wrap" style={{ marginTop: 16 }}>
-              <div className="rh-card rh-newsletter-card">
-                <div className="rh-newsletter-head">
-                  <p className="rh-section-kicker">Newsletter</p>
-                  <h3>Stay in the loop</h3>
-                  <p className="rh-section-copy">
-                    Get branch updates, public announcements, bulletin releases, and upcoming event notices by email.
-                  </p>
-                </div>
 
-                <form className="rh-newsletter-form" onSubmit={submitNewsletter}>
-                  <input
-                    className="rh-inline-editor"
-                    value={newsletterName}
-                    onChange={(e) => setNewsletterName(e.target.value)}
-                    placeholder="Name"
-                  />
-                  <input
-                    className="rh-inline-editor"
-                    type="email"
-                    value={newsletterEmail}
-                    onChange={(e) => setNewsletterEmail(e.target.value)}
-                    placeholder="Email address"
-                    required
-                  />
-                  <button type="submit" className="rh-btn rh-btn-primary" disabled={newsletterBusy}>
-                    {newsletterBusy ? "Joining..." : "Join newsletter"}
-                  </button>
-                </form>
-
-                {newsletterMsg ? (
-                  <p className="rh-note" style={{ marginTop: 12 }}>{newsletterMsg}</p>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
         </section>
       </main>
 

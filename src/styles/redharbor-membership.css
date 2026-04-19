@@ -349,5 +349,21 @@
 .rhm-cta-card {
   width: 100% !important;
   max-width: none !important;
+}\n
+
+/* make hero section truly full width */
+.rhm-hero {
+  max-width: none !important;
+  width: 100% !important;
 }
 
+/* remove inherited container cap */
+.rh-membership-page .rhm-hero {
+  max-width: none !important;
+}
+
+/* optionally widen inner content a bit so it doesn't look timid */
+.rhm-hero-copy {
+  max-width: 1200px !important;
+}
+\n

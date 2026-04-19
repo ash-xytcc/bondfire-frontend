@@ -160,3 +160,64 @@
     max-width: none;
   }
 }
+
+/* tighten membership card heights */
+.rh-membership-page .rh-card {
+  height: auto !important;
+  min-height: 0 !important;
+  align-self: start !important;
+}
+
+.rh-membership-two,
+.rh-membership-three {
+  align-items: start !important;
+}
+
+.rh-membership-two > .rh-card,
+.rh-membership-three > .rh-card {
+  height: auto !important;
+  min-height: 0 !important;
+  display: block !important;
+}
+
+.rh-membership-start-card {
+  max-width: 760px;
+}
+
+.rh-membership-start-card,
+.rh-membership-page .rh-dues-card,
+.rh-membership-two > .rh-card,
+.rh-membership-three > .rh-card {
+  padding: 18px !important;
+}
+
+.rh-membership-page .rh-dues-card h3 {
+  margin: 4px 0 6px !important;
+}
+
+.rh-membership-page .rh-card p:last-child,
+.rh-membership-page .rh-card ul:last-child {
+  margin-bottom: 0 !important;
+}
+
+.rh-membership-page .rh-event-list li:last-child {
+  margin-bottom: 0 !important;
+}
+
+.rh-membership-three > .rh-card {
+  min-height: 140px !important;
+}
+
+.rh-membership-two > .rh-card {
+  min-height: 0 !important;
+}
+
+@media (max-width: 760px) {
+  .rh-membership-start-card {
+    max-width: none;
+  }
+
+  .rh-membership-three > .rh-card {
+    min-height: 0 !important;
+  }
+}

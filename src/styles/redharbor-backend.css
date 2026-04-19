@@ -849,3 +849,178 @@ body[data-app="red-harbor"] .bf-brand {
     padding: 0 8px !important;
   }
 }
+
+/* mobile pass 4: dashboard cards, drive, settings */
+body[data-app="red-harbor"] .bfTopMetricsRow {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+body[data-app="red-harbor"] .bfTopMetricsRow > *,
+body[data-app="red-harbor"] .bfDashMobileStack > * {
+  min-width: 0 !important;
+  width: 100%;
+}
+
+body[data-app="red-harbor"] .bfDashCard,
+body[data-app="red-harbor"] .bfDashPanel {
+  min-width: 0 !important;
+  width: 100%;
+}
+
+body[data-app="red-harbor"] .bfDashPanel h2,
+body[data-app="red-harbor"] .bfDashCard,
+body[data-app="red-harbor"] .bfDashCard *,
+body[data-app="red-harbor"] .bfDashPanel *,
+body[data-app="red-harbor"] .bfDashMobileRowCard * {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+body[data-app="red-harbor"] .bfDashPanel > div:first-child {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+body[data-app="red-harbor"] .bfDashPanel > div:first-child .btn,
+body[data-app="red-harbor"] .bfDashPanel > div:first-child .btn-red {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+body[data-app="red-harbor"] .bfDashMobileRowHead {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+body[data-app="red-harbor"] .bfDashMobileAction {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+/* Drive mobile cleanup */
+body[data-app="red-harbor"] .drive-shell,
+body[data-app="red-harbor"] .drive-page,
+body[data-app="red-harbor"] .drive-wrap,
+body[data-app="red-harbor"] .drive-layout {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body[data-app="red-harbor"] .drive-toolbar,
+body[data-app="red-harbor"] .drive-actions,
+body[data-app="red-harbor"] .drive-header,
+body[data-app="red-harbor"] .drive-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+body[data-app="red-harbor"] .drive-editor,
+body[data-app="red-harbor"] .drive-preview,
+body[data-app="red-harbor"] .drive-sidebar,
+body[data-app="red-harbor"] .drive-main {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body[data-app="red-harbor"] .drive-editor textarea,
+body[data-app="red-harbor"] .drive-editor input,
+body[data-app="red-harbor"] .drive-main textarea,
+body[data-app="red-harbor"] .drive-main input {
+  width: 100%;
+}
+
+body[data-app="red-harbor"] .drive-block-buttons,
+body[data-app="red-harbor"] .drive-insert-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+body[data-app="red-harbor"] .drive-block-buttons > *,
+body[data-app="red-harbor"] .drive-insert-row > * {
+  width: 100%;
+}
+
+/* Settings mobile cleanup */
+body[data-app="red-harbor"] .settings-shell,
+body[data-app="red-harbor"] .settings-layout,
+body[data-app="red-harbor"] .settings-tabs,
+body[data-app="red-harbor"] .settings-nav {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body[data-app="red-harbor"] .settings-tabs,
+body[data-app="red-harbor"] .settings-nav {
+  display: grid !important;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+body[data-app="red-harbor"] .settings-tabs button,
+body[data-app="red-harbor"] .settings-nav button,
+body[data-app="red-harbor"] .settings-tabs a,
+body[data-app="red-harbor"] .settings-nav a {
+  width: 100%;
+  min-height: 42px;
+  text-align: left;
+  justify-content: flex-start;
+}
+
+@media (max-width: 1100px) {
+  body[data-app="red-harbor"] .bfTopMetricsRow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 920px) {
+  body[data-app="red-harbor"] .bfTopMetricsRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-app="red-harbor"] .bfDashMobileStack {
+    grid-template-columns: 1fr !important;
+  }
+
+  body[data-app="red-harbor"] .drive-layout,
+  body[data-app="red-harbor"] .drive-shell,
+  body[data-app="red-harbor"] .settings-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 680px) {
+  body[data-app="red-harbor"] .bfTopMetricsRow {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-app="red-harbor"] .bfDashPanel > div:first-child {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    align-items: start !important;
+  }
+
+  body[data-app="red-harbor"] .bfDashPanel > div:first-child .btn,
+  body[data-app="red-harbor"] .bfDashPanel > div:first-child .btn-red,
+  body[data-app="red-harbor"] .bfDashMobileAction {
+    width: 100%;
+  }
+
+  body[data-app="red-harbor"] .drive-toolbar > *,
+  body[data-app="red-harbor"] .drive-actions > *,
+  body[data-app="red-harbor"] .drive-header > *,
+  body[data-app="red-harbor"] .drive-tabs > * {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}

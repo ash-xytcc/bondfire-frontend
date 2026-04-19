@@ -116,7 +116,8 @@ export default function Settings() {
 
   /* ---------- Submenu tabs ---------- */
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = String(searchParams.get("tab") || "invites").toLowerCase();
+  const rawTab = String(searchParams.get("tab") || "invites").toLowerCase();
+  const tab = rawTab === "public" || rawTab === "public-inbox" ? "newsletter" : rawTab;
 
   const setTab = (next) => {
     const n = String(next || "invites").toLowerCase();
@@ -134,13 +135,25 @@ export default function Settings() {
     () => [
       ["invites", "Invites"],
       ["members", "Members"],
-      ["public", "Site settings"],
-      ["public-inbox", "Public inbox"],
       ["newsletter", "Newsletter"],
       ["security", "Security"],
     ],
     []
   );
+
+
+  React.useEffect(() => {
+    if (rawTab === "public" || rawTab === "public-inbox") {
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.set("tab", "newsletter");
+          return p;
+        },
+        { replace: true }
+      );
+    }
+  }, [rawTab, setSearchParams]);
 
   /* ========== INVITES (backend) ========== */
   const [invites, setInvites] = React.useState([]);

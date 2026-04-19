@@ -143,3 +143,72 @@
     gap: 12px;
   }
 }
+
+
+/* Red Harbor mobile cleanup: dashboard-specific */
+@media (max-width: 820px) {
+  .bfTopMetricsRow {
+    grid-template-columns: 1fr !important;
+  }
+
+  .bfDashMobileStack {
+    grid-template-columns: 1fr !important;
+  }
+
+  .bfDashPanel,
+  .bfDashCard,
+  .bfDashMobileRowCard {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .bfDashGrab {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    align-items: start !important;
+  }
+
+  .bfDashGrab h2 {
+    margin: 0 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    font-size: 1.05rem !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .bfDashGrab .btn,
+  .bfDashGrab .btn-red {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .bfDashMobileRowHead {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    align-items: start !important;
+  }
+
+  .bfDashMobileAction {
+    width: 100% !important;
+    align-self: stretch !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .bfTopMetricsRow {
+    gap: 10px !important;
+  }
+
+  .bfDashCard {
+    min-height: 104px !important;
+  }
+
+  .bfDashPanel {
+    padding: 12px !important;
+  }
+}

@@ -4,8 +4,8 @@
 }
 
 .rh-membership-page .rh-section {
-  padding-top: 22px;
-  padding-bottom: 18px;
+  padding-top: 24px;
+  padding-bottom: 20px;
 }
 
 .rh-membership-page .rh-section + .rh-section {
@@ -15,255 +15,232 @@
 .rh-membership-page .rh-section-band {
   margin-top: 0;
   margin-bottom: 0;
-  padding-top: 22px;
-  padding-bottom: 22px;
-  background: rgba(255,255,255,0.02);
+  padding-top: 24px;
+  padding-bottom: 24px;
 }
 
-.rh-membership-page .rh-section-head {
-  margin-bottom: 14px;
-  max-width: 760px;
+.rhm-main {
+  display: block;
 }
 
-.rh-membership-page .rh-section-copy,
-.rh-membership-page .rh-card p,
-.rh-membership-page .rh-card li,
-.rh-membership-page .rh-card h2,
-.rh-membership-page .rh-card h3 {
+.rhm-hero,
+.rhm-dues-shell,
+.rhm-grid {
+  min-width: 0;
+}
+
+.rhm-title,
+.rhm-lead,
+.rhm-card-title,
+.rhm-card-copy,
+.rhm-section-intro h2,
+.rhm-section-intro p,
+.rhm-info-card h3,
+.rhm-info-card p,
+.rhm-reason-card h3,
+.rhm-reason-card p,
+.rhm-dues-card h3,
+.rhm-dues-card p,
+.rhm-final-card h2,
+.rhm-final-card p,
+.rhm-list li {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
   white-space: normal !important;
   word-break: normal !important;
   overflow-wrap: break-word !important;
-  writing-mode: horizontal-tb !important;
-  text-orientation: mixed !important;
 }
 
 .rh-membership-page .rh-card {
-  display: block;
   min-width: 0;
   min-height: 0;
   height: auto;
   padding: 18px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.10);
   border-radius: 18px;
 }
 
-.rh-membership-shell {
+.rhm-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
   gap: 18px;
   align-items: start;
-  padding-top: 24px;
+  padding-top: 28px;
 }
 
-.rh-membership-intro {
+.rhm-hero-copy {
   min-width: 0;
-  max-width: 780px;
+  max-width: 760px;
 }
 
-.rh-membership-heading {
+.rhm-title {
   margin: 0;
-  max-width: 8.5ch;
-  font-size: clamp(2.6rem, 5.8vw, 4.7rem);
+  max-width: 8.6ch;
+  font-size: clamp(2.7rem, 5.7vw, 4.8rem);
   line-height: 0.94;
   letter-spacing: -0.025em;
   text-wrap: balance;
 }
 
-.rh-membership-start-card {
-  width: 100%;
-  max-width: none;
+.rhm-lead {
+  margin: 12px 0 0;
+  max-width: 60ch;
+  color: var(--rh-muted);
+  line-height: 1.62;
 }
 
-.rh-membership-buttons,
-.rh-home-membership-actions {
+.rhm-cta-card,
+.rhm-final-card {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.035)),
+    rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.11);
+}
+
+.rhm-card-title {
+  margin: 0 0 8px;
+  font-size: 1.22rem;
+  line-height: 1.15;
+}
+
+.rhm-card-copy {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.rhm-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 16px;
 }
 
-.rh-membership-buttons .rh-btn,
-.rh-home-membership-actions .rh-btn {
+.rhm-actions .rh-btn {
   width: auto;
   min-width: 168px;
   justify-content: center;
 }
 
-.rh-membership-two {
+.rhm-section-intro {
+  margin-bottom: 14px;
+  max-width: 760px;
+}
+
+.rhm-section-intro h2 {
+  margin: 0;
+}
+
+.rhm-grid {
   display: grid;
-  grid-template-columns: 0.95fr 1.05fr 1.05fr;
   gap: 16px;
   align-items: stretch;
 }
 
-.rh-membership-two > .rh-card,
-.rh-membership-three > .rh-card {
-  height: 100%;
+.rhm-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.rh-membership-three {
-  display: grid;
+.rhm-grid-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  align-items: stretch;
 }
 
-.rh-membership-page .rh-event-list {
+.rhm-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.rhm-info-card h3,
+.rhm-reason-card h3,
+.rhm-final-card h2 {
+  margin: 0 0 10px;
+}
+
+.rhm-info-card p,
+.rhm-reason-card p,
+.rhm-dues-card p,
+.rhm-final-card p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.rhm-list {
   margin: 0;
   padding-left: 18px;
 }
 
-.rh-membership-page .rh-event-list li:last-child,
-.rh-membership-page .rh-card p:last-child,
-.rh-membership-page .rh-card ul:last-child {
+.rhm-list li {
+  margin-bottom: 8px;
+  color: var(--rh-muted);
+  line-height: 1.5;
+}
+
+.rhm-list li:last-child {
   margin-bottom: 0;
 }
 
-.rh-membership-page .rh-dues-card {
-  padding: 16px 18px;
+.rhm-dues {
+  padding-top: 24px;
+  padding-bottom: 24px;
 }
 
-.rh-membership-page .rh-dues-card h3 {
-  margin: 4px 0 6px;
-  font-size: 1.85rem;
-  line-height: 1;
-}
-
-.rh-membership-bottom-section {
-  padding-top: 22px;
-  padding-bottom: 22px;
-}
-
-.rh-membership-bottom-shell {
+.rhm-dues-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
   gap: 16px;
   align-items: start;
 }
 
-.rh-membership-bottom-main {
+.rhm-dues-main {
   min-width: 0;
 }
 
-.rh-membership-final-card {
-  position: relative;
-  top: 0;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.035)),
-    rgba(255,255,255,0.04);
-  border-color: rgba(255,255,255,0.12);
+.rhm-dues-card {
+  padding: 16px 18px;
 }
 
-.rh-membership-final-card h2 {
-  margin: 0 0 10px;
+.rhm-dues-card h3 {
+  margin: 4px 0 6px;
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.rhm-final-card {
+  align-self: stretch;
+}
+
+.rhm-final-card h2 {
   max-width: 11ch;
-  font-size: clamp(1.9rem, 3.4vw, 2.7rem);
+  font-size: clamp(2rem, 3.6vw, 2.85rem);
   line-height: 0.98;
   text-wrap: balance;
 }
 
-.rh-membership-final-card .rh-section-copy {
-  margin-top: 0;
-  max-width: none;
-}
-
-.rh-home-membership-card {
-  margin-bottom: 16px;
-  padding: 20px !important;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto !important;
-  gap: 18px !important;
-  align-items: center !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.035)),
-    rgba(255,255,255,0.04) !important;
-  border-color: rgba(255,255,255,0.11) !important;
-}
-
-.rh-home-membership-copy,
-.rh-home-membership-copy h3,
-.rh-home-membership-copy p {
-  min-width: 0;
-  max-width: none;
-}
-
-.rh-home-membership-copy h3 {
-  margin: 0 0 8px;
-  font-size: 1.18rem;
-  line-height: 1.1;
-}
-
-.rh-home-membership-copy p {
-  margin: 0;
-  max-width: 56ch;
-}
-
-#join .rh-grid-three {
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 16px !important;
-  align-items: stretch !important;
-}
-
-#join .rh-grid-three > .rh-card {
-  width: 100% !important;
-  min-width: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 18px !important;
-}
-
-#join .rh-grid-three > .rh-card h3 {
-  margin: 0 0 8px !important;
-  font-size: 1.06rem !important;
-  line-height: 1.14 !important;
-}
-
-#join .rh-grid-three > .rh-card p {
-  margin: 0 0 12px !important;
-  line-height: 1.58 !important;
-}
-
-#join .rh-grid-three > .rh-card .rh-inline-link,
-#join .rh-grid-three > .rh-card .rh-btn {
-  margin-top: auto;
-  align-self: flex-start;
-}
-
-@media (max-width: 1040px) {
-  .rh-membership-two {
-    grid-template-columns: 1fr 1fr;
+@media (max-width: 1080px) {
+  .rhm-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .rh-membership-two > .rh-card:first-child {
-    grid-column: 1 / -1;
-  }
-
-  .rh-membership-bottom-shell {
+  .rhm-dues-shell {
     grid-template-columns: 1fr;
   }
 
-  .rh-membership-final-card h2 {
+  .rhm-final-card h2 {
     max-width: none;
   }
 }
 
 @media (max-width: 980px) {
-  .rh-membership-shell,
-  .rh-membership-three,
-  .rh-home-membership-card,
-  #join .rh-grid-three {
-    grid-template-columns: 1fr !important;
+  .rhm-hero,
+  .rhm-grid-2,
+  .rhm-grid-3 {
+    grid-template-columns: 1fr;
   }
 
-  .rh-membership-intro,
-  .rh-membership-page .rh-section-head,
-  .rh-home-membership-copy p {
+  .rhm-hero-copy,
+  .rhm-section-intro,
+  .rhm-lead {
     max-width: none;
   }
 
-  .rh-membership-heading {
+  .rhm-title {
     max-width: 10ch;
   }
 }
@@ -274,32 +251,25 @@
     padding-bottom: 16px;
   }
 
-  .rh-membership-heading {
+  .rh-membership-page .rh-card {
+    padding: 16px;
+  }
+
+  .rhm-title {
     max-width: none;
-    font-size: clamp(2.2rem, 10vw, 3.45rem);
+    font-size: clamp(2.25rem, 10vw, 3.5rem);
   }
 
-  .rh-membership-two,
-  .rh-membership-three,
-  .rh-home-membership-card,
-  #join .rh-grid-three {
-    grid-template-columns: 1fr !important;
+  .rhm-grid-4 {
+    grid-template-columns: 1fr;
   }
 
-  .rh-membership-page .rh-card,
-  #join .rh-grid-three > .rh-card,
-  .rh-home-membership-card {
-    padding: 16px !important;
-  }
-
-  .rh-membership-buttons,
-  .rh-home-membership-actions {
+  .rhm-actions {
     display: grid;
     grid-template-columns: 1fr;
   }
 
-  .rh-membership-buttons .rh-btn,
-  .rh-home-membership-actions .rh-btn {
+  .rhm-actions .rh-btn {
     width: 100%;
     min-width: 0;
   }

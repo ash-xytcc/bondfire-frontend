@@ -205,7 +205,7 @@ export default function OrgDash() {
   };
 
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: isMobile ? 12 : 16 }}>
       <h1 style={{ marginTop: 0 }}>Org Dashboard</h1>
       <p className="helper">Choose an organization to enter its workspace, or create or join one.</p>
 
@@ -225,9 +225,10 @@ export default function OrgDash() {
         style={{
           gap: 16,
           gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+          alignItems: "start",
         }}
       >
-        <div className="card" style={{ padding: 16}}>
+        <div className="card" style={{ padding: isMobile ? 14 : 16 }}>
           <h2 style={{ marginTop: 0 }}>Create a new org</h2>
           <form onSubmit={createOrg} className="grid" style={{ gap: 10 }}>
             <label className="grid" style={{ gap: 6 }}>
@@ -245,7 +246,7 @@ export default function OrgDash() {
           </form>
         </div>
 
-        <div className="card" style={{ padding: 16}}>
+        <div className="card" style={{ padding: isMobile ? 14 : 16 }}>
           <h2 style={{ marginTop: 0 }}>Join with an invite code</h2>
           <form onSubmit={joinWithInvite} className="grid" style={{ gap: 10 }}>
             <label className="grid" style={{ gap: 6 }}>
@@ -266,10 +267,23 @@ export default function OrgDash() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 16, marginTop: 16}}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <div className="card" style={{ padding: isMobile ? 14 : 16, marginTop: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: isMobile ? "stretch" : "center",
+            gap: 10,
+            flexWrap: "wrap",
+            flexDirection: isMobile ? "column" : "row",
+          }}
+        >
           <h2 style={{ margin: 0, flex: 1, minWidth: 140 }}>Your orgs</h2>
-          <button className="btn" style={{ whiteSpace: "nowrap" }} onClick={load} disabled={busy}>
+          <button
+            className="btn"
+            style={{ whiteSpace: "nowrap", width: isMobile ? "100%" : "auto" }}
+            onClick={load}
+            disabled={busy}
+          >
             Refresh
           </button>
         </div>
@@ -289,25 +303,34 @@ export default function OrgDash() {
                 key={o.id}
                 className="row"
                 style={{
-                  alignItems: "center",
+                  alignItems: isMobile ? "stretch" : "center",
                   justifyContent: "space-between",
-                  padding: "10px 0",
+                  padding: isMobile ? "12px 0" : "10px 0",
                   borderTop: "1px solid #222",
                   gap: 12,
                   flexWrap: "wrap",
+                  flexDirection: isMobile ? "column" : "row",
                 }}
               >
-                <div style={{ minWidth: 0 }}>
+                <div style={{ minWidth: 0, width: isMobile ? "100%" : "auto" }}>
                   <div style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>
                     {o.name || o.id}
                   </div>
                   <div className="helper">Role: {o.role || "member"}</div>
                 </div>
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    alignItems: "center",
+                    width: isMobile ? "100%" : "auto",
+                    flexDirection: isMobile ? "column" : "row",
+                  }}
+                >
                   <button
                     className="btn-red"
                     data-tour="demo-org-open"
-                    style={{ whiteSpace: "nowrap" }}
+                    style={{ whiteSpace: "nowrap", width: isMobile ? "100%" : "auto" }}
                     onClick={() => nav(`/org/${encodeURIComponent(o.id)}`)}
                     disabled={busy}
                   >
@@ -316,7 +339,7 @@ export default function OrgDash() {
 
                   <button
                     className="btn"
-                    style={{ whiteSpace: "nowrap" }}
+                    style={{ whiteSpace: "nowrap", width: isMobile ? "100%" : "auto" }}
                     onClick={() => deleteOrg(o)}
                     disabled={busy}
                     title="Delete this org"

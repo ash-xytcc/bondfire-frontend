@@ -278,6 +278,20 @@ export default function AppHeader({ onLogout, showLogout }) {
     new URLSearchParams(window.location.search).has("debugNav");
 
   React.useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(max-width: 900px)");
+    const onChange = () => setIsCompactNav(mq.matches);
+    onChange();
+    try {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    } catch {
+      mq.addListener(onChange);
+      return () => mq.removeListener(onChange);
+    }
+  }, []);
+
+  React.useEffect(() => {
     applyAppVariantToDocument();
     setMobileOpen(false);
   }, [loc.pathname, loc.hash]);
@@ -333,17 +347,51 @@ export default function AppHeader({ onLogout, showLogout }) {
 
   return (
     <>
-      <header className={`bf-appHeader${dpg ? " is-dpg" : ""}`}>
-        <div className="bf-appHeader-left">
+      <header
+        className={`bf-appHeader${dpg ? " is-dpg" : ""}`}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <div className="bf-appHeader-left" style={{ minWidth: 0, flex: "1 1 260px" }}>
           <Brand />
         </div>
 
-        <div className="bf-appHeader-right">
-          <div className="bf-nav-desktop" style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden", flexWrap: "nowrap", minWidth: 0 }}>
-            <OrgNav variant="desktop" />
-          </div>
+        <div
+          className="bf-appHeader-right"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: isCompactNav ? "flex-end" : "flex-end",
+            gap: 8,
+            flex: isCompactNav ? "0 1 auto" : "1 1 520px",
+            minWidth: 0,
+            width: isCompactNav ? "auto" : undefined,
+          }}
+        >
+          {!isCompactNav ? (
+            <div
+              className="bf-nav-desktop"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                overflow: "hidden",
+                flexWrap: "wrap",
+                minWidth: 0,
+                justifyContent: "flex-end",
+                flex: "1 1 auto",
+              }}
+            >
+              <OrgNav variant="desktop" />
+            </div>
+          ) : null}
 
-          {showLogout ? (
+          {!isCompactNav && showLogout ? (
             <button
               className="bf-logout"
               type="button"
@@ -354,16 +402,18 @@ export default function AppHeader({ onLogout, showLogout }) {
             </button>
           ) : null}
 
-          <button
-            className="bf-hamburger"
-            type="button"
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileOpen ? "true" : "false"}
-            onClick={() => setMobileOpen((v) => !v)}
-            style={{ marginLeft: 8 }}
-          >
-            <span aria-hidden="true">☰</span>
-          </button>
+          {isCompactNav ? (
+            <button
+              className="bf-hamburger"
+              type="button"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen ? "true" : "false"}
+              onClick={() => setMobileOpen((v) => !v)}
+              style={{ marginLeft: 0 }}
+            >
+              <span aria-hidden="true">☰</span>
+            </button>
+          ) : null}
         </div>
       </header>
 

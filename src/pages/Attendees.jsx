@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 
 async function authFetch(path, opts = {}) {
@@ -51,6 +51,7 @@ const STATUS_META = {
   form_started: { label: 'Form started', tone: '#fff0b7', text: '#5e4d14' },
   form_complete: { label: 'Form complete', tone: '#d7f4e1', text: '#23553a' },
   needs_followup: { label: 'Needs follow-up', tone: '#f7d7df', text: '#6a2540' },
+  reviewed: { label: 'Reviewed', tone: '#d7f4e1', text: '#23553a' },
 };
 
 function StatCard({ label, value, helper }) {
@@ -86,11 +87,14 @@ function Pill({ status }) {
 
 export default function Attendees() {
   const { orgId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadMsg, setLoadMsg] = useState('');
+  const [actionMsg, setActionMsg] = useState('');
   const [selectedId, setSelectedId] = useState(null);
 
   const loadAttendees = React.useCallback(async () => {
@@ -122,6 +126,14 @@ export default function Attendees() {
     return () => { dead = true; };
   }, [loadAttendees]);
 
+  useEffect(() => {
+    const qs = new URLSearchParams(location.search || '');
+    const fromQuery = qs.get('attendee');
+    if (fromQuery) {
+      setSelectedId(fromQuery);
+    }
+  }, [location.search]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return attendees.filter((person) => {
@@ -144,6 +156,33 @@ export default function Attendees() {
     };
     return base;
   }, [attendees]);
+
+  const markReviewed = async () => {
+    if (!selected?.id) return;
+    setActionMsg('');
+    try {
+      const data = await authFetch(`/api/orgs/${encodeURIComponent(orgId)}/attendees`, {
+        method: 'PATCH',
+        body: JSON.stringify({ id: selected.id, status: 'reviewed' }),
+        headers: { Accept: 'application/json' },
+      });
+      const updated = data?.attendee;
+      if (!updated) throw new Error('No attendee returned');
+      setAttendees((prev) => prev.map((row) => row.id === updated.id ? updated : row));
+      setSelectedId(updated.id);
+      setActionMsg('Marked reviewed.');
+    } catch (e) {
+      setActionMsg(String(e?.message || e || 'Failed to update attendee'));
+    }
+  };
+
+  const openFullProfile = () => {
+    if (!selected?.id) return;
+    const qs = new URLSearchParams(location.search || '');
+    qs.set('attendee', selected.id);
+    navigate(`?${qs.toString()}`);
+    setActionMsg('Deep link updated for this attendee.');
+  };
 
   return (
     <div style={{ padding: 16, display: 'grid', gap: 16 }}>
@@ -168,6 +207,9 @@ export default function Attendees() {
 
       {loadMsg ? (
         <div className="helper" style={{ color: 'tomato' }}>{loadMsg}</div>
+      ) : null}
+      {actionMsg ? (
+        <div className="helper" style={{ color: actionMsg.toLowerCase().includes('failed') ? 'tomato' : 'var(--muted)' }}>{actionMsg}</div>
       ) : null}
 
       <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
@@ -209,7 +251,12 @@ export default function Attendees() {
                 <button
                   key={person.id}
                   type="button"
-                  onClick={() => setSelectedId(person.id)}
+                  onClick={() => {
+                    setSelectedId(person.id);
+                    const qs = new URLSearchParams(location.search || '');
+                    qs.set('attendee', person.id);
+                    navigate(`?${qs.toString()}`);
+                  }}
                   style={{
                     textAlign: 'left',
                     background: active ? 'rgba(95,148,221,.18)' : 'rgba(255,255,255,0.04)',
@@ -273,9 +320,15 @@ export default function Attendees() {
                   <div><strong>Updated:</strong> {fmtStamp(selected.updatedAt) || '—'}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button className="btn" type="button">Send reminder</button>
-                  <button className="btn" type="button">Mark reviewed</button>
-                  <button className="btn-red" type="button">Open full profile</button>
+                  <button className="btn" type="button" disabled title="Reminder sending will be wired with Resend next">
+                    Send reminder
+                  </button>
+                  <button className="btn" type="button" onClick={markReviewed}>
+                    Mark reviewed
+                  </button>
+                  <button className="btn-red" type="button" onClick={openFullProfile}>
+                    Open full profile
+                  </button>
                 </div>
               </div>
             </>
@@ -285,15 +338,6 @@ export default function Attendees() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 16 }}>
-        <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--muted)', marginBottom: 8 }}>Next build steps</div>
-        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
-          <li>Public RSVP submissions now land here as attendee records.</li>
-          <li>Add detailed form completion state and segmented email actions.</li>
-          <li>Add volunteer, session interest, and access tags from the real intake flow.</li>
-          <li>Support organizer notes, status updates, and export tools.</li>
-        </ul>
-        <div style={{ marginTop: 12, color: 'var(--muted)' }}><strong>Current org:</strong> {getOrgDisplayName(orgId)}</div>
       </div>
     </div>
   );

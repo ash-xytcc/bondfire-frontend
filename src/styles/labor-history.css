@@ -672,3 +672,74 @@ html, body {
     overflow: visible;
   }
 }
+
+/* labor archive: use normal page flow, no nested scroll prisons */
+.lha-layout {
+  min-height: auto !important;
+  align-items: start !important;
+}
+
+.lha-sidebar {
+  min-height: 0 !important;
+  height: auto !important;
+  display: block !important;
+}
+
+.lha-sidebar-list {
+  flex: none !important;
+  max-height: none !important;
+  overflow: visible !important;
+  min-height: 0 !important;
+  padding-right: 0 !important;
+}
+
+.lha-main {
+  min-height: 0 !important;
+  height: auto !important;
+  display: block !important;
+  overflow: visible !important;
+}
+
+.lha-main-head {
+  flex: none !important;
+}
+
+.lha-flip-wrap {
+  flex: none !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 18px 8px 8px !important;
+}
+
+.lha-flipbook,
+.lha-flip-slot,
+.lha-flip-page {
+  max-width: 100% !important;
+}
+
+.lha-flip-page {
+  overflow: visible !important;
+}
+
+.lha-flip-image {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+/* make sure desktop doesn't reintroduce nested scroll */
+@media (min-width: 1101px) {
+  .lha-sidebar,
+  .lha-main {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .lha-sidebar-list,
+  .lha-flip-wrap {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+}

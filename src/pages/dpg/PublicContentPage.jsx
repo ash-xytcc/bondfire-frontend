@@ -2282,7 +2282,19 @@ function PressPageLayout({ accent, editorMode = false, activeField = "", setActi
   );
 }
 
-function RsvpPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+function RsvpPageLayout({
+  accent,
+  editorMode = false,
+  activeField = "",
+  setActiveField = () => {},
+  content,
+  setContent = () => {},
+  rsvpForm,
+  setRsvpForm = () => {},
+  rsvpBusy = false,
+  rsvpMsg = "",
+  submitPublicRsvp = () => {},
+}) {
   const updateStep = (index, value) => {
     const next = [...content.steps];
     while (next.length < 6) next.push("");
@@ -4578,6 +4590,11 @@ React.useEffect(() => {
             setActiveField={setActiveField}
             content={rsvpContent}
             setContent={setRsvpContent}
+            rsvpForm={rsvpForm}
+            setRsvpForm={setRsvpForm}
+            rsvpBusy={rsvpBusy}
+            rsvpMsg={rsvpMsg}
+            submitPublicRsvp={submitPublicRsvp}
           />
         ) : (
           slug === "dpg-shares" ? (

@@ -313,3 +313,20 @@
   }
 }
 
+
+/* expand hero text to use full width */
+.rhm-hero-copy {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* let the lead paragraph stretch nicely */
+.rhm-lead {
+  max-width: 80ch !important;
+}
+
+/* optional: give the heading a bit more horizontal presence */
+.rhm-title {
+  max-width: 12ch !important;
+}
+

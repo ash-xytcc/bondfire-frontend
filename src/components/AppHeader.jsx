@@ -10,11 +10,12 @@ function useOrgIdFromPath() {
 
   const m1 = pathname.match(/\/org\/([^/]+)/i);
   const m2 = hash.match(/#\/org\/([^/]+)/i);
-
   const raw = (m1 && m1[1]) || (m2 && m2[1]) || null;
+
   React.useEffect(() => {
     applyAppVariantToDocument();
-  }, [location.pathname, location.search, location.hash]);
+  }, [loc.pathname, loc.search, loc.hash]);
+
   return raw ? decodeURIComponent(raw) : null;
 }
 
@@ -48,7 +49,7 @@ function readOrgNameFromStorage(orgId) {
 
 const Brand = ({ orgId, logoSrc }) => {
   const inferredOrgId = orgId || useOrgIdFromPath();
-  const location = useLocation();
+  const loc = useLocation();
   const dpg = isDpgVariant();
   const brand = getAppBrand();
   const [orgName, setOrgName] = React.useState(() => readOrgNameFromStorage(inferredOrgId));
@@ -124,7 +125,7 @@ const Brand = ({ orgId, logoSrc }) => {
   );
 };
 
-function OrgNav({ variant = "desktop" }) {
+function OrgNav({ variant = "drawer" }) {
   const orgId = useOrgIdFromPath();
   const dpg = isDpgVariant();
   const isDrawer = variant === "drawer";
@@ -149,6 +150,7 @@ function OrgNav({ variant = "desktop" }) {
         color: "#fff",
         fontWeight: 700,
         textShadow: "0 1px 1px rgba(0,0,0,0.85)",
+        textDecoration: "none",
       }
     : undefined;
 
@@ -265,10 +267,6 @@ function OrgNav({ variant = "desktop" }) {
 
 export default function AppHeader({ onLogout, showLogout }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [isCompactNav, setIsCompactNav] = React.useState(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return false;
-    return window.matchMedia("(max-width: 900px)").matches;
-  });
   const loc = useLocation();
   const dpg = isDpgVariant();
   const brand = getAppBrand();
@@ -276,20 +274,6 @@ export default function AppHeader({ onLogout, showLogout }) {
   const debugNav =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).has("debugNav");
-
-  React.useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(max-width: 900px)");
-    const onChange = () => setIsCompactNav(mq.matches);
-    onChange();
-    try {
-      mq.addEventListener("change", onChange);
-      return () => mq.removeEventListener("change", onChange);
-    } catch {
-      mq.addListener(onChange);
-      return () => mq.removeListener(onChange);
-    }
-  }, []);
 
   React.useEffect(() => {
     applyAppVariantToDocument();
@@ -372,20 +356,16 @@ export default function AppHeader({ onLogout, showLogout }) {
             minWidth: 0,
           }}
         >
-          
-
-          
-
           <button
-              className="bf-hamburger"
-              type="button"
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileOpen ? "true" : "false"}
-              onClick={() => setMobileOpen((v) => !v)}
-              style={{ marginLeft: 0 }}
-            >
-              <span aria-hidden="true">☰</span>
-            </button>
+            className="bf-hamburger"
+            type="button"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen ? "true" : "false"}
+            onClick={() => setMobileOpen((v) => !v)}
+            style={{ marginLeft: 0 }}
+          >
+            <span aria-hidden="true">☰</span>
+          </button>
         </div>
       </header>
 
@@ -436,19 +416,23 @@ export default function AppHeader({ onLogout, showLogout }) {
             >
               Logout
             </button>
-          )}
+          ) : null}
 
           {brand.footerLabel ? (
             <div className="bf-powered-by">{brand.footerLabel}</div>
-          )}
+          ) : null}
         </div>
       </div>
 
       {debugNav ? (
         <pre style={debugOverlayStyle}>
-          {JSON.stringify({ pathname: loc.pathname, hash: loc.hash, variant: dpg ? "dpg" : "bondfire" }, null, 2)}
+          {JSON.stringify(
+            { pathname: loc.pathname, hash: loc.hash, variant: dpg ? "dpg" : "bondfire" },
+            null,
+            2
+          )}
         </pre>
-      )}
+      ) : null}
     </>
   );
 }

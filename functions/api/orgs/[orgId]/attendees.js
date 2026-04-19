@@ -1,7 +1,7 @@
-import { ok, err } from "../_lib/http.js";
-import { requireOrgRole } from "../_lib/auth.js";
-import { getDB } from "../_bf.js";
-import { ensureZkSchema } from "../_lib/zk.js";
+import { ok, err } from "../../_lib/http.js";
+import { requireOrgRole } from "../../_lib/auth.js";
+import { getDB } from "../../_bf.js";
+import { ensureZkSchema } from "../../_lib/zk.js";
 
 async function ensureAttendeesTable(db) {
   await db.prepare(`CREATE TABLE IF NOT EXISTS attendees (

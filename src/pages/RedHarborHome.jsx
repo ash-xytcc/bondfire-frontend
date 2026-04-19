@@ -46,7 +46,7 @@ const defaultHome = {
   hero_text:
     "Red Harbor is a branch of the Industrial Workers of the World. We organize across workplaces, support workers in struggle, publish branch updates, and build solidarity rooted in direct action and rank and file power.",
   about_intro:
-    "Red Harbor is the local IWW branch building organization, education, and solidarity among workers in Aberdeen, Hoquiam, Grays Harbor, and the surrounding region.",
+    "Red Harbor is the local IWW branch building organization, education, and solidarity among workers in Aberdeen, Hoquiam, and the surrounding region.",
   purpose_title: "What this site is for",
   about_title: "About Red Harbor",
   join_title: "Organize with us",
@@ -55,7 +55,7 @@ const defaultHome = {
   contact_title: "Get in touch",
   about_card_title: "Branch overview",
   about_card_body:
-    "Red Harbor is the local IWW branch building organization, education, and solidarity among workers in Aberdeen, Hoquiam, Grays Harbor, and the surrounding region.",
+    "We are a branch of the Industrial Workers of the World, a union for all workers. We organize across workplaces, support workers in struggle, publish branch updates, and build solidarity rooted in direct action and rank and file power. We are building the branch in Aberdeen, Hoquiam, and the surrounding region. We are workers supporting workers, and we are stronger together. Join us.",
   location_card_title: "Location",
   location_card_body: "Red Harbor Branch",
   join_intro:
@@ -79,12 +79,15 @@ const defaultHome = {
     "Branch meetings and political education",
     "Public bulletins and branch updates",
     "Solidarity rooted in direct action",
+    "Building worker power across industries",
+    'Organizing with the IWW network locally and globally',
   ],
   site_purpose_items: [
     "Learn what the branch is and what it does",
     "Find organizing and membership information",
     "Read public updates and branch publications",
     "Access the private branch board through sign in",
+    "Contact the branch for support, questions, or to get involved",
   ],
   join_cards: [
     {
@@ -656,8 +659,8 @@ function InlineActionListEditor({
 
 function ArchiveCarousel({
   slides,
-  title = "from the archive",
-  intro = "historical images from the longer struggle. replace the sample files with your real IWW photos.",
+  title = "From The Archive",
+  intro = "Historical images from the longer struggle. Click through to see more.",
 }) {
   const safeSlides = Array.isArray(slides) ? slides.filter(Boolean) : []
   const [index, setIndex] = React.useState(0)

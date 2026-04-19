@@ -3054,25 +3054,7 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           min-height: 70px;
           display: flex;
           align-items: center;
-        }
-        .dpg-shares-phase {
-          display: grid;
-          grid-template-columns: auto 1fr;
-          gap: 12px;
-          align-items: start;
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 18px;
-          padding: 14px 16px;
-        }
-        .dpg-shares-num {
-          width: 30px;
-          height: 30px;
-          border-radius: 999px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          background: ${accent};
+        };
           color: #121715;
           font-weight: 900;
           font-size: 13px;
@@ -3852,44 +3834,6 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
                       hint="Edit item"
                       display={value || (editorMode ? "Empty vision slot" : "")}
                       displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </article>
-
-          <article className="dpg-shares-card">
-            <InlineField
-              editorMode={editorMode}
-              editing={editorMode && activeField === "shares_build_title"}
-              value={content.build_title}
-              onChange={(v) => setContent({ ...content, build_title: v })}
-              onStartEdit={() => setActiveField("shares_build_title")}
-              onStopEdit={() => setActiveField("")}
-              placeholder="Build title"
-              hint="Edit section label"
-              display={content.build_title}
-              displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
-            />
-
-            <div style={{ display: "grid", gap: 12 }}>
-              {Array.from({ length: Math.max(content.build_items.length, editorMode ? 4 : content.build_items.length) }).map((_, idx) => {
-                const value = content.build_items[idx] || "";
-                return (
-                  <div className="dpg-shares-phase" key={`phase-${idx}`}>
-                    <div className="dpg-shares-num">{idx + 1}</div>
-                    <InlineField
-                      editorMode={editorMode}
-                      editing={editorMode && activeField === `shares_build_${idx}`}
-                      value={value}
-                      onChange={(v) => updateBuildItem(idx, v)}
-                      onStartEdit={() => setActiveField(`shares_build_${idx}`)}
-                      onStopEdit={() => setActiveField("")}
-                      placeholder={`Phase ${idx + 1}`}
-                      hint="Edit phase"
-                      display={value || (editorMode ? "Empty phase slot" : "")}
-                      displayStyle={{ color: "#f3efe8", lineHeight: 1.55, borderRadius: 10 }}
                     />
                   </div>
                 );

@@ -352,9 +352,6 @@ export default function Attendees() {
                   <button className="btn" type="button" onClick={markReviewed}>
                     Mark reviewed
                   </button>
-                  <button className="btn-red" type="button" onClick={openFullProfile}>
-                    Copy profile link
-                  </button>
                 </div>
               </div>
             </>

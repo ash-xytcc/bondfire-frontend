@@ -1,72 +1,178 @@
 .rh-membership-page .rh-section,
 .rh-membership-page .rh-public-footer {
-  max-width: 1100px;
+  max-width: 1120px;
+}
+
+.rh-membership-page .rh-section {
+  padding-top: 24px;
+  padding-bottom: 20px;
+}
+
+.rh-membership-page .rh-section-band {
+  margin-top: 18px;
+  margin-bottom: 18px;
+  padding-top: 24px;
+  padding-bottom: 24px;
 }
 
 .rh-membership-shell {
   display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
   gap: 20px;
-  padding-top: 34px;
+  align-items: start;
+  padding-top: 28px;
 }
 
 .rh-membership-intro {
+  min-width: 0;
   max-width: 760px;
 }
 
 .rh-membership-heading {
   margin: 0;
-  font-size: clamp(2.5rem, 6vw, 4.6rem);
-  line-height: 0.96;
-  letter-spacing: -0.02em;
-  max-width: 10ch;
+  max-width: 9ch;
+  font-size: clamp(2.7rem, 5.8vw, 4.8rem);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
-.rh-membership-start-card {
-  padding: 22px;
+.rh-membership-page .rh-section-head {
+  margin-bottom: 14px;
+  max-width: 760px;
+}
+
+.rh-membership-page .rh-section-copy,
+.rh-membership-page .rh-card p,
+.rh-membership-page .rh-card li {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.rh-membership-page .rh-card {
+  height: auto;
+  min-height: 0;
+  align-self: stretch;
+  padding: 18px;
+}
+
+.rh-membership-start-card,
+.rh-membership-entry-card,
+.rh-membership-final-card {
+  width: 100%;
+  max-width: none;
+}
+
+.rh-membership-entry-card,
+.rh-membership-final-card,
+.rh-home-membership-card {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.035)),
+    rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.11);
 }
 
 .rh-membership-start-card h2,
-.rh-membership-start-card h3,
-.rh-membership-start-card p,
-.rh-membership-heading,
-.rh-membership-page .rh-section-copy {
-  white-space: normal;
-  word-break: normal;
-  overflow-wrap: anywhere;
+.rh-membership-start-card h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 .rh-membership-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
   margin-top: 16px;
 }
 
-.rh-membership-buttons .rh-btn {
+.rh-membership-buttons .rh-btn,
+.rh-home-membership-actions .rh-btn {
   width: auto;
-  min-width: 180px;
+  min-width: 168px;
   justify-content: center;
 }
 
 .rh-membership-two {
   display: grid;
-  grid-template-columns: repeat(2, minmax(280px, 1fr));
-  gap: 18px;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 16px;
+  align-items: stretch;
 }
 
 .rh-membership-three {
   display: grid;
-  grid-template-columns: repeat(3, minmax(220px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.rh-membership-two > .rh-card,
+.rh-membership-three > .rh-card {
+  display: block;
+  min-width: 0;
+}
+
+.rh-membership-page .rh-event-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.rh-membership-page .rh-event-list li:last-child,
+.rh-membership-page .rh-card p:last-child,
+.rh-membership-page .rh-card ul:last-child {
+  margin-bottom: 0;
+}
+
+.rh-membership-page .rh-dues-card {
+  min-height: 0;
 }
 
 .rh-membership-page .rh-dues-card h3 {
-  margin: 6px 0 8px;
-  font-size: 2rem;
+  margin: 4px 0 6px;
+  font-size: 1.95rem;
+  line-height: 1;
+}
+
+.rh-membership-final-band {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+.rh-membership-final-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 22px;
+}
+
+.rh-membership-final-card h2 {
+  margin: 0 0 10px;
+  max-width: 14ch;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 0.98;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+.rh-membership-final-card .rh-section-copy {
+  margin-top: 0;
+  max-width: 60ch;
+}
+
+.rh-membership-final-card .rh-membership-buttons {
+  margin-top: 0;
+  justify-content: flex-end;
 }
 
 .rh-home-membership-card {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   padding: 20px !important;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
@@ -80,25 +186,30 @@
   min-width: 0;
   white-space: normal;
   word-break: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+}
+
+.rh-home-membership-copy h3 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  line-height: 1.1;
+}
+
+.rh-home-membership-copy p {
+  margin: 0;
+  max-width: 56ch;
 }
 
 .rh-home-membership-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-}
-
-.rh-home-membership-actions .rh-btn {
-  width: auto;
-  min-width: 180px;
-  justify-content: center;
+  gap: 10px;
 }
 
 #join .rh-grid-three {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(240px, 1fr)) !important;
-  gap: 18px !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
   align-items: stretch !important;
 }
 
@@ -116,9 +227,20 @@
 #join .rh-grid-three > .rh-card button {
   white-space: normal !important;
   word-break: normal !important;
-  overflow-wrap: anywhere !important;
+  overflow-wrap: break-word !important;
   writing-mode: horizontal-tb !important;
   text-orientation: mixed !important;
+}
+
+#join .rh-grid-three > .rh-card h3 {
+  margin: 0 0 8px !important;
+  font-size: 1.08rem !important;
+  line-height: 1.14 !important;
+}
+
+#join .rh-grid-three > .rh-card p {
+  margin: 0 0 12px !important;
+  line-height: 1.6 !important;
 }
 
 #join .rh-grid-three > .rh-card .rh-inline-link,
@@ -128,20 +250,46 @@
 }
 
 @media (max-width: 980px) {
-  .rh-membership-two,
+  .rh-membership-shell,
+  .rh-membership-final-card,
   .rh-home-membership-card,
+  .rh-membership-two,
+  .rh-membership-three,
   #join .rh-grid-three {
     grid-template-columns: 1fr !important;
   }
 
-  .rh-membership-three {
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  .rh-membership-intro,
+  .rh-membership-page .rh-section-head,
+  .rh-membership-final-card .rh-section-copy {
+    max-width: none;
+  }
+
+  .rh-membership-heading {
+    max-width: 10.5ch;
+  }
+
+  .rh-membership-final-card .rh-membership-buttons {
+    justify-content: flex-start;
   }
 }
 
 @media (max-width: 760px) {
-  .rh-membership-three {
-    grid-template-columns: 1fr;
+  .rh-membership-page .rh-section {
+    padding-top: 22px;
+    padding-bottom: 18px;
+  }
+
+  .rh-membership-heading {
+    max-width: none;
+    font-size: clamp(2.3rem, 10vw, 3.5rem);
+  }
+
+  .rh-membership-page .rh-card,
+  .rh-home-membership-card,
+  #join .rh-grid-three > .rh-card,
+  .rh-membership-final-card {
+    padding: 16px !important;
   }
 
   .rh-membership-buttons,
@@ -155,511 +303,4 @@
     width: 100%;
     min-width: 0;
   }
-
-  .rh-membership-heading {
-    max-width: none;
-  }
 }
-
-/* tighten membership card heights */
-.rh-membership-page .rh-card {
-  height: auto !important;
-  min-height: 0 !important;
-  align-self: start !important;
-}
-
-.rh-membership-two,
-.rh-membership-three {
-  align-items: start !important;
-}
-
-.rh-membership-two > .rh-card,
-.rh-membership-three > .rh-card {
-  height: auto !important;
-  min-height: 0 !important;
-  display: block !important;
-}
-
-.rh-membership-start-card {
-  max-width: 760px;
-}
-
-.rh-membership-start-card,
-.rh-membership-page .rh-dues-card,
-.rh-membership-two > .rh-card,
-.rh-membership-three > .rh-card {
-  padding: 18px !important;
-}
-
-.rh-membership-page .rh-dues-card h3 {
-  margin: 4px 0 6px !important;
-}
-
-.rh-membership-page .rh-card p:last-child,
-.rh-membership-page .rh-card ul:last-child {
-  margin-bottom: 0 !important;
-}
-
-.rh-membership-page .rh-event-list li:last-child {
-  margin-bottom: 0 !important;
-}
-
-.rh-membership-three > .rh-card {
-  min-height: 140px !important;
-}
-
-.rh-membership-two > .rh-card {
-  min-height: 0 !important;
-}
-
-@media (max-width: 760px) {
-  .rh-membership-start-card {
-    max-width: none;
-  }
-
-  .rh-membership-three > .rh-card {
-    min-height: 0 !important;
-  }
-}
-
-
-/* membership polish pass */
-.rh-membership-page .rh-section,
-.rh-membership-page .rh-public-footer {
-  max-width: 1120px;
-}
-
-.rh-membership-page .rh-section {
-  padding-top: 28px;
-  padding-bottom: 22px;
-}
-
-.rh-membership-page .rh-section-band {
-  margin-top: 20px;
-  margin-bottom: 20px;
-  padding-top: 30px;
-  padding-bottom: 30px;
-}
-
-.rh-membership-shell {
-  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
-  gap: 24px;
-  align-items: start;
-  padding-top: 28px;
-  padding-bottom: 8px;
-}
-
-.rh-membership-intro {
-  max-width: 820px;
-  min-width: 0;
-}
-
-.rh-membership-heading {
-  max-width: 9ch;
-  font-size: clamp(2.7rem, 5.8vw, 4.85rem);
-  line-height: 0.94;
-  letter-spacing: -0.025em;
-  overflow-wrap: break-word;
-  word-break: normal;
-  text-wrap: balance;
-}
-
-.rh-membership-start-card h2,
-.rh-membership-start-card h3,
-.rh-membership-start-card p,
-.rh-membership-heading,
-.rh-membership-page .rh-section-copy {
-  word-break: normal;
-  overflow-wrap: break-word;
-}
-
-.rh-membership-page .rh-section-head {
-  max-width: 820px;
-  margin-bottom: 16px;
-}
-
-.rh-membership-page .rh-card {
-  background: rgba(255,255,255,0.045);
-  border-color: rgba(255,255,255,0.10);
-}
-
-.rh-membership-entry-card,
-.rh-membership-final-card,
-.rh-home-membership-card {
-  border-color: rgba(216,199,173,0.16) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.035)),
-    rgba(255,255,255,0.04) !important;
-}
-
-.rh-membership-start-card {
-  max-width: none;
-  padding: 22px !important;
-}
-
-.rh-membership-entry-card {
-  align-self: stretch;
-}
-
-.rh-membership-buttons {
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.rh-membership-buttons .rh-btn {
-  min-width: 168px;
-}
-
-.rh-membership-two,
-.rh-membership-three {
-  gap: 16px;
-}
-
-.rh-membership-two > .rh-card,
-.rh-membership-three > .rh-card {
-  padding: 20px !important;
-}
-
-.rh-membership-two > .rh-card h3,
-.rh-membership-three > .rh-card h3 {
-  margin-bottom: 10px;
-}
-
-.rh-membership-page .rh-event-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 0;
-}
-
-.rh-membership-page .rh-event-list li {
-  margin-bottom: 0 !important;
-}
-
-.rh-membership-page .rh-dues-card {
-  min-height: 156px !important;
-}
-
-.rh-membership-page .rh-dues-card h3 {
-  margin: 4px 0 6px !important;
-  line-height: 1;
-}
-
-.rh-membership-final-band {
-  margin-top: 24px;
-}
-
-.rh-membership-final-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 22px;
-  align-items: end;
-  padding: 26px !important;
-}
-
-.rh-membership-final-card h2 {
-  margin: 0;
-  font-size: clamp(2rem, 4.2vw, 3rem);
-  line-height: 0.96;
-  max-width: 13ch;
-}
-
-.rh-membership-final-card .rh-section-copy {
-  margin-top: 12px;
-  max-width: 58ch;
-}
-
-.rh-membership-final-card .rh-membership-buttons {
-  margin-top: 0;
-  justify-content: flex-end;
-  align-self: end;
-}
-
-.rh-home-membership-card {
-  margin-bottom: 16px;
-  padding: 22px !important;
-  gap: 20px !important;
-}
-
-.rh-home-membership-copy h3 {
-  margin: 0 0 8px;
-  font-size: 1.28rem;
-  line-height: 1.1;
-}
-
-.rh-home-membership-copy p {
-  margin: 0;
-  max-width: 54ch;
-}
-
-.rh-home-membership-actions {
-  gap: 10px;
-}
-
-.rh-home-membership-actions .rh-btn {
-  min-width: 168px;
-}
-
-#join .rh-grid-three {
-  gap: 16px !important;
-}
-
-#join .rh-grid-three > .rh-card {
-  padding: 20px !important;
-  border-color: rgba(255,255,255,0.10) !important;
-}
-
-#join .rh-grid-three > .rh-card h3 {
-  margin: 0 0 8px !important;
-  font-size: 1.08rem !important;
-  line-height: 1.12 !important;
-}
-
-#join .rh-grid-three > .rh-card p {
-  margin: 0 0 12px !important;
-}
-
-@media (max-width: 980px) {
-  .rh-membership-shell,
-  .rh-membership-final-card,
-  .rh-home-membership-card {
-    grid-template-columns: 1fr !important;
-  }
-
-  .rh-membership-heading {
-    max-width: 11ch;
-  }
-
-  .rh-membership-final-card .rh-membership-buttons {
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 760px) {
-  .rh-membership-page .rh-section {
-    padding-top: 24px;
-    padding-bottom: 18px;
-  }
-
-  .rh-membership-heading {
-    max-width: none;
-    font-size: clamp(2.35rem, 10vw, 3.5rem);
-    text-wrap: pretty;
-  }
-
-  .rh-membership-start-card,
-  .rh-membership-two > .rh-card,
-  .rh-membership-three > .rh-card,
-  .rh-membership-final-card,
-  .rh-home-membership-card,
-  #join .rh-grid-three > .rh-card {
-    padding: 18px !important;
-  }
-
-  .rh-membership-buttons,
-  .rh-home-membership-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .rh-membership-buttons .rh-btn,
-  .rh-home-membership-actions .rh-btn {
-    width: 100%;
-    min-width: 0;
-  }
-}
-
-
-/* final layout rescue pass */
-.rh-membership-shell {
-  grid-template-columns: 1fr !important;
-  gap: 18px !important;
-  padding-top: 26px !important;
-  padding-bottom: 6px !important;
-}
-
-.rh-membership-intro,
-.rh-membership-start-card,
-.rh-membership-entry-card,
-.rh-membership-final-card {
-  width: 100% !important;
-  max-width: none !important;
-  min-width: 0 !important;
-}
-
-.rh-membership-heading {
-  max-width: 12ch !important;
-  width: 100% !important;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: break-word !important;
-  text-wrap: balance !important;
-}
-
-.rh-membership-page .rh-section-head,
-.rh-membership-page .rh-section-copy,
-.rh-membership-final-card .rh-section-copy,
-.rh-home-membership-copy p {
-  max-width: 72ch !important;
-}
-
-.rh-membership-start-card,
-.rh-membership-entry-card,
-.rh-home-membership-card,
-.rh-membership-final-card {
-  display: block !important;
-  padding: 22px !important;
-}
-
-.rh-membership-buttons,
-.rh-home-membership-actions {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 10px !important;
-  margin-top: 18px !important;
-  justify-content: flex-start !important;
-  align-items: center !important;
-}
-
-.rh-membership-buttons .rh-btn,
-.rh-home-membership-actions .rh-btn {
-  width: auto !important;
-  min-width: 170px !important;
-  max-width: 100% !important;
-}
-
-.rh-membership-final-band {
-  margin-top: 20px !important;
-  margin-bottom: 18px !important;
-}
-
-.rh-membership-final-card {
-  min-height: 0 !important;
-  height: auto !important;
-}
-
-.rh-membership-final-card h2 {
-  display: block !important;
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 0 12px !important;
-  font-size: clamp(2rem, 4.5vw, 3rem) !important;
-  line-height: 1.02 !important;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: break-word !important;
-  text-wrap: balance !important;
-}
-
-.rh-membership-final-card p,
-.rh-membership-final-card .rh-section-copy,
-.rh-membership-final-card .rh-membership-buttons {
-  width: 100% !important;
-  max-width: none !important;
-}
-
-.rh-membership-two {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 16px !important;
-}
-
-.rh-membership-three {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 16px !important;
-}
-
-.rh-membership-two > .rh-card,
-.rh-membership-three > .rh-card,
-#join .rh-grid-three > .rh-card {
-  width: 100% !important;
-  min-width: 0 !important;
-  height: auto !important;
-  min-height: 0 !important;
-}
-
-.rh-membership-page .rh-dues-card {
-  min-height: 0 !important;
-}
-
-.rh-home-membership-card {
-  grid-template-columns: 1fr auto !important;
-  gap: 18px !important;
-  align-items: center !important;
-}
-
-.rh-home-membership-copy,
-.rh-home-membership-copy h3,
-.rh-home-membership-copy p {
-  width: 100% !important;
-  max-width: none !important;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: break-word !important;
-}
-
-#join .rh-grid-three {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 16px !important;
-  align-items: stretch !important;
-}
-
-#join .rh-grid-three > .rh-card {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: flex-start !important;
-  padding: 20px !important;
-}
-
-#join .rh-grid-three > .rh-card h3 {
-  margin: 0 0 8px !important;
-  font-size: 1.08rem !important;
-  line-height: 1.15 !important;
-}
-
-#join .rh-grid-three > .rh-card p {
-  margin: 0 0 12px !important;
-  line-height: 1.6 !important;
-}
-
-#join .rh-grid-three > .rh-card .rh-inline-link,
-#join .rh-grid-three > .rh-card .rh-btn {
-  margin-top: auto !important;
-  align-self: flex-start !important;
-}
-
-@media (max-width: 980px) {
-  .rh-membership-two,
-  .rh-membership-three,
-  #join .rh-grid-three,
-  .rh-home-membership-card {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-@media (max-width: 760px) {
-  .rh-membership-heading {
-    max-width: none !important;
-    font-size: clamp(2.3rem, 10vw, 3.5rem) !important;
-  }
-
-  .rh-membership-start-card,
-  .rh-membership-entry-card,
-  .rh-home-membership-card,
-  .rh-membership-final-card,
-  .rh-membership-two > .rh-card,
-  .rh-membership-three > .rh-card,
-  #join .rh-grid-three > .rh-card {
-    padding: 18px !important;
-  }
-
-  .rh-membership-buttons,
-  .rh-home-membership-actions {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-  }
-
-  .rh-membership-buttons .rh-btn,
-  .rh-home-membership-actions .rh-btn {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-}
-

@@ -330,3 +330,24 @@
   max-width: 12ch !important;
 }
 
+
+/* full-width hero copy */
+.rhm-hero-copy {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.rhm-title {
+  max-width: 14ch !important;
+}
+
+.rhm-lead {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.rhm-cta-card {
+  width: 100% !important;
+  max-width: none !important;
+}
+

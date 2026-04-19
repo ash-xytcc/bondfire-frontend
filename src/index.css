@@ -248,21 +248,18 @@ input[type="file"]{padding:6px}
   line-height: 1;
 }
 
-/* Drawer is ALWAYS present in markup, but hidden by default (desktop). */
-.bf-drawer{ display: none; }
+/* Drawer is ALWAYS present and used on desktop + mobile */
+.bf-drawer{
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  pointer-events: none;
+}
+.bf-drawer.is-open{ pointer-events: auto; }
 
 @media (max-width: 840px){
   .bf-nav-desktop{ display: none; }
-
-  /* Drawer scaffold */
-  .bf-drawer{
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-    pointer-events: none;
-  }
-  .bf-drawer.is-open{ pointer-events: auto; }
 
   .bf-drawer-backdrop{
     position: absolute;

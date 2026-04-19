@@ -5,21 +5,9 @@ import "../styles/redharbor-public-pass1.css";
 const REDCARD_URL = "https://redcard.iww.org/";
 
 const duesTiers = [
-  {
-    name: "Minimum dues",
-    income: "Less than $2,000 per month",
-    amount: "$11/mo",
-  },
-  {
-    name: "Regular dues",
-    income: "$2,000 to $3,500 per month",
-    amount: "$22/mo",
-  },
-  {
-    name: "Maximum dues",
-    income: "More than $3,500 per month",
-    amount: "$33/mo",
-  },
+  { name: "Minimum dues", income: "Less than $2,000 per month", amount: "$11/mo" },
+  { name: "Regular dues", income: "$2,000 to $3,500 per month", amount: "$22/mo" },
+  { name: "Maximum dues", income: "More than $3,500 per month", amount: "$33/mo" },
 ];
 
 const reasons = [
@@ -50,9 +38,7 @@ export default function MembershipPage() {
             src="/red-harbor-logo.png"
             alt="Red Harbor logo"
             className="rh-public-logo"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
           />
           <div className="rh-public-brandtext">
             <div className="rh-public-kicker">Industrial Workers of the World</div>
@@ -69,30 +55,28 @@ export default function MembershipPage() {
       </header>
 
       <main>
-        <section className="rh-section rh-membership-hero">
-          <div className="rh-membership-hero-grid">
-            <div className="rh-membership-hero-copy">
-              <p className="rh-section-kicker">Membership</p>
-              <h1 className="rh-membership-title">Join the IWW through Red Harbor</h1>
-              <p className="rh-section-copy rh-membership-copy">
-                Join the One Big Union, connect with a local branch, and plug into workplace organizing,
-                political education, and worker solidarity on the harbor and beyond.
-              </p>
-            </div>
+        <section className="rh-section rh-membership-stack">
+          <div className="rh-section-head">
+            <p className="rh-section-kicker">Membership</p>
+            <h1 className="rh-membership-stack-title">Join the IWW through Red Harbor</h1>
+            <p className="rh-section-copy rh-membership-stack-copy">
+              Join the One Big Union, connect with a local branch, and plug into workplace organizing,
+              political education, and worker solidarity on the harbor and beyond.
+            </p>
+          </div>
 
-            <div className="rh-card rh-membership-hero-card">
-              <h3>Start here</h3>
-              <p>
-                New memberships are handled through Redcard. Join there, then connect back into Red Harbor and branch life.
-              </p>
-              <div className="rh-membership-actions">
-                <a href={REDCARD_URL} className="rh-btn rh-btn-primary" target="_blank" rel="noopener noreferrer">
-                  Join now
-                </a>
-                <Link to="/" className="rh-btn rh-btn-secondary">
-                  Back to homepage
-                </Link>
-              </div>
+          <div className="rh-card rh-membership-stack-card">
+            <h3>Start here</h3>
+            <p>
+              New memberships are handled through Redcard. Join there, then connect back into Red Harbor and branch life.
+            </p>
+            <div className="rh-membership-stack-actions">
+              <a href={REDCARD_URL} className="rh-btn rh-btn-primary" target="_blank" rel="noopener noreferrer">
+                Join now
+              </a>
+              <Link to="/" className="rh-btn rh-btn-secondary">
+                Back to homepage
+              </Link>
             </div>
           </div>
         </section>
@@ -103,19 +87,19 @@ export default function MembershipPage() {
             <h2>Workers belong here</h2>
             <p className="rh-section-copy">
               The IWW is for workers, not employers. That includes workers with jobs, unemployed workers,
-              students, retirees, self-employed workers, informal workers, and workers who cannot currently work.
+              students, retirees, self employed workers, informal workers, and workers who cannot currently work.
               People with real hiring and firing power over other workers are treated as employers and are not eligible.
             </p>
           </div>
 
-          <div className="rh-grid-two">
+          <div className="rh-membership-grid-two">
             <div className="rh-card">
               <h3>Who this includes</h3>
               <ul className="rh-event-list">
                 <li>Workers currently on the job</li>
                 <li>Unemployed and underemployed workers</li>
                 <li>Students and retirees</li>
-                <li>Self-employed and informal workers</li>
+                <li>Self employed and informal workers</li>
                 <li>Workers already in another union, except officers</li>
               </ul>
             </div>
@@ -138,7 +122,7 @@ export default function MembershipPage() {
             </p>
           </div>
 
-          <div className="rh-grid-two">
+          <div className="rh-membership-grid-two">
             {reasons.map((item) => (
               <article className="rh-card" key={item.title}>
                 <h3>{item.title}</h3>
@@ -157,7 +141,7 @@ export default function MembershipPage() {
             </p>
           </div>
 
-          <div className="rh-grid-three">
+          <div className="rh-membership-grid-three">
             {duesTiers.map((tier) => (
               <article className="rh-card rh-dues-card" key={tier.name}>
                 <p className="rh-section-kicker">{tier.name}</p>
@@ -169,14 +153,13 @@ export default function MembershipPage() {
         </section>
 
         <section className="rh-section rh-section-band">
-          <div className="rh-card rh-membership-cta-card">
+          <div className="rh-card rh-membership-stack-card">
             <p className="rh-section-kicker">Join the IWW</p>
             <h2>Ready to get your red card?</h2>
             <p className="rh-section-copy">
               Redcard handles the membership sign up. Once you are in, Red Harbor can be part of where that membership actually lives.
             </p>
-
-            <div className="rh-membership-actions">
+            <div className="rh-membership-stack-actions">
               <a href={REDCARD_URL} className="rh-btn rh-btn-primary" target="_blank" rel="noopener noreferrer">
                 Join via Redcard
               </a>

@@ -81,6 +81,14 @@ export default function MembershipPage() {
             </p>
           </div>
 
+          <div className="rhm-hero-media">
+            <img
+              src="/red-harbor-hero.jpg"
+              alt="Workers organizing together"
+              className="rhm-hero-image"
+            />
+          </div>
+
           <aside className="rh-card rhm-cta-card">
             <p className="rh-section-kicker">Start here</p>
             <h2 className="rhm-card-title">New memberships go through Redcard</h2>

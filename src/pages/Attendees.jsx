@@ -163,7 +163,7 @@ export default function Attendees() {
     try {
       const data = await authFetch(`/api/orgs/${encodeURIComponent(orgId)}/attendees`, {
         method: 'PATCH',
-        body: JSON.stringify({ id: selected.id, status: 'reviewed' }),
+        body: { id: selected.id, status: 'reviewed' },
         headers: { Accept: 'application/json' },
       });
       const updated = data?.attendee;
@@ -336,8 +336,6 @@ export default function Attendees() {
             <div style={{ color: 'var(--muted)' }}>Select an attendee to view details.</div>
           )}
         </div>
-      </div>
-
       </div>
     </div>
   );

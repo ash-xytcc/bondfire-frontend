@@ -1533,3 +1533,37 @@ html, body {
     width: 100%;
   }
 }
+
+/* membership page + homepage join CTA polish */
+.rh-membership-hero {
+  padding-top: 40px;
+}
+
+.rh-membership-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 6vw, 4.2rem);
+  line-height: 0.98;
+}
+
+.rh-membership-copy {
+  max-width: 780px;
+}
+
+.rh-dues-card h3 {
+  margin: 6px 0 8px;
+  font-size: 2rem;
+}
+
+.rh-membership-cta-card {
+  text-align: left;
+}
+
+.rh-membership-mini-cta {
+  margin-bottom: 18px;
+}
+
+@media (max-width: 780px) {
+  .rh-membership-mini-cta {
+    grid-template-columns: 1fr;
+  }
+}

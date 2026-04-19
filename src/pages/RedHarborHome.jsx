@@ -1142,6 +1142,7 @@ export default function RedHarborHome() {
         <nav className="rh-public-nav" aria-label="Primary">
           <SectionLink id="about" className="rh-nav-link">About</SectionLink>
           <SectionLink id="join" className="rh-nav-link">Join</SectionLink>
+          <Link to="/membership" className="rh-nav-link">Membership</Link>
           <SectionLink id="bulletin" className="rh-nav-link">Bulletin</SectionLink>
           <Link to="/labor-history" className="rh-nav-link">Labor History</Link>
           {liveHome.show_meetings ? <SectionLink id="events" className="rh-nav-link">Events</SectionLink> : null}
@@ -1436,6 +1437,20 @@ export default function RedHarborHome() {
             />
           </div>
 
+          <div className="rh-hero-actions rh-membership-mini-cta">
+            <Link to="/membership" className="rh-btn rh-btn-secondary">
+              Learn about membership
+            </Link>
+            <a
+              href="https://redcard.iww.org/"
+              className="rh-btn rh-btn-primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Join via Redcard
+            </a>
+          </div>
+
           <div className="rh-grid-three">
             {liveHome.join_cards.map((card, index) => {
               const action = (liveHome.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
@@ -1650,6 +1665,7 @@ export default function RedHarborHome() {
         <div className="rh-footer-links">
           <SectionLink id="about" className="rh-footer-link-button">About</SectionLink>
           <SectionLink id="join" className="rh-footer-link-button">Join</SectionLink>
+          <Link to="/membership">Membership</Link>
           <SectionLink id="bulletin" className="rh-footer-link-button">Bulletin</SectionLink>
           <Link to="/labor-history">Labor History</Link>
           {liveHome.show_meetings ? <SectionLink id="events" className="rh-footer-link-button">Events</SectionLink> : null}

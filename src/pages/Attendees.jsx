@@ -1,5 +1,21 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+
+
+async function authFetch(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(opts.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data?.ok === false) throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+  return data;
+}
 
 function getOrgDisplayName(orgId) {
   if (!orgId) return "current workspace";
@@ -103,30 +119,56 @@ export default function Attendees() {
   const { orgId } = useParams();
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedId, setSelectedId] = useState(MOCK_ATTENDEES[0]?.id || null);
+  const [attendees, setAttendees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadMsg, setLoadMsg] = useState('');
+  const [selectedId, setSelectedId] = useState(null);
+
+  useEffect(() => {
+    let dead = false;
+    (async () => {
+      setLoading(true);
+      setLoadMsg('');
+      try {
+        const data = await authFetch(`/api/orgs/${encodeURIComponent(orgId)}/attendees`);
+        if (dead) return;
+        const rows = Array.isArray(data?.attendees) ? data.attendees : [];
+        setAttendees(rows);
+        setSelectedId((prev) => prev || rows[0]?.id || null);
+      } catch (e) {
+        if (dead) return;
+        setAttendees(MOCK_ATTENDEES);
+        setSelectedId((prev) => prev || MOCK_ATTENDEES[0]?.id || null);
+        setLoadMsg(String(e?.message || e || 'Failed to load attendees'));
+      } finally {
+        if (!dead) setLoading(false);
+      }
+    })();
+    return () => { dead = true; };
+  }, [orgId]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MOCK_ATTENDEES.filter((person) => {
+    return attendees.filter((person) => {
       const matchesStatus = statusFilter === 'all' ? true : person.status === statusFilter;
       const matchesQuery = !q
         ? true
         : `${person.name} ${person.email} ${person.notes} ${person.access}`.toLowerCase().includes(q);
       return matchesStatus && matchesQuery;
     });
-  }, [query, statusFilter]);
+  }, [query, statusFilter, attendees]);
 
   const selected = filtered.find((person) => person.id === selectedId) || filtered[0] || null;
 
   const counts = useMemo(() => {
     const base = {
-      total: MOCK_ATTENDEES.length,
-      volunteer: MOCK_ATTENDEES.filter((p) => p.volunteer).length,
-      sessionLead: MOCK_ATTENDEES.filter((p) => p.sessionLead).length,
-      needsFollowup: MOCK_ATTENDEES.filter((p) => p.status === 'needs_followup').length,
+      total: attendees.length,
+      volunteer: attendees.filter((p) => p.volunteer).length,
+      sessionLead: attendees.filter((p) => p.sessionLead).length,
+      needsFollowup: attendees.filter((p) => p.status === 'needs_followup').length,
     };
     return base;
-  }, []);
+  }, [attendees]);
 
   return (
     <div style={{ padding: 16, display: 'grid', gap: 16 }}>
@@ -140,11 +182,15 @@ export default function Attendees() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'start', flexWrap: 'wrap' }}>
-            <button className="btn-red" type="button">Capture RSVP</button>
+            <a className="btn-red" href="/rsvp" style={{ textDecoration: 'none' }}>Capture RSVP</a>
             <button className="btn" type="button">Export CSV</button>
           </div>
         </div>
       </div>
+
+      {loadMsg ? (
+        <div className="helper" style={{ color: 'tomato' }}>{loadMsg}</div>
+      ) : null}
 
       <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
         <StatCard label="Total tracked" value={counts.total} helper="Everyone currently in the RSVP pipeline." />
@@ -176,7 +222,7 @@ export default function Attendees() {
       <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'minmax(0, 1.25fr) minmax(320px, .9fr)' }}>
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: 16, borderBottom: '1px solid var(--border)' }}>
-            <strong>Tracked people</strong>
+            <strong>{loading ? 'Loading attendees…' : 'Tracked people'}</strong>
           </div>
           <div style={{ display: 'grid' }}>
             {filtered.length ? filtered.map((person) => {
@@ -257,7 +303,7 @@ export default function Attendees() {
       <div className="card" style={{ padding: 16 }}>
         <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--muted)', marginBottom: 8 }}>Next build steps</div>
         <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
-          <li>Wire this list to real RSVP capture records instead of mock entries.</li>
+          <li>Public RSVP submissions now land here as attendee records.</li>
           <li>Add detailed form completion state and segmented email actions.</li>
           <li>Add volunteer, session interest, and access tags from the real intake flow.</li>
           <li>Support organizer notes, status updates, and export tools.</li>

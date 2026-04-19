@@ -832,7 +832,7 @@ export default function Overview() {
       <div className="bfTopMetricsRow">
         {!hasLoadedOnce && loading ? (
           <>
-            {["👥", "📦", "🧾", "📅", "🤝", "📨", "📰"].map((ic, i) => <div key={i}><MetricCardSkeleton icon={ic} /></div>)}
+            {["👥", "📦", "🧾", "📅", "✉️", "📰"].map((ic, i) => <div key={i}><MetricCardSkeleton icon={ic} /></div>)}
           </>
         ) : (
           topCards.map((c) => (

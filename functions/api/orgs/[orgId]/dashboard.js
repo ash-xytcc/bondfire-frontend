@@ -67,6 +67,20 @@ async function ensureDashboardLocalCompatibility(env) {
     email TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL DEFAULT 0
   )`);
+  await safeRun(env, `CREATE TABLE IF NOT EXISTS attendees (
+    id TEXT PRIMARY KEY,
+    org_id TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'captured',
+    volunteer INTEGER NOT NULL DEFAULT 0,
+    session_lead INTEGER NOT NULL DEFAULT 0,
+    access_notes TEXT NOT NULL DEFAULT '',
+    notes TEXT NOT NULL DEFAULT '',
+    source TEXT NOT NULL DEFAULT 'public_rsvp',
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0
+  )`);
   await safeRun(env, `CREATE TABLE IF NOT EXISTS pledges (
     id TEXT PRIMARY KEY,
     org_id TEXT NOT NULL,
@@ -206,6 +220,13 @@ export async function onRequestGet({ env, request, params }) {
     []
   );
 
+  const attendeesCount = await safeFirst(
+    env,
+    "SELECT COUNT(*) as c FROM attendees WHERE org_id = ?",
+    [orgId],
+    { c: 0 }
+  );
+
   const newsletterCount = await safeFirst(
     env,
     "SELECT COUNT(*) as c FROM newsletter_subscribers WHERE org_id = ?",
@@ -266,6 +287,8 @@ export async function onRequestGet({ env, request, params }) {
       needsAll: needsAllCount?.c || 0,
       inventory: inventoryCount?.c || 0,
       meetingsUpcoming: meetingsUpcomingCount?.c || 0,
+      attendees: attendeesCount?.c || 0,
+      rsvps: attendeesCount?.c || 0,
       newsletter: newsletterCount?.c || 0,
       pledges: pledgesCount?.c || 0,
       publicInbox: publicInboxCount?.c || 0,

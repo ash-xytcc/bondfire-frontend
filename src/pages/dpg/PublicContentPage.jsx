@@ -2516,9 +2516,56 @@ function RsvpPageLayout({ accent, editorMode = false, activeField = "", setActiv
                   />
                 ) : null}
 
-                <a href={content.primary_url} className="dpg-rsvp-cta">
-                  {content.primary_label}
-                </a>
+                {!editorMode ? (
+                  <form onSubmit={submitPublicRsvp} style={{ display: "grid", gap: 10 }}>
+                    <input
+                      value={rsvpForm.name}
+                      onChange={(e) => setRsvpForm((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="Your name"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px solid rgba(255,255,255,0.16)", padding: 12, borderRadius: 12, font: "inherit" }}
+                    />
+                    <input
+                      value={rsvpForm.email}
+                      onChange={(e) => setRsvpForm((prev) => ({ ...prev, email: e.target.value }))}
+                      placeholder="Email address"
+                      type="email"
+                      autoComplete="email"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px solid rgba(255,255,255,0.16)", padding: 12, borderRadius: 12, font: "inherit" }}
+                    />
+                    <textarea
+                      value={rsvpForm.accessNotes}
+                      onChange={(e) => setRsvpForm((prev) => ({ ...prev, accessNotes: e.target.value }))}
+                      placeholder="Access notes or accommodation needs"
+                      style={{ width: "100%", minHeight: 84, resize: "vertical", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px solid rgba(255,255,255,0.16)", padding: 12, borderRadius: 12, font: "inherit" }}
+                    />
+                    <textarea
+                      value={rsvpForm.notes}
+                      onChange={(e) => setRsvpForm((prev) => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Anything organizers should know"
+                      style={{ width: "100%", minHeight: 84, resize: "vertical", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px solid rgba(255,255,255,0.16)", padding: 12, borderRadius: 12, font: "inherit" }}
+                    />
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 10, color: "#f3efe8", fontWeight: 700 }}>
+                      <input type="checkbox" checked={!!rsvpForm.volunteer} onChange={(e) => setRsvpForm((prev) => ({ ...prev, volunteer: e.target.checked }))} />
+                      I want to volunteer
+                    </label>
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 10, color: "#f3efe8", fontWeight: 700 }}>
+                      <input type="checkbox" checked={!!rsvpForm.sessionLead} onChange={(e) => setRsvpForm((prev) => ({ ...prev, sessionLead: e.target.checked }))} />
+                      I may want to lead a session
+                    </label>
+                    <button type="submit" disabled={rsvpBusy} className="dpg-rsvp-cta" style={{ border: 0 }}>
+                      {rsvpBusy ? "Sending…" : content.primary_label}
+                    </button>
+                    {rsvpMsg ? (
+                      <div style={{ color: rsvpMsg.toLowerCase().includes("fail") || rsvpMsg.toLowerCase().includes("required") || rsvpMsg.toLowerCase().includes("invalid") ? "#ffb8b8" : "#9fd3ab", fontSize: 14 }}>
+                        {rsvpMsg}
+                      </div>
+                    ) : null}
+                  </form>
+                ) : (
+                  <a href={content.primary_url} className="dpg-rsvp-cta">
+                    {content.primary_label}
+                  </a>
+                )}
               </div>
             </div>
 
@@ -3945,6 +3992,16 @@ export default function PublicContentPage({ slug: slugProp = "" }) {
   const [editingShareId, setEditingShareId] = React.useState("");
   const [shareCreateBusy, setShareCreateBusy] = React.useState(false);
   const [shareCreateMsg, setShareCreateMsg] = React.useState("");
+  const [rsvpForm, setRsvpForm] = React.useState({
+    name: "",
+    email: "",
+    accessNotes: "",
+    notes: "",
+    volunteer: false,
+    sessionLead: false,
+  });
+  const [rsvpBusy, setRsvpBusy] = React.useState(false);
+  const [rsvpMsg, setRsvpMsg] = React.useState("");
   const [shareDraft, setShareDraft] = React.useState({
     title: "",
     description: "",
@@ -4221,6 +4278,49 @@ React.useEffect(() => {
 
   const setRsvpContent = (next) => {
     setDraftPages((prev) => ({ ...(prev || {}), rsvp: next }));
+  };
+
+  const submitPublicRsvp = async (e) => {
+    e?.preventDefault();
+    const name = String(rsvpForm.name || "").trim();
+    const email = String(rsvpForm.email || "").trim();
+
+    if (!name || !email) {
+      setRsvpMsg("Name and email are required.");
+      return;
+    }
+
+    setRsvpBusy(true);
+    setRsvpMsg("");
+    try {
+      const res = await fetch("/api/public/rsvp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          orgId: "dpg",
+          ...rsvpForm,
+          source: "public_rsvp_page",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+      }
+      setRsvpForm({
+        name: "",
+        email: "",
+        accessNotes: "",
+        notes: "",
+        volunteer: false,
+        sessionLead: false,
+      });
+      setRsvpMsg(data?.alreadyExists ? "Updated your RSVP." : "RSVP captured.");
+    } catch (e2) {
+      setRsvpMsg(String(e2?.message || e2 || "Failed to submit RSVP"));
+    } finally {
+      setRsvpBusy(false);
+    }
   };
 
   const beginEditShare = (item) => {

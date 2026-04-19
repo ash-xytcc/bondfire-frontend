@@ -158,16 +158,27 @@ export default function Attendees() {
   }, [attendees]);
 
   const markReviewed = async () => {
-    if (!selected?.id) return;
+    if (!selected?.id) {
+      setActionMsg('No attendee selected.');
+      return;
+    }
     setActionMsg('');
     try {
-      const data = await authFetch(`/api/orgs/${encodeURIComponent(orgId)}/attendees`, {
+      const res = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/attendees`, {
         method: 'PATCH',
-        body: { id: selected.id, status: 'reviewed' },
-        headers: { Accept: 'application/json' },
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: selected.id, status: 'reviewed' }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+      }
       const updated = data?.attendee;
-      if (!updated) throw new Error('No attendee returned');
+      if (!updated?.id) throw new Error('No attendee returned');
       setAttendees((prev) => prev.map((row) => row.id === updated.id ? updated : row));
       setSelectedId(updated.id);
       setActionMsg('Marked reviewed.');
@@ -176,12 +187,27 @@ export default function Attendees() {
     }
   };
 
-  const openFullProfile = () => {
-    if (!selected?.id) return;
+  const openFullProfile = async () => {
+    if (!selected?.id) {
+      setActionMsg('No attendee selected.');
+      return;
+    }
     const qs = new URLSearchParams(location.search || '');
     qs.set('attendee', selected.id);
-    navigate(`?${qs.toString()}`);
-    setActionMsg('Deep link updated for this attendee.');
+    const url = `${window.location.origin}${window.location.pathname}?${qs.toString()}`;
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        setActionMsg('Profile link copied.');
+      } else {
+        navigate(`?${qs.toString()}`);
+        setActionMsg('Profile link ready in the address bar.');
+      }
+    } catch {
+      navigate(`?${qs.toString()}`);
+      setActionMsg('Profile link ready in the address bar.');
+    }
   };
 
   return (
@@ -327,7 +353,7 @@ export default function Attendees() {
                     Mark reviewed
                   </button>
                   <button className="btn-red" type="button" onClick={openFullProfile}>
-                    Open full profile
+                    Copy profile link
                   </button>
                 </div>
               </div>

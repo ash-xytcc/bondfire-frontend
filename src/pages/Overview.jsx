@@ -439,8 +439,7 @@ export default function Overview() {
           inventory: Number(rawCounts.inventory || 0),
           needsOpen: Number(rawCounts.needsOpen || rawCounts.needs || 0),
           meetingsUpcoming: Number(rawCounts.meetingsUpcoming || 0),
-          pledgesActive: Number(rawCounts.pledgesActive || rawCounts.pledges || 0),
-          publicInbox: Number(rawCounts.publicInbox || rawCounts.public_inbox || rawCounts.publicInboxOpen || 0),
+          rsvps: Number(rawCounts.attendees || rawCounts.rsvps || rawCounts.rsvp || 0),
           subsTotal: Number(rawCounts.subscribers || rawCounts.subs || rawCounts.subsTotal || 0),
         };
         const base = readRefreshBaseline(orgId);
@@ -450,8 +449,7 @@ export default function Overview() {
           inventory: hasBase ? cn.inventory - Number(base.inventory || 0) : 0,
           needsOpen: hasBase ? cn.needsOpen - Number(base.needsOpen || 0) : 0,
           meetingsUpcoming: hasBase ? cn.meetingsUpcoming - Number(base.meetingsUpcoming || 0) : 0,
-          pledgesActive: hasBase ? cn.pledgesActive - Number(base.pledgesActive || 0) : 0,
-          publicInbox: hasBase ? cn.publicInbox - Number(base.publicInbox || 0) : 0,
+          rsvps: hasBase ? cn.rsvps - Number(base.rsvps || 0) : 0,
           subsTotal: hasBase ? cn.subsTotal - Number(base.subsTotal || 0) : 0,
         };
         setTickerDeltas(nextDeltas);
@@ -486,11 +484,10 @@ export default function Overview() {
       inventory: Number(c.inventory || inventory.length || 0),
       needsOpen: Number(c.needsOpen || c.needs || needs.filter((n) => String(n?.status || "").toLowerCase() === "open").length || 0),
       meetingsUpcoming: Number(c.meetingsUpcoming || meetings.filter((m) => Number(m?.starts_at) > 0).length || 0),
-      pledgesActive: Number(c.pledgesActive || c.pledges || pledges.length || 0),
-      publicInbox: Number(c.publicInbox || c.public_inbox || c.publicInboxOpen || publicInbox.length || 0),
+      rsvps: Number(c.attendees || c.rsvps || c.rsvp || 0),
       subsTotal: Number(c.subscribers || c.subs || c.subsTotal || subs.length || 0),
     };
-  }, [counts, people, inventory, needs, meetings, pledges, publicInbox, subs]);
+  }, [counts, people, inventory, needs, meetings, subs]);
 
   const deltas = useMemo(() => {
     const d = tickerDeltas || {};
@@ -499,8 +496,7 @@ export default function Overview() {
       inventory: Number(d.inventory || 0),
       needsOpen: Number(d.needsOpen || 0),
       meetingsUpcoming: Number(d.meetingsUpcoming || 0),
-      pledgesActive: Number(d.pledgesActive || 0),
-      publicInbox: Number(d.publicInbox || 0),
+      rsvps: Number(d.rsvps || 0),
       subsTotal: Number(d.subsTotal || 0),
     };
   }, [tickerDeltas]);
@@ -518,8 +514,7 @@ export default function Overview() {
       inventory: mk("inventory", countsNormalized.inventory),
       needsOpen: mk("needsOpen", countsNormalized.needsOpen),
       meetingsUpcoming: mk("meetingsUpcoming", countsNormalized.meetingsUpcoming),
-      pledgesActive: mk("pledgesActive", countsNormalized.pledgesActive),
-      publicInbox: mk("publicInbox", countsNormalized.publicInbox),
+      rsvps: mk("rsvps", countsNormalized.rsvps),
       subsTotal: mk("subsTotal", countsNormalized.subsTotal),
     };
   }, [orgId, countsNormalized]);
@@ -656,9 +651,8 @@ export default function Overview() {
       mk("inventory", "Inventory", "📦", countsNormalized.inventory, "items", "inventory"),
       mk("needsOpen", "Needs", "🧾", countsNormalized.needsOpen, "open", "needs"),
       mk("meetingsUpcoming", "Meetings", "📅", countsNormalized.meetingsUpcoming, "upcoming", "meetings"),
-      mk("pledgesActive", "Pledges", "🤝", countsNormalized.pledgesActive, "active", "settings?tab=pledges"),
+      mk("rsvps", "RSVPs", "✉️", countsNormalized.rsvps, "captured", "attendees"),
       mk("subsTotal", "New Subs", "📰", countsNormalized.subsTotal, "total", "settings?tab=newsletter"),
-      mk("publicInbox", "Inbox", "📨", countsNormalized.publicInbox, "open items", "settings?tab=public-inbox"),
     ];
   }, [countsNormalized, deltas, historySeries]);
 

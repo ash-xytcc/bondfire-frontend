@@ -1069,14 +1069,14 @@ export default function Drive() {
   const driveGridStyle = isMobile ? { display: "block", height: "100%" } : { display: "grid", gridTemplateColumns: `${sidebarWidth}px 6px minmax(0,1fr)`, height: "100%" };
 
   return (
-    <div style={{ position: focusMode ? "fixed" : "relative", inset: focusMode ? 0 : "auto", zIndex: focusMode ? 80 : "auto", background: "#0b0b0b", height: workspaceHeight }}>
+    <div className="bf-drive-page" style={{ position: focusMode ? "fixed" : "relative", inset: focusMode ? 0 : "auto", zIndex: focusMode ? 80 : "auto", background: "#0b0b0b", height: workspaceHeight }}>
       <input ref={fileInputRef} type="file" multiple style={{ display: "none" }} onChange={onUploadFiles} />
       <input ref={folderInputRef} type="file" multiple style={{ display: "none" }} onChange={onUploadFolder} />
 
       <div style={driveGridStyle}>
         {isMobile ? (
           <>
-            <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", padding: "8px 8px 0" }}>
+            <div className="bf-drive-mobile-topbar" style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", padding: "8px 8px 0" }}>
               <button className="btn" type="button" onClick={() => setMobileSidebarOpen(true)} style={{ padding: "7px 10px" }}>Explorer</button>
               <button className="btn" type="button" onClick={() => setCreateModalOpen(true)} style={{ padding: "7px 10px" }}>New</button>
               <button className="btn" type="button" onClick={() => { if (fileInputRef.current) fileInputRef.current.value = ""; fileInputRef.current?.click(); }} style={{ padding: "7px 10px" }}>Upload</button>
@@ -1183,7 +1183,7 @@ export default function Drive() {
           </>
         )}
 
-        <div style={{ minWidth: 0, overflow: "auto", padding: isMobile ? 8 : 8 }}>
+        <div className="bf-drive-main" style={{ minWidth: 0, overflow: "auto", padding: isMobile ? 8 : 8 }}>
           <Breadcrumbs folders={folders} currentFolder={currentFolder} setCurrentFolder={setCurrentFolder} compact />
 
           {loadState === "loading" ? (
@@ -1231,7 +1231,7 @@ export default function Drive() {
                 ].filter(Boolean)}
               /> : null}
 
-              <div id="bf-drive-editor-zone" style={{ display: "grid", gridTemplateColumns: !isMobile && viewMode === "split" ? `${Math.round(splitRatio * 100)}% 6px minmax(0,1fr)` : "minmax(0,1fr)", gap: !isMobile && viewMode === "split" ? 6 : 0, alignItems: "start" }}>
+              <div id="bf-drive-editor-zone" className="bf-drive-editor-zone" style={{ display: "grid", gridTemplateColumns: !isMobile && viewMode === "split" ? `${Math.round(splitRatio * 100)}% 6px minmax(0,1fr)` : "minmax(0,1fr)", gap: !isMobile && viewMode === "split" ? 6 : 0, alignItems: "start" }}>
                 {showEditor ? (
                   <div style={{ minWidth: 0 }}>
                     {selectedFileSubtype === "sheet" ? (

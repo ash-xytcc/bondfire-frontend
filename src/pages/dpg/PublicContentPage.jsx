@@ -2708,7 +2708,7 @@ function RsvpPageLayout({
 }
 
 
-function SharesPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {}, authed = false, sharesLoading = false, sharesError = "", sharesAdminState = { loading: false, items: [], error: "" }, editingShareId = "", shareDraft = null, setShareDraft = () => {}, shareCreateBusy = false, shareCreateMsg = "", onPublishShare = null, onBeginEditShare = null, onUnpublishShare = null, onResetShareEditor = null }) {
+function SharesPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {}, authed = false, sharesLoading = false, sharesError = "", sharesAdminState = { loading: false, items: [], error: "" }, editingShareId = "", shareDraft = null, setShareDraft = () => {}, shareCreateBusy = false, shareCreateMsg = "", onPublishShare = null, onBeginEditShare = null, onUnpublishShare = null, onResetShareEditor = null, liveVideos = [], liveFeatured = null, hasLiveShares = false }) {
   const updateVisionItem = (index, value) => {
     const next = [...content.vision_items];
     while (next.length < 8) next.push("");
@@ -2789,15 +2789,19 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
     });
   };
 
-  const featured = content.featured || {};
-  const videos = Array.isArray(content.videos) ? content.videos : [];
-  const visibleCards = Math.max(videos.length, editorMode ? 6 : videos.length);
+  const fallbackFeatured = content.featured || {};
+  const fallbackVideos = Array.isArray(content.videos) ? content.videos : [];
+  const featured = !editorMode && hasLiveShares ? (liveFeatured || {}) : fallbackFeatured;
+  const videos = !editorMode && hasLiveShares
+    ? (Array.isArray(liveVideos) ? liveVideos : [])
+    : fallbackVideos;
+  const visibleCards = Math.max(fallbackVideos.length, editorMode ? 6 : fallbackVideos.length);
   const showComposer = authed && !editorMode && shareDraft;
   const [shareQuery, setShareQuery] = React.useState("");
   const [activeTag, setActiveTag] = React.useState("All");
 
   const sourceVideos = videos.map((video, idx) => ({ ...video, __idx: idx }));
-  const editorVideos = Array.from({ length: visibleCards }).map((_, idx) => ({ ...(videos[idx] || {}), __idx: idx }));
+  const editorVideos = Array.from({ length: visibleCards }).map((_, idx) => ({ ...(fallbackVideos[idx] || {}), __idx: idx }));
   const availableTags = ["All", ...Array.from(new Set(sourceVideos.map((video) => String(video?.tag || "").trim()).filter(Boolean)))];
   const normalizedQuery = String(shareQuery || "").trim().toLowerCase();
 
@@ -3576,7 +3580,7 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
                 displayStyle={{ color: "#d7ddd8", lineHeight: 1.66, maxWidth: 760, borderRadius: 10 }}
               />
 
-              {!editorMode ? (
+              {!editorMode && hasLiveShares ? (
                 <div style={{ display: "grid", gap: 12, marginTop: 8 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                     <input
@@ -3626,7 +3630,9 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
                   marginBottom: 14,
                 }}
               >
-                No sessions match the current search or tag filter.
+                {hasLiveShares
+                  ? "No sessions match the current search or tag filter."
+                  : "No published sessions yet. This archive is ready for real entries as soon as organizers publish them."}
               </div>
             ) : null}
 
@@ -4191,7 +4197,7 @@ React.useEffect(() => {
     ...(draftPages?.["dpg-shares"] || {}),
   }, page);
 
-  const sharesVideos = Array.isArray(sharesState.items) && sharesState.items.length
+  const liveSharesVideos = Array.isArray(sharesState.items)
     ? sharesState.items.map((item) => ({
         tag: Array.isArray(item?.tags) && item.tags.length ? item.tags[0] : "Session",
         title: item?.title || "",
@@ -4201,9 +4207,9 @@ React.useEffect(() => {
         thumb: item?.thumbnailUrl || "",
         href: item?.slug ? `/dpg-shares/${item.slug}` : (item?.videoUrl || "#"),
       }))
-    : sharesContent.videos;
+    : [];
 
-  const sharesFeatured = sharesState.featured
+  const liveSharesFeatured = sharesState.featured
     ? {
         tag: Array.isArray(sharesState.featured?.tags) && sharesState.featured.tags.length ? sharesState.featured.tags[0] : "Featured",
         title: sharesState.featured?.title || "",
@@ -4213,13 +4219,7 @@ React.useEffect(() => {
         thumb: sharesState.featured?.thumbnailUrl || "",
         href: sharesState.featured?.slug ? `/dpg-shares/${sharesState.featured.slug}` : (sharesState.featured?.videoUrl || "#"),
       }
-    : sharesContent.featured;
-
-  const mergedSharesContent = {
-    ...sharesContent,
-    videos: sharesVideos,
-    featured: sharesFeatured,
-  };
+    : null;
 
   const rsvpContent = normalizeRsvpContent({
     ...(contentPages?.rsvp || {}),
@@ -4603,7 +4603,7 @@ React.useEffect(() => {
             editorMode={editorMode}
             activeField={activeField}
             setActiveField={setActiveField}
-            content={mergedSharesContent}
+            content={sharesContent}
             setContent={setSharesContent}
             authed={authState.authed}
             sharesLoading={sharesState.loading}
@@ -4618,6 +4618,9 @@ React.useEffect(() => {
             onBeginEditShare={beginEditShare}
             onUnpublishShare={unpublishShare}
             onResetShareEditor={resetShareEditor}
+            liveVideos={liveSharesVideos}
+            liveFeatured={liveSharesFeatured}
+            hasLiveShares={liveSharesVideos.length > 0}
           />
         ) : (
           <GenericPublicPage page={page} accent={accent} />

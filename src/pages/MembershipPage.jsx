@@ -66,7 +66,7 @@ export default function MembershipPage() {
             </p>
           </div>
 
-          <div className="rh-card rh-membership-start-card">
+          <div className="rh-card rh-membership-start-card rh-membership-entry-card">
             <h3>Start here</h3>
             <p>
               New memberships are handled through Redcard. Join there, then connect back into Red Harbor and branch life.
@@ -153,8 +153,8 @@ export default function MembershipPage() {
           </div>
         </section>
 
-        <section className="rh-section rh-section-band">
-          <div className="rh-card rh-membership-start-card">
+        <section className="rh-section rh-section-band rh-membership-final-band">
+          <div className="rh-card rh-membership-start-card rh-membership-final-card">
             <p className="rh-section-kicker">Join the IWW</p>
             <h2>Ready to get your red card?</h2>
             <p className="rh-section-copy">

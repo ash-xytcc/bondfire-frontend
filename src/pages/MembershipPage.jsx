@@ -133,41 +133,43 @@ export default function MembershipPage() {
           </div>
         </section>
 
-        <section className="rh-section">
-          <div className="rh-section-head">
-            <p className="rh-section-kicker">Dues</p>
-            <h2>Scaled by income</h2>
-            <p className="rh-section-copy">
-              Current dues are based on self reported monthly income. The first month also includes an initiation fee equal to one month of dues.
-            </p>
-          </div>
+        <section className="rh-section rh-membership-bottom-section">
+          <div className="rh-membership-bottom-shell">
+            <div className="rh-membership-bottom-main">
+              <div className="rh-section-head">
+                <p className="rh-section-kicker">Dues</p>
+                <h2>Scaled by income</h2>
+                <p className="rh-section-copy">
+                  Current dues are based on self reported monthly income. The first month also includes an initiation fee equal to one month of dues.
+                </p>
+              </div>
 
-          <div className="rh-membership-three">
-            {duesTiers.map((tier) => (
-              <article className="rh-card rh-dues-card" key={tier.name}>
-                <p className="rh-section-kicker">{tier.name}</p>
-                <h3>{tier.amount}</h3>
-                <p>{tier.income}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="rh-section rh-section-band rh-membership-final-band">
-          <div className="rh-card rh-membership-start-card rh-membership-final-card">
-            <p className="rh-section-kicker">Join the IWW</p>
-            <h2>Ready to get your red card?</h2>
-            <p className="rh-section-copy">
-              Redcard handles the membership sign up. Once you are in, Red Harbor can be part of where that membership actually lives.
-            </p>
-            <div className="rh-membership-buttons">
-              <a href={REDCARD_URL} className="rh-btn rh-btn-primary" target="_blank" rel="noopener noreferrer">
-                Join via Redcard
-              </a>
-              <Link to="/" className="rh-btn rh-btn-secondary">
-                Back to homepage
-              </Link>
+              <div className="rh-membership-three">
+                {duesTiers.map((tier) => (
+                  <article className="rh-card rh-dues-card" key={tier.name}>
+                    <p className="rh-section-kicker">{tier.name}</p>
+                    <h3>{tier.amount}</h3>
+                    <p>{tier.income}</p>
+                  </article>
+                ))}
+              </div>
             </div>
+
+            <aside className="rh-card rh-membership-start-card rh-membership-final-card">
+              <p className="rh-section-kicker">Join the IWW</p>
+              <h2>Ready to get your red card?</h2>
+              <p className="rh-section-copy">
+                Redcard handles the membership sign up. Once you are in, Red Harbor can be part of where that membership actually lives.
+              </p>
+              <div className="rh-membership-buttons">
+                <a href={REDCARD_URL} className="rh-btn rh-btn-primary" target="_blank" rel="noopener noreferrer">
+                  Join via Redcard
+                </a>
+                <Link to="/" className="rh-btn rh-btn-secondary">
+                  Back to homepage
+                </Link>
+              </div>
+            </aside>
           </div>
         </section>
       </main>

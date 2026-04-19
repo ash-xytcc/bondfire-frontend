@@ -679,6 +679,9 @@ export default function DpgPublicHome() {
   const [saveBusy, setSaveBusy] = React.useState(false);
   const [saveMsg, setSaveMsg] = React.useState("");
   const [postsState, setPostsState] = React.useState({ loading: true, posts: [], error: "" });
+  const [newsletterForm, setNewsletterForm] = React.useState({ name: "", email: "" });
+  const [newsletterBusy, setNewsletterBusy] = React.useState(false);
+  const [newsletterMsg, setNewsletterMsg] = React.useState("");
   const heroFileInputRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -847,6 +850,43 @@ export default function DpgPublicHome() {
     while (next.length < 8) next.push("");
     next[index] = value;
     updateDraft("progress_items", next.filter((x) => String(x || "").trim()));
+  };
+
+  const submitNewsletterSignup = async (e) => {
+    e?.preventDefault();
+    const email = String(newsletterForm.email || "").trim();
+    const name = String(newsletterForm.name || "").trim();
+
+    if (!email) {
+      setNewsletterMsg("Enter an email address.");
+      return;
+    }
+
+    setNewsletterBusy(true);
+    setNewsletterMsg("");
+    try {
+      const res = await fetch("/api/public/newsletter-subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          orgId: "dpg",
+          email,
+          name,
+          source: "public_home",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+      }
+      setNewsletterForm({ name: "", email: "" });
+      setNewsletterMsg(data?.alreadyExists ? "You are already subscribed." : "Signed up. Thanks.");
+    } catch (err) {
+      setNewsletterMsg(String(err?.message || err || "Signup failed"));
+    } finally {
+      setNewsletterBusy(false);
+    }
   };
 
   return (
@@ -1268,9 +1308,10 @@ export default function DpgPublicHome() {
             )}
           </div>
 
-          <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 10 }}>
-              <div style={{ flex: 1 }}>
+          <div style={{ display: 'grid', gap: 20 }}>
+            <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 10 }}>
+                <div style={{ flex: 1 }}>
                 <InlineField
                   editorMode={editorMode}
                   editing={editorMode && activeField === "organizer_title"}
@@ -1349,6 +1390,110 @@ export default function DpgPublicHome() {
               >
                 {authState.authed ? "Go to organizer area" : "Go to organizer sign-in"}
               </button>
+            </div>
+            </div>
+
+            <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
+              <div
+                style={{
+                  marginBottom: 12,
+                  color: "#8fa1ab",
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: ".08em",
+                }}
+              >
+                Stay connected
+              </div>
+
+              <h3
+                style={{
+                  marginTop: 0,
+                  marginBottom: 10,
+                  color: accent,
+                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                  fontWeight: 800,
+                  fontSize: 24,
+                }}
+              >
+                Newsletter signup
+              </h3>
+
+              <p
+                style={{
+                  marginTop: 0,
+                  marginBottom: 14,
+                  lineHeight: 1.6,
+                  color: "#f3efe8",
+                }}
+              >
+                Get updates about the gathering, announcements, and important logistics.
+                This is separate from RSVP. Signing up here does not register you for the event.
+              </p>
+
+              <form onSubmit={submitNewsletterSignup} style={{ display: "grid", gap: 10 }}>
+                <input
+                  value={newsletterForm.name}
+                  onChange={(e) => setNewsletterForm((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="Name (optional)"
+                  style={{
+                    width: "100%",
+                    background: "rgba(255,255,255,0.08)",
+                    color: "#f3efe8",
+                    border: "1px solid rgba(255,255,255,0.16)",
+                    padding: 12,
+                    borderRadius: 12,
+                    font: "inherit",
+                  }}
+                />
+                <input
+                  value={newsletterForm.email}
+                  onChange={(e) => setNewsletterForm((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email address"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  style={{
+                    width: "100%",
+                    background: "rgba(255,255,255,0.08)",
+                    color: "#f3efe8",
+                    border: "1px solid rgba(255,255,255,0.16)",
+                    padding: 12,
+                    borderRadius: 12,
+                    font: "inherit",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={newsletterBusy}
+                  style={{
+                    border: 0,
+                    borderRadius: 999,
+                    padding: "12px 16px",
+                    background: accent,
+                    color: "#121715",
+                    fontWeight: 800,
+                    cursor: newsletterBusy ? "default" : "pointer",
+                    fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                  }}
+                >
+                  {newsletterBusy ? "Signing up…" : "Join newsletter"}
+                </button>
+              </form>
+
+              {newsletterMsg ? (
+                <div
+                  style={{
+                    marginTop: 12,
+                    color: newsletterMsg.toLowerCase().includes("fail") || newsletterMsg.toLowerCase().includes("invalid")
+                      ? "#ffb8b8"
+                      : "#9fd3ab",
+                    fontSize: 14,
+                  }}
+                >
+                  {newsletterMsg}
+                </div>
+              ) : null}
             </div>
           </div>
         </section>

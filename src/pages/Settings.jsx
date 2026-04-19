@@ -112,7 +112,7 @@ export default function Settings() {
 
   /* ---------- Submenu tabs ---------- */
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = String(searchParams.get("tab") || "org").toLowerCase();
+  const tab = String(searchParams.get("tab") || "invites").toLowerCase();
 
   const setTab = (next) => {
     const n = String(next || "org").toLowerCase();
@@ -128,16 +128,17 @@ export default function Settings() {
 
   const tabs = React.useMemo(
     () => [
-      ["org", "Organization"],
       ["invites", "Invites"],
       ["members", "Members"],
-      ["public", "Public site"],
-      ["public-inbox", "Public inbox"],
       ["newsletter", "Newsletter"],
-      ["pledges", "Pledges"],
       ["security", "Security"],
     ],
     []
+  );
+
+  const currentTab = React.useMemo(
+    () => (tabs.some(([key]) => key === tab) ? tab : "invites"),
+    [tab, tabs]
   );
 
   /* ========== INVITES (backend) ========== */
@@ -641,13 +642,13 @@ const loadPublic = React.useCallback(async () => {
   };
 
 React.useEffect(() => {
-  if (tab === "public") {
+  if (currentTab === "public") {
     loadPublic();
   }
-  if (tab === "public-inbox") {
+  if (currentTab === "public-inbox") {
     loadPublicInbox();
   }
-}, [tab, loadPublic, loadPublicInbox]);
+}, [currentTab, loadPublic, loadPublicInbox]);
 
 React.useEffect(() => {
   if (!primaryActionItems.length) setPrimaryActionItems(primaryActionDefaults);
@@ -880,11 +881,11 @@ React.useEffect(() => {
   };
 
   React.useEffect(() => {
-    if (tab === "newsletter") {
+    if (currentTab === "newsletter") {
       loadNewsletter();
       loadSubscribers();
     }
-  }, [tab, loadNewsletter, loadSubscribers]);
+  }, [currentTab, loadNewsletter, loadSubscribers]);
 
   const csvHref = orgId
     ? `/#/org/${encodeURIComponent(orgId)}/settings?tab=newsletter`
@@ -953,11 +954,11 @@ React.useEffect(() => {
   }, [orgId]);
 
   React.useEffect(() => {
-    if (tab === "pledges") {
+    if (currentTab === "pledges") {
       loadNeedsForPledges();
       loadPledges();
     }
-  }, [tab, loadNeedsForPledges, loadPledges]);
+  }, [currentTab, loadNeedsForPledges, loadPledges]);
 
   const upsertPledge = async (id, patch) => {
     if (!orgId) return;
@@ -1048,7 +1049,7 @@ React.useEffect(() => {
       <div className="card" style={{ padding: 12 }}>
         <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
           {tabs.map(([key, label]) => {
-            const active = tab === key;
+            const active = currentTab === key;
             return (
               <button
                 key={key}
@@ -1065,7 +1066,7 @@ React.useEffect(() => {
       </div>
 
       {/* Security */}
-      {tab === "security" && (
+      {currentTab === "security" && (
         <div className="card" style={{ padding: 16 }}>
           <h2 style={{ marginTop: 0 }}>Security</h2>
           <p className="helper">Account security is global, but lives here so you can actually find it.</p>
@@ -1074,7 +1075,7 @@ React.useEffect(() => {
       )}
 
       {/* Organization */}
-      {tab === "org" && (
+      {currentTab === "org" && (
         <div className="card" style={{ padding: 16 }}>
           <h2 style={{ marginTop: 0 }}>Organization</h2>
           <div className="grid" style={{ gap: 10 }}>
@@ -1119,7 +1120,7 @@ React.useEffect(() => {
       )}
 
       {/* Invites */}
-      {tab === "invites" && (
+      {currentTab === "invites" && (
         <div className="card" style={{ padding: 16 }}>
           <h2 style={{ marginTop: 0 }}>Invites</h2>
           <p className="helper">Generate invite codes so someone can join this org.</p>
@@ -1179,7 +1180,7 @@ React.useEffect(() => {
       )}
 
       {/* Members */}
-      {tab === "members" && (
+      {currentTab === "members" && (
         <div className="card" style={{ padding: 16 }}>
           <h2 style={{ marginTop: 0 }}>Members and Roles</h2>
 
@@ -1293,7 +1294,7 @@ React.useEffect(() => {
       )}
 
       {/* Public Page */}
-      {tab === "public" && (
+      {currentTab === "public" && (
         <div className="card" style={{ padding: 16 }}>
           <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div>
@@ -1590,7 +1591,7 @@ Outreach`} />
       )}
 
       {/* Public Inbox */}
-      {tab === "public-inbox" && (
+      {currentTab === "public-inbox" && (
         <div className="card" style={{ padding: 16 }}>
           <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <h2 style={{ margin: 0 }}>Public Inbox</h2>
@@ -1705,7 +1706,7 @@ Outreach`} />
       )}
 
       {/* Newsletter */}
-      {tab === "newsletter" && (
+      {currentTab === "newsletter" && (
         <div className="card" style={{ padding: 16 }}>
           <h2 style={{ marginTop: 0 }}>Newsletter</h2>
           <div className="helper">
@@ -1818,7 +1819,7 @@ Outreach`} />
       )}
 
       {/* Pledges */}
-      {tab === "pledges" && (
+      {currentTab === "pledges" && (
         <div className="card" style={{ padding: 16 }}>
           <h2 style={{ marginTop: 0 }}>Pledges</h2>
 

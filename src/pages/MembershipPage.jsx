@@ -6,46 +6,38 @@ const REDCARD_URL = "https://redcard.iww.org/";
 
 const duesTiers = [
   {
-    name: "Minimum",
-    income: "If you make less than $2,000 per month",
+    name: "Minimum dues",
+    income: "Less than $2,000 per month",
     amount: "$11/mo",
   },
   {
-    name: "Regular",
-    income: "If you make between $2,000 and $3,500 per month",
+    name: "Regular dues",
+    income: "$2,000 to $3,500 per month",
     amount: "$22/mo",
   },
   {
-    name: "Maximum",
-    income: "If you make more than $3,500 per month",
+    name: "Maximum dues",
+    income: "More than $3,500 per month",
     amount: "$33/mo",
   },
 ];
 
 const reasons = [
   {
-    title: "Organization",
-    body: "Build real workplace power with the backing of a democratic, member-run union.",
+    title: "A real union connection",
+    body: "Joining gives you a union home, not just a mailing list. You get a path into branch life, organizing, and shared struggle.",
   },
   {
-    title: "Education",
-    body: "Learn organizing skills from fellow workers, trainings, and branch experience.",
+    title: "Organizing support",
+    body: "Workers trying to organize on the job need more than courage. They need structure, strategy, and other workers behind them.",
   },
   {
-    title: "Solidarity",
-    body: "Join something larger than a single workplace and stand with workers across industries.",
+    title: "Political education",
+    body: "The branch is a place to learn labor history, organizing practice, and how to build collective power deliberately.",
   },
   {
-    title: "Community",
-    body: "Connect with other workers committed to building a kinder, tougher, more organized future.",
-  },
-  {
-    title: "Local branch connection",
-    body: "Joining through Red Harbor means a path into branch meetings, branch life, and local support.",
-  },
-  {
-    title: "Direct action culture",
-    body: "The IWW is built around workers acting together, not waiting around to be rescued.",
+    title: "Solidarity beyond one shop",
+    body: "The IWW is built around worker solidarity across jobs, industries, and conditions, not just one workplace at a time.",
   },
 ];
 
@@ -78,22 +70,30 @@ export default function MembershipPage() {
 
       <main>
         <section className="rh-section rh-membership-hero">
-          <div className="rh-section-head">
-            <p className="rh-section-kicker">Membership</p>
-            <h1 className="rh-membership-title">Join the IWW through Red Harbor</h1>
-            <p className="rh-section-copy rh-membership-copy">
-              Join the One Big Union, connect with a local branch, and plug into workplace organizing,
-              political education, and worker solidarity on the harbor and beyond.
-            </p>
-          </div>
+          <div className="rh-membership-hero-grid">
+            <div className="rh-membership-hero-copy">
+              <p className="rh-section-kicker">Membership</p>
+              <h1 className="rh-membership-title">Join the IWW through Red Harbor</h1>
+              <p className="rh-section-copy rh-membership-copy">
+                Join the One Big Union, connect with a local branch, and plug into workplace organizing,
+                political education, and worker solidarity on the harbor and beyond.
+              </p>
+            </div>
 
-          <div className="rh-hero-actions">
-            <a href={REDCARD_URL} className="rh-btn rh-btn-primary" target="_blank" rel="noopener noreferrer">
-              Join now
-            </a>
-            <Link to="/" className="rh-btn rh-btn-secondary">
-              Back to homepage
-            </Link>
+            <div className="rh-card rh-membership-hero-card">
+              <h3>Start here</h3>
+              <p>
+                New memberships are handled through Redcard. Join there, then connect back into Red Harbor and branch life.
+              </p>
+              <div className="rh-membership-actions">
+                <a href={REDCARD_URL} className="rh-btn rh-btn-primary" target="_blank" rel="noopener noreferrer">
+                  Join now
+                </a>
+                <Link to="/" className="rh-btn rh-btn-secondary">
+                  Back to homepage
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -102,7 +102,7 @@ export default function MembershipPage() {
             <p className="rh-section-kicker">Who can join</p>
             <h2>Workers belong here</h2>
             <p className="rh-section-copy">
-              The IWW is open to workers, not employers. That includes workers with jobs, unemployed workers,
+              The IWW is for workers, not employers. That includes workers with jobs, unemployed workers,
               students, retirees, self-employed workers, informal workers, and workers who cannot currently work.
               People with real hiring and firing power over other workers are treated as employers and are not eligible.
             </p>
@@ -123,8 +123,7 @@ export default function MembershipPage() {
             <div className="rh-card">
               <h3>Why that matters</h3>
               <p>
-                The point is worker solidarity. Limiting membership to workers makes it easier to organize
-                together on the job and fight for shared material interests.
+                The point is worker solidarity. Membership is centered on workers so that organizing stays rooted in shared material interests and collective action.
               </p>
             </div>
           </div>
@@ -135,12 +134,11 @@ export default function MembershipPage() {
             <p className="rh-section-kicker">Why join</p>
             <h2>More than a card</h2>
             <p className="rh-section-copy">
-              Joining should lead somewhere: workplace support, branch connection, organizing skills,
-              and a real structure for acting with other workers.
+              Membership should lead somewhere: branch connection, organizing support, education, and durable solidarity.
             </p>
           </div>
 
-          <div className="rh-grid-three">
+          <div className="rh-grid-two">
             {reasons.map((item) => (
               <article className="rh-card" key={item.title}>
                 <h3>{item.title}</h3>
@@ -155,8 +153,7 @@ export default function MembershipPage() {
             <p className="rh-section-kicker">Dues</p>
             <h2>Scaled by income</h2>
             <p className="rh-section-copy">
-              Current dues are based on self-reported monthly income. Your first month also includes an initiation fee
-              equal to one month of dues.
+              Current dues are based on self reported monthly income. The first month also includes an initiation fee equal to one month of dues.
             </p>
           </div>
 
@@ -166,12 +163,6 @@ export default function MembershipPage() {
                 <p className="rh-section-kicker">{tier.name}</p>
                 <h3>{tier.amount}</h3>
                 <p>{tier.income}</p>
-                <ul className="rh-event-list">
-                  <li>Organizing support</li>
-                  <li>IWW backing</li>
-                  <li>Branch connection</li>
-                  <li>Internal union updates</li>
-                </ul>
               </article>
             ))}
           </div>
@@ -182,15 +173,15 @@ export default function MembershipPage() {
             <p className="rh-section-kicker">Join the IWW</p>
             <h2>Ready to get your red card?</h2>
             <p className="rh-section-copy">
-              New memberships are handled through Redcard. Start there, then connect back into Red Harbor and branch life.
+              Redcard handles the membership sign up. Once you are in, Red Harbor can be part of where that membership actually lives.
             </p>
 
-            <div className="rh-hero-actions">
+            <div className="rh-membership-actions">
               <a href={REDCARD_URL} className="rh-btn rh-btn-primary" target="_blank" rel="noopener noreferrer">
                 Join via Redcard
               </a>
-              <Link to="/#join" className="rh-btn rh-btn-ghost">
-                Back to join section
+              <Link to="/" className="rh-btn rh-btn-secondary">
+                Back to homepage
               </Link>
             </div>
           </div>

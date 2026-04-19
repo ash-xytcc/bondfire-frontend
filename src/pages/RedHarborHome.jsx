@@ -1437,18 +1437,27 @@ export default function RedHarborHome() {
             />
           </div>
 
-          <div className="rh-hero-actions rh-membership-mini-cta">
-            <Link to="/membership" className="rh-btn rh-btn-secondary">
-              Learn about membership
-            </Link>
-            <a
-              href="https://redcard.iww.org/"
-              className="rh-btn rh-btn-primary"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Join via Redcard
-            </a>
+          <div className="rh-card rh-home-join-cta-card">
+            <div className="rh-home-join-cta-copy">
+              <h3>IWW membership</h3>
+              <p>
+                Learn how membership works, what dues look like, and join through the official Redcard sign up.
+              </p>
+            </div>
+
+            <div className="rh-membership-actions">
+              <Link to="/membership" className="rh-btn rh-btn-secondary">
+                Learn about membership
+              </Link>
+              <a
+                href="https://redcard.iww.org/"
+                className="rh-btn rh-btn-primary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Join via Redcard
+              </a>
+            </div>
           </div>
 
           <div className="rh-grid-three">

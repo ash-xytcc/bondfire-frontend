@@ -2709,20 +2709,6 @@ function RsvpPageLayout({
 
 
 function SharesPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {}, authed = false, sharesLoading = false, sharesError = "", sharesAdminState = { loading: false, items: [], error: "" }, editingShareId = "", shareDraft = null, setShareDraft = () => {}, shareCreateBusy = false, shareCreateMsg = "", onPublishShare = null, onBeginEditShare = null, onUnpublishShare = null, onResetShareEditor = null, liveVideos = [], liveFeatured = null, hasLiveShares = false }) {
-  const updateVisionItem = (index, value) => {
-    const next = [...content.vision_items];
-    while (next.length < 8) next.push("");
-    next[index] = value;
-    setContent({ ...content, vision_items: next.filter((x) => String(x || "").trim()) });
-  };
-
-  const updateBuildItem = (index, value) => {
-    const next = [...content.build_items];
-    while (next.length < 6) next.push("");
-    next[index] = value;
-    setContent({ ...content, build_items: next.filter((x) => String(x || "").trim()) });
-  };
-
   const updateFeatured = (key, value) => {
     setContent({
       ...content,
@@ -2795,6 +2781,7 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
   const videos = !editorMode && hasLiveShares
     ? (Array.isArray(liveVideos) ? liveVideos : [])
     : fallbackVideos;
+
   const visibleCards = Math.max(fallbackVideos.length, editorMode ? 6 : fallbackVideos.length);
   const showComposer = authed && !editorMode && shareDraft;
   const [shareQuery, setShareQuery] = React.useState("");
@@ -3039,27 +3026,6 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           letter-spacing: .07em;
           text-transform: uppercase;
         }
-        .dpg-shares-gridlist {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          gap: 12px;
-          margin-top: 16px;
-        }
-        .dpg-shares-tile {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 18px;
-          padding: 14px;
-          color: #f3efe8;
-          min-height: 70px;
-          display: flex;
-          align-items: center;
-        };
-          color: #121715;
-          font-weight: 900;
-          font-size: 13px;
-          margin-top: 2px;
-        }
         .dpg-shares-sticky {
           background: #f3e28b;
           color: #171717;
@@ -3261,54 +3227,6 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
             <div className="dpg-shares-card">
               <InlineField
                 editorMode={editorMode}
-                editing={editorMode && activeField === "shares_cta_title"}
-                value={content.cta_title}
-                onChange={(v) => setContent({ ...content, cta_title: v })}
-                onStartEdit={() => setActiveField("shares_cta_title")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="CTA title"
-                hint="Edit label"
-                display={content.cta_title}
-                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
-              />
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "shares_cta_body"}
-                value={content.cta_body}
-                onChange={(v) => setContent({ ...content, cta_body: v })}
-                onStartEdit={() => setActiveField("shares_cta_body")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="CTA body"
-                multiline
-                hint="Edit body"
-                display={content.cta_body}
-                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
-              />
-              {!editorMode ? (
-                <a
-                  href="/sessions"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginTop: 16,
-                    padding: "14px 18px",
-                    borderRadius: 999,
-                    background: accent,
-                    color: "#121715",
-                    textDecoration: "none",
-                    fontWeight: 800,
-                    boxShadow: "0 12px 28px rgba(0,0,0,0.18)",
-                  }}
-                >
-                  Open session commons
-                </a>
-              ) : null}
-            </div>
-
-            <div className="dpg-shares-card">
-              <InlineField
-                editorMode={editorMode}
                 editing={editorMode && activeField === "shares_side_title"}
                 value={content.side_title}
                 onChange={(v) => setContent({ ...content, side_title: v })}
@@ -3366,171 +3284,170 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
           </aside>
         </section>
 
+        <section className="dpg-shares-wide-stack">
+          {showComposer ? (
+            <article className="dpg-shares-card">
+              <div style={{ display: "grid", gap: 14 }}>
+                <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
+                  {editingShareId ? "Edit live video entry" : "Publish live video entry"}
+                </div>
+                <div style={{ color: "#d7ddd8", lineHeight: 1.62, maxWidth: 860 }}>
+                  This is the first real Shares write path. Paste hosted video and thumbnail URLs, add metadata, and the card will publish into the live public grid below.
+                </div>
 
-<section className="dpg-shares-wide-stack">
-  {showComposer ? (
-    <article className="dpg-shares-card">
-      <div style={{ display: "grid", gap: 14 }}>
-        <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
-          {editingShareId ? "Edit live video entry" : "Publish live video entry"}
-        </div>
-        <div style={{ color: "#d7ddd8", lineHeight: 1.62, maxWidth: 860 }}>
-          This is the first real Shares write path. Paste hosted video and thumbnail URLs, add metadata, and the card will publish into the live public grid below.
-        </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+                  <input value={shareDraft.title || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, title: e.target.value }))} placeholder="Title" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+                  <input value={shareDraft.videoUrl || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, videoUrl: e.target.value }))} placeholder="Video URL" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+                  <input value={shareDraft.thumbnailUrl || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, thumbnailUrl: e.target.value }))} placeholder="Thumbnail URL" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+                  <input value={shareDraft.tags || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, tags: e.target.value }))} placeholder="Tags, comma separated" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+                  <input value={shareDraft.durationText || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, durationText: e.target.value }))} placeholder="Duration text" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+                  <input value={shareDraft.metaText || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, metaText: e.target.value }))} placeholder="Meta text" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+                </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-          <input value={shareDraft.title || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, title: e.target.value }))} placeholder="Title" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
-          <input value={shareDraft.videoUrl || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, videoUrl: e.target.value }))} placeholder="Video URL" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
-          <input value={shareDraft.thumbnailUrl || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, thumbnailUrl: e.target.value }))} placeholder="Thumbnail URL" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
-          <input value={shareDraft.tags || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, tags: e.target.value }))} placeholder="Tags, comma separated" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
-          <input value={shareDraft.durationText || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, durationText: e.target.value }))} placeholder="Duration text" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
-          <input value={shareDraft.metaText || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, metaText: e.target.value }))} placeholder="Meta text" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
-        </div>
+                <textarea value={shareDraft.description || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, description: e.target.value }))} placeholder="Description" style={{ width: "100%", minHeight: 110, resize: "vertical", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
 
-        <textarea value={shareDraft.description || ""} onChange={(e) => setShareDraft((prev) => ({ ...prev, description: e.target.value }))} placeholder="Description" style={{ width: "100%", minHeight: 110, resize: "vertical", background: "rgba(255,255,255,0.08)", color: "#f3efe8", border: "1px dashed rgba(255,255,255,0.28)", padding: 10, font: "inherit", borderRadius: 12 }} />
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 10, color: "#f3efe8", fontWeight: 700 }}>
+                  <input type="checkbox" checked={!!shareDraft.featured} onChange={(e) => setShareDraft((prev) => ({ ...prev, featured: e.target.checked }))} />
+                  Mark as featured
+                </label>
 
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 10, color: "#f3efe8", fontWeight: 700 }}>
-          <input type="checkbox" checked={!!shareDraft.featured} onChange={(e) => setShareDraft((prev) => ({ ...prev, featured: e.target.checked }))} />
-          Mark as featured
-        </label>
+                <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={onPublishShare}
+                    disabled={shareCreateBusy}
+                    style={{
+                      border: 0,
+                      borderRadius: 999,
+                      padding: "12px 16px",
+                      background: accent,
+                      color: "#121715",
+                      fontWeight: 800,
+                      cursor: shareCreateBusy ? "default" : "pointer",
+                    }}
+                  >
+                    {shareCreateBusy ? "Saving…" : (editingShareId ? "Save share changes" : "Publish video entry")}
+                  </button>
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <button
-            type="button"
-            onClick={onPublishShare}
-            disabled={shareCreateBusy}
-            style={{
-              border: 0,
-              borderRadius: 999,
-              padding: "12px 16px",
-              background: accent,
-              color: "#121715",
-              fontWeight: 800,
-              cursor: shareCreateBusy ? "default" : "pointer",
-            }}
-          >
-            {shareCreateBusy ? "Saving…" : (editingShareId ? "Save share changes" : "Publish video entry")}
-          </button>
-
-          {editingShareId ? (
-            <button
-              type="button"
-              onClick={onResetShareEditor}
-              disabled={shareCreateBusy}
-              style={{
-                border: "1px solid rgba(255,255,255,0.14)",
-                borderRadius: 999,
-                padding: "12px 16px",
-                background: "rgba(255,255,255,0.04)",
-                color: "#f3efe8",
-                fontWeight: 800,
-                cursor: shareCreateBusy ? "default" : "pointer",
-              }}
-            >
-              Cancel edit
-            </button>
-          ) : null}
-
-          {shareCreateMsg ? (
-            <span style={{ color: shareCreateMsg.includes("published") ? "#9fd3ab" : "#ffb8b8", fontSize: 13 }}>
-              {shareCreateMsg}
-            </span>
-          ) : null}
-        </div>
-      </div>
-    </article>
-  ) : null}
-
-  {authed && !editorMode ? (
-    <article className="dpg-shares-card">
-      <div style={{ display: "grid", gap: 14 }}>
-        <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
-          Manage published shares
-        </div>
-
-        {sharesAdminState.loading ? (
-          <div style={{ color: "#d7ddd8" }}>Loading share records…</div>
-        ) : null}
-
-        {!sharesAdminState.loading && sharesAdminState.error ? (
-          <div style={{ color: "#ffb8b8" }}>{sharesAdminState.error}</div>
-        ) : null}
-
-        {!sharesAdminState.loading && !sharesAdminState.error && !sharesAdminState.items.length ? (
-          <div style={{ color: "#d7ddd8" }}>No share records yet.</div>
-        ) : null}
-
-        {!sharesAdminState.loading && sharesAdminState.items.length ? (
-          <div style={{ display: "grid", gap: 10 }}>
-            {sharesAdminState.items.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  display: "grid",
-                  gap: 8,
-                  padding: 14,
-                  borderRadius: 16,
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-                  <div style={{ display: "grid", gap: 4 }}>
-                    <div style={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.15 }}>
-                      {item.title}
-                    </div>
-                    <div style={{ color: "#8fa1ab", fontSize: 13 }}>
-                      {item.status} • {item.slug || "no-slug"}
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {editingShareId ? (
                     <button
                       type="button"
-                      onClick={() => onBeginEditShare(item)}
+                      onClick={onResetShareEditor}
+                      disabled={shareCreateBusy}
                       style={{
                         border: "1px solid rgba(255,255,255,0.14)",
                         borderRadius: 999,
-                        padding: "8px 12px",
+                        padding: "12px 16px",
                         background: "rgba(255,255,255,0.04)",
                         color: "#f3efe8",
                         fontWeight: 800,
-                        cursor: "pointer",
+                        cursor: shareCreateBusy ? "default" : "pointer",
                       }}
                     >
-                      Edit
+                      Cancel edit
                     </button>
-                    {item.status === "published" ? (
-                      <button
-                        type="button"
-                        onClick={() => onUnpublishShare(item)}
-                        style={{
-                          border: "1px solid rgba(255,255,255,0.14)",
-                          borderRadius: 999,
-                          padding: "8px 12px",
-                          background: "rgba(255,255,255,0.04)",
-                          color: "#f3efe8",
-                          fontWeight: 800,
-                          cursor: "pointer",
-                        }}
-                      >
-                        Unpublish
-                      </button>
-                    ) : null}
-                  </div>
+                  ) : null}
+
+                  {shareCreateMsg ? (
+                    <span style={{ color: shareCreateMsg.includes("published") || shareCreateMsg.includes("updated") ? "#9fd3ab" : "#ffb8b8", fontSize: 13 }}>
+                      {shareCreateMsg}
+                    </span>
+                  ) : null}
                 </div>
               </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </article>
-  ) : null}
+            </article>
+          ) : null}
 
-  <article className="dpg-shares-card">
-    <InlineField
-      editorMode={editorMode}
-      editing={editorMode && activeField === "shares_grid_title"}
+          {authed && !editorMode ? (
+            <article className="dpg-shares-card">
+              <div style={{ display: "grid", gap: 14 }}>
+                <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
+                  Manage published shares
+                </div>
+
+                {sharesAdminState.loading ? (
+                  <div style={{ color: "#d7ddd8" }}>Loading share records…</div>
+                ) : null}
+
+                {!sharesAdminState.loading && sharesAdminState.error ? (
+                  <div style={{ color: "#ffb8b8" }}>{sharesAdminState.error}</div>
+                ) : null}
+
+                {!sharesAdminState.loading && !sharesAdminState.error && !sharesAdminState.items.length ? (
+                  <div style={{ color: "#d7ddd8" }}>No share records yet.</div>
+                ) : null}
+
+                {!sharesAdminState.loading && sharesAdminState.items.length ? (
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {sharesAdminState.items.map((item) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          display: "grid",
+                          gap: 8,
+                          padding: 14,
+                          borderRadius: 16,
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+                          <div style={{ display: "grid", gap: 4 }}>
+                            <div style={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.15 }}>
+                              {item.title}
+                            </div>
+                            <div style={{ color: "#8fa1ab", fontSize: 13 }}>
+                              {item.status} • {item.slug || "no-slug"}
+                            </div>
+                          </div>
+
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            <button
+                              type="button"
+                              onClick={() => onBeginEditShare(item)}
+                              style={{
+                                border: "1px solid rgba(255,255,255,0.14)",
+                                borderRadius: 999,
+                                padding: "8px 12px",
+                                background: "rgba(255,255,255,0.04)",
+                                color: "#f3efe8",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Edit
+                            </button>
+                            {item.status === "published" ? (
+                              <button
+                                type="button"
+                                onClick={() => onUnpublishShare(item)}
+                                style={{
+                                  border: "1px solid rgba(255,255,255,0.14)",
+                                  borderRadius: 999,
+                                  padding: "8px 12px",
+                                  background: "rgba(255,255,255,0.04)",
+                                  color: "#f3efe8",
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Unpublish
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </article>
+          ) : null}
+
+          <article className="dpg-shares-card">
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "shares_grid_title"}
               value={content.grid_title}
               onChange={(v) => setContent({ ...content, grid_title: v })}
               onStartEdit={() => setActiveField("shares_grid_title")}
@@ -3668,7 +3585,7 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
 
                       <InlineField
                         editorMode={editorMode}
-                        editing={editorMode && activeField == `shares_video_tag_${idx}`}
+                        editing={editorMode && activeField === `shares_video_tag_${idx}`}
                         value={video.tag || ""}
                         onChange={(v) => updateVideo(idx, "tag", v)}
                         onStartEdit={() => setActiveField(`shares_video_tag_${idx}`)}
@@ -3767,7 +3684,7 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
               })}
             </div>
 
-            {editorMode && videos.length < 12 ? (
+            {editorMode && fallbackVideos.length < 12 ? (
               <div style={{ marginTop: 18 }}>
                 <EditChip onClick={addVideo} subtle>
                   Add video card
@@ -3775,76 +3692,12 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
               </div>
             ) : null}
           </article>
-
-          <article className="dpg-shares-card">
-            <InlineField
-              editorMode={editorMode}
-              editing={editorMode && activeField === "shares_lead_title"}
-              value={content.lead_title}
-              onChange={(v) => setContent({ ...content, lead_title: v })}
-              onStartEdit={() => setActiveField("shares_lead_title")}
-              onStopEdit={() => setActiveField("")}
-              placeholder="Lead title"
-              hint="Edit title"
-              display={content.lead_title}
-              displayStyle={{ color: "#f3efe8", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "2rem", lineHeight: 1.05, marginBottom: 14, borderRadius: 10 }}
-            />
-            <InlineField
-              editorMode={editorMode}
-              editing={editorMode && activeField === "shares_lead_body"}
-              value={content.lead_body}
-              onChange={(v) => setContent({ ...content, lead_body: v })}
-              onStartEdit={() => setActiveField("shares_lead_body")}
-              onStopEdit={() => setActiveField("")}
-              placeholder="Lead body"
-              multiline
-              hint="Edit intro block"
-              display={content.lead_body}
-              displayStyle={{ color: "#f3efe8", lineHeight: 1.68, fontSize: "1.06rem", borderRadius: 10 }}
-            />
-          </article>
-
-          <article className="dpg-shares-card">
-            <InlineField
-              editorMode={editorMode}
-              editing={editorMode && activeField === "shares_vision_title"}
-              value={content.vision_title}
-              onChange={(v) => setContent({ ...content, vision_title: v })}
-              onStartEdit={() => setActiveField("shares_vision_title")}
-              onStopEdit={() => setActiveField("")}
-              placeholder="Vision title"
-              hint="Edit section label"
-              display={content.vision_title}
-              displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
-            />
-
-            <div className="dpg-shares-gridlist">
-              {Array.from({ length: Math.max(content.vision_items.length, editorMode ? 6 : content.vision_items.length) }).map((_, idx) => {
-                const value = content.vision_items[idx] || "";
-                return (
-                  <div className="dpg-shares-tile" key={`vision-${idx}`}>
-                    <InlineField
-                      editorMode={editorMode}
-                      editing={editorMode && activeField === `shares_vision_${idx}`}
-                      value={value}
-                      onChange={(v) => updateVisionItem(idx, v)}
-                      onStartEdit={() => setActiveField(`shares_vision_${idx}`)}
-                      onStopEdit={() => setActiveField("")}
-                      placeholder={`Vision item ${idx + 1}`}
-                      hint="Edit item"
-                      display={value || (editorMode ? "Empty vision slot" : "")}
-                      displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </article>
         </section>
       </div>
     </>
   );
 }
+
 
 function GenericPublicPage({ page, accent }) {
   return (

@@ -17,6 +17,22 @@ async function authFetch(path, opts = {}) {
   return data;
 }
 
+function fmtStamp(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return "";
+  try {
+    return new Date(n).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
+
 function getOrgDisplayName(orgId) {
   if (!orgId) return "current workspace";
   try {
@@ -28,53 +44,6 @@ function getOrgDisplayName(orgId) {
     return String(orgId);
   }
 }
-
-const MOCK_ATTENDEES = [
-  {
-    id: 'A-101',
-    name: 'Riley Ortega',
-    email: 'riley@example.org',
-    status: 'captured',
-    volunteer: true,
-    sessionLead: false,
-    access: 'Mobility notes',
-    notes: 'Interested in helping with setup and quiet space support.',
-    updatedAt: '2h ago',
-  },
-  {
-    id: 'A-102',
-    name: 'Juniper Fields',
-    email: 'juniper@example.org',
-    status: 'confirmed',
-    volunteer: false,
-    sessionLead: true,
-    access: 'ASL requested',
-    notes: 'Wants to lead a session on jail support and movement security culture.',
-    updatedAt: '5h ago',
-  },
-  {
-    id: 'A-103',
-    name: 'Mica Salazar',
-    email: 'mica@example.org',
-    status: 'form_complete',
-    volunteer: true,
-    sessionLead: true,
-    access: 'No notes',
-    notes: 'Detailed form complete. Strong interest in mutual aid logistics and cooking crew.',
-    updatedAt: '1d ago',
-  },
-  {
-    id: 'A-104',
-    name: 'Devon Lake',
-    email: 'devon@example.org',
-    status: 'needs_followup',
-    volunteer: false,
-    sessionLead: false,
-    access: 'Sensory/quiet camping request',
-    notes: 'Email captured but detailed form still incomplete.',
-    updatedAt: '2d ago',
-  },
-];
 
 const STATUS_META = {
   captured: { label: 'Email captured', tone: '#dbe6f5', text: '#21405f' },
@@ -124,28 +93,34 @@ export default function Attendees() {
   const [loadMsg, setLoadMsg] = useState('');
   const [selectedId, setSelectedId] = useState(null);
 
+  const loadAttendees = React.useCallback(async () => {
+    setLoading(true);
+    setLoadMsg('');
+    try {
+      const data = await authFetch(`/api/orgs/${encodeURIComponent(orgId)}/attendees`);
+      const rows = Array.isArray(data?.attendees) ? data.attendees : [];
+      setAttendees(rows);
+      setSelectedId((prev) => {
+        if (prev && rows.some((row) => row.id === prev)) return prev;
+        return rows[0]?.id || null;
+      });
+    } catch (e) {
+      setAttendees([]);
+      setSelectedId(null);
+      setLoadMsg(String(e?.message || e || 'Failed to load attendees'));
+    } finally {
+      setLoading(false);
+    }
+  }, [orgId]);
+
   useEffect(() => {
     let dead = false;
     (async () => {
-      setLoading(true);
-      setLoadMsg('');
-      try {
-        const data = await authFetch(`/api/orgs/${encodeURIComponent(orgId)}/attendees`);
-        if (dead) return;
-        const rows = Array.isArray(data?.attendees) ? data.attendees : [];
-        setAttendees(rows);
-        setSelectedId((prev) => prev || rows[0]?.id || null);
-      } catch (e) {
-        if (dead) return;
-        setAttendees(MOCK_ATTENDEES);
-        setSelectedId((prev) => prev || MOCK_ATTENDEES[0]?.id || null);
-        setLoadMsg(String(e?.message || e || 'Failed to load attendees'));
-      } finally {
-        if (!dead) setLoading(false);
-      }
+      if (dead) return;
+      await loadAttendees();
     })();
     return () => { dead = true; };
-  }, [orgId]);
+  }, [loadAttendees]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -183,6 +158,9 @@ export default function Attendees() {
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'start', flexWrap: 'wrap' }}>
             <a className="btn-red" href="/rsvp" style={{ textDecoration: 'none' }}>Capture RSVP</a>
+            <button className="btn" type="button" onClick={loadAttendees} disabled={loading}>
+              {loading ? 'Refreshing…' : 'Refresh'}
+            </button>
             <button className="btn" type="button">Export CSV</button>
           </div>
         </div>
@@ -252,12 +230,14 @@ export default function Attendees() {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', color: 'var(--muted)', fontSize: 13 }}>
                     {person.volunteer ? <span>Volunteer interested</span> : null}
                     {person.sessionLead ? <span>Can lead a session</span> : null}
-                    <span>Updated {person.updatedAt}</span>
+                    <span>{fmtStamp(person.updatedAt || person.createdAt) ? `Updated ${fmtStamp(person.updatedAt || person.createdAt)}` : 'Recently added'}</span>
                   </div>
                 </button>
               );
             }) : (
-              <div style={{ padding: 16, color: 'var(--muted)' }}>No attendees match this filter yet.</div>
+              <div style={{ padding: 16, color: 'var(--muted)' }}>
+                {attendees.length ? 'No attendees match this filter yet.' : 'No RSVP records yet.'}
+              </div>
             )}
           </div>
         </div>
@@ -286,6 +266,11 @@ export default function Attendees() {
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <span className="tag">{selected.volunteer ? 'Volunteer interested' : 'No volunteer flag yet'}</span>
                   <span className="tag">{selected.sessionLead ? 'Can lead a session' : 'No session lead flag yet'}</span>
+                  <span className="tag">Source: {selected.source || 'public_rsvp'}</span>
+                </div>
+                <div style={{ display: 'grid', gap: 6, color: 'var(--muted)', fontSize: 14 }}>
+                  <div><strong>Created:</strong> {fmtStamp(selected.createdAt) || '—'}</div>
+                  <div><strong>Updated:</strong> {fmtStamp(selected.updatedAt) || '—'}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <button className="btn" type="button">Send reminder</button>

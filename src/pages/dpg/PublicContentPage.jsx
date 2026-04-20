@@ -1393,7 +1393,7 @@ function DonatePageLayout({ accent, editorMode = false, activeField = "", setAct
         }
         setHcbState({
           loading: false,
-          balanceCents: Number.isFinite(Number(data?.balanceCents)) ? Number(data.balanceCents) : null,
+          balanceCents: data?.balanceCents == null ? null : (Number.isFinite(Number(data.balanceCents)) ? Number(data.balanceCents) : null),
           transactions: Array.isArray(data?.transactions) ? data.transactions : [],
           error: "",
         });

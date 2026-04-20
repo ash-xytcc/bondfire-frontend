@@ -18,7 +18,6 @@ const PUBLIC_NAV_LINKS = [
   { label: "Donate", url: "/donate" },
   { label: "Press", url: "/press" },
   { label: "DPG Shares", url: "/dpg-shares" },
-  { label: "Sessions", url: "/sessions" },
   { label: "RSVP", url: "/rsvp" },
 ];
 
@@ -1720,11 +1719,11 @@ function normalizeSharesContent(src = {}, page = {}) {
     title: String(src?.title || page?.title || "DPG Shares"),
     intro: String(src?.intro || "A native video and media platform for session recordings, interviews, skill shares, and movement memory."),
     featured_label: String(src?.featured_label || "Featured session"),
-    featured_title: String(src?.featured_title || "Watch what this platform is for"),
-    featured_body: String(src?.featured_body || "This page should feel like the front door to a real media platform: featured sessions up top, browseable recordings underneath, and enough structure that the archive stays usable instead of dissolving into link compost."),
+    featured_title: String(src?.featured_title || "Featured session"),
+    featured_body: String(src?.featured_body || "Featured recordings, interviews, and session media from Dual Power West live here in a public archive built to stay usable over time."),
     featured: featured,
     grid_title: String(src?.grid_title || "Featured sessions"),
-    grid_body: String(src?.grid_body || "Mock sessions for now, real archive surface next. Thumbnails, tags, durations, and enough visual weight to make the platform legible."),
+    grid_body: String(src?.grid_body || "Browse published sessions, interviews, and recordings from the archive."),
     videos,
     lead_title: String(src?.lead_title || "Build the archive, not just the moment"),
     lead_body: String(src?.lead_body || "DPG Shares is meant to become the place where session recordings, interviews, roundtables, trainings, and movement media can live natively instead of being scattered across other platforms."),
@@ -1751,9 +1750,9 @@ function normalizeSharesContent(src = {}, page = {}) {
     cta_title: String(src?.cta_title || "What belongs here"),
     cta_body: String(src?.cta_body || "Session recordings, interviews, roundtables, workshop clips, organizer explainers, and media that would otherwise disappear into algorithmic landfill."),
     side_title: String(src?.side_title || "Why make this at all"),
-    side_body: String(src?.side_body || "Because a movement archive should not depend entirely on corporate platforms, broken links, or whoever still has the password six months later."),
+    side_body: String(src?.side_body || "Movement media should be findable, maintainable, and rooted in the archive itself instead of scattered across outside platforms."),
     sticky_title: String(src?.sticky_title || "own the archive"),
-    sticky_body: String(src?.sticky_body || "If the gathering matters, the record of it should live somewhere we can shape, maintain, and keep."),
+    sticky_body: String(src?.sticky_body || "If the gathering matters, its record should stay organized, searchable, and ours."),
   };
 }
 
@@ -3292,7 +3291,7 @@ function SharesPageLayout({ accent, editorMode = false, activeField = "", setAct
                   {editingShareId ? "Edit live video entry" : "Publish live video entry"}
                 </div>
                 <div style={{ color: "#d7ddd8", lineHeight: 1.62, maxWidth: 860 }}>
-                  This is the first real Shares write path. Paste hosted video and thumbnail URLs, add metadata, and the card will publish into the live public grid below.
+                  Add a published archive entry by filling in metadata, media URL, and thumbnail. This will publish directly into the live public grid below.
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>

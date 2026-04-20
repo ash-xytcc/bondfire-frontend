@@ -448,6 +448,15 @@ export default function DpgVideosPage() {
 
   const publishedCount = items.filter((item) => item?.status === "published").length;
   const draftCount = items.filter((item) => item?.status !== "published").length;
+  const tagSuggestions = Array.from(
+    new Set(
+      items.flatMap((item) =>
+        Array.isArray(item?.tags)
+          ? item.tags.map((tag) => String(tag || "").trim()).filter(Boolean)
+          : []
+      )
+    )
+  ).sort((a, b) => a.localeCompare(b));
 
   return (
     <div
@@ -512,8 +521,7 @@ export default function DpgVideosPage() {
           <div style={{ display: "grid", gap: 12 }}>
             <div style={{ display: "grid", gap: 10 }}>
               <div>
-                <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>upload video file to R2</div>
-                <label style={{ ...buttonStyle(false), cursor: uploading ? "default" : "pointer" }}>
+                                <label style={{ ...buttonStyle(false), cursor: uploading ? "default" : "pointer" }}>
                   {uploading ? "uploading video..." : "choose video file"}
                   <input
                     type="file"
@@ -579,12 +587,20 @@ export default function DpgVideosPage() {
               style={inputStyle()}
             />
 
-            <input
-              value={draft.tags}
-              onChange={(e) => setDraft((prev) => ({ ...prev, tags: e.target.value }))}
-              placeholder="tags, comma separated"
-              style={inputStyle()}
-            />
+            <div style={{ display: "grid", gap: 6 }}>
+              <input
+                list="dpg-video-tag-suggestions"
+                value={draft.tags}
+                onChange={(e) => setDraft((prev) => ({ ...prev, tags: e.target.value }))}
+                placeholder="tags, comma separated"
+                style={inputStyle()}
+              />
+              <datalist id="dpg-video-tag-suggestions">
+                {tagSuggestions.map((tag) => (
+                  <option key={tag} value={tag} />
+                ))}
+              </datalist>
+            </div>
 
             <div style={{ display: "grid", gap: 6 }}>
               <div style={{ fontSize: 13, color: "var(--muted)" }}>duration</div>

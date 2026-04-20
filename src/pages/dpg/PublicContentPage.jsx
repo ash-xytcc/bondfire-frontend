@@ -1567,14 +1567,31 @@ function DonatePageLayout({ accent, editorMode = false, activeField = "", setAct
               Public transparency data from HCB for Dual Power Gathering.
             </div>
             <div style={{ marginTop: 14 }}>
-              <a
-                href="https://hcb.hackclub.com/dual-power-gathering"
-                target="_blank"
-                rel="noreferrer"
-                className="dpg-donate-inline-cta"
-              >
-                Open full HCB page
-              </a>
+              <div style={{ display: "grid", gap: 12, marginTop: 14 }}>
+                <a
+                  href="https://hcb.hackclub.com/dual-power-gathering"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="dpg-donate-inline-cta"
+                  style={{ justifySelf: "start" }}
+                >
+                  Open full HCB page
+                </a>
+
+                <div style={{ color: "#d7ddd8", lineHeight: 1.6, maxWidth: "44ch" }}>
+                  If you or someone you know would like to support the gathering, donations make the event more accessible and materially sustainable.
+                </div>
+
+                <a
+                  href="https://hcb.hackclub.com/dual-power-gathering"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="dpg-donate-cta"
+                  style={{ width: "auto", justifySelf: "start", minWidth: 280 }}
+                >
+                  Donate to Dual Power Gathering
+                </a>
+              </div>
             </div>
           </article>
 
@@ -1712,68 +1729,6 @@ function DonatePageLayout({ accent, editorMode = false, activeField = "", setAct
           </div>
 
           <aside className="dpg-donate-side">
-            <div className="dpg-donate-card">
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "donate_cta_title"}
-                value={content.cta_title}
-                onChange={(v) => setContent({ ...content, cta_title: v })}
-                onStartEdit={() => setActiveField("donate_cta_title")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="CTA title"
-                hint="Edit title"
-                display={content.cta_title}
-                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
-              />
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "donate_cta_body"}
-                value={content.cta_body}
-                onChange={(v) => setContent({ ...content, cta_body: v })}
-                onStartEdit={() => setActiveField("donate_cta_body")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="CTA body"
-                multiline
-                hint="Edit body"
-                display={content.cta_body}
-                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
-              />
-
-              <div style={{ display: "grid", gap: 10 }}>
-                <InlineField
-                  editorMode={editorMode}
-                  editing={editorMode && activeField === "donate_cta_label"}
-                  value={content.cta_label}
-                  onChange={(v) => setContent({ ...content, cta_label: v })}
-                  onStartEdit={() => setActiveField("donate_cta_label")}
-                  onStopEdit={() => setActiveField("")}
-                  placeholder="CTA label"
-                  hint="Edit button label"
-                  display={content.cta_label}
-                  displayStyle={{ color: "#f3efe8", fontWeight: 800, borderRadius: 10 }}
-                />
-
-                {editorMode ? (
-                  <InlineField
-                    editorMode={editorMode}
-                    editing={editorMode && activeField === "donate_cta_url"}
-                    value={content.cta_url}
-                    onChange={(v) => setContent({ ...content, cta_url: v })}
-                    onStartEdit={() => setActiveField("donate_cta_url")}
-                    onStopEdit={() => setActiveField("")}
-                    placeholder="CTA URL"
-                    hint="Edit link"
-                    display={content.cta_url}
-                    displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
-                  />
-                ) : null}
-
-                <a href={content.cta_url} target="_blank" rel="noreferrer" className="dpg-donate-cta">
-                  {content.cta_label}
-                </a>
-              </div>
-            </div>
-
             <div className="dpg-donate-card">
               <InlineField
                 editorMode={editorMode}

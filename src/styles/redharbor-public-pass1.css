@@ -3029,3 +3029,28 @@ html, body {
   }
 }
 
+
+/* ===== FIX: FORCE CTA INTO RIGHT COLUMN ===== */
+
+/* grab the final standalone card in membership and force it into col 2 */
+#membership > .rh-card:last-of-type {
+  grid-column: 2 !important;
+  max-width: none !important;
+  width: 100% !important;
+  margin-top: 0 !important;
+}
+
+/* make sure it visually matches stacked right column */
+#membership > .rh-card:last-of-type {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+/* mobile fallback */
+@media (max-width: 900px) {
+  #membership > .rh-card:last-of-type {
+    grid-column: 1 !important;
+  }
+}
+

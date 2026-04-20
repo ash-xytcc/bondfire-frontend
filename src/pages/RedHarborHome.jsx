@@ -6,6 +6,7 @@ const ORG_ID = "red-harbor"
 const ORG_SLUG = "red-harbor"
 const BRANCH_EMAIL = "redharboriww@gmail.com"
 const BRANCH_EMAIL_LABEL = BRANCH_EMAIL
+const JOIN_CARD_SIZES_KEY = "rh_home_join_card_sizes_v1"
 
 const ARCHIVE_SLIDES = [
   {
@@ -815,6 +816,66 @@ export default function RedHarborHome() {
   const [newsletterEmail, setNewsletterEmail] = React.useState("")
   const [newsletterBusy, setNewsletterBusy] = React.useState(false)
   const [newsletterMsg, setNewsletterMsg] = React.useState("")
+  const [joinCardSizes, setJoinCardSizes] = React.useState({})
+  const joinCardRefs = React.useRef({})
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem(JOIN_CARD_SIZES_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed === "object") {
+        setJoinCardSizes(parsed)
+      }
+    } catch {}
+  }, [])
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(JOIN_CARD_SIZES_KEY, JSON.stringify(joinCardSizes || {}))
+    } catch {}
+  }, [joinCardSizes])
+
+  React.useEffect(() => {
+    if (!editorMode) return
+
+    const observed = []
+    const ro = new ResizeObserver((entries) => {
+      setJoinCardSizes((prev) => {
+        let changed = false
+        const next = { ...(prev || {}) }
+
+        for (const entry of entries) {
+          const el = entry.target
+          const key = el.getAttribute("data-join-card-key")
+          if (!key) continue
+          const width = Math.round(entry.contentRect.width)
+          const height = Math.round(entry.contentRect.height)
+          const prior = next[key] || {}
+          if (prior.width !== width || prior.height !== height) {
+            next[key] = { width, height }
+            changed = true
+          }
+        }
+
+        return changed ? next : prev
+      })
+    })
+
+    Object.values(joinCardRefs.current || {}).forEach((el) => {
+      if (el) {
+        ro.observe(el)
+        observed.push(el)
+      }
+    })
+
+    return () => {
+      observed.forEach((el) => {
+        try { ro.unobserve(el) } catch {}
+      })
+      try { ro.disconnect() } catch {}
+    }
+  }, [editorMode, liveJoinCards.length])
 
   React.useEffect(() => {
     let ignore = false
@@ -992,6 +1053,13 @@ export default function RedHarborHome() {
       return normalizeHome({ ...src, join_cards: moveArrayItem(base, fromIndex, toIndex) })
     })
   }, [home])
+
+  const resetJoinCardSizes = React.useCallback(() => {
+    setJoinCardSizes({})
+    try {
+      localStorage.removeItem(JOIN_CARD_SIZES_KEY)
+    } catch {}
+  }, [])
 
   const updateActionList = React.useCallback((key, items, limit = 3) => {
     setDraft((prev) => {
@@ -1597,6 +1665,9 @@ export default function RedHarborHome() {
                     Add join card
                   </button>
                 ) : null}
+                <button type="button" className="rh-inline-remove-btn" onClick={resetJoinCardSizes}>
+                  Reset join card sizes
+                </button>
               </div>
             </div>
           ) : null}
@@ -1605,7 +1676,23 @@ export default function RedHarborHome() {
             {liveJoinCards.map((card, index) => {
               const action = (liveHome.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
               return (
-                <article className="rh-card" key={`${card.title || "join-card"}-${index}`}>
+                <article
+                  className={`rh-card ${editorMode ? "rh-resizable-card" : ""}`}
+                  key={`${card.title || "join-card"}-${index}`}
+                  data-join-card-key={`join-card-${index}`}
+                  ref={(el) => {
+                    if (el) joinCardRefs.current[`join-card-${index}`] = el
+                    else delete joinCardRefs.current[`join-card-${index}`]
+                  }}
+                  style={
+                    editorMode && joinCardSizes[`join-card-${index}`]
+                      ? {
+                          width: joinCardSizes[`join-card-${index}`].width,
+                          minHeight: joinCardSizes[`join-card-${index}`].height,
+                        }
+                      : undefined
+                  }
+                >
                   {editorMode ? (
                     <div className="rh-inline-action-head" style={{ marginBottom: 10 }}>
                       <div className="rh-inline-group-label">Join card {index + 1}</div>

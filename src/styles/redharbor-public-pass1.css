@@ -1969,3 +1969,25 @@ html, body {
     min-width: 0;
   }
 }
+
+/* live resize for homepage join cards in editor mode */
+.rh-resizable-card {
+  resize: both;
+  overflow: auto;
+  min-width: 240px;
+  min-height: 220px;
+}
+
+.rh-resizable-card::-webkit-resizer {
+  background: rgba(216,199,173,0.35);
+}
+
+.rh-resizable-card .rh-inline-group,
+.rh-resizable-card .rh-inline-editor,
+.rh-resizable-card .rh-inline-editor-textarea {
+  max-width: 100%;
+}
+
+.rh-resizable-card textarea {
+  min-height: 120px;
+}

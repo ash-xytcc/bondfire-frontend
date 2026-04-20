@@ -205,15 +205,16 @@ function cleanStringArray(arr, limit = 12) {
 }
 
 function cleanJoinCards(arr) {
-  const fallback = defaultHome.join_cards
   const items = Array.isArray(arr) ? arr : []
-  return fallback.map((def, i) => {
-    const raw = items[i] && typeof items[i] === "object" ? items[i] : {}
-    return {
-      title: String(raw.title || def.title).trim(),
-      body: String(raw.body || def.body).trim(),
-    }
-  })
+  const cleaned = items
+    .map((item) => ({
+      title: String(item?.title || "").trim(),
+      body: String(item?.body || "").trim(),
+    }))
+    .filter((item) => item.title || item.body)
+    .slice(0, 6)
+
+  return cleaned.length ? cleaned : defaultHome.join_cards
 }
 
 function moveArrayItem(arr, fromIndex, toIndex) {
@@ -640,7 +641,6 @@ function InlineActionListEditor({
   if (!editorMode) return null
 
   const safe = Array.isArray(items) ? items.slice(0, limit) : []
-  while (safe.length < limit) safe.push({ label: "", url: "" })
 
   return (
     <div className="rh-inline-group">
@@ -669,6 +669,14 @@ function InlineActionListEditor({
                 >
                   ↓
                 </button>
+                <button
+                  type="button"
+                  className="rh-inline-remove-btn"
+                  onClick={() => onChange(safe.filter((_, i) => i !== index))}
+                  aria-label={`Remove button ${index + 1}`}
+                >
+                  Remove
+                </button>
               </div>
             </div>
             <input
@@ -692,6 +700,16 @@ function InlineActionListEditor({
           </div>
         ))}
       </div>
+
+      {safe.length < limit ? (
+        <button
+          type="button"
+          className="rh-inline-add-btn"
+          onClick={() => onChange([...safe, { label: "", url: "" }])}
+        >
+          Add button
+        </button>
+      ) : null}
     </div>
   )
 }
@@ -878,6 +896,7 @@ export default function RedHarborHome() {
   const whatWeDoItems = React.useMemo(() => cleanStringArray(liveHome.what_we_do, 8), [liveHome.what_we_do])
   const purposeItems = React.useMemo(() => cleanStringArray(liveHome.site_purpose_items, 8), [liveHome.site_purpose_items])
   const eventItems = React.useMemo(() => cleanStringArray(liveHome.events_items, 8), [liveHome.events_items])
+  const liveJoinCards = React.useMemo(() => cleanJoinCards(liveHome.join_cards), [liveHome.join_cards])
   const membershipIncludesItems = React.useMemo(() => cleanStringArray(liveHome.membership_includes_items, 12), [liveHome.membership_includes_items])
   const membershipDuesItems = React.useMemo(() => cleanStringArray(liveHome.membership_dues_items, 12), [liveHome.membership_dues_items])
   const primaryActions = React.useMemo(() => cleanLinkArray(liveHome.primary_actions, 3), [liveHome.primary_actions])
@@ -936,8 +955,41 @@ export default function RedHarborHome() {
     setDraft((prev) => {
       const src = normalizeHome(prev || home)
       setIsDirty(true)
-      const next = src.join_cards.map((card, i) => (i === index ? { ...card, ...patch } : card))
+      const base = cleanJoinCards(src.join_cards)
+      const next = base.map((card, i) => (i === index ? { ...card, ...patch } : card))
       return normalizeHome({ ...src, join_cards: next })
+    })
+  }, [home])
+
+  const addJoinCard = React.useCallback(() => {
+    setDraft((prev) => {
+      const src = normalizeHome(prev || home)
+      setIsDirty(true)
+      const base = cleanJoinCards(src.join_cards)
+      if (base.length >= 6) return src
+      return normalizeHome({
+        ...src,
+        join_cards: [...base, { title: "New join card", body: "Add copy here." }],
+      })
+    })
+  }, [home])
+
+  const removeJoinCard = React.useCallback((index) => {
+    setDraft((prev) => {
+      const src = normalizeHome(prev || home)
+      setIsDirty(true)
+      const base = cleanJoinCards(src.join_cards)
+      const next = base.filter((_, i) => i !== index)
+      return normalizeHome({ ...src, join_cards: next.length ? next : defaultHome.join_cards })
+    })
+  }, [home])
+
+  const moveJoinCard = React.useCallback((fromIndex, toIndex) => {
+    setDraft((prev) => {
+      const src = normalizeHome(prev || home)
+      setIsDirty(true)
+      const base = cleanJoinCards(src.join_cards)
+      return normalizeHome({ ...src, join_cards: moveArrayItem(base, fromIndex, toIndex) })
     })
   }, [home])
 
@@ -1537,12 +1589,43 @@ export default function RedHarborHome() {
           </div>
 
           <div className="rh-grid-three">
-            {liveHome.join_cards.map((card, index) => {
+            {liveJoinCards.map((card, index) => {
               const action = (liveHome.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
               return (
-                <article className="rh-card" key={`${card.title}-${index}`}>
+                <article className="rh-card" key={`${card.title || "join-card"}-${index}`}>
+                  {editorMode ? (
+                    <div className="rh-inline-action-head" style={{ marginBottom: 10 }}>
+                      <div className="rh-inline-group-label">Join card {index + 1}</div>
+                      <div className="rh-inline-reorder-actions">
+                        <button
+                          type="button"
+                          className="rh-inline-move-btn"
+                          onClick={() => moveJoinCard(index, index - 1)}
+                          disabled={index === 0}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          className="rh-inline-move-btn"
+                          onClick={() => moveJoinCard(index, index + 1)}
+                          disabled={index === liveJoinCards.length - 1}
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          className="rh-inline-remove-btn"
+                          onClick={() => removeJoinCard(index)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
                   <InlineCardBlockEditor
-                    title={editorMode ? `Join card ${index + 1}` : ""}
+                    title=""
                     cardTitle={card.title}
                     cardBody={card.body}
                     onTitleChange={(value) => updateJoinCard(index, { title: value })}
@@ -1572,6 +1655,14 @@ export default function RedHarborHome() {
               )
             })}
           </div>
+
+          {editorMode && liveJoinCards.length < 6 ? (
+            <div style={{ marginTop: 14 }}>
+              <button type="button" className="rh-inline-add-btn" onClick={addJoinCard}>
+                Add join card
+              </button>
+            </div>
+          ) : null}
         </section>
 
         <section id="membership" className="rh-section rh-section-band">

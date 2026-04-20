@@ -1411,6 +1411,7 @@ function DonatePageLayout({ accent, editorMode = false, activeField = "", setAct
   }, []);
 
   const fmtMoney = (cents) => {
+    if (cents == null || cents === "") return "Unavailable";
     const n = Number(cents);
     if (!Number.isFinite(n)) return "Unavailable";
     return new Intl.NumberFormat("en-US", {

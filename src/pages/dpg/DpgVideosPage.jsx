@@ -259,7 +259,7 @@ export default function DpgVideosPage() {
     setUploading(true);
     setUploadPct(0);
     setError("");
-    setStatus(`Uploading ${file.name} to R2…`);
+    setStatus(`Uploading ${file.name} `);
 
     try {
       const seconds = await readVideoDuration(file);
@@ -289,8 +289,8 @@ export default function DpgVideosPage() {
 
       setUploadPct(100);
       setStatus(autoDurationText
-        ? `Upload complete. Video URL and duration were filled automatically.`
-        : "Upload complete. Video URL field has been filled from R2.");
+        ? `Upload complete.`
+        : "Upload complete.");
     } catch (err) {
       setError(String(err?.message || err));
       setStatus("Upload failed.");
@@ -495,34 +495,15 @@ export default function DpgVideosPage() {
         </div>
       </div>
 
-      <div style={cardStyle()}>
-        <div style={{ fontWeight: 800, marginBottom: 10 }}>status</div>
-        <div style={{ color: "var(--muted)", whiteSpace: "pre-wrap" }}>{status}</div>
-        {error ? (
-          <div
-            style={{
-              marginTop: 12,
-              padding: 12,
-              borderRadius: 14,
-              border: "1px solid rgba(255,120,120,0.22)",
-              background: "rgba(255,120,120,0.08)",
-              color: "#ffb8b8",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {error}
-          </div>
-        ) : null}
-      </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(320px, 1fr) minmax(320px, 1fr)",
-          gap: 20,
-          alignItems: "start",
-        }}
-      >
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(320px, 1fr) minmax(320px, 1fr)",
+        gap: 20,
+        alignItems: "start",
+      }}
+    >
         <div style={cardStyle()}>
           <div style={{ fontWeight: 800, fontSize: 24, marginBottom: 14 }}>
             {editingId ? "edit video entry" : "new video entry"}

@@ -503,3 +503,24 @@
   }
 }
 
+
+/* STOP CENTERING, PUT IT AT THE TOP */
+.rhm-hero {
+  align-items: start !important;
+}
+
+.rhm-hero-media {
+  align-self: start !important;
+  margin-top: 0 !important;
+}
+
+.rhm-hero-image {
+  display: block !important;
+  margin-top: 0 !important;
+}
+
+/* if something is still pushing it down, kill the height */
+.rhm-hero-media {
+  height: auto !important;
+}
+

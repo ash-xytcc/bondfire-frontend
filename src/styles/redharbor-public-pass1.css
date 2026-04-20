@@ -3261,3 +3261,50 @@ html, body {
   }
 }
 
+
+/* ===== FORCE POSTER UNDER LEFT HEADER ===== */
+@media (min-width: 901px) {
+  #membership .rh-section-head {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    align-self: start !important;
+  }
+
+  #membership .rh-membership-side-stack {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    align-self: start !important;
+    justify-self: start !important;
+    width: 220px !important;
+    max-width: 220px !important;
+    margin: 10px 0 0 0 !important;
+  }
+
+  #membership .rh-membership-side-stack > .rh-card {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  #membership .rh-membership-side-stack img {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 260px !important;
+    object-fit: contain !important;
+    margin: 0 auto !important;
+  }
+
+  #membership .rh-membership-stack {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  #membership > .rh-card:last-of-type {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    align-self: start !important;
+  }
+}
+

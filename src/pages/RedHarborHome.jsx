@@ -1929,7 +1929,7 @@ export default function RedHarborHome() {
                   </div>
                   <h3 className="rh-bulletin-home-card-title">{post.title}</h3>
                   {post.excerpt ? <p>{post.excerpt}</p> : null}
-                  <Link to={`}/bulletin/${post.slug}`} className="rh-inline-link">Read post</Link>
+                  <Link to={`/bulletin/${post.slug}`} className="rh-inline-link">Read post</Link>
                 </article>
               ))}
             </div>

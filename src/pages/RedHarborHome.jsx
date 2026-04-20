@@ -1764,7 +1764,7 @@ export default function RedHarborHome() {
             />
           </div>
 
-          <div className="rh-grid-two" style={{ alignItems: "start" }}>
+          <div className="rh-grid-three rh-membership-three-col" style={{ alignItems: "start" }}>
             <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
               <InlineTextEdit
                 tag="h3"
@@ -1812,7 +1812,34 @@ export default function RedHarborHome() {
               </div>
             </div>
 
-            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`} style={{ display: "grid", gap: 14 }}>
+            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`} style={{ padding: 18 }}>
+              <InlineTextEdit
+                tag="h3"
+                className=""
+                editorMode={editorMode}
+                value={liveHome.membership_dues_title || defaultHome.membership_dues_title}
+                onChange={(value) => updateDraft("membership_dues_title", value)}
+                placeholder="Dues"
+              />
+              {editorMode ? (
+                <InlineReorderableStringListEditor
+                  title="Membership dues"
+                  items={membershipDuesItems}
+                  onChange={(items) => updateDraft("membership_dues_items", items)}
+                  editorMode={editorMode}
+                  itemPlaceholder="Dues item"
+                  maxItems={12}
+                />
+              ) : (
+                <ul className="rh-event-list">
+                  {membershipDuesItems.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
               {liveHome.membership_poster_url ? (
                 <img
                   src={liveHome.membership_poster_url}
@@ -1829,33 +1856,6 @@ export default function RedHarborHome() {
               ) : (
                 <div className="rh-note">Upload a membership poster from editor mode.</div>
               )}
-
-              <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`} style={{ padding: 18 }}>
-                <InlineTextEdit
-                  tag="h3"
-                  className=""
-                  editorMode={editorMode}
-                  value={liveHome.membership_dues_title || defaultHome.membership_dues_title}
-                  onChange={(value) => updateDraft("membership_dues_title", value)}
-                  placeholder="Dues"
-                />
-                {editorMode ? (
-                  <InlineReorderableStringListEditor
-                    title="Membership dues"
-                    items={membershipDuesItems}
-                    onChange={(items) => updateDraft("membership_dues_items", items)}
-                    editorMode={editorMode}
-                    itemPlaceholder="Dues item"
-                    maxItems={12}
-                  />
-                ) : (
-                  <ul className="rh-event-list">
-                    {membershipDuesItems.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
             </div>
           </div>
 

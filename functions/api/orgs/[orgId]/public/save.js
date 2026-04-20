@@ -37,7 +37,7 @@ function cleanStrings(arr, limit) {
 
 function cleanJoinCards(arr) {
   return Array.isArray(arr)
-    ? arr.slice(0, 3).map((item) => ({
+    ? arr.slice(0, 6).map((item) => ({
         title: String(item?.title || "").trim(),
         body: String(item?.body || "").trim(),
       }))

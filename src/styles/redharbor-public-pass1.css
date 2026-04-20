@@ -1984,3 +1984,36 @@ html, body {
 .rh-editor-mode .rh-resizable {
   cursor: nwse-resize;
 }
+
+
+/* smaller archive image inside existing archive card */
+.rh-archive-stage {
+  align-items: start;
+}
+
+.rh-archive-image {
+  width: min(100%, 420px);
+  max-height: 280px;
+  object-fit: contain;
+  margin: 0 auto 14px;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .rh-archive-image {
+    width: min(100%, 340px);
+    max-height: 220px;
+  }
+}
+
+/* membership section: details / dues / poster */
+.rh-membership-three-col {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 980px) {
+  .rh-membership-three-col {
+    grid-template-columns: 1fr;
+  }
+}
+

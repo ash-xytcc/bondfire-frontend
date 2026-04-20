@@ -2685,3 +2685,88 @@ html, body {
   }
 }
 
+
+/* ===== CLEANUP: REMOVE REDUNDANT JOIN BLOCK ===== */
+
+/* nuke the top JOIN section (the ugly duplicate one) */
+#join.rh-section {
+  display: none !important;
+}
+
+
+/* ===== CLEAN MEMBERSHIP SECTION (THE ONE WE KEEP) ===== */
+
+#membership.rh-section {
+  display: grid !important;
+  grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.4fr) minmax(300px, 1fr) !important;
+  gap: 20px !important;
+  align-items: start !important;
+}
+
+/* left intro */
+#membership .rh-section-head {
+  grid-column: 1 !important;
+  margin: 0 !important;
+}
+
+/* middle stack (who + dues) */
+#membership .rh-membership-stack {
+  grid-column: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+/* right side (image + CTA) */
+#membership .rh-membership-side-stack {
+  grid-column: 3 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+/* make poster behave */
+#membership .rh-membership-side-stack img {
+  width: 100% !important;
+  max-height: 420px !important;
+  object-fit: contain !important;
+}
+
+/* FIX THE CTA (no more vertical cursed column) */
+#membership .rh-membership-side-stack .rh-card:last-child {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+#membership .rh-membership-side-stack .rh-card:last-child h2,
+#membership .rh-membership-side-stack .rh-card:last-child p {
+  writing-mode: horizontal-tb !important;
+}
+
+/* normalize ALL text (kills vertical text bug completely) */
+#membership * {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+}
+
+/* tighten spacing */
+#membership .rh-card {
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+/* ===== MOBILE FIX ===== */
+@media (max-width: 900px) {
+  #membership.rh-section {
+    grid-template-columns: 1fr !important;
+  }
+
+  #membership .rh-section-head,
+  #membership .rh-membership-stack,
+  #membership .rh-membership-side-stack {
+    grid-column: 1 !important;
+  }
+}
+

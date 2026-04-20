@@ -1242,90 +1242,13 @@ export default function DpgPublicHome() {
           className='dpg-home-lower-grid'
           style={{
             display: 'grid',
-            gridTemplateColumns: '1.2fr .8fr',
+            gridTemplateColumns: '1fr',
             gap: 20,
             alignItems: 'start',
           }}
         >
-          <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
-            
-
-            {editorMode && activeField === "progress" ? (
-              <div style={{ display: "grid", gap: 8 }}>
-                {Array.from({ length: 8 }).map((_, idx) => (
-                  <InlineField
-                    key={`progress-${idx}`}
-                    editorMode={true}
-                    editing={true}
-                    value={progressItems[idx] || ""}
-                    onChange={(v) => setProgressField(idx, v)}
-                    onStartEdit={() => {}}
-                    onStopEdit={() => {}}
-                    placeholder={`Progress item ${idx + 1}`}
-                    dark={true}
-                    hint={`Item ${idx + 1}`}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EditableRegion
-                enabled={editorMode}
-                active={false}
-                onEdit={() => setActiveField("progress")}
-                dark={true}
-                hint="Edit progress list"
-                displayStyle={{ borderRadius: 14 }}
-              >
-                <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8, color: '#f3efe8' }}>
-                  {progressItems.map((item, idx) => (
-                    <li key={`${item}-${idx}`} style={{ color: '#f3efe8' }}>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </EditableRegion>
-            )}
-          </div>
 
           <div style={{ display: 'grid', gap: 20 }}>
-            <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 10 }}>
-                
-
-              {editorMode ? (
-                <EditChip
-                  onClick={() => setActiveField(activeField === "organizer_body" ? "" : "organizer_body")}
-                  subtle
-                  active={activeField === "organizer_body"}
-                >
-                  Body
-                </EditChip>
-              ) : null}
-            </div>
-
-            <InlineField
-              editorMode={editorMode}
-              editing={editorMode && activeField === "organizer_body"}
-              value={String(liveConfig?.organizer_body || '')}
-              onChange={(v) => updateDraft("organizer_body", v)}
-              onStartEdit={() => editorMode && setActiveField("organizer_body")}
-              onStopEdit={() => setActiveField("")}
-              placeholder="Organizer card body"
-              multiline
-              display={liveConfig?.organizer_body || ''}
-              hint="Edit card copy"
-              displayStyle={{
-                marginTop: 0,
-                lineHeight: 1.6,
-                color: '#f3efe8',
-                borderRadius: 12,
-              }}
-            />
-
-            
-
-            </div>
-
             <div style={{ gridColumn: "1 / -1",  ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
               <div
                 style={{

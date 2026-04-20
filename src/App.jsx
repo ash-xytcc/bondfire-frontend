@@ -271,7 +271,7 @@ fetch("/api/orgs", { credentials: "include" })
   <Route path="/bulletin" element={<BulletinIndexPage />} />
   <Route path="/bulletin/:slug" element={<BulletinArticlePage />} />
   <Route path="/labor-history" element={<LaborHistoryPage />} />
-  <Route path="/membership" element={<MembershipPage />} />
+  <Route path="/membership" element={<Navigate to="/" replace />} />
 
 				{/* Orgs list */}
 				<Route

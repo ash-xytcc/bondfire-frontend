@@ -78,6 +78,7 @@ export async function onRequestGet({ env, request, params }) {
         "content-length": String(length),
         "content-range": `bytes ${parsed.start}-${parsed.end}/${size}`,
         "accept-ranges": "bytes",
+        "content-disposition": `inline; filename="${key.split("/").pop() || "file"}"`,
         "cache-control": "public, max-age=31536000, immutable",
       },
     });
@@ -92,6 +93,7 @@ export async function onRequestGet({ env, request, params }) {
       "content-type": contentType,
       "content-length": String(size),
       "accept-ranges": "bytes",
+      "content-disposition": `inline; filename="${key.split("/").pop() || "file"}"`,
       "cache-control": "public, max-age=31536000, immutable",
     },
   });

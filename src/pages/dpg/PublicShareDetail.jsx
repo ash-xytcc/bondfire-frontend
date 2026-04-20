@@ -140,7 +140,8 @@ function toEmbedUrl(url = "") {
 }
 
 function isDirectVideo(url = "") {
-  return /\.(mp4|webm|ogg)(\?.*)?$/i.test(String(url || "").trim());
+  const raw = String(url || "").trim();
+  return /\.(mp4|webm|ogg)(\?.*)?$/i.test(raw) || raw.includes("/api/public/share-file/");
 }
 
 export default function PublicShareDetail({ slug: slugProp = "" }) {
@@ -375,8 +376,6 @@ export default function PublicShareDetail({ slug: slugProp = "" }) {
                     {(share.tags || []).map((tag) => (
                       <span key={tag} className="dpg-share-detail-chip">{tag}</span>
                     ))}
-                    {share.durationText ? <span className="dpg-share-detail-chip">{share.durationText}</span> : null}
-                    {share.metaText ? <span className="dpg-share-detail-chip">{share.metaText}</span> : null}
                   </div>
 
                   {canEmbed ? (
@@ -421,30 +420,11 @@ export default function PublicShareDetail({ slug: slugProp = "" }) {
                   <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
                     Session info
                   </div>
-                  <div style={{ display: "grid", gap: 10, color: "#f3efe8", lineHeight: 1.6 }}>
-                    {share.metaText ? <div><strong>Meta:</strong> {share.metaText}</div> : null}
-                    {share.durationText ? <div><strong>Duration:</strong> {share.durationText}</div> : null}
-                    {share.publishedAt ? <div><strong>Published:</strong> {new Date(share.publishedAt).toLocaleDateString()}</div> : null}
-                    {share.slug ? <div><strong>Slug:</strong> {share.slug}</div> : null}
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    background: "#f3e28b",
-                    color: "#171717",
-                    borderRadius: 16,
-                    padding: 18,
-                    transform: "rotate(1deg)",
-                    border: "1px solid rgba(0,0,0,0.08)",
-                    boxShadow: "0 18px 36px rgba(0,0,0,0.16)",
-                  }}
-                >
-                  <div style={{ fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.1, marginBottom: 8 }}>
-                    archive the useful stuff
-                  </div>
-                  <div style={{ lineHeight: 1.56, fontSize: "0.98rem" }}>
-                    The point is not just posting clips. The point is making the record findable, legible, and reusable later.
+                  <div style={{ display: "grid", gap: 10, color: "#d7ddd8", lineHeight: 1.6 }}>
+                    {share.metaText ? <div><strong style={{ color: "#f3efe8" }}>Meta:</strong> {share.metaText}</div> : null}
+                    {share.durationText ? <div><strong style={{ color: "#f3efe8" }}>Duration:</strong> {share.durationText}</div> : null}
+                    {share.publishedAt ? <div><strong style={{ color: "#f3efe8" }}>Published:</strong> {new Date(share.publishedAt).toLocaleDateString()}</div> : null}
+                    {share.slug ? <div><strong style={{ color: "#f3efe8" }}>Slug:</strong> {share.slug}</div> : null}
                   </div>
                 </div>
               </aside>

@@ -30,30 +30,50 @@ async function api(path, opts = {}) {
   };
 }
 
-async function uploadVideoFile(file) {
-  const form = new FormData();
-  form.append("file", file);
+function uploadFileWithProgress(path, file, onProgress = () => {}) {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    const form = new FormData();
+    form.append("file", file);
 
-  const res = await fetch("/api/orgs/dpg/shares-upload", {
-    method: "POST",
-    credentials: "include",
-    body: form,
-    headers: { Accept: "application/json" },
+    xhr.open("POST", path, true);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader("Accept", "application/json");
+
+    xhr.upload.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      const pct = Math.max(0, Math.min(100, Math.round((e.loaded / e.total) * 100)));
+      onProgress(pct);
+    };
+
+    xhr.onerror = () => {
+      resolve({ ok: false, status: 0, data: { error: "NETWORK_ERROR" } });
+    };
+
+    xhr.onload = () => {
+      let data = {};
+      try {
+        data = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+      } catch {
+        data = { raw: xhr.responseText || "" };
+      }
+      resolve({
+        ok: !!(xhr.status >= 200 && xhr.status < 300 && data?.ok !== false),
+        status: xhr.status,
+        data,
+      });
+    };
+
+    xhr.send(form);
   });
+}
 
-  const text = await res.text().catch(() => "");
-  let data = {};
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { raw: text };
-  }
+function uploadVideoFile(file, onProgress = () => {}) {
+  return uploadFileWithProgress("/api/orgs/dpg/shares-upload", file, onProgress);
+}
 
-  return {
-    ok: !!(res.ok && data?.ok !== false),
-    status: res.status,
-    data,
-  };
+function uploadThumbFile(file, onProgress = () => {}) {
+  return uploadFileWithProgress("/api/orgs/dpg/shares-thumb-upload", file, onProgress);
 }
 
 const theme = {
@@ -130,6 +150,9 @@ export default function DpgVideosPage() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [uploading, setUploading] = React.useState(false);
+  const [uploadPct, setUploadPct] = React.useState(0);
+  const [thumbUploading, setThumbUploading] = React.useState(false);
+  const [thumbPct, setThumbPct] = React.useState(0);
   const [items, setItems] = React.useState([]);
   const [error, setError] = React.useState("");
   const [status, setStatus] = React.useState("Loading videos…");
@@ -200,11 +223,12 @@ export default function DpgVideosPage() {
     if (!file) return;
 
     setUploading(true);
+    setUploadPct(0);
     setError("");
     setStatus(`Uploading ${file.name} to R2…`);
 
     try {
-      const res = await uploadVideoFile(file);
+      const res = await uploadVideoFile(file, setUploadPct);
 
       if (!res.ok) {
         throw new Error(
@@ -226,12 +250,52 @@ export default function DpgVideosPage() {
         title: prev.title || titleFromFile,
       }));
 
+      setUploadPct(100);
       setStatus("Upload complete. Video URL field has been filled from R2.");
     } catch (err) {
       setError(String(err?.message || err));
       setStatus("Upload failed.");
     } finally {
       setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  async function onPickThumb(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setThumbUploading(true);
+    setThumbPct(0);
+    setError("");
+    setStatus(`Uploading thumbnail ${file.name}…`);
+
+    try {
+      const res = await uploadThumbFile(file, setThumbPct);
+
+      if (!res.ok) {
+        throw new Error(
+          res?.data?.error ||
+          res?.data?.detail ||
+          res?.data?.message ||
+          res?.data?.raw ||
+          `HTTP ${res.status}`
+        );
+      }
+
+      const url = String(res?.data?.url || "").trim();
+      setDraft((prev) => ({
+        ...prev,
+        thumbnailUrl: url || prev.thumbnailUrl,
+      }));
+
+      setThumbPct(100);
+      setStatus("Thumbnail upload complete.");
+    } catch (err) {
+      setError(String(err?.message || err));
+      setStatus("Thumbnail upload failed.");
+    } finally {
+      setThumbUploading(false);
       e.target.value = "";
     }
   }
@@ -426,18 +490,52 @@ export default function DpgVideosPage() {
           </div>
 
           <div style={{ display: "grid", gap: 12 }}>
-            <div>
-              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>upload video file to R2</div>
-              <label style={{ ...buttonStyle(false), cursor: uploading ? "default" : "pointer" }}>
-                {uploading ? "uploading..." : "choose video file"}
-                <input
-                  type="file"
-                  accept="video/*"
-                  onChange={onPickVideo}
-                  disabled={uploading}
-                  style={{ display: "none" }}
-                />
-              </label>
+            <div style={{ display: "grid", gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>upload video file to R2</div>
+                <label style={{ ...buttonStyle(false), cursor: uploading ? "default" : "pointer" }}>
+                  {uploading ? "uploading video..." : "choose video file"}
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={onPickVideo}
+                    disabled={uploading || thumbUploading}
+                    style={{ display: "none" }}
+                  />
+                </label>
+              </div>
+
+              {(uploading || uploadPct > 0) ? (
+                <div style={{ display: "grid", gap: 6 }}>
+                  <div style={{ fontSize: 13, color: "var(--muted)" }}>video upload progress: {uploadPct}%</div>
+                  <div style={{ height: 10, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                    <div style={{ width: `${uploadPct}%`, height: "100%", background: "var(--accent)", transition: "width 120ms linear" }} />
+                  </div>
+                </div>
+              ) : null}
+
+              <div>
+                <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>upload thumbnail image</div>
+                <label style={{ ...buttonStyle(false), cursor: thumbUploading ? "default" : "pointer" }}>
+                  {thumbUploading ? "uploading thumbnail..." : "choose thumbnail image"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={onPickThumb}
+                    disabled={uploading || thumbUploading}
+                    style={{ display: "none" }}
+                  />
+                </label>
+              </div>
+
+              {(thumbUploading || thumbPct > 0) ? (
+                <div style={{ display: "grid", gap: 6 }}>
+                  <div style={{ fontSize: 13, color: "var(--muted)" }}>thumbnail upload progress: {thumbPct}%</div>
+                  <div style={{ height: 10, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                    <div style={{ width: `${thumbPct}%`, height: "100%", background: "var(--accent)", transition: "width 120ms linear" }} />
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <input

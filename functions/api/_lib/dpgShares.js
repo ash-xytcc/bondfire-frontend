@@ -18,6 +18,10 @@ export async function ensureDpgSharesSchema(env) {
       description TEXT NOT NULL DEFAULT '',
       video_url TEXT NOT NULL DEFAULT '',
       thumbnail_url TEXT NOT NULL DEFAULT '',
+      storage_key TEXT NOT NULL DEFAULT '',
+      poster_key TEXT NOT NULL DEFAULT '',
+      mime_type TEXT NOT NULL DEFAULT '',
+      file_size INTEGER NOT NULL DEFAULT 0,
       tags TEXT NOT NULL DEFAULT '',
       duration_text TEXT NOT NULL DEFAULT '',
       meta_text TEXT NOT NULL DEFAULT '',
@@ -35,6 +39,22 @@ export async function ensureDpgSharesSchema(env) {
 
   for (const sql of statements) {
     await db.prepare(sql).run();
+  }
+
+  const alterStatements = [
+    `ALTER TABLE dpg_shares_videos ADD COLUMN storage_key TEXT NOT NULL DEFAULT ''`,
+    `ALTER TABLE dpg_shares_videos ADD COLUMN poster_key TEXT NOT NULL DEFAULT ''`,
+    `ALTER TABLE dpg_shares_videos ADD COLUMN mime_type TEXT NOT NULL DEFAULT ''`,
+    `ALTER TABLE dpg_shares_videos ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0`
+  ];
+
+  for (const sql of alterStatements) {
+    try {
+      await db.prepare(sql).run();
+    } catch (e) {
+      const msg = String(e?.message || e || "");
+      if (!msg.includes("duplicate column name")) throw e;
+    }
   }
 
   env.__bfDpgSharesSchemaReady = true;
@@ -71,6 +91,10 @@ export function cleanShareInput(body = {}) {
   const description = String(body?.description || "").trim();
   const videoUrl = String(body?.videoUrl || body?.video_url || "").trim();
   const thumbnailUrl = String(body?.thumbnailUrl || body?.thumbnail_url || "").trim();
+  const storageKey = String(body?.storageKey || body?.storage_key || "").trim();
+  const posterKey = String(body?.posterKey || body?.poster_key || "").trim();
+  const mimeType = String(body?.mimeType || body?.mime_type || "").trim();
+  const fileSize = Math.max(0, Number(body?.fileSize || body?.file_size || 0) || 0);
   const durationText = String(body?.durationText || body?.duration_text || "").trim();
   const metaText = String(body?.metaText || body?.meta_text || "").trim();
   const status = String(body?.status || "published").trim().toLowerCase() === "draft" ? "draft" : "published";
@@ -88,6 +112,10 @@ export function cleanShareInput(body = {}) {
     description,
     videoUrl,
     thumbnailUrl,
+    storageKey,
+    posterKey,
+    mimeType,
+    fileSize,
     durationText,
     metaText,
     status,
@@ -110,6 +138,10 @@ export function rowToShare(row = {}) {
     description: String(row.description || ""),
     videoUrl: String(row.video_url || ""),
     thumbnailUrl: String(row.thumbnail_url || ""),
+    storageKey: String(row.storage_key || ""),
+    posterKey: String(row.poster_key || ""),
+    mimeType: String(row.mime_type || ""),
+    fileSize: Number(row.file_size || 0),
     tags,
     durationText: String(row.duration_text || ""),
     metaText: String(row.meta_text || ""),
@@ -140,9 +172,9 @@ export async function createShare(env, orgId, userId, input) {
 
   await db.prepare(
     `INSERT INTO dpg_shares_videos (
-      id, org_id, slug, title, description, video_url, thumbnail_url, tags,
+      id, org_id, slug, title, description, video_url, thumbnail_url, storage_key, poster_key, mime_type, file_size, tags,
       duration_text, meta_text, featured, status, created_by, created_at, updated_at, published_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     id,
     orgId,
@@ -151,6 +183,10 @@ export async function createShare(env, orgId, userId, input) {
     input.description,
     input.videoUrl,
     input.thumbnailUrl,
+    input.storageKey,
+    input.posterKey,
+    input.mimeType,
+    input.fileSize,
     input.tags.join(", "),
     input.durationText,
     input.metaText,
@@ -221,6 +257,10 @@ export async function updateShare(env, orgId, shareId, input) {
          description = ?,
          video_url = ?,
          thumbnail_url = ?,
+         storage_key = ?,
+         poster_key = ?,
+         mime_type = ?,
+         file_size = ?,
          tags = ?,
          duration_text = ?,
          meta_text = ?,
@@ -235,6 +275,10 @@ export async function updateShare(env, orgId, shareId, input) {
     input.description,
     input.videoUrl,
     input.thumbnailUrl,
+    input.storageKey,
+    input.posterKey,
+    input.mimeType,
+    input.fileSize,
     input.tags.join(", "),
     input.durationText,
     input.metaText,

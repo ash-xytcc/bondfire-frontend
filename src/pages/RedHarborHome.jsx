@@ -1566,7 +1566,7 @@ export default function RedHarborHome() {
           </div>
 
           <div className="rh-grid-two">
-            <div className="rh-card">
+            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
               <InlineCardBlockEditor
                 title={editorMode ? "About card" : ""}
                 cardTitle={liveHome.about_card_title || defaultHome.about_card_title}
@@ -1577,7 +1577,7 @@ export default function RedHarborHome() {
               />
             </div>
 
-            <div className="rh-card">
+            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
               <InlineCardBlockEditor
                 title={editorMode ? "Location card" : ""}
                 cardTitle={liveHome.location_card_title || defaultHome.location_card_title}
@@ -1589,7 +1589,7 @@ export default function RedHarborHome() {
             </div>
 
             {liveHome.show_what_we_do && whatWeDoItems.length > 0 ? (
-              <div className="rh-card" style={{ gridColumn: "1 / -1" }}>
+              <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`} style={{ gridColumn: "1 / -1" }}>
                 <h3>What we do</h3>
                 {editorMode ? (
                   <InlineReorderableStringListEditor
@@ -1603,7 +1603,7 @@ export default function RedHarborHome() {
                 ) : (
                   <div className="rh-grid-two">
                     {whatWeDoItems.map((item) => (
-                      <div key={item} className="rh-card">
+                      <div key={item} className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
                         <p style={{ margin: 0 }}>{item}</p>
                       </div>
                     ))}
@@ -1636,7 +1636,7 @@ export default function RedHarborHome() {
             />
           </div>
 
-          <div className="rh-card rh-home-membership-card">
+          <div className={`rh-card ${editorMode ? "rh-resizable" : ""} rh-home-membership-card`}>
             <div className="rh-home-membership-copy">
               <h3>IWW membership</h3>
               <p>
@@ -1676,7 +1676,7 @@ export default function RedHarborHome() {
             {liveJoinCards.map((card, index) => {
               const action = (liveHome.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
               return (
-                <article className="rh-card" key={`${card.title || "join-card"}-${index}`}>
+                <article className={`rh-card ${editorMode ? "rh-resizable" : ""}`} key={`${card.title || "join-card"}-${index}`}>
                   {editorMode ? (
                     <div className="rh-inline-action-head" style={{ marginBottom: 10 }}>
                       <div className="rh-inline-group-label">Join card {index + 1}</div>
@@ -1765,7 +1765,7 @@ export default function RedHarborHome() {
           </div>
 
           <div className="rh-grid-two" style={{ alignItems: "start" }}>
-            <div className="rh-card">
+            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
               <InlineTextEdit
                 tag="h3"
                 className=""
@@ -1812,7 +1812,7 @@ export default function RedHarborHome() {
               </div>
             </div>
 
-            <div className="rh-card" style={{ display: "grid", gap: 14 }}>
+            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`} style={{ display: "grid", gap: 14 }}>
               {liveHome.membership_poster_url ? (
                 <img
                   src={liveHome.membership_poster_url}
@@ -1830,7 +1830,7 @@ export default function RedHarborHome() {
                 <div className="rh-note">Upload a membership poster from editor mode.</div>
               )}
 
-              <div className="rh-card" style={{ padding: 18 }}>
+              <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`} style={{ padding: 18 }}>
                 <InlineTextEdit
                   tag="h3"
                   className=""
@@ -1859,7 +1859,7 @@ export default function RedHarborHome() {
             </div>
           </div>
 
-          <div className="rh-card" style={{ marginTop: 18 }}>
+          <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`} style={{ marginTop: 18 }}>
             <InlineTextEdit
               tag="h2"
               className=""
@@ -1921,13 +1921,13 @@ export default function RedHarborHome() {
 
             <div className="rh-bulletin-home-list">
               {posts.map((post) => (
-                <article className="rh-card rh-bulletin-home-card" key={post.id}>
+                <article className={`rh-card ${editorMode ? "rh-resizable" : ""} rh-bulletin-home-card`} key={post.id}>
                   <div className="rh-bulletin-home-date">
                     {post.publishedAt || post.updatedAt || ""}
                   </div>
                   <h3 className="rh-bulletin-home-card-title">{post.title}</h3>
                   {post.excerpt ? <p>{post.excerpt}</p> : null}
-                  <Link to={`/bulletin/${post.slug}`} className="rh-inline-link">Read post</Link>
+                  <Link to={`}/bulletin/${post.slug}`} className="rh-inline-link">Read post</Link>
                 </article>
               ))}
             </div>
@@ -1956,7 +1956,7 @@ export default function RedHarborHome() {
                 placeholder="Events section intro"
               />
             </div>
-            <div className="rh-card">
+            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
               <InlineStringListEditor
                 items={eventItems}
                 onChange={(items) => updateDraft("events_items", items)}
@@ -1992,7 +1992,7 @@ export default function RedHarborHome() {
           </div>
 
           <div className="rh-grid-two">
-            <div className="rh-card">
+            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
               <InlineCardBlockEditor
                 title={editorMode ? "Contact card" : ""}
                 cardTitle={liveHome.contact_card_title || defaultHome.contact_card_title}
@@ -2015,7 +2015,7 @@ export default function RedHarborHome() {
               ) : null}
             </div>
 
-            <div className="rh-card">
+            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
               <div className="rh-newsletter-head">
                 <h3>Newsletter</h3>
                 <p>

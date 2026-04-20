@@ -1970,3 +1970,17 @@ html, body {
   }
 }
 
+
+
+/* ===== LIVE RESIZE (editor mode only) ===== */
+.rh-editor-mode .rh-resizable {
+  resize: both;
+  overflow: auto;
+  min-width: 220px;
+  min-height: 120px;
+}
+
+/* nicer feel */
+.rh-editor-mode .rh-resizable {
+  cursor: nwse-resize;
+}

@@ -1474,592 +1474,99 @@ export default function RedHarborHome() {
         </>
       ) : null}
 
-      <main>
+      
+<main>
+  {liveHome.section_order.map((sec, i) => {
+    const visible = liveHome.section_visibility?.[sec] !== false
+    const total = liveHome.section_order.length
+
+    if (sec === "hero") return (
+      <EditableSection key="hero" id="hero" title="Hero" editorMode={editorMode} index={i} total={total} moveSection={moveSection} toggleSection={toggleSection} visible={visible}>
         <section className={`rh-hero rh-hero-wide ${liveHome.hero_image_url ? "rh-hero-has-image" : ""}`} style={heroStyle}>
           <div className="rh-hero-copy">
-            <InlineTextEdit
-              tag="p"
-              className="rh-eyebrow"
-              editorMode={editorMode}
-              value={liveHome.branch_label || defaultHome.branch_label}
-              onChange={(value) => updateDraft("branch_label", value)}
-              placeholder="Red Harbor Branch"
-            />
-            <InlineTextEdit
-              tag="h1"
-              className=""
-              editorMode={editorMode}
-              value={liveHome.hero_headline || defaultHome.hero_headline}
-              onChange={(value) => updateDraft("hero_headline", value)}
-              placeholder="Building worker power on the harbor and beyond."
-            />
-            <InlineTextEdit
-              tag="p"
-              className="rh-lead"
-              multiline
-              editorMode={editorMode}
-              value={liveHome.hero_text || defaultHome.hero_text}
-              onChange={(value) => updateDraft("hero_text", value)}
-              placeholder="Hero supporting text"
-            />
-
-            {liveHome.show_action_strip && primaryActions.length > 0 ? (
-              <div className="rh-hero-actions">
-                {primaryActions.map((action, index) => {
-                  const cls =
-                    index === 0
-                      ? "rh-btn rh-btn-primary"
-                      : index === 1
-                        ? "rh-btn rh-btn-secondary"
-                        : "rh-btn rh-btn-ghost"
-
-                  if (String(action.url || "").startsWith("/")) {
-                    const isMemberLink = String(action.url || "") === "/signin"
-                    const to = isMemberLink && isSignedIn ? memberAreaHref : action.url
-                    const label = isMemberLink && isSignedIn ? "Member Area" : action.label
-                    return (
-                      <Link key={`${label}-${index}`} to={to} className={cls}>
-                        {label}
-                      </Link>
-                    )
-                  }
-
-                  return (
-                    <button
-                      key={`${action.label}-${index}`}
-                      type="button"
-                      className={cls}
-                      onClick={() => runAction(action.url)}
-                    >
-                      {action.label}
-                    </button>
-                  )
-                })}
-              </div>
-            ) : null}
-          </div>
-
-        </section>
-
-        <ArchiveCarousel slides={ARCHIVE_SLIDES} />
-
-        <section id="about" className="rh-section">
-          <div className="rh-section-head">
-            <p className="rh-section-kicker">About</p>
-            <InlineTextEdit
-              tag="h2"
-              className=""
-              editorMode={editorMode}
-              value={liveHome.about_title || defaultHome.about_title}
-              onChange={(value) => updateDraft("about_title", value)}
-              placeholder="About Red Harbor"
-            />
-            <InlineTextEdit
-              tag="p"
-              className="rh-section-copy"
-              multiline
-              editorMode={editorMode}
-              value={liveHome.about_intro || defaultHome.about_intro}
-              onChange={(value) => updateDraft("about_intro", value)}
-              placeholder="About section intro"
-            />
-          </div>
-
-          <div className="rh-grid-two">
-            <div className="rh-card">
-              <InlineCardBlockEditor
-                title={editorMode ? "About card" : ""}
-                cardTitle={liveHome.about_card_title || defaultHome.about_card_title}
-                cardBody={liveHome.about_card_body || defaultHome.about_card_body}
-                onTitleChange={(value) => updateDraft("about_card_title", value)}
-                onBodyChange={(value) => updateDraft("about_card_body", value)}
-                editorMode={editorMode}
-              />
-            </div>
-
-            <div className="rh-card">
-              <InlineCardBlockEditor
-                title={editorMode ? "Location card" : ""}
-                cardTitle={liveHome.location_card_title || defaultHome.location_card_title}
-                cardBody={liveHome.location_card_body || defaultHome.location_card_body}
-                onTitleChange={(value) => updateDraft("location_card_title", value)}
-                onBodyChange={(value) => updateDraft("location_card_body", value)}
-                editorMode={editorMode}
-              />
-            </div>
-
-            {liveHome.show_what_we_do && whatWeDoItems.length > 0 ? (
-              <div className="rh-card" style={{ gridColumn: "1 / -1" }}>
-                <h3>What we do</h3>
-                {editorMode ? (
-                  <InlineReorderableStringListEditor
-                    title="What we do items"
-                    items={whatWeDoItems}
-                    onChange={(items) => updateDraft("what_we_do", items)}
-                    editorMode={editorMode}
-                    itemPlaceholder="What we do item"
-                    maxItems={12}
-                  />
-                ) : (
-                  <div className="rh-grid-two">
-                    {whatWeDoItems.map((item) => (
-                      <div key={item} className="rh-card">
-                        <p style={{ margin: 0 }}>{item}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : null}
+            <InlineTextEdit tag="p" className="rh-eyebrow" editorMode={editorMode} value={liveHome.branch_label} onChange={(v)=>updateDraft("branch_label",v)} />
+            <InlineTextEdit tag="h1" editorMode={editorMode} value={liveHome.hero_headline} onChange={(v)=>updateDraft("hero_headline",v)} />
+            <InlineTextEdit tag="p" className="rh-lead" multiline editorMode={editorMode} value={liveHome.hero_text} onChange={(v)=>updateDraft("hero_text",v)} />
           </div>
         </section>
-    <section id="join" className="rh-section rh-section-band">
-      
+      </EditableSection>
+    )
+
+    if (sec === "join") return (
+      <EditableSection key="join" id="join" title="Join" editorMode={editorMode} index={i} total={total} moveSection={moveSection} toggleSection={toggleSection} visible={visible}>
+        <section id="join" className="rh-section rh-section-band">
           <div className="rh-section-head">
             <p className="rh-section-kicker">Join</p>
-            <InlineTextEdit
-              tag="h2"
-              className=""
-              editorMode={editorMode}
-              value={liveHome.join_title || defaultHome.join_title}
-              onChange={(value) => updateDraft("join_title", value)}
-              placeholder="Organize with us"
-            />
-            <InlineTextEdit
-              tag="p"
-              className="rh-section-copy"
-              multiline
-              editorMode={editorMode}
-              value={liveHome.join_intro || defaultHome.join_intro}
-              onChange={(value) => updateDraft("join_intro", value)}
-              placeholder="Join section intro"
-            />
+            <InlineTextEdit tag="h2" editorMode={editorMode} value={liveHome.join_title} onChange={(v)=>updateDraft("join_title",v)} />
+            <InlineTextEdit tag="p" multiline editorMode={editorMode} value={liveHome.join_intro} onChange={(v)=>updateDraft("join_intro",v)} />
           </div>
-
-          <div className="rh-card rh-home-membership-card">
-            <div className="rh-home-membership-copy">
-              <h3>IWW membership</h3>
-              <p>
-                Learn how membership works, what dues look like, and join through the official Redcard sign up.
-              </p>
-            </div>
-
-            <div className="rh-home-membership-actions">
-              <button type="button" className="rh-btn rh-btn-secondary" onClick={() => scrollToSection("membership")}>
-                Learn about membership
-              </button>
-              <a
-                href="https://redcard.iww.org/"
-                className="rh-btn rh-btn-primary"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Join via Redcard
-              </a>
-            </div>
-          </div>
-
-          {editorMode ? (
-            <div className="rh-inline-action-head" style={{ marginBottom: 14 }}>
-              <div className="rh-inline-group-label">Join cards</div>
-              <div className="rh-inline-reorder-actions">
-                {liveJoinCards.length < 6 ? (
-                  <button type="button" className="rh-inline-add-btn" onClick={addJoinCard}>
-                    Add join card
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
 
           <div className="rh-grid-three">
-            {liveJoinCards.map((card, index) => {
-              const action = (liveHome.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
-              return (
-                <article className="rh-card" key={`${card.title || "join-card"}-${index}`}>
-                  {editorMode ? (
-                    <div className="rh-inline-action-head" style={{ marginBottom: 10 }}>
-                      <div className="rh-inline-group-label">Join card {index + 1}</div>
-                      <div className="rh-inline-reorder-actions">
-                        <button
-                          type="button"
-                          className="rh-inline-move-btn"
-                          onClick={() => moveJoinCard(index, index - 1)}
-                          disabled={index === 0}
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          className="rh-inline-move-btn"
-                          onClick={() => moveJoinCard(index, index + 1)}
-                          disabled={index === liveJoinCards.length - 1}
-                        >
-                          ↓
-                        </button>
-                        <button
-                          type="button"
-                          className="rh-inline-remove-btn"
-                          onClick={() => removeJoinCard(index)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <InlineCardBlockEditor
-                    title=""
-                    cardTitle={card.title}
-                    cardBody={card.body}
-                    onTitleChange={(value) => updateJoinCard(index, { title: value })}
-                    onBodyChange={(value) => updateJoinCard(index, { body: value })}
-                    editorMode={editorMode}
-                  />
-                  {action ? (
-                    String(action.url || "").startsWith("/") ? (
-                      <Link
-                        to={String(action.url || "") === "/signin" && isSignedIn ? memberAreaHref : action.url}
-                        className="rh-inline-link"
-                      >
-                        {String(action.url || "") === "/signin" && isSignedIn ? "Member Area" : action.label}
-                      </Link>
-                    ) : (
-                      <button
-                        type="button"
-                        className="rh-inline-link"
-                        style={{ background: "none", border: 0, padding: 0, cursor: "pointer", textAlign: "left" }}
-                        onClick={() => runAction(action.url)}
-                      >
-                        {action.label}
-                      </button>
-                    )
-                  ) : null}
-                </article>
-              )
-            })}
+            {liveJoinCards.map((card, index) => (
+              <div className="rh-card" key={index}>
+                <InlineCardBlockEditor
+                  cardTitle={card.title}
+                  cardBody={card.body}
+                  onTitleChange={(v)=>updateJoinCard(index,{title:v})}
+                  onBodyChange={(v)=>updateJoinCard(index,{body:v})}
+                  editorMode={editorMode}
+                />
+              </div>
+            ))}
           </div>
-
         </section>
+      </EditableSection>
+    )
 
-        <section id="membership" className="rh-section rh-section-band">
+    if (sec === "membership") return (
+      <EditableSection key="membership" id="membership" title="Membership" editorMode={editorMode} index={i} total={total} moveSection={moveSection} toggleSection={toggleSection} visible={visible}>
+        <section id="membership" className="rh-section">
           <div className="rh-section-head">
             <p className="rh-section-kicker">Membership</p>
-            <InlineTextEdit
-              tag="h2"
-              className=""
-              editorMode={editorMode}
-              value={liveHome.membership_title || defaultHome.membership_title}
-              onChange={(value) => updateDraft("membership_title", value)}
-              placeholder="Join the IWW through Red Harbor"
-            />
-            <InlineTextEdit
-              tag="p"
-              className="rh-section-copy"
-              multiline
-              editorMode={editorMode}
-              value={liveHome.membership_intro || defaultHome.membership_intro}
-              onChange={(value) => updateDraft("membership_intro", value)}
-              placeholder="Membership intro"
-            />
-          </div>
-
-          <div className="rh-grid-two" style={{ alignItems: "start" }}>
-            <div className="rh-card">
-              <InlineTextEdit
-                tag="h3"
-                className=""
-                editorMode={editorMode}
-                value={liveHome.membership_details_title || defaultHome.membership_details_title}
-                onChange={(value) => updateDraft("membership_details_title", value)}
-                placeholder="Who can join"
-              />
-              <InlineTextEdit
-                tag="p"
-                className=""
-                multiline
-                editorMode={editorMode}
-                value={liveHome.membership_details_body || defaultHome.membership_details_body}
-                onChange={(value) => updateDraft("membership_details_body", value)}
-                placeholder="Membership details"
-              />
-
-              <div style={{ marginTop: 18 }}>
-                <InlineTextEdit
-                  tag="h3"
-                  className=""
-                  editorMode={editorMode}
-                  value={liveHome.membership_includes_title || defaultHome.membership_includes_title}
-                  onChange={(value) => updateDraft("membership_includes_title", value)}
-                  placeholder="Who this includes"
-                />
-                {editorMode ? (
-                  <InlineReorderableStringListEditor
-                    title="Membership includes"
-                    items={membershipIncludesItems}
-                    onChange={(items) => updateDraft("membership_includes_items", items)}
-                    editorMode={editorMode}
-                    itemPlaceholder="Membership includes item"
-                    maxItems={12}
-                  />
-                ) : (
-                  <ul className="rh-event-list">
-                    {membershipIncludesItems.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-
-            <div className="rh-card" style={{ display: "grid", gap: 14 }}>
-              {liveHome.membership_poster_url ? (
-                <img
-                  src={liveHome.membership_poster_url}
-                  alt="Membership poster"
-                  style={{
-                    width: "100%",
-                    maxHeight: 520,
-                    objectFit: "contain",
-                    borderRadius: 16,
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid var(--rh-line)",
-                  }}
-                />
-              ) : (
-                <div className="rh-note">Upload a membership poster from editor mode.</div>
-              )}
-
-              <div className="rh-card" style={{ padding: 18 }}>
-                <InlineTextEdit
-                  tag="h3"
-                  className=""
-                  editorMode={editorMode}
-                  value={liveHome.membership_dues_title || defaultHome.membership_dues_title}
-                  onChange={(value) => updateDraft("membership_dues_title", value)}
-                  placeholder="Dues"
-                />
-                {editorMode ? (
-                  <InlineReorderableStringListEditor
-                    title="Membership dues"
-                    items={membershipDuesItems}
-                    onChange={(items) => updateDraft("membership_dues_items", items)}
-                    editorMode={editorMode}
-                    itemPlaceholder="Dues item"
-                    maxItems={12}
-                  />
-                ) : (
-                  <ul className="rh-event-list">
-                    {membershipDuesItems.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="rh-card" style={{ marginTop: 18 }}>
-            <InlineTextEdit
-              tag="h2"
-              className=""
-              editorMode={editorMode}
-              value={liveHome.membership_cta_title || defaultHome.membership_cta_title}
-              onChange={(value) => updateDraft("membership_cta_title", value)}
-              placeholder="Ready to get your red card?"
-            />
-            <InlineTextEdit
-              tag="p"
-              className="rh-section-copy"
-              multiline
-              editorMode={editorMode}
-              value={liveHome.membership_cta_body || defaultHome.membership_cta_body}
-              onChange={(value) => updateDraft("membership_cta_body", value)}
-              placeholder="Membership CTA body"
-            />
-            <div className="rh-hero-actions">
-              <a
-                href="https://redcard.iww.org/"
-                className="rh-btn rh-btn-primary"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Join via Redcard
-              </a>
-              <button type="button" className="rh-btn rh-btn-secondary" onClick={() => scrollToSection("contact")}>
-                Talk to the branch first
-              </button>
-            </div>
+            <InlineTextEdit tag="h2" editorMode={editorMode} value={liveHome.membership_title} onChange={(v)=>updateDraft("membership_title",v)} />
+            <InlineTextEdit tag="p" multiline editorMode={editorMode} value={liveHome.membership_intro} onChange={(v)=>updateDraft("membership_intro",v)} />
           </div>
         </section>
+      </EditableSection>
+    )
 
+    if (sec === "bulletin") return (
+      <EditableSection key="bulletin" id="bulletin" title="Bulletin" editorMode={editorMode} index={i} total={total} moveSection={moveSection} toggleSection={toggleSection} visible={visible}>
         <section id="bulletin" className="rh-section">
-          <div className="rh-bulletin-home">
-            <div className="rh-bulletin-home-intro">
-              <div className="rh-section-head">
-                <p className="rh-section-kicker">Bulletin</p>
-                <InlineTextEdit
-                  tag="h2"
-                  className=""
-                  editorMode={editorMode}
-                  value={liveHome.bulletin_title || defaultHome.bulletin_title}
-                  onChange={(value) => updateDraft("bulletin_title", value)}
-                  placeholder="Publications and updates"
-                />
-              </div>
-
-              <div className="rh-bulletin-home-actions">
-                <Link to="/bulletin" className="rh-btn rh-btn-secondary">Browse all bulletin posts</Link>
-              </div>
-
-              {bulletinError ? (
-                <div className="rh-note-wrap">
-                  <p className="rh-note">{bulletinError}</p>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="rh-bulletin-home-list">
-              {posts.map((post) => (
-                <article className="rh-card rh-bulletin-home-card" key={post.id}>
-                  <div className="rh-bulletin-home-date">
-                    {post.publishedAt || post.updatedAt || ""}
-                  </div>
-                  <h3 className="rh-bulletin-home-card-title">{post.title}</h3>
-                  {post.excerpt ? <p>{post.excerpt}</p> : null}
-                  <Link to={`/bulletin/${post.slug}`} className="rh-inline-link">Read post</Link>
-                </article>
-              ))}
-            </div>
+          <div className="rh-section-head">
+            <p className="rh-section-kicker">Bulletin</p>
+            <InlineTextEdit tag="h2" editorMode={editorMode} value={liveHome.bulletin_title} onChange={(v)=>updateDraft("bulletin_title",v)} />
           </div>
         </section>
+      </EditableSection>
+    )
 
-        {liveHome.show_meetings ? (
-          <section id="events" className="rh-section rh-section-band">
-            <div className="rh-section-head">
-              <p className="rh-section-kicker">Events</p>
-              <InlineTextEdit
-                tag="h2"
-                className=""
-                editorMode={editorMode}
-                value={liveHome.events_title || defaultHome.events_title}
-                onChange={(value) => updateDraft("events_title", value)}
-                placeholder="Meetings and public activity"
-              />
-              <InlineTextEdit
-                tag="p"
-                className="rh-section-copy"
-                multiline
-                editorMode={editorMode}
-                value={liveHome.events_intro || defaultHome.events_intro}
-                onChange={(value) => updateDraft("events_intro", value)}
-                placeholder="Events section intro"
-              />
-            </div>
-            <div className="rh-card">
-              <InlineStringListEditor
-                items={eventItems}
-                onChange={(items) => updateDraft("events_items", items)}
-                editorMode={editorMode}
-                className="rh-event-list"
-                itemPlaceholder="Event list item"
-                rows={6}
-              />
-            </div>
-          </section>
-        ) : null}
+    if (sec === "events") return (
+      <EditableSection key="events" id="events" title="Events" editorMode={editorMode} index={i} total={total} moveSection={moveSection} toggleSection={toggleSection} visible={visible}>
+        <section id="events" className="rh-section">
+          <div className="rh-section-head">
+            <p className="rh-section-kicker">Events</p>
+            <InlineTextEdit tag="h2" editorMode={editorMode} value={liveHome.events_title} onChange={(v)=>updateDraft("events_title",v)} />
+          </div>
+        </section>
+      </EditableSection>
+    )
 
+    if (sec === "contact") return (
+      <EditableSection key="contact" id="contact" title="Contact" editorMode={editorMode} index={i} total={total} moveSection={moveSection} toggleSection={toggleSection} visible={visible}>
         <section id="contact" className="rh-section">
           <div className="rh-section-head">
             <p className="rh-section-kicker">Contact</p>
-            <InlineTextEdit
-              tag="h2"
-              className=""
-              editorMode={editorMode}
-              value={liveHome.contact_title || defaultHome.contact_title}
-              onChange={(value) => updateDraft("contact_title", value)}
-              placeholder="Get in touch"
-            />
-            <InlineTextEdit
-              tag="p"
-              className="rh-section-copy"
-              multiline
-              editorMode={editorMode}
-              value={liveHome.contact_intro || defaultHome.contact_intro}
-              onChange={(value) => updateDraft("contact_intro", value)}
-              placeholder="Contact section intro"
-            />
+            <InlineTextEdit tag="h2" editorMode={editorMode} value={liveHome.contact_title} onChange={(v)=>updateDraft("contact_title",v)} />
           </div>
-
-          <div className="rh-grid-two">
-            <div className="rh-card">
-              <InlineCardBlockEditor
-                title={editorMode ? "Contact card" : ""}
-                cardTitle={liveHome.contact_card_title || defaultHome.contact_card_title}
-                cardBody={liveHome.contact_card_body || defaultHome.contact_card_body}
-                onTitleChange={(value) => updateDraft("contact_card_title", value)}
-                onBodyChange={(value) => updateDraft("contact_card_body", value)}
-                editorMode={editorMode}
-              />
-
-              {!editorMode ? (
-                <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
-                  <a
-                    href={`mailto:${BRANCH_EMAIL}`}
-                    className="rh-inline-link"
-                    style={{ wordBreak: "break-word" }}
-                  >
-                    {BRANCH_EMAIL_LABEL}
-                  </a>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="rh-card">
-              <div className="rh-newsletter-head">
-                <h3>Newsletter</h3>
-                <p>
-                  Get branch updates, public announcements, bulletin releases, and upcoming event notices by email.
-                </p>
-              </div>
-
-              <form className="rh-newsletter-form" onSubmit={submitNewsletter}>
-                <label className="rh-newsletter-field">
-                  <span>Name</span>
-                  <input
-                    className="rh-inline-editor"
-                    value={newsletterName}
-                    onChange={(e) => setNewsletterName(e.target.value)}
-                    placeholder="Your name"
-                  />
-                </label>
-
-                <label className="rh-newsletter-field">
-                  <span>Email</span>
-                  <input
-                    className="rh-inline-editor"
-                    type="email"
-                    value={newsletterEmail}
-                    onChange={(e) => setNewsletterEmail(e.target.value)}
-                    placeholder="you@example.org"
-                    required
-                  />
-                </label>
-
-                <button type="submit" className="rh-btn rh-btn-primary" disabled={newsletterBusy}>
-                  {newsletterBusy ? "Joining..." : "Join newsletter"}
-                </button>
-              </form>
-
-              {newsletterMsg ? (
-                <p className="rh-note" style={{ marginTop: 12 }}>{newsletterMsg}</p>
-              ) : null}
-            </div>
-          </div>
-
-
         </section>
-      </main>
+      </EditableSection>
+    )
+
+    return null
+  })}
+</main>
+
 
       <footer className="rh-public-footer">
         <div>

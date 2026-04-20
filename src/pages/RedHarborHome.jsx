@@ -875,7 +875,7 @@ export default function RedHarborHome() {
       })
       try { ro.disconnect() } catch {}
     }
-  }, [editorMode, liveJoinCards.length])
+  }, [editorMode, draft, home])
 
   React.useEffect(() => {
     let ignore = false

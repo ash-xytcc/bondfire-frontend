@@ -2500,3 +2500,188 @@ html, body {
   }
 }
 
+
+/* ===== FINAL HOMEPAGE LAYOUT FIX: JOIN + MEMBERSHIP ===== */
+
+/* kill resize leftovers outside editor mode */
+.rh-public:not(.rh-editor-mode) #join .rh-card,
+.rh-public:not(.rh-editor-mode) #membership .rh-card {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  resize: none !important;
+  overflow: visible !important;
+}
+
+/* ---------------------------------
+   JOIN SECTION
+   left = intro
+   right top = membership CTA card
+   right bottom = join cards filling row
+--------------------------------- */
+#join.rh-section {
+  display: grid !important;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 3.15fr) !important;
+  column-gap: 18px !important;
+  row-gap: 18px !important;
+  align-items: start !important;
+}
+
+#join .rh-section-head {
+  grid-column: 1 !important;
+  grid-row: 1 / span 2 !important;
+  margin-bottom: 0 !important;
+}
+
+#join .rh-home-membership-card {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+#join .rh-grid-three,
+#join .rh-grid-three.rh-join-grid-four {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+#join .rh-grid-three > .rh-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+}
+
+#join .rh-grid-three > .rh-card,
+#join .rh-grid-three > .rh-card *,
+#join .rh-grid-three > .rh-card h3,
+#join .rh-grid-three > .rh-card p,
+#join .rh-grid-three > .rh-card a,
+#join .rh-grid-three > .rh-card button,
+#join .rh-home-membership-card,
+#join .rh-home-membership-card *,
+#join .rh-home-membership-card h3,
+#join .rh-home-membership-card p,
+#join .rh-home-membership-card a,
+#join .rh-home-membership-card button {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+#join .rh-grid-three > .rh-card .rh-inline-link,
+#join .rh-grid-three > .rh-card .rh-btn {
+  margin-top: auto !important;
+  align-self: flex-start !important;
+}
+
+/* ---------------------------------
+   MEMBERSHIP SECTION
+   left = intro
+   middle = who can join + dues stacked
+   right = poster + CTA stacked
+--------------------------------- */
+#membership.rh-section {
+  display: grid !important;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.25fr) minmax(280px, 0.95fr) !important;
+  column-gap: 18px !important;
+  row-gap: 18px !important;
+  align-items: start !important;
+}
+
+#membership .rh-section-head {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  margin-bottom: 0 !important;
+}
+
+#membership > .rh-grid-two.rh-membership-two-col {
+  grid-column: 2 / 4 !important;
+  grid-row: 1 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr) !important;
+  gap: 18px !important;
+  align-items: start !important;
+  width: 100% !important;
+}
+
+#membership .rh-membership-stack {
+  grid-column: 1 !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+#membership .rh-membership-side-stack {
+  grid-column: 2 !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+#membership .rh-membership-stack > .rh-card,
+#membership .rh-membership-side-stack > .rh-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+#membership .rh-card,
+#membership .rh-card *,
+#membership .rh-card h2,
+#membership .rh-card h3,
+#membership .rh-card p,
+#membership .rh-card li,
+#membership .rh-card a,
+#membership .rh-card button {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+/* mobile / tablet collapse */
+@media (max-width: 980px) {
+  #join.rh-section,
+  #membership.rh-section {
+    grid-template-columns: 1fr !important;
+  }
+
+  #join .rh-section-head,
+  #join .rh-home-membership-card,
+  #join .rh-grid-three,
+  #membership .rh-section-head,
+  #membership > .rh-grid-two.rh-membership-two-col {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+
+  #membership > .rh-grid-two.rh-membership-two-col {
+    grid-template-columns: 1fr !important;
+  }
+
+  #membership .rh-membership-stack,
+  #membership .rh-membership-side-stack {
+    grid-column: 1 !important;
+  }
+}
+

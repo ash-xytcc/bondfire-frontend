@@ -1290,26 +1290,8 @@ export default function DpgPublicHome() {
           <div style={{ display: 'grid', gap: 20 }}>
             <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 10 }}>
-                <div style={{ flex: 1 }}>
-                <InlineField
-                  editorMode={editorMode}
-                  editing={editorMode && activeField === "organizer_title"}
-                  value={String(liveConfig?.organizer_title || '')}
-                  onChange={(v) => updateDraft("organizer_title", v)}
-                  onStartEdit={() => editorMode && setActiveField("organizer_title")}
-                  onStopEdit={() => setActiveField("")}
-                  placeholder="Organizer title"
-                  display={liveConfig?.organizer_title || 'Organizer entry'}
-                  hint="Edit title"
-                  displayStyle={{
-                    color: '#f3efe8',
-                    fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
-                    fontWeight: 800,
-                    fontSize: 26,
-                    borderRadius: 12,
-                  }}
-                />
-              </div>
+                
+
               {editorMode ? (
                 <EditChip
                   onClick={() => setActiveField(activeField === "organizer_body" ? "" : "organizer_body")}

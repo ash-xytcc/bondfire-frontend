@@ -297,6 +297,43 @@ export async function updateShare(env, orgId, shareId, input) {
   return rowToShare(row || {});
 }
 
+
+function getSharesBucket(env) {
+  return env?.DPG_SHARES_R2 || env?.SHARES_R2 || env?.R2 || env?.BF_R2 || null;
+}
+
+export async function deleteShare(env, orgId, shareId, options = {}) {
+  await ensureDpgSharesSchema(env);
+  const db = getDb(env);
+
+  const existing = await db.prepare(
+    `SELECT * FROM dpg_shares_videos WHERE id = ? AND org_id = ? LIMIT 1`
+  ).bind(String(shareId || ""), String(orgId || "")).first();
+
+  if (!existing) throw new Error("SHARE_NOT_FOUND");
+
+  const share = rowToShare(existing || {});
+  const bucket = getSharesBucket(env);
+
+  if (options?.deleteAssets && bucket) {
+    const keys = [share.storageKey, share.posterKey]
+      .map((x) => String(x || "").trim())
+      .filter(Boolean);
+
+    for (const key of keys) {
+      try {
+        await bucket.delete(key);
+      } catch {}
+    }
+  }
+
+  await db.prepare(
+    `DELETE FROM dpg_shares_videos WHERE id = ? AND org_id = ?`
+  ).bind(String(shareId || ""), String(orgId || "")).run();
+
+  return share;
+}
+
 export async function getPublicShareBySlug(env, orgId = "dpg", slug = "") {
   await ensureDpgSharesSchema(env);
   const db = getDb(env);

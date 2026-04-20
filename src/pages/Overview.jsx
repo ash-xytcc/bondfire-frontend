@@ -242,25 +242,22 @@ function layoutKey(orgId) {
 function defaultLayouts() {
   return {
     lg: [
-      { i: "inbox", x: 0, y: 0, w: 5, h: 14, minW: 3, minH: 10 },
-      { i: "meetings", x: 5, y: 0, w: 5, h: 9, minW: 3, minH: 7 },
-      { i: "inventory", x: 10, y: 0, w: 4, h: 10, minW: 3, minH: 8 },
-      { i: "needs", x: 5, y: 9, w: 5, h: 10, minW: 3, minH: 8 },
-      { i: "pledges", x: 10, y: 10, w: 4, h: 9, minW: 3, minH: 7 },
+      { i: "rsvps", x: 0, y: 0, w: 7, h: 11, minW: 4, minH: 8 },
+      { i: "meetings", x: 7, y: 0, w: 7, h: 11, minW: 4, minH: 8 },
+      { i: "inventory", x: 0, y: 11, w: 7, h: 11, minW: 4, minH: 8 },
+      { i: "needs", x: 7, y: 11, w: 7, h: 11, minW: 4, minH: 8 },
     ],
     md: [
-      { i: "inbox", x: 0, y: 0, w: 6, h: 13, minW: 4, minH: 10 },
-      { i: "meetings", x: 6, y: 0, w: 6, h: 8, minW: 4, minH: 7 },
-      { i: "inventory", x: 6, y: 8, w: 6, h: 9, minW: 4, minH: 8 },
-      { i: "needs", x: 0, y: 13, w: 6, h: 10, minW: 4, minH: 8 },
-      { i: "pledges", x: 6, y: 17, w: 6, h: 8, minW: 4, minH: 7 },
+      { i: "rsvps", x: 0, y: 0, w: 6, h: 11, minW: 4, minH: 8 },
+      { i: "meetings", x: 6, y: 0, w: 6, h: 11, minW: 4, minH: 8 },
+      { i: "inventory", x: 0, y: 11, w: 6, h: 11, minW: 4, minH: 8 },
+      { i: "needs", x: 6, y: 11, w: 6, h: 11, minW: 4, minH: 8 },
     ],
     sm: [
-      { i: "inbox", x: 0, y: 0, w: 1, h: 14, minH: 10, static: true },
-      { i: "meetings", x: 0, y: 14, w: 1, h: 9, minH: 7, static: true },
-      { i: "inventory", x: 0, y: 23, w: 1, h: 10, minH: 8, static: true },
-      { i: "needs", x: 0, y: 33, w: 1, h: 10, minH: 8, static: true },
-      { i: "pledges", x: 0, y: 43, w: 1, h: 9, minH: 7, static: true },
+      { i: "rsvps", x: 0, y: 0, w: 1, h: 11, minH: 8, static: true },
+      { i: "meetings", x: 0, y: 11, w: 1, h: 11, minH: 8, static: true },
+      { i: "inventory", x: 0, y: 22, w: 1, h: 11, minH: 8, static: true },
+      { i: "needs", x: 0, y: 33, w: 1, h: 11, minH: 8, static: true },
     ],
   };
 }
@@ -301,6 +298,8 @@ export default function Overview() {
   const [needs, setNeeds] = useState([]);
   const [meetings, setMeetings] = useState([]);
   const [subs, setSubs] = useState([]);
+  const [attendees, setAttendees] = useState([]);
+  const [shares, setShares] = useState([]);
   const [pledges, setPledges] = useState([]);
   const [publicInbox, setPublicInbox] = useState([]);
   const [rsvpMsg, setRsvpMsg] = useState("");
@@ -415,6 +414,8 @@ export default function Overview() {
 
       const meetsRaw = Array.isArray(d?.meetings) ? d.meetings : (await api(`/api/orgs/${encodeURIComponent(orgId)}/meetings`))?.meetings;
       const subsResp = await api(`/api/orgs/${encodeURIComponent(orgId)}/newsletter/subscribers`);
+      const attendeesResp = await api(`/api/orgs/${encodeURIComponent(orgId)}/attendees`).catch(() => ({ attendees: [] }));
+      const sharesResp = await api(`/api/orgs/${encodeURIComponent(orgId)}/shares`).catch(() => ({ shares: [] }));
       const pledgesResp = await api(`/api/orgs/${encodeURIComponent(orgId)}/pledges`);
       const publicInboxResp = await api(`/api/orgs/${encodeURIComponent(orgId)}/public/inbox`).catch(() => ({ items: [] }));
 
@@ -430,6 +431,8 @@ export default function Overview() {
       setNeeds(Array.isArray(needsDec) ? needsDec : []);
       setMeetings(Array.isArray(meetsDec) ? meetsDec : []);
       setSubs(Array.isArray(subsDec) ? subsDec : []);
+      setAttendees(Array.isArray(attendeesResp?.attendees) ? attendeesResp.attendees : []);
+      setShares(Array.isArray(sharesResp?.shares) ? sharesResp.shares : []);
       setPledges(Array.isArray(pledgesDec) ? pledgesDec : []);
       setPublicInbox(Array.isArray(publicInboxResp?.items) ? publicInboxResp.items : Array.isArray(publicInboxResp?.submissions) ? publicInboxResp.submissions : []);
 
@@ -480,14 +483,14 @@ export default function Overview() {
   const countsNormalized = useMemo(() => {
     const c = counts || {};
     return {
-      people: Number(c.people || people.length || 0),
-      inventory: Number(c.inventory || inventory.length || 0),
-      needsOpen: Number(c.needsOpen || c.needs || needs.filter((n) => String(n?.status || "").toLowerCase() === "open").length || 0),
-      meetingsUpcoming: Number(c.meetingsUpcoming || meetings.filter((m) => Number(m?.starts_at) > 0).length || 0),
-      rsvps: Number(c.attendees || c.rsvps || c.rsvp || 0),
-      subsTotal: Number(c.subscribers || c.subs || c.subsTotal || subs.length || 0),
+      people: Math.max(Number(c.people || 0), Number(people.length || 0), 1),
+      inventory: Math.max(Number(c.inventory || 0), Number(inventory.length || 0)),
+      needsOpen: Math.max(Number(c.needsOpen || c.needs || 0), Number(needs.filter((n) => String(n?.status || "").toLowerCase() === "open").length || 0)),
+      meetingsUpcoming: Math.max(Number(c.meetingsUpcoming || 0), Number(meetings.filter((m) => Number(m?.starts_at) > 0).length || 0)),
+      rsvps: Math.max(Number(c.attendees || c.rsvps || c.rsvp || 0), Number(attendees.length || 0)),
+      subsTotal: Math.max(Number(c.subscribers || c.subs || c.subsTotal || 0), Number(subs.length || 0)),
     };
-  }, [counts, people, inventory, needs, meetings, subs]);
+  }, [counts, people, inventory, needs, meetings, attendees, subs]);
 
   const deltas = useMemo(() => {
     const d = tickerDeltas || {};
@@ -523,6 +526,14 @@ export default function Overview() {
     const arr = Array.isArray(meetings) ? meetings : [];
     return arr.filter((m) => Number(m?.starts_at) > 0).sort((a, b) => Number(a.starts_at) - Number(b.starts_at)).slice(0, 3);
   }, [meetings]);
+
+  const recentAttendees = useMemo(() => {
+    const arr = Array.isArray(attendees) ? attendees : [];
+    return arr
+      .slice()
+      .sort((a, b) => Number(b?.updatedAt || b?.createdAt || 0) - Number(a?.updatedAt || a?.createdAt || 0))
+      .slice(0, 6);
+  }, [attendees]);
 
   const needsOpen = useMemo(() => {
     const arr = Array.isArray(needs) ? needs : [];
@@ -653,8 +664,9 @@ export default function Overview() {
       mk("meetingsUpcoming", "Meetings", "📅", countsNormalized.meetingsUpcoming, "upcoming", "meetings"),
       mk("rsvps", "RSVPs", "✉️", countsNormalized.rsvps, "captured", "attendees"),
       mk("subsTotal", "New Subs", "📰", countsNormalized.subsTotal, "total", "settings?tab=newsletter"),
+      mk("videos", "Videos", "🎬", Number(shares.length || 0), "entries", "videos"),
     ];
-  }, [countsNormalized, deltas, historySeries]);
+  }, [countsNormalized, deltas, historySeries, shares.length]);
 
   const inboxPanel = panelWrap(
     "Inbox",
@@ -686,6 +698,38 @@ export default function Overview() {
       </div>
     ) : (
       <div className="helper" style={{ marginTop: 12 }}>No public inbox items yet.</div>
+    )
+  );
+
+  const rsvpsPanel = panelWrap(
+    "Recent RSVPs",
+    <button className="btn" type="button" onClick={() => go("attendees")}>View all</button>,
+    recentAttendees.length ? (
+      <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+        {recentAttendees.map((person) => (
+          <div key={person.id} className="card" style={{ padding: 12 }}>
+            <div style={{ display: "grid", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                {pill(
+                  String(person?.status || "captured").replace(/_/g, " "),
+                  String(person?.status || "").toLowerCase() === "needs_followup"
+                    ? "urgent"
+                    : String(person?.status || "").toLowerCase() === "reviewed"
+                      ? "accepted"
+                      : "medium"
+                )}
+                <div style={{ fontWeight: 900, flex: 1, minWidth: 0, wordBreak: "break-word" }}>
+                  {safeStr(person?.name || "anonymous")}
+                </div>
+              </div>
+              <div className="helper" style={{ wordBreak: "break-word" }}>{safeStr(person?.email || "")}</div>
+              <div className="helper">{fmtDT(person?.updatedAt || person?.createdAt) || "Recently added"}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="helper" style={{ marginTop: 12 }}>No RSVPs yet.</div>
     )
   );
 
@@ -854,7 +898,6 @@ export default function Overview() {
 
       {loading && !hasLoadedOnce ? (
         <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 12, alignItems: "start" }}>
-          <SectionCardSkeleton rows={2} />
           <SectionCardSkeleton rows={3} />
           <SectionCardSkeleton rows={3} />
           <SectionCardSkeleton rows={3} />
@@ -862,11 +905,10 @@ export default function Overview() {
         </div>
       ) : isNarrow ? (
         <div className="bfDashMobileStack">
-          {inboxPanel}
+          {rsvpsPanel}
           {meetingsPanel}
           {inventoryPanel}
           {needsPanel}
-          {pledgesPanel}
         </div>
       ) : (
         <div ref={gridWrapRef} className="bfDashGridWrap">
@@ -889,11 +931,10 @@ export default function Overview() {
               measureBeforeMount={false}
               useCSSTransforms={true}
             >
-              <div key="inbox">{inboxPanel}</div>
+              <div key="rsvps">{rsvpsPanel}</div>
               <div key="meetings">{meetingsPanel}</div>
               <div key="inventory">{inventoryPanel}</div>
               <div key="needs">{needsPanel}</div>
-              <div key="pledges">{pledgesPanel}</div>
             </Responsive>
           ) : null}
         </div>

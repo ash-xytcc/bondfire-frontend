@@ -400,6 +400,43 @@ export default function DpgVideosPage() {
     }
   }
 
+  async function deleteEntry(item) {
+    const id = String(item?.id || "").trim();
+    if (!id) return;
+
+    const confirmed = window.confirm(
+      `Delete "${item?.title || "this entry"}"?\n\nThis removes the share record and will also try to remove uploaded assets tied to it.`
+    );
+    if (!confirmed) return;
+
+    setSaving(true);
+    setError("");
+
+    try {
+      const res = await api("/api/orgs/dpg/shares", {
+        method: "DELETE",
+        body: { id, deleteAssets: true },
+      });
+
+      if (!res.ok) {
+        throw new Error(
+          res?.data?.error ||
+          res?.data?.detail ||
+          res?.data?.message ||
+          res?.data?.raw ||
+          `HTTP ${res.status}`
+        );
+      }
+
+      if (String(editingId || "") === id) resetForm();
+      await load();
+    } catch (e) {
+      setError(String(e?.message || e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function unpublish(item) {
     setSaving(true);
     setError("");
@@ -703,6 +740,10 @@ export default function DpgVideosPage() {
                         unpublish
                       </button>
                     ) : null}
+
+                    <button type="button" onClick={() => deleteEntry(item)} disabled={saving} style={buttonStyle(false)}>
+                      delete
+                    </button>
 
                     {item.slug ? (
                       <a href={`/dpg-shares/${item.slug}`} style={buttonStyle(false)}>

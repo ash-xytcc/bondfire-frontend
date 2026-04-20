@@ -1249,9 +1249,12 @@ function VolunteerPageLayout({ accent, editorMode = false, activeField = "", set
                 displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
               />
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                <a href="mailto:dualpowergathering@proton.me" className="dpg-vol-cta">
-                  Email organizers
-                </a>
+                <a
+  href="mailto:dualpowergathering@proton.me"
+  className="dpg-vol-cta"
+>
+  Email organizers
+</a>
 
                 <InlineField
                   editorMode={editorMode}

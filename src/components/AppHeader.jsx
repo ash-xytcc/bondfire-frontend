@@ -86,7 +86,7 @@ const Brand = ({ orgId, logoSrc }) => {
 
   const label = orgName || (dpg ? "Organizer workspace" : "Org");
   const imgSrc = logoSrc || brand.logoSrc;
-  const homeHref = inferredOrgId && dpg ? `/org/${encodeURIComponent(inferredOrgId)}/overview` : brand.homeHref;
+  const homeHref = dpg ? "/" : (inferredOrgId ? `/org/${encodeURIComponent(inferredOrgId)}/overview` : brand.homeHref);
 
   return (
     <div className="bf-brand-wrap">

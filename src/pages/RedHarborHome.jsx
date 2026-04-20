@@ -1672,7 +1672,7 @@ export default function RedHarborHome() {
             </div>
           ) : null}
 
-          <div className="rh-grid-three">
+          <div className={`rh-grid-three ${liveJoinCards.length >= 4 ? "rh-join-grid-four" : ""}`}>
             {liveJoinCards.map((card, index) => {
               const action = (liveHome.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
               return (
@@ -1764,79 +1764,81 @@ export default function RedHarborHome() {
             />
           </div>
 
-          <div className="rh-grid-three rh-membership-three-col" style={{ alignItems: "start" }}>
-            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
-              <InlineTextEdit
-                tag="h3"
-                className=""
-                editorMode={editorMode}
-                value={liveHome.membership_details_title || defaultHome.membership_details_title}
-                onChange={(value) => updateDraft("membership_details_title", value)}
-                placeholder="Who can join"
-              />
-              <InlineTextEdit
-                tag="p"
-                className=""
-                multiline
-                editorMode={editorMode}
-                value={liveHome.membership_details_body || defaultHome.membership_details_body}
-                onChange={(value) => updateDraft("membership_details_body", value)}
-                placeholder="Membership details"
-              />
-
-              <div style={{ marginTop: 18 }}>
+          <div className="rh-grid-two rh-membership-two-col" style={{ alignItems: "start" }}>
+            <div className="rh-membership-stack">
+              <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
                 <InlineTextEdit
                   tag="h3"
                   className=""
                   editorMode={editorMode}
-                  value={liveHome.membership_includes_title || defaultHome.membership_includes_title}
-                  onChange={(value) => updateDraft("membership_includes_title", value)}
-                  placeholder="Who this includes"
+                  value={liveHome.membership_details_title || defaultHome.membership_details_title}
+                  onChange={(value) => updateDraft("membership_details_title", value)}
+                  placeholder="Who can join"
+                />
+                <InlineTextEdit
+                  tag="p"
+                  className=""
+                  multiline
+                  editorMode={editorMode}
+                  value={liveHome.membership_details_body || defaultHome.membership_details_body}
+                  onChange={(value) => updateDraft("membership_details_body", value)}
+                  placeholder="Membership details"
+                />
+
+                <div style={{ marginTop: 18 }}>
+                  <InlineTextEdit
+                    tag="h3"
+                    className=""
+                    editorMode={editorMode}
+                    value={liveHome.membership_includes_title || defaultHome.membership_includes_title}
+                    onChange={(value) => updateDraft("membership_includes_title", value)}
+                    placeholder="Who this includes"
+                  />
+                  {editorMode ? (
+                    <InlineReorderableStringListEditor
+                      title="Membership includes"
+                      items={membershipIncludesItems}
+                      onChange={(items) => updateDraft("membership_includes_items", items)}
+                      editorMode={editorMode}
+                      itemPlaceholder="Membership includes item"
+                      maxItems={12}
+                    />
+                  ) : (
+                    <ul className="rh-event-list">
+                      {membershipIncludesItems.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`} style={{ padding: 18 }}>
+                <InlineTextEdit
+                  tag="h3"
+                  className=""
+                  editorMode={editorMode}
+                  value={liveHome.membership_dues_title || defaultHome.membership_dues_title}
+                  onChange={(value) => updateDraft("membership_dues_title", value)}
+                  placeholder="Dues"
                 />
                 {editorMode ? (
                   <InlineReorderableStringListEditor
-                    title="Membership includes"
-                    items={membershipIncludesItems}
-                    onChange={(items) => updateDraft("membership_includes_items", items)}
+                    title="Membership dues"
+                    items={membershipDuesItems}
+                    onChange={(items) => updateDraft("membership_dues_items", items)}
                     editorMode={editorMode}
-                    itemPlaceholder="Membership includes item"
+                    itemPlaceholder="Dues item"
                     maxItems={12}
                   />
                 ) : (
                   <ul className="rh-event-list">
-                    {membershipIncludesItems.map((item) => (
+                    {membershipDuesItems.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
                 )}
               </div>
-            </div>
-
-            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`} style={{ padding: 18 }}>
-              <InlineTextEdit
-                tag="h3"
-                className=""
-                editorMode={editorMode}
-                value={liveHome.membership_dues_title || defaultHome.membership_dues_title}
-                onChange={(value) => updateDraft("membership_dues_title", value)}
-                placeholder="Dues"
-              />
-              {editorMode ? (
-                <InlineReorderableStringListEditor
-                  title="Membership dues"
-                  items={membershipDuesItems}
-                  onChange={(items) => updateDraft("membership_dues_items", items)}
-                  editorMode={editorMode}
-                  itemPlaceholder="Dues item"
-                  maxItems={12}
-                />
-              ) : (
-                <ul className="rh-event-list">
-                  {membershipDuesItems.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              )}
             </div>
 
             <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>

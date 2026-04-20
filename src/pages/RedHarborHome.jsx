@@ -139,6 +139,15 @@ const defaultHome = {
   membership_cta_body:
     "Redcard handles the membership sign up. Once you are in, Red Harbor can be part of where that membership actually lives.",
   membership_poster_url: "/red-harbor-hero.jpg",
+  section_order: ["hero","join","membership","bulletin","events","contact"],
+  section_visibility: {
+    hero: true,
+    join: true,
+    membership: true,
+    bulletin: true,
+    events: true,
+    contact: true
+  },
   primary_actions: [
     { label: "Join Us", url: "#join" },
     { label: "Read the Bulletin", url: "#bulletin" },
@@ -314,6 +323,12 @@ function normalizeHome(raw) {
     membership_cta_title: String(base.membership_cta_title || defaultHome.membership_cta_title).trim(),
     membership_cta_body: String(base.membership_cta_body || defaultHome.membership_cta_body).trim(),
     membership_poster_url: String(base.membership_poster_url || defaultHome.membership_poster_url).trim(),
+    section_order: Array.isArray(base.section_order)
+      ? base.section_order
+      : defaultHome.section_order,
+    section_visibility: typeof base.section_visibility === "object"
+      ? base.section_visibility
+      : defaultHome.section_visibility,
     primary_actions: cleanLinkArray(base.primary_actions, 3).length
       ? cleanLinkArray(base.primary_actions, 3)
       : defaultHome.primary_actions,
@@ -798,6 +813,35 @@ function ArchiveCarousel({
   )
 }
 
+
+function EditableSection({ id, title, children, editorMode, index, total, moveSection, toggleSection, visible }) {
+  if (!visible) {
+    return editorMode ? (
+      <div style={{ opacity: 0.4, marginBottom: 12 }}>
+        <strong>{title} (hidden)</strong>
+        <button onClick={() => toggleSection(id)}>Show</button>
+      </div>
+    ) : null
+  }
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      {editorMode && (
+        <div className="rh-inline-action-head" style={{ marginBottom: 8 }}>
+          <div className="rh-inline-group-label">{title}</div>
+          <div className="rh-inline-reorder-actions">
+            <button disabled={index===0} onClick={() => moveSection(index,index-1)}>↑</button>
+            <button disabled={index===total-1} onClick={() => moveSection(index,index+1)}>↓</button>
+            <button onClick={() => toggleSection(id)}>Hide</button>
+          </div>
+        </div>
+      )}
+      {children}
+    </div>
+  )
+}
+
+
 export default function RedHarborHome() {
   const [home, setHome] = React.useState(defaultHome)
   const [draft, setDraft] = React.useState(null)
@@ -987,6 +1031,29 @@ export default function RedHarborHome() {
     })
   }, [home])
 
+
+  const moveSection = React.useCallback((from, to) => {
+    setDraft(prev => {
+      const src = normalizeHome(prev || home)
+      const order = [...src.section_order]
+      const item = order.splice(from, 1)[0]
+      order.splice(to, 0, item)
+      return normalizeHome({ ...src, section_order: order })
+    })
+  }, [home])
+
+  const toggleSection = React.useCallback((id) => {
+    setDraft(prev => {
+      const src = normalizeHome(prev || home)
+      return normalizeHome({
+        ...src,
+        section_visibility: {
+          ...src.section_visibility,
+          [id]: !src.section_visibility[id]
+        }
+      })
+    })
+  }, [home])
   const moveJoinCard = React.useCallback((fromIndex, toIndex) => {
     setDraft((prev) => {
       const src = normalizeHome(prev || home)
@@ -1546,8 +1613,8 @@ export default function RedHarborHome() {
             ) : null}
           </div>
         </section>
-
-        <section id="join" className="rh-section rh-section-band">
+    <section id="join" className="rh-section rh-section-band">
+      
           <div className="rh-section-head">
             <p className="rh-section-kicker">Join</p>
             <InlineTextEdit

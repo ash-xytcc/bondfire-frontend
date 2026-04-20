@@ -1,22 +1,31 @@
 import React from "react";
 
-function authFetch(path, opts = {}) {
+async function authFetch(path, opts = {}) {
   const headers = {
-    "Content-Type": "application/json",
+    ...(opts.body ? { "Content-Type": "application/json" } : {}),
     ...(opts.headers || {}),
   };
-  return fetch(path, {
+
+  const res = await fetch(path, {
     ...opts,
     headers,
     body: opts.body ? JSON.stringify(opts.body) : undefined,
     credentials: "include",
-  }).then(async (res) => {
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || data?.ok === false) {
-      throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
-    }
-    return data;
   });
+
+  const text = await res.text().catch(() => "");
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
+
+  return {
+    ok: !!(res.ok && data?.ok !== false),
+    status: res.status,
+    data,
+  };
 }
 
 const VIDEO_THEME = {
@@ -82,13 +91,25 @@ export default function DpgVideosPage() {
   const loadShares = React.useCallback(async () => {
     setState((prev) => ({ ...prev, loading: true, error: "" }));
     try {
-      const data = await authFetch("/api/orgs/dpg/shares", {
+      const res = await authFetch("/api/orgs/dpg/shares", {
         method: "GET",
         headers: { Accept: "application/json" },
       });
+
+      if (!res.ok) {
+        const detail =
+          res?.data?.error ||
+          res?.data?.detail ||
+          res?.data?.message ||
+          res?.data?.raw ||
+          `HTTP ${res.status}`;
+        setState({ loading: false, items: [], error: String(detail || "Failed to load shares") });
+        return;
+      }
+
       setState({
         loading: false,
-        items: Array.isArray(data?.shares) ? data.shares : [],
+        items: Array.isArray(res?.data?.shares) ? res.data.shares : [],
         error: "",
       });
     } catch (e) {
@@ -147,15 +168,21 @@ export default function DpgVideosPage() {
       };
 
       if (editingId) {
-        await authFetch("/api/orgs/dpg/shares", {
+        const res = await authFetch("/api/orgs/dpg/shares", {
           method: "PATCH",
           body: { id: editingId, ...body },
         });
+        if (!res.ok) {
+          throw new Error(res?.data?.error || res?.data?.detail || res?.data?.message || `HTTP ${res.status}`);
+        }
       } else {
-        await authFetch("/api/orgs/dpg/shares", {
+        const res = await authFetch("/api/orgs/dpg/shares", {
           method: "POST",
           body,
         });
+        if (!res.ok) {
+          throw new Error(res?.data?.error || res?.data?.detail || res?.data?.message || `HTTP ${res.status}`);
+        }
       }
 
       await loadShares();
@@ -173,7 +200,7 @@ export default function DpgVideosPage() {
     setBusy(true);
     setMsg("");
     try {
-      await authFetch("/api/orgs/dpg/shares", {
+      const res = await authFetch("/api/orgs/dpg/shares", {
         method: "PATCH",
         body: {
           id: item?.id,
@@ -188,6 +215,9 @@ export default function DpgVideosPage() {
           status: "draft",
         },
       });
+      if (!res.ok) {
+        throw new Error(res?.data?.error || res?.data?.detail || res?.data?.message || `HTTP ${res.status}`);
+      }
       await loadShares();
       if (String(editingId || "") === String(item?.id || "")) resetForm();
       setMsg("Video entry unpublished.");
@@ -231,6 +261,20 @@ export default function DpgVideosPage() {
       }}
     >
       <style>{VIDEOS_MOBILE_CSS}</style>
+
+      <div
+        style={{
+          marginBottom: 12,
+          padding: 12,
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.08)",
+          background: "rgba(255,255,255,0.03)",
+          color: "var(--muted)",
+          fontSize: 14,
+        }}
+      >
+        DPG Videos backend is loading.
+      </div>
 
       <div
         style={{

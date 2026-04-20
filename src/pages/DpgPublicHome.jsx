@@ -965,6 +965,539 @@ export default function DpgPublicHome() {
           </div>
         </div>
       ) : null}
+
+      <section
+        style={{
+          position: 'relative',
+          minHeight: 720,
+          background: heroBackground
+            ? `linear-gradient(rgba(10,14,12,0.34), rgba(10,14,12,0.42)), url("${heroBackground}") center/cover no-repeat`
+            : '#121715',
+        }}
+      >
+        <NavBar
+          links={navLinks}
+          editorMode={editorMode}
+          onOpenNavEditor={() => setNavEditorOpen((v) => !v)}
+          authed={authState.authed}
+          accent={accent}
+        />
+        <NavEditPopover
+          links={navLinks}
+          onChange={(next) => updateDraft("nav_links", next)}
+          visible={editorMode && navEditorOpen}
+          onClose={() => setNavEditorOpen(false)}
+        />
+
+        <div
+          className="dpg-home-hero-inner"
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            maxWidth: 1240,
+            margin: '0 auto',
+            padding: navEditorOpen ? '260px 28px 110px' : '180px 28px 110px',
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 26,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+            }}
+          >
+            <img
+              src={DPG_BRAND.logoSrc}
+              alt={DPG_BRAND.logoAlt}
+              style={{ width: 86, height: 86, objectFit: 'contain' }}
+            />
+            <h1
+              style={{
+                margin: 0,
+                color: accent,
+                fontSize: 'clamp(2.4rem, 5.5vw, 5.8rem)',
+                lineHeight: 1,
+                fontFamily: 'var(--dpg-display-font, "Fancy Shadow", Georgia, serif)',
+                textShadow: '0 1px 2px rgba(0,0,0,0.35)',
+                WebkitTextStroke: '0.35px rgba(255,255,255,0.28)',
+              }}
+            >
+              {DPG_BRAND.name}
+            </h1>
+            <img
+              src={DPG_BRAND.logoSrc}
+              alt=""
+              aria-hidden="true"
+              style={{ width: 86, height: 86, objectFit: 'contain' }}
+            />
+          </div>
+
+          <div style={{ marginTop: 24, maxWidth: 820, marginInline: "auto" }}>
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "hero_body"}
+              value={heroSubheading}
+              onChange={(v) => updateDraft("hero_body", v)}
+              onStartEdit={() => editorMode && setActiveField("hero_body")}
+              onStopEdit={() => setActiveField("")}
+              multiline
+              placeholder="Hero subheading"
+              hint="Edit subheading"
+              style={{
+                maxWidth: 820,
+                margin: "0 auto",
+                textAlign: "center",
+                fontSize: "clamp(1.4rem, 3vw, 2.2rem)",
+                lineHeight: 1.2,
+                fontFamily: 'Inter, system-ui, Arial, sans-serif',
+                fontWeight: 500,
+              }}
+              displayStyle={{
+                color: '#ffffff',
+                fontSize: 'clamp(1.4rem, 3vw, 2.2rem)',
+                lineHeight: 1.2,
+                fontFamily: 'Inter, system-ui, Arial, sans-serif',
+                fontWeight: 500,
+                textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                borderRadius: 14,
+              }}
+            />
+          </div>
+
+          <div style={{ marginTop: 18, maxWidth: 760, marginInline: "auto" }}>
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "hero_title"}
+              value={eyebrowText}
+              onChange={(v) => updateDraft("hero_title", v)}
+              onStartEdit={() => editorMode && setActiveField("hero_title")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Eyebrow text"
+              hint="Edit strapline"
+              style={{
+                maxWidth: 760,
+                margin: "0 auto",
+                textAlign: "center",
+                fontSize: 16,
+              }}
+              displayStyle={{
+                color: '#f3efe8',
+                fontSize: 16,
+                fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                textShadow: '0 1px 2px rgba(0,0,0,0.45)',
+                borderRadius: 14,
+              }}
+            />
+          </div>
+
+          {editorMode && activeField === "hero_bg" ? (
+            <div style={{ marginTop: 16, maxWidth: 760, marginInline: "auto" }}>
+              <InlineTextEditor
+                value={heroBackground}
+                onChange={(v) => updateDraft("hero_background_url", v)}
+                placeholder="Paste image URL here, or use Choose image"
+              />
+            </div>
+          ) : null}
+
+          {editorMode ? (
+            <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
+              <EditChip
+                onClick={() => setActiveField(activeField === "hero_bg" ? "" : "hero_bg")}
+                subtle
+                active={activeField === "hero_bg"}
+              >
+                {activeField === "hero_bg" ? "Hide image field" : "Edit hero image"}
+              </EditChip>
+              <EditChip onClick={onChooseHeroImage} subtle>
+                Choose image
+              </EditChip>
+              {heroBackground ? (
+                <EditChip onClick={() => updateDraft("hero_background_url", "")} subtle>
+                  Clear image
+                </EditChip>
+              ) : null}
+              <input
+                ref={heroFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={onHeroFileChange}
+                style={{ display: "none" }}
+              />
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <div className='dpg-home-lower-shell' style={{ maxWidth: 1240, margin: '0 auto', padding: '34px 28px 80px' }}>
+        <section style={{ display: 'grid', gap: 24, marginBottom: 42 }}>
+          {postsState.loading ? <div style={{ color: '#d7ddd8' }}>Loading featured posts…</div> : null}
+          {postsState.error ? <div style={{ color: 'crimson' }}>{postsState.error}</div> : null}
+          {featuredPosts.map((post, idx) => (
+            <FeaturedCard key={post.slug || idx} post={post} reverse={idx % 2 === 1} />
+          ))}
+        </section>
+
+        {editorMode ? (
+          <section style={{ marginBottom: 28 }}>
+            <SectionHint>Featured post control</SectionHint>
+            <EditChip
+              onClick={() => setActiveField(activeField === "featured" ? "" : "featured")}
+              subtle
+              active={activeField === "featured"}
+            >
+              {activeField === "featured" ? "Hide featured slugs" : "Edit featured posts"}
+            </EditChip>
+          </section>
+        ) : null}
+
+        {editorMode && activeField === "featured" ? (
+          <section style={{ marginBottom: 28 }}>
+            <InlineStringListEditor
+              title="Featured post slugs"
+              items={selectedSlugs}
+              onChange={(items) => updateDraft("featured_post_slugs", items)}
+              limit={4}
+              itemPlaceholder="featured-post-slug"
+            />
+          </section>
+        ) : null}
+
+        {stickyCards.length ? (
+          <section
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: 18,
+              marginBottom: 30,
+            }}
+          >
+            {stickyCards.map((card, idx) => {
+              const titleKey = `sticky_${idx}_title`;
+              const textKey = `sticky_${idx}_text`;
+              return (
+                <Sticky
+                  key={`${card?.title || 'card'}-${idx}`}
+                  title={
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === titleKey}
+                      value={card?.title || ''}
+                      onChange={(v) => setStickyField(idx, "title", v)}
+                      onStartEdit={() => editorMode && setActiveField(titleKey)}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Sticky title"
+                      dark={false}
+                      hint="Edit title"
+                      displayStyle={{
+                        color: '#171717',
+                        fontSize: 15,
+                        fontWeight: 800,
+                        fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                        borderRadius: 10,
+                      }}
+                    />
+                  }
+                  text={
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === textKey}
+                      value={card?.text || ''}
+                      onChange={(v) => setStickyField(idx, "text", v)}
+                      onStartEdit={() => editorMode && setActiveField(textKey)}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Sticky text"
+                      multiline
+                      dark={false}
+                      hint="Edit note"
+                      displayStyle={{
+                        color: '#171717',
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                        fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                        borderRadius: 10,
+                      }}
+                    />
+                  }
+                  tone={card?.tone || '#f3e28b'}
+                  rotate={['-2deg', '1.5deg', '-1deg', '2deg'][idx] || '-1deg'}
+                  dark={true}
+                >
+                  {editorMode ? (
+                    <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, opacity: 0.86 }}>
+                      <EditChip onClick={() => setActiveField(titleKey)} subtle active={activeField === titleKey}>Title</EditChip>
+                      <EditChip onClick={() => setActiveField(textKey)} subtle active={activeField === textKey}>Body</EditChip>
+                    </div>
+                  ) : null}
+                </Sticky>
+              );
+            })}
+          </section>
+        ) : null}
+
+        <section
+          className='dpg-home-lower-grid'
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1.2fr .8fr',
+            gap: 20,
+            alignItems: 'start',
+          }}
+        >
+          <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 }}>
+              <h2
+                style={{
+                  marginTop: 0,
+                  marginBottom: 0,
+                  color: accent,
+                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                  fontWeight: 800,
+                }}
+              >
+                What is in progress
+              </h2>
+              {editorMode ? (
+                <EditChip
+                  onClick={() => setActiveField(activeField === "progress" ? "" : "progress")}
+                  subtle
+                  active={activeField === "progress"}
+                >
+                  Edit
+                </EditChip>
+              ) : null}
+            </div>
+
+            {editorMode && activeField === "progress" ? (
+              <div style={{ display: "grid", gap: 8 }}>
+                {Array.from({ length: 8 }).map((_, idx) => (
+                  <InlineField
+                    key={`progress-${idx}`}
+                    editorMode={true}
+                    editing={true}
+                    value={progressItems[idx] || ""}
+                    onChange={(v) => setProgressField(idx, v)}
+                    onStartEdit={() => {}}
+                    onStopEdit={() => {}}
+                    placeholder={`Progress item ${idx + 1}`}
+                    dark={true}
+                    hint={`Item ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EditableRegion
+                enabled={editorMode}
+                active={false}
+                onEdit={() => setActiveField("progress")}
+                dark={true}
+                hint="Edit progress list"
+                displayStyle={{ borderRadius: 14 }}
+              >
+                <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8, color: '#f3efe8' }}>
+                  {progressItems.map((item, idx) => (
+                    <li key={`${item}-${idx}`} style={{ color: '#f3efe8' }}>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </EditableRegion>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gap: 20 }}>
+            <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 10 }}>
+                <div style={{ flex: 1 }}>
+                <InlineField
+                  editorMode={editorMode}
+                  editing={editorMode && activeField === "organizer_title"}
+                  value={String(liveConfig?.organizer_title || '')}
+                  onChange={(v) => updateDraft("organizer_title", v)}
+                  onStartEdit={() => editorMode && setActiveField("organizer_title")}
+                  onStopEdit={() => setActiveField("")}
+                  placeholder="Organizer title"
+                  display={liveConfig?.organizer_title || 'Organizer entry'}
+                  hint="Edit title"
+                  displayStyle={{
+                    color: '#f3efe8',
+                    fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                    fontWeight: 800,
+                    fontSize: 26,
+                    borderRadius: 12,
+                  }}
+                />
+              </div>
+              {editorMode ? (
+                <EditChip
+                  onClick={() => setActiveField(activeField === "organizer_body" ? "" : "organizer_body")}
+                  subtle
+                  active={activeField === "organizer_body"}
+                >
+                  Body
+                </EditChip>
+              ) : null}
+            </div>
+
+            <InlineField
+              editorMode={editorMode}
+              editing={editorMode && activeField === "organizer_body"}
+              value={String(liveConfig?.organizer_body || '')}
+              onChange={(v) => updateDraft("organizer_body", v)}
+              onStartEdit={() => editorMode && setActiveField("organizer_body")}
+              onStopEdit={() => setActiveField("")}
+              placeholder="Organizer card body"
+              multiline
+              display={liveConfig?.organizer_body || ''}
+              hint="Edit card copy"
+              displayStyle={{
+                marginTop: 0,
+                lineHeight: 1.6,
+                color: '#f3efe8',
+                borderRadius: 12,
+              }}
+            />
+
+            <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
+              <a
+                href="/bulletin"
+                style={{
+                  ...theme.link,
+                  color: accent,
+                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                }}
+              >
+                Read public bulletin
+              </a>
+              <button
+                type="button"
+                style={{
+                  ...theme.link,
+                  color: accent,
+                  background: 'transparent',
+                  border: 0,
+                  padding: 0,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                }}
+                onClick={() => {
+                  window.location.href = authState.authed ? "/?app=dpg#/org/dpg/overview" : "/?app=dpg#/signin";
+                }}
+              >
+                {authState.authed ? "Go to organizer area" : "Go to organizer sign-in"}
+              </button>
+            </div>
+            </div>
+
+            <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
+              <div
+                style={{
+                  marginBottom: 12,
+                  color: "#8fa1ab",
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: ".08em",
+                }}
+              >
+                Stay connected
+              </div>
+
+              <h3
+                style={{
+                  marginTop: 0,
+                  marginBottom: 10,
+                  color: accent,
+                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                  fontWeight: 800,
+                  fontSize: 24,
+                }}
+              >
+                Newsletter signup
+              </h3>
+
+              <p
+                style={{
+                  marginTop: 0,
+                  marginBottom: 14,
+                  lineHeight: 1.6,
+                  color: "#f3efe8",
+                }}
+              >
+                Get updates about the gathering, announcements, and important logistics.
+                This is separate from RSVP. Signing up here does not register you for the event.
+              </p>
+
+              <form onSubmit={submitNewsletterSignup} style={{ display: "grid", gap: 10 }}>
+                <input
+                  value={newsletterForm.name}
+                  onChange={(e) => setNewsletterForm((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="Name (optional)"
+                  style={{
+                    width: "100%",
+                    background: "rgba(255,255,255,0.08)",
+                    color: "#f3efe8",
+                    border: "1px solid rgba(255,255,255,0.16)",
+                    padding: 12,
+                    borderRadius: 12,
+                    font: "inherit",
+                  }}
+                />
+                <input
+                  value={newsletterForm.email}
+                  onChange={(e) => setNewsletterForm((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email address"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  style={{
+                    width: "100%",
+                    background: "rgba(255,255,255,0.08)",
+                    color: "#f3efe8",
+                    border: "1px solid rgba(255,255,255,0.16)",
+                    padding: 12,
+                    borderRadius: 12,
+                    font: "inherit",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={newsletterBusy}
+                  style={{
+                    border: 0,
+                    borderRadius: 999,
+                    padding: "12px 16px",
+                    background: accent,
+                    color: "#121715",
+                    fontWeight: 800,
+                    cursor: newsletterBusy ? "default" : "pointer",
+                    fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
+                  }}
+                >
+                  {newsletterBusy ? "Signing up…" : "Join newsletter"}
+                </button>
+              </form>
+
+              {newsletterMsg ? (
+                <div
+                  style={{
+                    marginTop: 12,
+                    color: newsletterMsg.toLowerCase().includes("fail") || newsletterMsg.toLowerCase().includes("invalid")
+                      ? "#ffb8b8"
+                      : "#9fd3ab",
+                    fontSize: 14,
+                  }}
+                >
+                  {newsletterMsg}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

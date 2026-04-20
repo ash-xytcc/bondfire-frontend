@@ -533,18 +533,29 @@ function normalizeVolunteerContent(src = {}, page = {}) {
     lead_body: String(src?.lead_body || "We need all kinds of help in advance of and during the Western Dual Power Gathering to pull these events off."),
     list_title: String(src?.list_title || "Current areas of need"),
     needs: Array.isArray(src?.needs) && src.needs.length
-      ? src.needs.slice(0, 12).map((x) => String(x || "").trim()).filter(Boolean)
+      ? src.needs.slice(0, 12).map((x) => {
+          if (x && typeof x === "object") {
+            return {
+              label: String(x?.label || x?.title || "").trim(),
+              link: String(x?.link || x?.url || "").trim(),
+            };
+          }
+          return {
+            label: String(x || "").trim(),
+            link: "",
+          };
+        }).filter((x) => x.label)
       : [
-          "Food and kitchen support",
-          "Transportation",
-          "Childcare",
-          "Outreach and getting the word out",
-          "Camping gear sharing and sourcing",
-          "Fundraising",
-          "Facilitation",
-          "Organizing and logistics",
-          "Communications",
-          "Training, workshops, and session support",
+          { label: "Food and kitchen support", link: "" },
+          { label: "Transportation", link: "" },
+          { label: "Childcare", link: "" },
+          { label: "Outreach and getting the word out", link: "" },
+          { label: "Camping gear sharing and sourcing", link: "" },
+          { label: "Fundraising", link: "" },
+          { label: "Facilitation", link: "" },
+          { label: "Organizing and logistics", link: "" },
+          { label: "Communications", link: "" },
+          { label: "Training, workshops, and session support", link: "" },
         ],
     support_title: String(src?.support_title || "When help is needed"),
     support_body: String(src?.support_body || "We are looking for people who want to help during the event as well as people who want to help plan and organize beforehand."),
@@ -582,7 +593,7 @@ function normalizeDonateContent(src = {}, page = {}) {
     cta_url: String(src?.cta_url || "https://hcb.hackclub.com/donations/start/dual-power-gathering"),
     cta_label: String(src?.cta_label || "Donate to Dual Power Gathering"),
     receipt_title: String(src?.receipt_title || "Receipts and questions"),
-    receipt_body: String(src?.receipt_body || "If you need a receipt or have questions, reach out through the organizer contacts."),
+    receipt_body: String(src?.receipt_body || "If you need a receipt or have questions, email dualpowergathering@proton.me."),
     side_title: String(src?.side_title || "Keep it usable"),
     side_body: String(src?.side_body || "The point is not luxury. The point is making the gathering materially possible without pricing people out or burning organizers down."),
     sticky_title: String(src?.sticky_title || "small amounts matter"),
@@ -981,7 +992,7 @@ function FaqPageLayout({ accent, editorMode = false, activeField = "", setActive
                 Shortcut
               </div>
               <div style={{ color: "#171717", lineHeight: 1.58 }}>
-                RSVP if you know you are coming. Volunteer if you want to help shape the thing. Send the FAQ to the person who is asking you six separate questions in a row.
+                <a href="/rsvp" style={{ color: "#171717", textDecoration: "underline", fontWeight: 800 }}>RSVP</a> if you know you are coming. Volunteer if you want to help shape the thing. Send the FAQ to the person who is asking you six separate questions in a row.
               </div>
             </div>
           </div>
@@ -992,11 +1003,17 @@ function FaqPageLayout({ accent, editorMode = false, activeField = "", setActive
 }
 
 function VolunteerPageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
-  const updateNeed = (index, value) => {
+  const updateNeed = (index, key, value) => {
     const next = [...content.needs];
-    while (next.length < 12) next.push("");
-    next[index] = value;
-    setContent({ ...content, needs: next.filter((x) => String(x || "").trim()) });
+    while (next.length < 12) next.push({ label: "", link: "" });
+    const current = next[index] && typeof next[index] === "object"
+      ? next[index]
+      : { label: String(next[index] || ""), link: "" };
+    next[index] = { ...current, [key]: value };
+    setContent({
+      ...content,
+      needs: next.filter((x) => String(x?.label || "").trim()),
+    });
   };
 
   return (
@@ -1118,21 +1135,68 @@ function VolunteerPageLayout({ accent, editorMode = false, activeField = "", set
 
               <div className="dpg-vol-needs">
                 {Array.from({ length: Math.max(content.needs.length, editorMode ? 10 : content.needs.length) }).map((_, idx) => {
-                  const value = content.needs[idx] || "";
+                  const item = content.needs[idx] && typeof content.needs[idx] === "object"
+                    ? content.needs[idx]
+                    : { label: String(content.needs[idx] || ""), link: "" };
                   return (
-                    <div className="dpg-vol-pill" key={`need-${idx}`}>
-                      <InlineField
-                        editorMode={editorMode}
-                        editing={editorMode && activeField === `vol_need_${idx}`}
-                        value={value}
-                        onChange={(v) => updateNeed(idx, v)}
-                        onStartEdit={() => setActiveField(`vol_need_${idx}`)}
-                        onStopEdit={() => setActiveField("")}
-                        placeholder={`Need ${idx + 1}`}
-                        hint="Edit need"
-                        display={value || (editorMode ? "Empty need slot" : "")}
-                        displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
-                      />
+                    <div className="dpg-vol-pill" key={`need-${idx}`} style={{ justifyContent: "space-between", gap: 12 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <InlineField
+                          editorMode={editorMode}
+                          editing={editorMode && activeField === `vol_need_${idx}`}
+                          value={item.label}
+                          onChange={(v) => updateNeed(idx, "label", v)}
+                          onStartEdit={() => setActiveField(`vol_need_${idx}`)}
+                          onStopEdit={() => setActiveField("")}
+                          placeholder={`Need ${idx + 1}`}
+                          hint="Edit need"
+                          display={item.label || (editorMode ? "Empty need slot" : "")}
+                          displayStyle={{ color: "#f3efe8", lineHeight: 1.45, width: "100%", borderRadius: 10 }}
+                        />
+                        {editorMode ? (
+                          <div style={{ marginTop: 8 }}>
+                            <InlineField
+                              editorMode={editorMode}
+                              editing={editorMode && activeField === `vol_need_link_${idx}`}
+                              value={item.link || ""}
+                              onChange={(v) => updateNeed(idx, "link", v)}
+                              onStartEdit={() => setActiveField(`vol_need_link_${idx}`)}
+                              onStopEdit={() => setActiveField("")}
+                              placeholder="Discord invite URL"
+                              hint="Edit Discord link"
+                              display={item.link || "Set Discord invite URL"}
+                              displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {!editorMode && item.link ? (
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Open Discord for ${item.label}`}
+                          title="Open Discord"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 34,
+                            height: 34,
+                            minWidth: 34,
+                            borderRadius: 999,
+                            background: "rgba(88,101,242,0.16)",
+                            border: "1px solid rgba(88,101,242,0.34)",
+                            color: "#cfd6ff",
+                            textDecoration: "none",
+                            fontSize: 16,
+                            fontWeight: 900,
+                          }}
+                        >
+                          💬
+                        </a>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -1532,6 +1596,23 @@ function DonatePageLayout({ accent, editorMode = false, activeField = "", setAct
                 display={content.receipt_body}
                 displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
               />
+              {!editorMode ? (
+                <div style={{ marginTop: 14 }}>
+                  <a
+                    href="mailto:dualpowergathering@proton.me"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      color: accent,
+                      textDecoration: "none",
+                      fontWeight: 800,
+                    }}
+                  >
+                    Email organizers
+                  </a>
+                </div>
+              ) : null}
             </div>
 
             <div className="dpg-donate-card">
@@ -2242,36 +2323,6 @@ function PressPageLayout({ accent, editorMode = false, activeField = "", setActi
                 hint="Edit note"
                 display={content.side_body}
                 displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
-              />
-            </div>
-
-            <div className="dpg-press-sticky">
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "press_sticky_title"}
-                value={content.sticky_title}
-                onChange={(v) => setContent({ ...content, sticky_title: v })}
-                onStartEdit={() => setActiveField("press_sticky_title")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="Sticky title"
-                hint="Edit title"
-                dark={false}
-                display={content.sticky_title}
-                displayStyle={{ color: "#171717", fontFamily: "Inter, system-ui, Arial, sans-serif", fontWeight: 800, fontSize: "1rem", lineHeight: 1.1, marginBottom: 8, borderRadius: 10 }}
-              />
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "press_sticky_body"}
-                value={content.sticky_body}
-                onChange={(v) => setContent({ ...content, sticky_body: v })}
-                onStartEdit={() => setActiveField("press_sticky_body")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="Sticky body"
-                multiline
-                hint="Edit note"
-                dark={false}
-                display={content.sticky_body}
-                displayStyle={{ color: "#171717", lineHeight: 1.56, fontSize: "0.98rem", borderRadius: 10 }}
               />
             </div>
           </aside>

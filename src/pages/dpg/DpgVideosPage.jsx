@@ -1,63 +1,45 @@
 import React from "react";
 
-async function loadJson(path) {
-  const res = await fetch(path, {
-    method: "GET",
-    credentials: "include",
-    headers: { Accept: "application/json" },
-  });
-
-  const text = await res.text().catch(() => "");
-  let data = {};
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { raw: text };
-  }
-
-  return {
-    ok: !!(res.ok && data?.ok !== false),
-    status: res.status,
-    data,
-  };
-}
-
 export default function DpgVideosPage() {
-  const [loading, setLoading] = React.useState(true);
+  const [status, setStatus] = React.useState("rendered");
+  const [count, setCount] = React.useState("not loaded");
   const [error, setError] = React.useState("");
-  const [items, setItems] = React.useState([]);
 
   React.useEffect(() => {
     let dead = false;
 
     (async () => {
       try {
-        const res = await loadJson("/api/orgs/dpg/shares");
+        setStatus("fetching /api/orgs/dpg/shares");
+        const res = await fetch("/api/orgs/dpg/shares", {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
+
+        const text = await res.text().catch(() => "");
+        let data = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { raw: text };
+        }
+
         if (dead) return;
 
-        if (!res.ok) {
-          setError(
-            String(
-              res?.data?.error ||
-              res?.data?.detail ||
-              res?.data?.message ||
-              res?.data?.raw ||
-              `HTTP ${res.status}`
-            )
-          );
-          setItems([]);
-          setLoading(false);
+        if (!res.ok || data?.ok === false) {
+          setStatus("api error");
+          setError(String(data?.error || data?.detail || data?.message || data?.raw || `HTTP ${res.status}`));
           return;
         }
 
-        setItems(Array.isArray(res?.data?.shares) ? res.data.shares : []);
-        setError("");
-        setLoading(false);
+        const shares = Array.isArray(data?.shares) ? data.shares : [];
+        setStatus("loaded");
+        setCount(String(shares.length));
       } catch (e) {
         if (dead) return;
+        setStatus("runtime error");
         setError(String(e?.message || e));
-        setItems([]);
-        setLoading(false);
       }
     })();
 
@@ -67,14 +49,15 @@ export default function DpgVideosPage() {
   }, []);
 
   return (
-    <div style={{ padding: 20, color: "#f3efe8" }}>
+    <div style={{ padding: 24, color: "#f3efe8" }}>
       <div
         style={{
-          border: "1px solid rgba(255,255,255,0.10)",
+          border: "2px solid #93b4f0",
           borderRadius: 20,
-          padding: 20,
-          background: "rgba(255,255,255,0.04)",
-          marginBottom: 20,
+          padding: 24,
+          background: "rgba(255,255,255,0.05)",
+          boxShadow: "0 18px 42px rgba(0,0,0,0.16)",
+          maxWidth: 980,
         }}
       >
         <div
@@ -84,91 +67,38 @@ export default function DpgVideosPage() {
             fontWeight: 800,
             textTransform: "uppercase",
             letterSpacing: ".08em",
-            marginBottom: 10,
+            marginBottom: 12,
           }}
         >
-          DPG Shares backend
+          dpg shares backend
         </div>
 
-        <h1
-          style={{
-            margin: 0,
-            fontSize: "clamp(2rem, 5vw, 3.4rem)",
-            lineHeight: 1,
-            color: "#f3efe8",
-          }}
-        >
-          videos
+        <h1 style={{ margin: 0, fontSize: "clamp(2rem, 5vw, 3.5rem)", lineHeight: 1 }}>
+          videos page is rendering
         </h1>
 
-        <div style={{ marginTop: 12, color: "#d7ddd8", lineHeight: 1.55 }}>
-          This page is rendering. Phase one backend manager is live. R2 upload flow comes next.
+        <div style={{ marginTop: 16, color: "#d7ddd8", lineHeight: 1.6 }}>
+          This is a hard-reset backend page. If you can read this, the route is working and the page component is alive.
         </div>
-      </div>
 
-      <div
-        style={{
-          border: "1px solid rgba(255,255,255,0.10)",
-          borderRadius: 20,
-          padding: 20,
-          background: "rgba(255,255,255,0.04)",
-          display: "grid",
-          gap: 12,
-        }}
-      >
-        <div style={{ fontWeight: 800, color: "#f3efe8" }}>status</div>
-
-        {loading ? (
-          <div style={{ color: "#d7ddd8" }}>Loading shares…</div>
-        ) : error ? (
-          <div
-            style={{
-              padding: 12,
-              borderRadius: 14,
-              border: "1px solid rgba(255,120,120,0.24)",
-              background: "rgba(255,120,120,0.08)",
-              color: "#ffb8b8",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {error}
-          </div>
-        ) : (
-          <div style={{ color: "#d7ddd8" }}>
-            Loaded {items.length} video entr{items.length === 1 ? "y" : "ies"}.
-          </div>
-        )}
-
-        <div style={{ fontWeight: 800, color: "#f3efe8", marginTop: 8 }}>records</div>
-
-        {!loading && !error && !items.length ? (
-          <div style={{ color: "#d7ddd8" }}>No share records found yet.</div>
-        ) : null}
-
-        {!loading && !error && items.length ? (
-          <div style={{ display: "grid", gap: 10 }}>
-            {items.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 16,
-                  padding: 14,
-                  background: "rgba(255,255,255,0.03)",
-                  display: "grid",
-                  gap: 6,
-                }}
-              >
-                <div style={{ color: "#f3efe8", fontWeight: 800 }}>
-                  {item.title || "(untitled)"}
-                </div>
-                <div style={{ color: "#d7ddd8", fontSize: 14 }}>
-                  {item.status || "draft"} • {item.slug || "no-slug"}{item.featured ? " • featured" : ""}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
+        <div style={{ marginTop: 18, display: "grid", gap: 10 }}>
+          <div><strong>status:</strong> {status}</div>
+          <div><strong>count:</strong> {count}</div>
+          {error ? (
+            <div
+              style={{
+                padding: 12,
+                borderRadius: 14,
+                border: "1px solid rgba(255,120,120,0.24)",
+                background: "rgba(255,120,120,0.08)",
+                color: "#ffb8b8",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {error}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

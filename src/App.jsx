@@ -26,6 +26,7 @@ import Drive from "./pages/Drive.jsx";
 import Studio from "./pages/Studio.jsx";
 import Attendees from "./pages/Attendees.jsx";
 import DpgSessionsPage from "./pages/dpg/DpgSessionsPage";
+import DpgVideosPage from "./pages/dpg/DpgVideosPage.jsx";
 import DpgPublicHome from "./pages/DpgPublicHome.jsx";
 import PublicBulletinIndex from "./pages/dpg/PublicBulletinIndex.jsx";
 import PublicBulletinPost from "./pages/dpg/PublicBulletinPost.jsx";
@@ -284,6 +285,7 @@ function Shell() {
                                 <Route path="/dpg/app/drive" element={<DpgAppRedirect to="drive" />} />
                                 <Route path="/dpg/app/studio" element={<DpgAppRedirect to="studio" />} />
                                 <Route path="/dpg/app/sessions" element={<DpgAppRedirect to="sessions" />} />
+                                <Route path="/dpg/app/videos" element={<DpgAppRedirect to="videos" />} />
 
 				{/* Orgs list */}
 				<Route
@@ -327,6 +329,7 @@ function Shell() {
 					<Route path="drive" element={<Drive />} />
 					<Route path="studio" element={<Studio />} />
 					<Route path="sessions" element={<DpgSessionsPage />} />
+					<Route path="videos" element={<DpgVideosPage key="dpg-videos-hard-reset" />} />
 					<Route path="public" element={<OrgPublicPreview />} />
 					<Route path="chat" element={isDpgVariant() ? <Navigate to="../overview" replace /> : <BondfireChat />} />
 					<Route path="guard/*" element={<OrgSecretGuard />} />

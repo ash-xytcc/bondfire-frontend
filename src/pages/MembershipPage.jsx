@@ -4,6 +4,7 @@ import "../styles/redharbor-public-pass1.css";
 import "../styles/redharbor-membership.css";
 
 const REDCARD_URL = "https://redcard.iww.org/";
+const LAYOUT_KEY = "rh_membership_hero_layout_v1";
 
 const duesTiers = [
   { name: "Minimum dues", income: "Less than $2,000 per month", amount: "$11/mo" },
@@ -38,7 +39,87 @@ const eligible = [
   "Workers already in another union, except officers",
 ];
 
+const DEFAULT_LAYOUT = {
+  poster: { x: 770, y: 24 },
+  cta: { x: 0, y: 300 },
+};
+
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+
 export default function MembershipPage() {
+  const [layoutMode, setLayoutMode] = React.useState(false);
+  const [heroLayout, setHeroLayout] = React.useState(DEFAULT_LAYOUT);
+  const dragRef = React.useRef(null);
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LAYOUT_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.poster && parsed?.cta) {
+        setHeroLayout(parsed);
+      }
+    } catch {}
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(LAYOUT_KEY, JSON.stringify(heroLayout));
+    } catch {}
+  }, [heroLayout]);
+
+  React.useEffect(() => {
+    function onMove(e) {
+      if (!dragRef.current) return;
+      const { kind, startX, startY, baseX, baseY } = dragRef.current;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      setHeroLayout((prev) => ({
+        ...prev,
+        [kind]: {
+          x: clamp(baseX + dx, -20, 1200),
+          y: clamp(baseY + dy, -20, 900),
+        },
+      }));
+    }
+
+    function onUp() {
+      dragRef.current = null;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    }
+
+    if (dragRef.current) {
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    }
+
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [heroLayout]);
+
+  function beginDrag(kind, e) {
+    if (!layoutMode) return;
+    e.preventDefault();
+    const current = heroLayout[kind];
+    dragRef.current = {
+      kind,
+      startX: e.clientX,
+      startY: e.clientY,
+      baseX: current.x,
+      baseY: current.y,
+    };
+  }
+
+  function resetLayout() {
+    setHeroLayout(DEFAULT_LAYOUT);
+  }
+
   return (
     <div className="rh-public rh-membership-page">
       <header className="rh-public-header">
@@ -71,44 +152,79 @@ export default function MembershipPage() {
       </header>
 
       <main className="rhm-main">
-        <section className="rh-section rhm-hero">
-          <div className="rhm-hero-copy">
-            <p className="rh-section-kicker">Membership</p>
-            <h1 className="rhm-title">Join the IWW through Red Harbor</h1>
-            <p className="rhm-lead">
-              Join the One Big Union, connect with a local branch, and plug into workplace
-              organizing, political education, and worker solidarity on the harbor and beyond.
-            </p>
-          </div>
-
-          <div className="rhm-hero-media">
-            <img
-              src="/red-harbor-hero.jpg"
-              alt="Workers organizing together"
-              className="rhm-hero-image"
-            />
-          </div>
-
-          <aside className="rh-card rhm-cta-card">
-            <p className="rh-section-kicker">Start here</p>
-            <h2 className="rhm-card-title">New memberships go through Redcard</h2>
-            <p className="rhm-card-copy">
-              Join through the official sign up, then connect back into Red Harbor and branch life.
-            </p>
-            <div className="rhm-actions">
-              <a
-                href={REDCARD_URL}
-                className="rh-btn rh-btn-primary"
-                target="_blank"
-                rel="noopener noreferrer"
+        <section className="rh-section rhm-hero-shell">
+          <div className="rhm-layout-toolbar">
+            <button
+              type="button"
+              className="rh-btn rh-btn-secondary"
+              onClick={() => setLayoutMode((v) => !v)}
+            >
+              {layoutMode ? "Done moving" : "Adjust layout"}
+            </button>
+            {layoutMode ? (
+              <button
+                type="button"
+                className="rh-btn rh-btn-ghost"
+                onClick={resetLayout}
               >
-                Join now
-              </a>
-              <Link to="/" className="rh-btn rh-btn-secondary">
-                Back to homepage
-              </Link>
+                Reset positions
+              </button>
+            ) : null}
+          </div>
+
+          <div className={`rhm-hero-stage ${layoutMode ? "is-layout-mode" : ""}`}>
+            <div className="rhm-hero-copy">
+              <p className="rh-section-kicker">Membership</p>
+              <h1 className="rhm-title">Join the IWW through Red Harbor</h1>
+              <p className="rhm-lead">
+                Join the One Big Union, connect with a local branch, and plug into workplace
+                organizing, political education, and worker solidarity on the harbor and beyond.
+              </p>
             </div>
-          </aside>
+
+            <div
+              className={`rhm-floating rhm-poster ${layoutMode ? "is-draggable" : ""}`}
+              style={{
+                transform: `translate(${heroLayout.poster.x}px, ${heroLayout.poster.y}px)`,
+              }}
+              onPointerDown={(e) => beginDrag("poster", e)}
+            >
+              <img
+                src="/red-harbor-hero.jpg"
+                alt="Historic IWW poster"
+                className="rhm-hero-image"
+              />
+              {layoutMode ? <div className="rhm-drag-label">drag poster</div> : null}
+            </div>
+
+            <aside
+              className={`rh-card rhm-cta-card rhm-floating ${layoutMode ? "is-draggable" : ""}`}
+              style={{
+                transform: `translate(${heroLayout.cta.x}px, ${heroLayout.cta.y}px)`,
+              }}
+              onPointerDown={(e) => beginDrag("cta", e)}
+            >
+              <p className="rh-section-kicker">Start here</p>
+              <h2 className="rhm-card-title">New memberships go through Redcard</h2>
+              <p className="rhm-card-copy">
+                Join through the official sign up, then connect back into Red Harbor and branch life.
+              </p>
+              <div className="rhm-actions">
+                <a
+                  href={REDCARD_URL}
+                  className="rh-btn rh-btn-primary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Join now
+                </a>
+                <Link to="/" className="rh-btn rh-btn-secondary">
+                  Back to homepage
+                </Link>
+              </div>
+              {layoutMode ? <div className="rhm-drag-label">drag card</div> : null}
+            </aside>
+          </div>
         </section>
 
         <section className="rh-section rhm-eligibility">

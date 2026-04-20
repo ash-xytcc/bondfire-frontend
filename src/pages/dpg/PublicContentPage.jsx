@@ -2129,11 +2129,11 @@ function normalizePressContent(src = {}, page = {}) {
             description: "Interview coverage connected to DPG West.",
           },
           {
-            type: "link",
+            type: "embed",
             title: "This Is America #189",
             url: "https://itsgoingdown.org/this-is-america-189/",
-            embedUrl: "",
-            description: "Article and broader movement coverage tied into the event and its context.",
+            embedUrl: "https://media.blubrry.com/itsgoingdown/ia800507.us.archive.org/19/items/tia-189/TIA189.mp3",
+            description: "Episode covering the Midwest Dual Power Gathering alongside organizing in Eugene and analysis of the Trump indictment. The DPG segment features two organizers discussing the gathering ahead of the Chicago event.",
           },
         ],
   };
@@ -2350,13 +2350,32 @@ function PressPageLayout({ accent, editorMode = false, activeField = "", setActi
                     ) : null}
 
                     {item.type === "embed" && item.embedUrl ? (
-                      <iframe
-                        className="dpg-press-embed"
-                        src={item.embedUrl}
-                        title={item.title || `Embedded media ${idx + 1}`}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                      />
+                      item.embedUrl.toLowerCase().endsWith(".mp3") ? (
+                        <div style={{
+                          marginTop: 14,
+                          padding: 14,
+                          borderRadius: 18,
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                        }}>
+                          <audio
+                            controls
+                            preload="none"
+                            style={{ width: "100%" }}
+                            src={item.embedUrl}
+                          >
+                            Your browser does not support the audio element.
+                          </audio>
+                        </div>
+                      ) : (
+                        <iframe
+                          className="dpg-press-embed"
+                          src={item.embedUrl}
+                          title={item.title || `Embedded media ${idx + 1}`}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      )
                     ) : null}
 
                     <div className="dpg-press-actions">
@@ -2393,6 +2412,37 @@ function PressPageLayout({ accent, editorMode = false, activeField = "", setActi
                   </EditChip>
                 </div>
               ) : null}
+            </div>
+
+          </div>
+
+          <aside className="dpg-press-side">
+            <div className="dpg-press-card">
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "press_side_title"}
+                value={content.side_title}
+                onChange={(v) => setContent({ ...content, side_title: v })}
+                onStartEdit={() => setActiveField("press_side_title")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side title"
+                hint="Edit label"
+                display={content.side_title}
+                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
+              />
+              <InlineField
+                editorMode={editorMode}
+                editing={editorMode && activeField === "press_side_body"}
+                value={content.side_body}
+                onChange={(v) => setContent({ ...content, side_body: v })}
+                onStartEdit={() => setActiveField("press_side_body")}
+                onStopEdit={() => setActiveField("")}
+                placeholder="Side body"
+                multiline
+                hint="Edit note"
+                display={content.side_body}
+                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
+              />
             </div>
 
             <div className="dpg-press-card" id="updates">
@@ -2434,48 +2484,12 @@ function PressPageLayout({ accent, editorMode = false, activeField = "", setActi
               ) : null}
 
               {bulletinState.posts.length ? (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                    gap: 14,
-                  }}
-                >
+                <div style={{ display: "grid", gap: 14 }}>
                   {bulletinState.posts.map((post) => (
                     <BulletinFeedCard key={post.slug} post={post} />
                   ))}
                 </div>
               ) : null}
-            </div>
-          </div>
-
-          <aside className="dpg-press-side">
-            <div className="dpg-press-card">
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "press_side_title"}
-                value={content.side_title}
-                onChange={(v) => setContent({ ...content, side_title: v })}
-                onStartEdit={() => setActiveField("press_side_title")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="Side title"
-                hint="Edit label"
-                display={content.side_title}
-                displayStyle={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10, borderRadius: 10 }}
-              />
-              <InlineField
-                editorMode={editorMode}
-                editing={editorMode && activeField === "press_side_body"}
-                value={content.side_body}
-                onChange={(v) => setContent({ ...content, side_body: v })}
-                onStartEdit={() => setActiveField("press_side_body")}
-                onStopEdit={() => setActiveField("")}
-                placeholder="Side body"
-                multiline
-                hint="Edit note"
-                display={content.side_body}
-                displayStyle={{ color: "#f3efe8", lineHeight: 1.68, borderRadius: 10 }}
-              />
             </div>
           </aside>
         </section>

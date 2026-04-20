@@ -561,6 +561,9 @@ function normalizeVolunteerContent(src = {}, page = {}) {
     support_body: String(src?.support_body || "We are looking for people who want to help during the event as well as people who want to help plan and organize beforehand."),
     contact_title: String(src?.contact_title || "Get involved"),
     contact_body: String(src?.contact_body || "If you want to get involved, email dualpowergathering@proton.me."),
+    contact_discord_text: String(src?.contact_discord_text || "or join us on Discord"),
+    contact_discord_label: String(src?.contact_discord_label || "Join Discord"),
+    contact_discord_url: String(src?.contact_discord_url || ""),
     side_title: String(src?.side_title || "Good volunteer energy"),
     side_body: String(src?.side_body || "People who can follow through, coordinate with others, notice what is missing, and help without turning every practical task into a personal manifesto."),
     sticky_title: String(src?.sticky_title || "show up ready"),
@@ -1073,6 +1076,18 @@ function VolunteerPageLayout({ accent, editorMode = false, activeField = "", set
           text-decoration: none;
           font-weight: 800;
         }
+        .dpg-vol-discord {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 14px 18px;
+          border-radius: 999px;
+          background: #5865f2;
+          color: #ffffff;
+          text-decoration: none;
+          font-weight: 800;
+          box-shadow: 0 12px 28px rgba(88,101,242,0.28);
+        }
         @media (max-width: 920px) {
           .dpg-vol-grid { grid-template-columns: 1fr; }
         }
@@ -1171,36 +1186,6 @@ function VolunteerPageLayout({ accent, editorMode = false, activeField = "", set
                         ) : null}
                       </div>
 
-                      {!editorMode && item.link ? (
-                        <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={`Open Discord for ${item.label}`}
-                          title="Open Discord"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: 34,
-                            height: 34,
-                            minWidth: 34,
-                            borderRadius: 999,
-                            background: "rgba(88,101,242,0.16)",
-                            border: "1px solid rgba(88,101,242,0.34)",
-                            color: "#cfd6ff",
-                            textDecoration: "none",
-                            fontSize: 16,
-                            fontWeight: 900,
-                          }}
-                        >
-                          
-<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-  <path d="M20.317 4.369A19.791 19.791 0 0015.885 3c-.19.34-.4.8-.547 1.16a18.27 18.27 0 00-6.676 0A11.6 11.6 0 008.115 3a19.736 19.736 0 00-4.438 1.372C.533 9.046-.32 13.58.099 18.057a19.9 19.9 0 005.993 3.04c.484-.66.913-1.356 1.285-2.08-.707-.266-1.38-.596-2.012-.986.168-.123.333-.25.493-.381a13.94 13.94 0 0012.152 0c.161.131.326.258.494.381-.633.39-1.307.72-2.015.987.373.723.803 1.419 1.288 2.079a19.86 19.86 0 005.994-3.04c.5-5.177-.838-9.66-3.457-13.688zM8.02 14.844c-1.182 0-2.153-1.085-2.153-2.419 0-1.334.951-2.419 2.153-2.419 1.213 0 2.164 1.095 2.153 2.419 0 1.334-.94 2.419-2.153 2.419zm7.96 0c-1.182 0-2.153-1.085-2.153-2.419 0-1.334.951-2.419 2.153-2.419 1.213 0 2.164 1.095 2.153 2.419 0 1.334-.94 2.419-2.153 2.419z"/>
-</svg>
-
-                        </a>
-                      ) : null}
                     </div>
                   );
                 })}
@@ -1263,9 +1248,65 @@ function VolunteerPageLayout({ accent, editorMode = false, activeField = "", set
                 display={content.contact_body}
                 displayStyle={{ color: "#f3efe8", lineHeight: 1.68, marginBottom: 16, borderRadius: 10 }}
               />
-              <a href="mailto:dualpowergathering@proton.me" className="dpg-vol-cta">
-                Email organizers
-              </a>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+                <a href="mailto:dualpowergathering@proton.me" className="dpg-vol-cta">
+                  Email organizers
+                </a>
+
+                <InlineField
+                  editorMode={editorMode}
+                  editing={editorMode && activeField === "vol_contact_discord_text"}
+                  value={content.contact_discord_text}
+                  onChange={(v) => setContent({ ...content, contact_discord_text: v })}
+                  onStartEdit={() => setActiveField("vol_contact_discord_text")}
+                  onStopEdit={() => setActiveField("")}
+                  placeholder="Discord helper text"
+                  hint="Edit Discord helper text"
+                  display={content.contact_discord_text}
+                  displayStyle={{ color: "#d7ddd8", fontSize: 14, borderRadius: 10 }}
+                />
+
+                {editorMode ? (
+                  <div style={{ display: "grid", gap: 10, width: "100%" }}>
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === "vol_contact_discord_label"}
+                      value={content.contact_discord_label}
+                      onChange={(v) => setContent({ ...content, contact_discord_label: v })}
+                      onStartEdit={() => setActiveField("vol_contact_discord_label")}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Discord button label"
+                      hint="Edit Discord button label"
+                      display={content.contact_discord_label || "Set Discord button label"}
+                      displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                    />
+                    <InlineField
+                      editorMode={editorMode}
+                      editing={editorMode && activeField === "vol_contact_discord_url"}
+                      value={content.contact_discord_url}
+                      onChange={(v) => setContent({ ...content, contact_discord_url: v })}
+                      onStartEdit={() => setActiveField("vol_contact_discord_url")}
+                      onStopEdit={() => setActiveField("")}
+                      placeholder="Discord invite URL"
+                      hint="Edit Discord invite link"
+                      display={content.contact_discord_url || "Set Discord invite URL"}
+                      displayStyle={{ color: "#8fa1ab", fontSize: 13, lineHeight: 1.4, borderRadius: 10 }}
+                    />
+                  </div>
+                ) : content.contact_discord_url ? (
+                  <a
+                    href={content.contact_discord_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="dpg-vol-discord"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M20.317 4.369A19.791 19.791 0 0015.885 3c-.19.34-.4.8-.547 1.16a18.27 18.27 0 00-6.676 0A11.6 11.6 0 008.115 3a19.736 19.736 0 00-4.438 1.372C.533 9.046-.32 13.58.099 18.057a19.9 19.9 0 005.993 3.04c.484-.66.913-1.356 1.285-2.08-.707-.266-1.38-.596-2.012-.986.168-.123.333-.25.493-.381a13.94 13.94 0 0012.152 0c.161.131.326.258.494.381-.633.39-1.307.72-2.015.987.373.723.803 1.419 1.288 2.079a19.86 19.86 0 005.994-3.04c.5-5.177-.838-9.66-3.457-13.688zM8.02 14.844c-1.182 0-2.153-1.085-2.153-2.419 0-1.334.951-2.419 2.153-2.419 1.213 0 2.164 1.095 2.153 2.419 0 1.334-.94 2.419-2.153 2.419zm7.96 0c-1.182 0-2.153-1.085-2.153-2.419 0-1.334.951-2.419 2.153-2.419 1.213 0 2.164 1.095 2.153 2.419 0 1.334-.94 2.419-2.153 2.419z"/>
+                    </svg>
+                    {content.contact_discord_label || "Join Discord"}
+                  </a>
+                ) : null}
+              </div>
             </div>
 
             <div className="dpg-vol-card">

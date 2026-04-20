@@ -146,6 +146,40 @@ function sortItems(items = []) {
   });
 }
 
+function formatDurationText(totalSeconds) {
+  const sec = Math.max(0, Math.round(Number(totalSeconds) || 0));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+
+  if (h > 0) {
+    return [h, String(m).padStart(2, "0"), String(s).padStart(2, "0")].join(":");
+  }
+  return [m, String(s).padStart(2, "0")].join(":");
+}
+
+function readVideoDuration(file) {
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        const value = Number(video.duration || 0);
+        URL.revokeObjectURL(url);
+        resolve(Number.isFinite(value) && value > 0 ? value : 0);
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(0);
+      };
+      video.src = url;
+    } catch {
+      resolve(0);
+    }
+  });
+}
+
 export default function DpgVideosPage() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -228,6 +262,8 @@ export default function DpgVideosPage() {
     setStatus(`Uploading ${file.name} to R2…`);
 
     try {
+      const seconds = await readVideoDuration(file);
+      const autoDurationText = seconds > 0 ? formatDurationText(seconds) : "";
       const res = await uploadVideoFile(file, setUploadPct);
 
       if (!res.ok) {
@@ -248,10 +284,13 @@ export default function DpgVideosPage() {
         ...prev,
         videoUrl: url || prev.videoUrl,
         title: prev.title || titleFromFile,
+        durationText: autoDurationText || prev.durationText,
       }));
 
       setUploadPct(100);
-      setStatus("Upload complete. Video URL field has been filled from R2.");
+      setStatus(autoDurationText
+        ? `Upload complete. Video URL and duration were filled automatically.`
+        : "Upload complete. Video URL field has been filled from R2.");
     } catch (err) {
       setError(String(err?.message || err));
       setStatus("Upload failed.");
@@ -566,12 +605,15 @@ export default function DpgVideosPage() {
               style={inputStyle()}
             />
 
-            <input
-              value={draft.durationText}
-              onChange={(e) => setDraft((prev) => ({ ...prev, durationText: e.target.value }))}
-              placeholder="duration text"
-              style={inputStyle()}
-            />
+            <div style={{ display: "grid", gap: 6 }}>
+              <div style={{ fontSize: 13, color: "var(--muted)" }}>duration</div>
+              <input
+                value={draft.durationText}
+                readOnly
+                placeholder="auto-set from uploaded video"
+                style={{ ...inputStyle(), opacity: 0.88 }}
+              />
+            </div>
 
             <input
               value={draft.metaText}

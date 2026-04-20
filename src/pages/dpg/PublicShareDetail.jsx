@@ -421,10 +421,30 @@ export default function PublicShareDetail({ slug: slugProp = "" }) {
                     Session info
                   </div>
                   <div style={{ display: "grid", gap: 10, color: "#d7ddd8", lineHeight: 1.6 }}>
-                    {share.metaText ? <div><strong style={{ color: "#f3efe8" }}>Meta:</strong> {share.metaText}</div> : null}
-                    {share.durationText ? <div><strong style={{ color: "#f3efe8" }}>Duration:</strong> {share.durationText}</div> : null}
-                    {share.publishedAt ? <div><strong style={{ color: "#f3efe8" }}>Published:</strong> {new Date(share.publishedAt).toLocaleDateString()}</div> : null}
-                    {share.slug ? <div><strong style={{ color: "#f3efe8" }}>Slug:</strong> {share.slug}</div> : null}
+                    {share.metaText ? (
+                      <div>
+                        <strong style={{ color: "#f3efe8" }}>Meta:</strong>{" "}
+                        <span style={{ color: "#d7ddd8" }}>{share.metaText}</span>
+                      </div>
+                    ) : null}
+                    {share.durationText ? (
+                      <div>
+                        <strong style={{ color: "#f3efe8" }}>Duration:</strong>{" "}
+                        <span style={{ color: "#d7ddd8" }}>{share.durationText}</span>
+                      </div>
+                    ) : null}
+                    {share.publishedAt ? (
+                      <div>
+                        <strong style={{ color: "#f3efe8" }}>Published:</strong>{" "}
+                        <span style={{ color: "#d7ddd8" }}>{new Date(share.publishedAt).toLocaleDateString()}</span>
+                      </div>
+                    ) : null}
+                    {share.slug ? (
+                      <div>
+                        <strong style={{ color: "#f3efe8" }}>Slug:</strong>{" "}
+                        <span style={{ color: "#d7ddd8" }}>{share.slug}</span>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </aside>

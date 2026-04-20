@@ -2876,3 +2876,73 @@ html, body {
   }
 }
 
+
+/* ===== MEMBERSHIP SINGLE-COLUMN OVERRIDE ===== */
+#membership.rh-section {
+  display: grid !important;
+  grid-template-columns: minmax(280px, 420px) !important;
+  justify-content: center !important;
+  align-items: start !important;
+  column-gap: 0 !important;
+  row-gap: 14px !important;
+}
+
+#membership .rh-section-head {
+  grid-column: 1 !important;
+  grid-row: auto !important;
+  margin: 0 !important;
+  max-width: none !important;
+}
+
+#membership > .rh-grid-two.rh-membership-two-col {
+  grid-column: 1 !important;
+  grid-row: auto !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+#membership .rh-membership-stack,
+#membership .rh-membership-side-stack {
+  grid-column: 1 !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
+  align-items: start !important;
+}
+
+#membership .rh-membership-stack > .rh-card,
+#membership .rh-membership-side-stack > .rh-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 16px !important;
+}
+
+#membership .rh-membership-side-stack img {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 300px !important;
+  object-fit: contain !important;
+  margin: 0 auto !important;
+}
+
+#membership .rh-card,
+#membership .rh-card *,
+#membership .rh-card h2,
+#membership .rh-card h3,
+#membership .rh-card p,
+#membership .rh-card li,
+#membership .rh-card a,
+#membership .rh-card button {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+

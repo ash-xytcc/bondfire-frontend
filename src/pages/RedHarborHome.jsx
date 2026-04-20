@@ -1588,6 +1588,19 @@ export default function RedHarborHome() {
             </div>
           </div>
 
+          {editorMode ? (
+            <div className="rh-inline-action-head" style={{ marginBottom: 14 }}>
+              <div className="rh-inline-group-label">Join cards</div>
+              <div className="rh-inline-reorder-actions">
+                {liveJoinCards.length < 6 ? (
+                  <button type="button" className="rh-inline-add-btn" onClick={addJoinCard}>
+                    Add join card
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
           <div className="rh-grid-three">
             {liveJoinCards.map((card, index) => {
               const action = (liveHome.show_get_involved && involvedActions.length > 0 ? involvedActions : defaultHome.get_involved_links)[index]
@@ -1656,13 +1669,6 @@ export default function RedHarborHome() {
             })}
           </div>
 
-          {editorMode && liveJoinCards.length < 6 ? (
-            <div style={{ marginTop: 14 }}>
-              <button type="button" className="rh-inline-add-btn" onClick={addJoinCard}>
-                Add join card
-              </button>
-            </div>
-          ) : null}
         </section>
 
         <section id="membership" className="rh-section rh-section-band">

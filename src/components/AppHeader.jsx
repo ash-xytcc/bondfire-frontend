@@ -406,29 +406,6 @@ export default function AppHeader({ onLogout, showLogout }) {
             </button>
           </div>
 
-          {dpg ? (
-            <div style={{ display: "grid", gap: 10, marginTop: 14, marginBottom: 6 }}>
-              <NavLink
-                to="/org/dpg/videos"
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  background: "rgba(147,180,240,0.16)",
-                  border: "1px solid rgba(147,180,240,0.34)",
-                  color: "#fff",
-                  fontWeight: 800,
-                  textDecoration: "none",
-                  textShadow: "0 1px 1px rgba(0,0,0,0.85)",
-                }}
-              >
-                Videos
-              </NavLink>
-            </div>
-          ) : null}
-
           <OrgNav variant="drawer" />
 
           {showLogout ? (

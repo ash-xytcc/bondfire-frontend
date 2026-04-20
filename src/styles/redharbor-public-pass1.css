@@ -3143,3 +3143,46 @@ html, body {
 
 }
 
+
+/* ===== FIX CTA ROW ALIGNMENT WITH POSTER ===== */
+@media (min-width: 901px) {
+  /* heading */
+  #membership .rh-section-head {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  /* who can join + dues */
+  #membership .rh-membership-stack {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    display: grid !important;
+    gap: 14px !important;
+    align-items: start !important;
+  }
+
+  /* poster */
+  #membership .rh-membership-side-stack {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    display: grid !important;
+    gap: 14px !important;
+    align-items: start !important;
+  }
+
+  /* CTA goes directly to the right of poster, not on a later row */
+  #membership > .rh-card:last-of-type {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    align-self: start !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* normalize overall spacing */
+  #membership.rh-section {
+    row-gap: 14px !important;
+  }
+}
+

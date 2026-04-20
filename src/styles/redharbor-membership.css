@@ -328,3 +328,65 @@
     min-width: 0;
   }
 }
+
+
+/* final hero poster placement override */
+.rhm-hero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.15fr) 280px !important;
+  gap: 24px !important;
+  align-items: start !important;
+}
+
+.rhm-hero-copy {
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.rhm-hero-media {
+  width: 280px !important;
+  max-width: 280px !important;
+  min-width: 280px !important;
+  height: auto !important;
+  align-self: start !important;
+  justify-self: end !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-end !important;
+}
+
+.rhm-hero-image {
+  display: block !important;
+  width: 100% !important;
+  max-width: 280px !important;
+  max-height: 360px !important;
+  height: auto !important;
+  object-fit: contain !important;
+  object-position: top center !important;
+}
+
+.rhm-cta-card {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+@media (max-width: 980px) {
+  .rhm-hero {
+    grid-template-columns: 1fr !important;
+  }
+
+  .rhm-hero-media {
+    width: 100% !important;
+    max-width: 260px !important;
+    min-width: 0 !important;
+    justify-self: start !important;
+    justify-content: flex-start !important;
+  }
+
+  .rhm-hero-image {
+    max-width: 260px !important;
+    max-height: 340px !important;
+  }
+}
+

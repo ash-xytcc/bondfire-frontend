@@ -3186,3 +3186,37 @@ html, body {
   }
 }
 
+
+/* ===== SMALL FIX: poster under left intro, nothing else ===== */
+@media (min-width: 901px) {
+  #membership .rh-section-head {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  #membership .rh-membership-side-stack {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    align-self: start !important;
+  }
+
+  #membership .rh-membership-stack {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  #membership > .rh-card:last-of-type {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    align-self: start !important;
+  }
+
+  #membership .rh-membership-side-stack img {
+    max-width: 220px !important;
+    max-height: 260px !important;
+    margin: 0 auto !important;
+    display: block !important;
+    object-fit: contain !important;
+  }
+}
+

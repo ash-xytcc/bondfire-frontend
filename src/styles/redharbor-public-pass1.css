@@ -3122,3 +3122,24 @@ html, body {
   }
 }
 
+
+/* ===== TIGHTEN CTA UNDER DUES ===== */
+@media (min-width: 901px) {
+
+  /* remove any vertical spacing pushing it down */
+  #membership > .rh-card:last-of-type {
+    margin-top: -6px !important;
+  }
+
+  /* tighten the stack spacing overall */
+  #membership.rh-section {
+    row-gap: 10px !important;
+  }
+
+  #membership .rh-membership-stack,
+  #membership .rh-membership-side-stack {
+    gap: 10px !important;
+  }
+
+}
+

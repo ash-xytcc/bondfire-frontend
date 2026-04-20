@@ -114,31 +114,6 @@ const defaultHome = {
   member_access_title: "Member access",
   member_access_body:
     "Existing members can use the private branch board for internal updates, documents, meetings, and announcements.",
-  membership_title: "Join the IWW through Red Harbor",
-  membership_intro:
-    "Join the One Big Union, connect with a local branch, and plug into workplace organizing, political education, and worker solidarity on the harbor and beyond.",
-  membership_details_title: "Who can join",
-  membership_details_body:
-    "The IWW is for workers, not employers. That includes workers with jobs, unemployed workers, students, retirees, self employed workers, informal workers, and workers who cannot currently work. People with real hiring and firing power over other workers are treated as employers and are not eligible.",
-  membership_includes_title: "Who this includes",
-  membership_includes_items: [
-    "Workers currently on the job",
-    "Unemployed and underemployed workers",
-    "Students and retirees",
-    "Self employed and informal workers",
-    "Workers already in another union, except officers",
-  ],
-  membership_dues_title: "Dues",
-  membership_dues_items: [
-    "$11/mo · Less than $2,000 per month",
-    "$22/mo · $2,000 to $3,500 per month",
-    "$33/mo · More than $3,500 per month",
-    "The first month also includes an initiation fee equal to one month of dues.",
-  ],
-  membership_cta_title: "Ready to get your red card?",
-  membership_cta_body:
-    "Redcard handles the membership sign up. Once you are in, Red Harbor can be part of where that membership actually lives.",
-  membership_poster_url: "/red-harbor-hero.jpg",
   primary_actions: [
     { label: "Join Us", url: "#join" },
     { label: "Read the Bulletin", url: "#bulletin" },
@@ -298,21 +273,6 @@ function normalizeHome(raw) {
     contact_card_body: String(base.contact_card_body || defaultHome.contact_card_body).trim(),
     member_access_title: String(base.member_access_title || defaultHome.member_access_title).trim(),
     member_access_body: String(base.member_access_body || defaultHome.member_access_body).trim(),
-    membership_title: String(base.membership_title || defaultHome.membership_title).trim(),
-    membership_intro: String(base.membership_intro || defaultHome.membership_intro).trim(),
-    membership_details_title: String(base.membership_details_title || defaultHome.membership_details_title).trim(),
-    membership_details_body: String(base.membership_details_body || defaultHome.membership_details_body).trim(),
-    membership_includes_title: String(base.membership_includes_title || defaultHome.membership_includes_title).trim(),
-    membership_includes_items: cleanStringArray(base.membership_includes_items, 12).length
-      ? cleanStringArray(base.membership_includes_items, 12)
-      : defaultHome.membership_includes_items,
-    membership_dues_title: String(base.membership_dues_title || defaultHome.membership_dues_title).trim(),
-    membership_dues_items: cleanStringArray(base.membership_dues_items, 12).length
-      ? cleanStringArray(base.membership_dues_items, 12)
-      : defaultHome.membership_dues_items,
-    membership_cta_title: String(base.membership_cta_title || defaultHome.membership_cta_title).trim(),
-    membership_cta_body: String(base.membership_cta_body || defaultHome.membership_cta_body).trim(),
-    membership_poster_url: String(base.membership_poster_url || defaultHome.membership_poster_url).trim(),
     primary_actions: cleanLinkArray(base.primary_actions, 3).length
       ? cleanLinkArray(base.primary_actions, 3)
       : defaultHome.primary_actions,
@@ -878,8 +838,6 @@ export default function RedHarborHome() {
   const whatWeDoItems = React.useMemo(() => cleanStringArray(liveHome.what_we_do, 8), [liveHome.what_we_do])
   const purposeItems = React.useMemo(() => cleanStringArray(liveHome.site_purpose_items, 8), [liveHome.site_purpose_items])
   const eventItems = React.useMemo(() => cleanStringArray(liveHome.events_items, 8), [liveHome.events_items])
-  const membershipIncludesItems = React.useMemo(() => cleanStringArray(liveHome.membership_includes_items, 12), [liveHome.membership_includes_items])
-  const membershipDuesItems = React.useMemo(() => cleanStringArray(liveHome.membership_dues_items, 12), [liveHome.membership_dues_items])
   const primaryActions = React.useMemo(() => cleanLinkArray(liveHome.primary_actions, 3), [liveHome.primary_actions])
   const involvedActions = React.useMemo(() => cleanLinkArray(liveHome.get_involved_links, 6), [liveHome.get_involved_links])
 
@@ -961,16 +919,6 @@ export default function RedHarborHome() {
       setSaveMsg("")
       const dataUrl = await fileToOptimizedDataUrl(file)
       updateDraft("hero_image_url", dataUrl)
-    } catch (err) {
-      setSaveMsg(String(err?.message || err || "Failed to load image"))
-    }
-  }, [updateDraft])
-
-  const handleMembershipPosterUpload = React.useCallback(async (file) => {
-    try {
-      setSaveMsg("")
-      const dataUrl = await fileToOptimizedDataUrl(file)
-      updateDraft("membership_poster_url", dataUrl)
     } catch (err) {
       setSaveMsg(String(err?.message || err || "Failed to load image"))
     }
@@ -1091,17 +1039,6 @@ export default function RedHarborHome() {
         contact_card_body: src.contact_card_body,
         member_access_title: src.member_access_title,
         member_access_body: src.member_access_body,
-        membership_title: src.membership_title,
-        membership_intro: src.membership_intro,
-        membership_details_title: src.membership_details_title,
-        membership_details_body: src.membership_details_body,
-        membership_includes_title: src.membership_includes_title,
-        membership_includes_items: src.membership_includes_items,
-        membership_dues_title: src.membership_dues_title,
-        membership_dues_items: src.membership_dues_items,
-        membership_cta_title: src.membership_cta_title,
-        membership_cta_body: src.membership_cta_body,
-        membership_poster_url: src.membership_poster_url,
         primary_actions: src.primary_actions,
         get_involved_links: src.get_involved_links,
       }
@@ -1205,7 +1142,7 @@ export default function RedHarborHome() {
         <nav className="rh-public-nav" aria-label="Primary">
           <SectionLink id="about" className="rh-nav-link">About</SectionLink>
           <SectionLink id="join" className="rh-nav-link">Join</SectionLink>
-          <SectionLink id="membership" className="rh-nav-link">Membership</SectionLink>
+          <Link to="/membership" className="rh-nav-link">Membership</Link>
           <SectionLink id="bulletin" className="rh-nav-link">Bulletin</SectionLink>
           <Link to="/labor-history" className="rh-nav-link">Labor History</Link>
           {liveHome.show_meetings ? <SectionLink id="events" className="rh-nav-link">Events</SectionLink> : null}
@@ -1268,19 +1205,6 @@ export default function RedHarborHome() {
                   onChange={async (e) => {
                     const file = e.target.files && e.target.files[0]
                     if (file) await handleHeroImageUpload(file)
-                    e.target.value = ""
-                  }}
-                />
-              </label>
-
-              <label className="rh-editor-image">
-                <span>Membership poster</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files && e.target.files[0]
-                    if (file) await handleMembershipPosterUpload(file)
                     e.target.value = ""
                   }}
                 />
@@ -1522,9 +1446,9 @@ export default function RedHarborHome() {
             </div>
 
             <div className="rh-home-membership-actions">
-              <button type="button" className="rh-btn rh-btn-secondary" onClick={() => scrollToSection("membership")}>
+              <Link to="/membership" className="rh-btn rh-btn-secondary">
                 Learn about membership
-              </button>
+              </Link>
               <a
                 href="https://redcard.iww.org/"
                 className="rh-btn rh-btn-primary"
@@ -1571,157 +1495,6 @@ export default function RedHarborHome() {
                 </article>
               )
             })}
-          </div>
-        </section>
-
-        <section id="membership" className="rh-section rh-section-band">
-          <div className="rh-section-head">
-            <p className="rh-section-kicker">Membership</p>
-            <InlineTextEdit
-              tag="h2"
-              className=""
-              editorMode={editorMode}
-              value={liveHome.membership_title || defaultHome.membership_title}
-              onChange={(value) => updateDraft("membership_title", value)}
-              placeholder="Join the IWW through Red Harbor"
-            />
-            <InlineTextEdit
-              tag="p"
-              className="rh-section-copy"
-              multiline
-              editorMode={editorMode}
-              value={liveHome.membership_intro || defaultHome.membership_intro}
-              onChange={(value) => updateDraft("membership_intro", value)}
-              placeholder="Membership section intro"
-            />
-          </div>
-
-          <div className="rh-grid-two" style={{ alignItems: "start" }}>
-            <div className="rh-card">
-              <InlineTextEdit
-                tag="h3"
-                className=""
-                editorMode={editorMode}
-                value={liveHome.membership_details_title || defaultHome.membership_details_title}
-                onChange={(value) => updateDraft("membership_details_title", value)}
-                placeholder="Who can join"
-              />
-              <InlineTextEdit
-                tag="p"
-                className=""
-                multiline
-                editorMode={editorMode}
-                value={liveHome.membership_details_body || defaultHome.membership_details_body}
-                onChange={(value) => updateDraft("membership_details_body", value)}
-                placeholder="Membership details"
-              />
-
-              <div style={{ marginTop: 18 }}>
-                <InlineTextEdit
-                  tag="h3"
-                  className=""
-                  editorMode={editorMode}
-                  value={liveHome.membership_includes_title || defaultHome.membership_includes_title}
-                  onChange={(value) => updateDraft("membership_includes_title", value)}
-                  placeholder="Who this includes"
-                />
-                {editorMode ? (
-                  <InlineReorderableStringListEditor
-                    title="Membership includes items"
-                    items={membershipIncludesItems}
-                    onChange={(items) => updateDraft("membership_includes_items", items)}
-                    editorMode={editorMode}
-                    itemPlaceholder="Membership includes item"
-                    maxItems={12}
-                  />
-                ) : (
-                  <ul className="rh-event-list">
-                    {membershipIncludesItems.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-
-            <div className="rh-card" style={{ display: "grid", gap: 14 }}>
-              {liveHome.membership_poster_url ? (
-                <img
-                  src={liveHome.membership_poster_url}
-                  alt="Membership poster"
-                  style={{
-                    width: "100%",
-                    maxHeight: 520,
-                    objectFit: "contain",
-                    borderRadius: 16,
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid var(--rh-line)",
-                  }}
-                />
-              ) : (
-                <div className="rh-note">Upload a membership poster from editor mode.</div>
-              )}
-
-              <div className="rh-card" style={{ padding: 18 }}>
-                <InlineTextEdit
-                  tag="h3"
-                  className=""
-                  editorMode={editorMode}
-                  value={liveHome.membership_dues_title || defaultHome.membership_dues_title}
-                  onChange={(value) => updateDraft("membership_dues_title", value)}
-                  placeholder="Dues"
-                />
-                {editorMode ? (
-                  <InlineReorderableStringListEditor
-                    title="Membership dues items"
-                    items={membershipDuesItems}
-                    onChange={(items) => updateDraft("membership_dues_items", items)}
-                    editorMode={editorMode}
-                    itemPlaceholder="Dues item"
-                    maxItems={12}
-                  />
-                ) : (
-                  <ul className="rh-event-list">
-                    {membershipDuesItems.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="rh-card" style={{ marginTop: 18 }}>
-            <InlineTextEdit
-              tag="h2"
-              className=""
-              editorMode={editorMode}
-              value={liveHome.membership_cta_title || defaultHome.membership_cta_title}
-              onChange={(value) => updateDraft("membership_cta_title", value)}
-              placeholder="Ready to get your red card?"
-            />
-            <InlineTextEdit
-              tag="p"
-              className="rh-section-copy"
-              multiline
-              editorMode={editorMode}
-              value={liveHome.membership_cta_body || defaultHome.membership_cta_body}
-              onChange={(value) => updateDraft("membership_cta_body", value)}
-              placeholder="Membership CTA body"
-            />
-            <div className="rh-hero-actions">
-              <a
-                href="https://redcard.iww.org/"
-                className="rh-btn rh-btn-primary"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Join via Redcard
-              </a>
-              <button type="button" className="rh-btn rh-btn-secondary" onClick={() => scrollToSection("contact")}>
-                Talk to the branch first
-              </button>
-            </div>
           </div>
         </section>
 
@@ -1901,7 +1674,7 @@ export default function RedHarborHome() {
         <div className="rh-footer-links">
           <SectionLink id="about" className="rh-footer-link-button">About</SectionLink>
           <SectionLink id="join" className="rh-footer-link-button">Join</SectionLink>
-          <SectionLink id="membership" className="rh-footer-link-button">Membership</SectionLink>
+          <Link to="/membership">Membership</Link>
           <SectionLink id="bulletin" className="rh-footer-link-button">Bulletin</SectionLink>
           <Link to="/labor-history">Labor History</Link>
           {liveHome.show_meetings ? <SectionLink id="events" className="rh-footer-link-button">Events</SectionLink> : null}

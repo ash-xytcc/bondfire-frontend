@@ -2168,3 +2168,132 @@ html, body {
   margin-top: 8px !important;
 }
 
+
+/* =========================================
+   FINAL STABILITY FIX: clear resize leftovers
+   ========================================= */
+
+/* when NOT editing, ignore any inline resize dimensions left on cards */
+.rh-public:not(.rh-editor-mode) #join .rh-card,
+.rh-public:not(.rh-editor-mode) #membership .rh-card {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  resize: none !important;
+  overflow: visible !important;
+}
+
+/* =========================================
+   JOIN: four cards across on desktop
+   ========================================= */
+#join .rh-grid-three.rh-join-grid-four {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+}
+
+#join .rh-grid-three.rh-join-grid-four > .rh-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+}
+
+#join .rh-grid-three.rh-join-grid-four > .rh-card,
+#join .rh-grid-three.rh-join-grid-four > .rh-card *,
+#join .rh-grid-three.rh-join-grid-four > .rh-card h3,
+#join .rh-grid-three.rh-join-grid-four > .rh-card p,
+#join .rh-grid-three.rh-join-grid-four > .rh-card a,
+#join .rh-grid-three.rh-join-grid-four > .rh-card button {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+#join .rh-grid-three.rh-join-grid-four > .rh-card .rh-inline-link,
+#join .rh-grid-three.rh-join-grid-four > .rh-card .rh-btn {
+  margin-top: auto !important;
+  align-self: flex-start !important;
+}
+
+@media (max-width: 1100px) {
+  #join .rh-grid-three.rh-join-grid-four {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  #join .rh-grid-three.rh-join-grid-four {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* =========================================
+   MEMBERSHIP: left stack + right stack
+   ========================================= */
+
+#membership .rh-grid-two.rh-membership-two-col {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr) !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+.rh-membership-stack {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+.rh-membership-side-stack {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+.rh-membership-stack > .rh-card,
+.rh-membership-side-stack > .rh-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* keep poster above CTA in the right column */
+.rh-membership-side-stack > .rh-card:first-child {
+  order: 1 !important;
+}
+
+.rh-membership-side-stack > .rh-card:last-child {
+  order: 2 !important;
+  margin-top: 0 !important;
+}
+
+/* membership text should never stack vertically */
+#membership .rh-card,
+#membership .rh-card *,
+#membership .rh-card h2,
+#membership .rh-card h3,
+#membership .rh-card p,
+#membership .rh-card li,
+#membership .rh-card a,
+#membership .rh-card button {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+@media (max-width: 980px) {
+  #membership .rh-grid-two.rh-membership-two-col {
+    grid-template-columns: 1fr !important;
+  }
+}
+

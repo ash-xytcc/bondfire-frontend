@@ -2297,3 +2297,206 @@ html, body {
   }
 }
 
+
+/* =========================================
+   FINAL SPACE FIX
+   use available width instead of tiny columns
+   ========================================= */
+
+/* JOIN: auto-fill cards across available space */
+#join .rh-grid-three,
+#join .rh-grid-three.rh-join-grid-four {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+}
+
+#join .rh-grid-three > .rh-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+}
+
+#join .rh-grid-three > .rh-card,
+#join .rh-grid-three > .rh-card *,
+#join .rh-grid-three > .rh-card h3,
+#join .rh-grid-three > .rh-card p,
+#join .rh-grid-three > .rh-card a,
+#join .rh-grid-three > .rh-card button {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+#join .rh-grid-three > .rh-card .rh-inline-link,
+#join .rh-grid-three > .rh-card .rh-btn {
+  margin-top: auto !important;
+  align-self: flex-start !important;
+}
+
+/* MEMBERSHIP: actually use the whole width */
+#membership .rh-grid-two.rh-membership-two-col {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr) !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+.rh-membership-stack {
+  display: grid !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+.rh-membership-side-stack {
+  display: grid !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+/* reset any resize leftovers */
+.rh-public:not(.rh-editor-mode) #join .rh-card,
+.rh-public:not(.rh-editor-mode) #membership .rh-card {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  resize: none !important;
+  overflow: visible !important;
+}
+
+/* text should stay horizontal like normal human language */
+#membership .rh-card,
+#membership .rh-card *,
+#membership .rh-card h2,
+#membership .rh-card h3,
+#membership .rh-card p,
+#membership .rh-card li,
+#membership .rh-card a,
+#membership .rh-card button {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+@media (max-width: 980px) {
+  #membership .rh-grid-two.rh-membership-two-col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* ===== clean layout fix: join + membership ===== */
+
+/* join section should actually use the row */
+#join .rh-grid-three,
+#join .rh-grid-three.rh-join-grid-four {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+}
+
+#join .rh-grid-three > .rh-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+}
+
+#join .rh-grid-three > .rh-card,
+#join .rh-grid-three > .rh-card *,
+#join .rh-grid-three > .rh-card h3,
+#join .rh-grid-three > .rh-card p,
+#join .rh-grid-three > .rh-card a,
+#join .rh-grid-three > .rh-card button {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+#join .rh-grid-three > .rh-card .rh-inline-link,
+#join .rh-grid-three > .rh-card .rh-btn {
+  margin-top: auto !important;
+  align-self: flex-start !important;
+}
+
+/* membership main band: intro left, content middle, poster+cta right */
+#membership {
+  overflow: visible !important;
+}
+
+#membership > .rh-grid-two.rh-membership-two-col {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr) !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+.rh-membership-stack {
+  display: grid !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+.rh-membership-side-stack {
+  display: grid !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+.rh-membership-stack > .rh-card,
+.rh-membership-side-stack > .rh-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+#membership .rh-card,
+#membership .rh-card *,
+#membership .rh-card h2,
+#membership .rh-card h3,
+#membership .rh-card p,
+#membership .rh-card li,
+#membership .rh-card a,
+#membership .rh-card button {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+/* kill any leftover resize poisoning outside editor mode */
+.rh-public:not(.rh-editor-mode) #join .rh-card,
+.rh-public:not(.rh-editor-mode) #membership .rh-card {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  resize: none !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 980px) {
+  #membership > .rh-grid-two.rh-membership-two-col {
+    grid-template-columns: 1fr !important;
+  }
+}
+

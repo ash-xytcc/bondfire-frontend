@@ -1248,28 +1248,7 @@ export default function DpgPublicHome() {
           }}
         >
           <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 }}>
-              <h2
-                style={{
-                  marginTop: 0,
-                  marginBottom: 0,
-                  color: accent,
-                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
-                  fontWeight: 800,
-                }}
-              >
-                What is in progress
-              </h2>
-              {editorMode ? (
-                <EditChip
-                  onClick={() => setActiveField(activeField === "progress" ? "" : "progress")}
-                  subtle
-                  active={activeField === "progress"}
-                >
-                  Edit
-                </EditChip>
-              ) : null}
-            </div>
+            
 
             {editorMode && activeField === "progress" ? (
               <div style={{ display: "grid", gap: 8 }}>

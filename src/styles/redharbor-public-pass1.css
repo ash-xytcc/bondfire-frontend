@@ -3054,3 +3054,71 @@ html, body {
   }
 }
 
+
+/* ===== MEMBERSHIP POSTER MOVE TO LEFT COLUMN ===== */
+@media (min-width: 901px) {
+  /* flatten the inner membership wrapper so its children can join the outer grid */
+  #membership > .rh-grid-two.rh-membership-two-col {
+    display: contents !important;
+  }
+
+  /* outer membership section stays 2 columns */
+  #membership.rh-section {
+    display: grid !important;
+    grid-template-columns: minmax(220px, 280px) minmax(360px, 1fr) !important;
+    column-gap: 18px !important;
+    row-gap: 14px !important;
+    align-items: start !important;
+  }
+
+  /* heading stays in left column */
+  #membership .rh-section-head {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    margin: 0 !important;
+  }
+
+  /* poster stack moves into left column under heading */
+  #membership .rh-membership-side-stack {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    display: grid !important;
+    gap: 14px !important;
+    align-items: start !important;
+  }
+
+  /* middle content stays in right column */
+  #membership .rh-membership-stack {
+    grid-column: 2 !important;
+    grid-row: 1 / span 2 !important;
+    display: grid !important;
+    gap: 14px !important;
+    align-items: start !important;
+  }
+
+  /* bottom CTA stays in right column below the content */
+  #membership > .rh-card:last-of-type {
+    grid-column: 2 !important;
+    grid-row: 3 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  /* shrink poster so it fits the left rail nicely */
+  #membership .rh-membership-side-stack img {
+    display: block !important;
+    width: 100% !important;
+    max-width: 220px !important;
+    max-height: 260px !important;
+    object-fit: contain !important;
+    margin: 0 auto !important;
+  }
+
+  #membership .rh-membership-side-stack > .rh-card {
+    padding: 14px !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+

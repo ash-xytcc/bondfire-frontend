@@ -3308,3 +3308,69 @@ html, body {
   }
 }
 
+
+/* ===== MEMBERSHIP LAYOUT RESET ===== */
+#membership.rh-membership-shell {
+  display: grid !important;
+  grid-template-columns: minmax(220px, 280px) minmax(360px, 1fr) !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+#membership .rh-membership-left {
+  display: grid !important;
+  gap: 14px !important;
+  align-items: start !important;
+}
+
+#membership .rh-membership-right {
+  display: grid !important;
+  gap: 14px !important;
+  align-items: start !important;
+}
+
+#membership .rh-membership-stack {
+  display: grid !important;
+  gap: 14px !important;
+  align-items: start !important;
+}
+
+#membership .rh-membership-poster-wrap .rh-card,
+#membership .rh-membership-right > .rh-card,
+#membership .rh-membership-stack > .rh-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+#membership .rh-membership-poster-wrap img {
+  display: block !important;
+  width: 100% !important;
+  max-width: 220px !important;
+  max-height: 260px !important;
+  object-fit: contain !important;
+  margin: 0 auto !important;
+}
+
+#membership .rh-card,
+#membership .rh-card *,
+#membership .rh-card h2,
+#membership .rh-card h3,
+#membership .rh-card p,
+#membership .rh-card li,
+#membership .rh-card a,
+#membership .rh-card button {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+@media (max-width: 900px) {
+  #membership.rh-membership-shell {
+    grid-template-columns: 1fr !important;
+  }
+}
+

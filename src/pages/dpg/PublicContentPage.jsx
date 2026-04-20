@@ -1377,6 +1377,55 @@ function VolunteerPageLayout({ accent, editorMode = false, activeField = "", set
 }
 
 function DonatePageLayout({ accent, editorMode = false, activeField = "", setActiveField = () => {}, content, setContent = () => {} }) {
+  const [hcbState, setHcbState] = React.useState({ loading: true, balanceCents: null, transactions: [], error: "" });
+
+  React.useEffect(() => {
+    let dead = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/public/hcb-summary", {
+          headers: { Accept: "application/json" },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (dead) return;
+        if (!res.ok || data?.ok === false) {
+          throw new Error(data?.error || `HTTP ${res.status}`);
+        }
+        setHcbState({
+          loading: false,
+          balanceCents: Number.isFinite(Number(data?.balanceCents)) ? Number(data.balanceCents) : null,
+          transactions: Array.isArray(data?.transactions) ? data.transactions : [],
+          error: "",
+        });
+      } catch (e) {
+        if (dead) return;
+        setHcbState({
+          loading: false,
+          balanceCents: null,
+          transactions: [],
+          error: String(e?.message || e),
+        });
+      }
+    })();
+    return () => { dead = true; };
+  }, []);
+
+  const fmtMoney = (cents) => {
+    const n = Number(cents);
+    if (!Number.isFinite(n)) return "Unavailable";
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(n / 100);
+  };
+
+  const fmtTxnMoney = (tx) => {
+    if (Number.isFinite(Number(tx?.amountCents))) {
+      return fmtMoney(Number(tx.amountCents));
+    }
+    return String(tx?.amountText || "—");
+  };
+
   const updateSupportItem = (index, value) => {
     const next = [...content.support_items];
     while (next.length < 8) next.push("");
@@ -1434,6 +1483,52 @@ function DonatePageLayout({ accent, editorMode = false, activeField = "", setAct
           font-weight: 800;
           box-shadow: 0 12px 28px rgba(0,0,0,0.18);
         }
+        .dpg-donate-inline-cta {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 14px 18px;
+          border-radius: 999px;
+          background: ${accent};
+          color: #121715;
+          text-decoration: none;
+          font-weight: 800;
+          box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+        }
+        .dpg-donate-hcb-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 18px;
+        }
+        .dpg-donate-hcb-value {
+          color: #f3efe8;
+          font-family: Inter, system-ui, Arial, sans-serif;
+          font-size: clamp(2rem, 4vw, 3rem);
+          font-weight: 900;
+          line-height: 1;
+          margin: 8px 0 10px;
+        }
+        .dpg-donate-hcb-list {
+          display: grid;
+          gap: 12px;
+          margin-top: 8px;
+        }
+        .dpg-donate-hcb-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 10px;
+          align-items: start;
+          padding-bottom: 12px;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .dpg-donate-hcb-row:last-child {
+          border-bottom: 0;
+          padding-bottom: 0;
+        }
+        @media (max-width: 920px) {
+          .dpg-donate-grid { grid-template-columns: 1fr; }
+          .dpg-donate-hcb-grid { grid-template-columns: 1fr; }
+        }
         .dpg-donate-sticky {
           background: #f3e28b;
           color: #171717;
@@ -1458,6 +1553,66 @@ function DonatePageLayout({ accent, editorMode = false, activeField = "", setAct
           content={content}
           setContent={setContent}
         />
+
+        <section className="dpg-donate-hcb-grid">
+          <article className="dpg-donate-card">
+            <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>
+              Live HCB balance
+            </div>
+            <div className="dpg-donate-hcb-value">
+              {hcbState.loading ? "Loading…" : fmtMoney(hcbState.balanceCents)}
+            </div>
+            <div style={{ color: "#d7ddd8", lineHeight: 1.6 }}>
+              Public transparency data from HCB for Dual Power Gathering.
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <a
+                href="https://hcb.hackclub.com/dual-power-gathering"
+                target="_blank"
+                rel="noreferrer"
+                className="dpg-donate-inline-cta"
+              >
+                Open full HCB page
+              </a>
+            </div>
+          </article>
+
+          <article className="dpg-donate-card">
+            <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
+              Recent transactions
+            </div>
+
+            {hcbState.loading ? (
+              <div style={{ color: "#d7ddd8" }}>Loading transactions…</div>
+            ) : hcbState.error ? (
+              <div style={{ color: "#ffb8b8" }}>{hcbState.error}</div>
+            ) : hcbState.transactions.length ? (
+              <div className="dpg-donate-hcb-list">
+                {hcbState.transactions.slice(0, 6).map((tx, idx) => (
+                  <div className="dpg-donate-hcb-row" key={tx.id || idx}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ color: "#f3efe8", fontWeight: 800, wordBreak: "break-word" }}>
+                        {tx.memo || "Transaction"}
+                      </div>
+                      <div style={{ color: "#8fa1ab", fontSize: 13, marginTop: 4 }}>
+                        {tx.date ? new Date(tx.date).toLocaleDateString() : ""}
+                      </div>
+                    </div>
+                    <div style={{
+                      color: Number(tx?.amountCents) < 0 ? "#ff8f8f" : "#8fe0ad",
+                      fontWeight: 800,
+                      whiteSpace: "nowrap",
+                    }}>
+                      {fmtTxnMoney(tx)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ color: "#d7ddd8" }}>No transactions available.</div>
+            )}
+          </article>
+        </section>
 
         <section className="dpg-donate-grid">
           <div style={{ display: "grid", gap: 18 }}>
@@ -1648,14 +1803,7 @@ function DonatePageLayout({ accent, editorMode = false, activeField = "", setAct
                 <div style={{ marginTop: 14 }}>
                   <a
                     href="mailto:dualpowergathering@proton.me"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      color: accent,
-                      textDecoration: "none",
-                      fontWeight: 800,
-                    }}
+                    className="dpg-donate-inline-cta"
                   >
                     Email organizers
                   </a>

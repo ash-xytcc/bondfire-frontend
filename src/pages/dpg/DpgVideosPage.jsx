@@ -30,6 +30,32 @@ async function api(path, opts = {}) {
   };
 }
 
+async function uploadVideoFile(file) {
+  const form = new FormData();
+  form.append("file", file);
+
+  const res = await fetch("/api/orgs/dpg/shares-upload", {
+    method: "POST",
+    credentials: "include",
+    body: form,
+    headers: { Accept: "application/json" },
+  });
+
+  const text = await res.text().catch(() => "");
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
+
+  return {
+    ok: !!(res.ok && data?.ok !== false),
+    status: res.status,
+    data,
+  };
+}
+
 const theme = {
   bgElev: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)), rgba(10,16,14,0.72)",
   border: "rgba(255,255,255,0.08)",
@@ -103,6 +129,7 @@ function sortItems(items = []) {
 export default function DpgVideosPage() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
   const [items, setItems] = React.useState([]);
   const [error, setError] = React.useState("");
   const [status, setStatus] = React.useState("Loading videos…");
@@ -168,6 +195,47 @@ export default function DpgVideosPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  async function onPickVideo(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError("");
+    setStatus(`Uploading ${file.name} to R2…`);
+
+    try {
+      const res = await uploadVideoFile(file);
+
+      if (!res.ok) {
+        throw new Error(
+          res?.data?.error ||
+          res?.data?.detail ||
+          res?.data?.message ||
+          res?.data?.raw ||
+          `HTTP ${res.status}`
+        );
+      }
+
+      const url = String(res?.data?.url || "").trim();
+      const filename = String(res?.data?.filename || file.name || "").trim();
+      const titleFromFile = filename.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+
+      setDraft((prev) => ({
+        ...prev,
+        videoUrl: url || prev.videoUrl,
+        title: prev.title || titleFromFile,
+      }));
+
+      setStatus("Upload complete. Video URL field has been filled from R2.");
+    } catch (err) {
+      setError(String(err?.message || err));
+      setStatus("Upload failed.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
   async function save(statusValue = "published") {
     const title = String(draft.title || "").trim();
     const videoUrl = String(draft.videoUrl || "").trim();
@@ -177,7 +245,7 @@ export default function DpgVideosPage() {
       return;
     }
     if (!videoUrl) {
-      setError("Video URL is required until the R2 upload phase lands.");
+      setError("Upload a file or provide a video URL.");
       return;
     }
 
@@ -313,8 +381,8 @@ export default function DpgVideosPage() {
         </h1>
 
         <div style={{ marginTop: 12, color: "var(--muted)", lineHeight: 1.58, maxWidth: 900 }}>
-          Phase two is now the real backend manager. You can create entries, save drafts, publish,
-          edit existing records, and unpublish. R2 upload replaces the plain video URL field next.
+          This phase adds the first R2-backed upload flow. Uploading a video fills the video URL field
+          automatically, and public playback still uses the existing shares routes and detail pages.
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
@@ -358,6 +426,20 @@ export default function DpgVideosPage() {
           </div>
 
           <div style={{ display: "grid", gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>upload video file to R2</div>
+              <label style={{ ...buttonStyle(false), cursor: uploading ? "default" : "pointer" }}>
+                {uploading ? "uploading..." : "choose video file"}
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={onPickVideo}
+                  disabled={uploading}
+                  style={{ display: "none" }}
+                />
+              </label>
+            </div>
+
             <input
               value={draft.title}
               onChange={(e) => setDraft((prev) => ({ ...prev, title: e.target.value }))}
@@ -368,7 +450,7 @@ export default function DpgVideosPage() {
             <input
               value={draft.videoUrl}
               onChange={(e) => setDraft((prev) => ({ ...prev, videoUrl: e.target.value }))}
-              placeholder="video URL"
+              placeholder="video URL or uploaded R2 asset URL"
               style={inputStyle()}
             />
 
@@ -418,16 +500,16 @@ export default function DpgVideosPage() {
             </label>
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button type="button" onClick={() => save("published")} disabled={saving} style={buttonStyle(true)}>
+              <button type="button" onClick={() => save("published")} disabled={saving || uploading} style={buttonStyle(true)}>
                 {saving ? "saving..." : editingId ? "save changes" : "publish entry"}
               </button>
 
-              <button type="button" onClick={() => save("draft")} disabled={saving} style={buttonStyle(false)}>
+              <button type="button" onClick={() => save("draft")} disabled={saving || uploading} style={buttonStyle(false)}>
                 save as draft
               </button>
 
               {editingId ? (
-                <button type="button" onClick={resetForm} disabled={saving} style={buttonStyle(false)}>
+                <button type="button" onClick={resetForm} disabled={saving || uploading} style={buttonStyle(false)}>
                   cancel edit
                 </button>
               ) : null}

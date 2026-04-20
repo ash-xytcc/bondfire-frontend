@@ -1862,43 +1862,42 @@ export default function RedHarborHome() {
                   </ul>
                 )}
               </div>
-            </div>
 
-            <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
-              <InlineTextEdit
-                tag="h2"
-                className=""
-                editorMode={editorMode}
-                value={liveHome.membership_cta_title || defaultHome.membership_cta_title}
-                onChange={(value) => updateDraft("membership_cta_title", value)}
-                placeholder="Ready to get your red card?"
-              />
-              <InlineTextEdit
-                tag="p"
-                className="rh-section-copy"
-                multiline
-                editorMode={editorMode}
-                value={liveHome.membership_cta_body || defaultHome.membership_cta_body}
-                onChange={(value) => updateDraft("membership_cta_body", value)}
-                placeholder="Membership CTA body"
-              />
-              <div className="rh-hero-actions">
-                <a
-                  href="https://redcard.iww.org/"
-                  className="rh-btn rh-btn-primary"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Join via Redcard
-                </a>
-                <button type="button" className="rh-btn rh-btn-secondary" onClick={() => scrollToSection("contact")}>
-                  Talk to the branch first
-                </button>
+              <div className={`rh-card ${editorMode ? "rh-resizable" : ""}`}>
+                <InlineTextEdit
+                  tag="h2"
+                  className=""
+                  editorMode={editorMode}
+                  value={liveHome.membership_cta_title || defaultHome.membership_cta_title}
+                  onChange={(value) => updateDraft("membership_cta_title", value)}
+                  placeholder="Ready to get your red card?"
+                />
+                <InlineTextEdit
+                  tag="p"
+                  className="rh-section-copy"
+                  multiline
+                  editorMode={editorMode}
+                  value={liveHome.membership_cta_body || defaultHome.membership_cta_body}
+                  onChange={(value) => updateDraft("membership_cta_body", value)}
+                  placeholder="Membership CTA body"
+                />
+                <div className="rh-hero-actions">
+                  <a
+                    href="https://redcard.iww.org/"
+                    className="rh-btn rh-btn-primary"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Join via Redcard
+                  </a>
+                  <button type="button" className="rh-btn rh-btn-secondary" onClick={() => scrollToSection("contact")}>
+                    Talk to the branch first
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </section>
-
         <section id="bulletin" className="rh-section">
           <div className="rh-bulletin-home">
             <div className="rh-bulletin-home-intro">

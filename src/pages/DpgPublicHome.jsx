@@ -1322,39 +1322,11 @@ export default function DpgPublicHome() {
               }}
             />
 
-            <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
-              <a
-                href="/bulletin"
-                style={{
-                  ...theme.link,
-                  color: accent,
-                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
-                }}
-              >
-                Read public bulletin
-              </a>
-              <button
-                type="button"
-                style={{
-                  ...theme.link,
-                  color: accent,
-                  background: 'transparent',
-                  border: 0,
-                  padding: 0,
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--dpg-font, "Formulario 1312", Inter, system-ui, Arial, sans-serif)',
-                }}
-                onClick={() => {
-                  window.location.href = authState.authed ? "/?app=dpg#/org/dpg/overview" : "/?app=dpg#/signin";
-                }}
-              >
-                {authState.authed ? "Go to organizer area" : "Go to organizer sign-in"}
-              </button>
-            </div>
+            
+
             </div>
 
-            <div style={{ ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
+            <div style={{ gridColumn: "1 / -1",  ...theme.card, color: '#f3efe8', borderRadius: 22, padding: 24 }}>
               <div
                 style={{
                   marginBottom: 12,

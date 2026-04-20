@@ -992,7 +992,7 @@ function FaqPageLayout({ accent, editorMode = false, activeField = "", setActive
                 Shortcut
               </div>
               <div style={{ color: "#171717", lineHeight: 1.58 }}>
-                <a href="/rsvp" style={{ color: "#171717", textDecoration: "underline", fontWeight: 800 }}>RSVP</a> if you know you are coming. Volunteer if you want to help shape the thing. Send the FAQ to the person who is asking you six separate questions in a row.
+                <a href="/rsvp" style={{ color: "#171717", textDecoration: "underline", fontWeight: 800 }}>RSVP</a> if you know you are coming. <a href="/volunteer" style={{ color: "#171717", textDecoration: "underline", fontWeight: 800 }}>Volunteer</a> if you want to help shape the thing. Send the FAQ to the person who is asking you six separate questions in a row.
               </div>
             </div>
           </div>

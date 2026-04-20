@@ -3186,3 +3186,36 @@ html, body {
   }
 }
 
+
+/* ===== MOVE POSTER BACK UNDER LEFT INTRO ===== */
+@media (min-width: 901px) {
+  /* heading stays top-left */
+  #membership .rh-section-head {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  /* poster stack goes directly under heading in left column */
+  #membership .rh-membership-side-stack {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    display: grid !important;
+    gap: 14px !important;
+    align-items: start !important;
+  }
+
+  /* text content stays right column */
+  #membership .rh-membership-stack {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  /* CTA stays right column under dues */
+  #membership > .rh-card:last-of-type {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    align-self: start !important;
+    margin: 0 !important;
+  }
+}
+

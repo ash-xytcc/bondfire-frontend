@@ -1,4 +1,9 @@
-import { ensureNativeRevisionTable, getExistingNativeEntry, listRevisionSnapshots, restoreRevisionSnapshot } from './_lib/nativePublicContent.js'
+import {
+  ensureNativeRevisionTable,
+  getExistingNativeEntry,
+  listRevisionSnapshots,
+  restoreRevisionSnapshot,
+} from './_lib/nativePublicContent.js'
 import { resolvePublicSitePermission } from './_lib/publicSiteAuth.js'
 import { jsonOk, withApiHandler, ensureDb, hasDb, parseJsonBody } from './_lib/api.js'
 import { badRequest, forbidden } from './_lib/errors.js'
@@ -46,7 +51,12 @@ export async function onRequestGet(context) {
     await ensureNativeRevisionTable(db)
     const items = await listRevisionSnapshots(db, resolvedId)
 
-    return jsonOk({ mode: 'd1', data: { items }, items, schemaVersion: APP_SCHEMA_VERSION })
+    return jsonOk({
+      mode: 'd1',
+      data: { items },
+      items,
+      schemaVersion: APP_SCHEMA_VERSION,
+    })
   })
 }
 
@@ -72,6 +82,11 @@ export async function onRequestPost(context) {
 
     const restored = await restoreRevisionSnapshot(db, revisionId)
 
-    return jsonOk({ mode: 'd1', data: { item: restored }, item: restored, schemaVersion: APP_SCHEMA_VERSION })
+    return jsonOk({
+      mode: 'd1',
+      data: { item: restored },
+      item: restored,
+      schemaVersion: APP_SCHEMA_VERSION,
+    })
   }, { status: 400 })
 }

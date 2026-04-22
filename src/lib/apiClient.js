@@ -7,11 +7,14 @@ export async function safeJson(res) {
 }
 
 export function getErrorMessage(data, fallback) {
-  return (
-    data?.errorInfo?.message ||
-    data?.error ||
-    fallback
-  )
+  return data?.errorInfo?.message || data?.error || fallback
+}
+
+export function getDataPayload(data) {
+  if (data && typeof data === 'object' && data.data && typeof data.data === 'object') {
+    return data.data
+  }
+  return data
 }
 
 export function requireOk(data, res, fallback) {
@@ -19,7 +22,15 @@ export function requireOk(data, res, fallback) {
     const error = new Error(getErrorMessage(data, fallback))
     error.status = res.status
     error.info = data?.errorInfo || null
+    error.payload = data || null
     throw error
   }
+  return data
+}
+
+export async function requestJson(input, init = {}, fallback = 'Request failed') {
+  const res = await fetch(input, init)
+  const data = await safeJson(res)
+  requireOk(data, res, `${fallback}: ${res.status}`)
   return data
 }

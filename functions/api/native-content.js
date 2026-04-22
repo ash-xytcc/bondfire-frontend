@@ -37,7 +37,11 @@ export async function onRequestGet(context) {
     const includeFuture = permission.canEdit || url.searchParams.get('includeFuture') === '1'
 
     if (!hasDb(context)) {
-      return jsonOk({ mode: 'scaffold', data: { items: [] }, items: [] })
+      return jsonOk({
+        mode: 'scaffold',
+        data: { items: [] },
+        items: [],
+      })
     }
 
     const db = await ensureDb(context)
@@ -46,7 +50,12 @@ export async function onRequestGet(context) {
 
     if (id || slug) {
       const item = await getNativeEntry(db, id || slug, { includeFuture })
-      return jsonOk({ mode: 'd1', data: { item }, item, schemaVersion: APP_SCHEMA_VERSION })
+      return jsonOk({
+        mode: 'd1',
+        data: { item },
+        item,
+        schemaVersion: APP_SCHEMA_VERSION,
+      })
     }
 
     const items = await listNativeEntries(db, {
@@ -56,7 +65,12 @@ export async function onRequestGet(context) {
       includeFuture,
     })
 
-    return jsonOk({ mode: 'd1', data: { items }, items, schemaVersion: APP_SCHEMA_VERSION })
+    return jsonOk({
+      mode: 'd1',
+      data: { items },
+      items,
+      schemaVersion: APP_SCHEMA_VERSION,
+    })
   })
 }
 
@@ -84,18 +98,28 @@ export async function onRequestDelete(context) {
     }
 
     if (!hasDb(context)) {
-      return jsonOk({ mode: 'scaffold', data: { deleted: id }, deleted: id })
+      return jsonOk({
+        mode: 'scaffold',
+        data: { deleted: id },
+        deleted: id,
+      })
     }
 
     const db = await ensureDb(context)
     const existing = await getExistingNativeEntry(db, id)
+
     if (existing) {
       await saveRevisionSnapshot(db, existing, 'delete:before')
     }
 
     const result = await deleteNativeEntry(db, id)
 
-    return jsonOk({ mode: 'd1', data: result, ...result, schemaVersion: APP_SCHEMA_VERSION })
+    return jsonOk({
+      mode: 'd1',
+      data: result,
+      ...result,
+      schemaVersion: APP_SCHEMA_VERSION,
+    })
   })
 }
 
@@ -112,7 +136,11 @@ async function handleWrite(context) {
     const revisionNote = String(body?.revisionNote || item?.revisionNote || 'save')
 
     if (!hasDb(context)) {
-      return jsonOk({ mode: 'scaffold', data: { item }, item })
+      return jsonOk({
+        mode: 'scaffold',
+        data: { item },
+        item,
+      })
     }
 
     const db = await ensureDb(context)
@@ -120,6 +148,7 @@ async function handleWrite(context) {
     await ensureNativeRevisionTable(db)
 
     const existing = item?.id ? await getExistingNativeEntry(db, item.id) : null
+
     if (existing) {
       await saveRevisionSnapshot(db, existing, `before:${revisionNote}`)
     }
@@ -127,6 +156,11 @@ async function handleWrite(context) {
     const saved = await upsertNativeEntry(db, item)
     await saveRevisionSnapshot(db, saved, revisionNote)
 
-    return jsonOk({ mode: 'd1', data: { item: saved }, item: saved, schemaVersion: APP_SCHEMA_VERSION })
+    return jsonOk({
+      mode: 'd1',
+      data: { item: saved },
+      item: saved,
+      schemaVersion: APP_SCHEMA_VERSION,
+    })
   }, { status: 400 })
 }

@@ -1,5 +1,5 @@
 import { getSavedAdminToken } from './publicConfigApi'
-import { safeJson, requireOk } from './apiClient'
+import { requestJson, getDataPayload } from './apiClient'
 
 function authHeaders() {
   const token = getSavedAdminToken()
@@ -19,44 +19,53 @@ export async function fetchMediaAssets(params = {}) {
     }
   }
 
-  const res = await fetch(url.pathname + url.search, {
+  const data = await requestJson(url.pathname + url.search, {
     method: 'GET',
     headers: {
       accept: 'application/json',
       ...authHeaders(),
     },
-  })
+  }, 'media fetch failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `media fetch failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    items: data?.items || data?.data?.items || [],
+  }
 }
 
 export async function saveMediaAsset(asset) {
-  const res = await fetch('/api/media-assets', {
+  const data = await requestJson('/api/media-assets', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       ...authHeaders(),
     },
     body: JSON.stringify({ asset }),
-  })
+  }, 'media save failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `media save failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    asset: data?.asset || data?.data?.asset || null,
+  }
 }
 
 export async function removeMediaAsset(id) {
   const url = new URL('/api/media-assets', window.location.origin)
   url.searchParams.set('id', id)
 
-  const res = await fetch(url.pathname + url.search, {
+  const data = await requestJson(url.pathname + url.search, {
     method: 'DELETE',
     headers: {
       accept: 'application/json',
       ...authHeaders(),
     },
-  })
+  }, 'media delete failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `media delete failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    deleted: data?.deleted || data?.data?.deleted || null,
+  }
 }

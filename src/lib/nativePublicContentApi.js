@@ -1,5 +1,5 @@
 import { getSavedAdminToken } from './publicConfigApi'
-import { safeJson, requireOk } from './apiClient'
+import { requestJson, getDataPayload } from './apiClient'
 
 function buildAuthHeaders() {
   const token = getSavedAdminToken()
@@ -19,46 +19,56 @@ export async function fetchNativeEntries(params = {}) {
     }
   }
 
-  const res = await fetch(url.pathname + url.search, {
+  const data = await requestJson(url.pathname + url.search, {
     method: 'GET',
     headers: {
       accept: 'application/json',
       ...buildAuthHeaders(),
     },
-  })
+  }, 'native content fetch failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `native content fetch failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    items: data?.items || data?.data?.items || [],
+    item: data?.item || data?.data?.item || null,
+  }
 }
 
 export async function saveNativeEntry(item, revisionNote = 'save') {
-  const res = await fetch('/api/native-content', {
+  const data = await requestJson('/api/native-content', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       ...buildAuthHeaders(),
     },
     body: JSON.stringify({ item, revisionNote }),
-  })
+  }, 'native content save failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `native content save failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    item: data?.item || data?.data?.item || null,
+  }
 }
 
 export async function removeNativeEntry(idOrSlug) {
   const url = new URL('/api/native-content', window.location.origin)
   url.searchParams.set('id', idOrSlug)
 
-  const res = await fetch(url.pathname + url.search, {
+  const data = await requestJson(url.pathname + url.search, {
     method: 'DELETE',
     headers: {
       accept: 'application/json',
       ...buildAuthHeaders(),
     },
-  })
+  }, 'native content delete failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `native content delete failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    deleted: data?.deleted || data?.data?.deleted || null,
+  }
 }
 
 export async function fetchNativeRevisions(params = {}) {
@@ -70,28 +80,34 @@ export async function fetchNativeRevisions(params = {}) {
     }
   }
 
-  const res = await fetch(url.pathname + url.search, {
+  const data = await requestJson(url.pathname + url.search, {
     method: 'GET',
     headers: {
       accept: 'application/json',
       ...buildAuthHeaders(),
     },
-  })
+  }, 'native revisions fetch failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `native revisions fetch failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    items: data?.items || data?.data?.items || [],
+  }
 }
 
 export async function restoreNativeRevision(revisionId) {
-  const res = await fetch('/api/native-content-revisions', {
+  const data = await requestJson('/api/native-content-revisions', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       ...buildAuthHeaders(),
     },
     body: JSON.stringify({ revisionId }),
-  })
+  }, 'native revision restore failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `native revision restore failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    item: data?.item || data?.data?.item || null,
+  }
 }

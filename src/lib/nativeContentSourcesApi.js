@@ -1,5 +1,5 @@
 import { getSavedAdminToken } from './publicConfigApi'
-import { safeJson, requireOk } from './apiClient'
+import { requestJson, getDataPayload } from './apiClient'
 
 function authHeaders() {
   const token = getSavedAdminToken()
@@ -14,44 +14,53 @@ export async function fetchNativeSources(nativeContentId) {
   const url = new URL('/api/native-content-sources', window.location.origin)
   url.searchParams.set('nativeContentId', nativeContentId)
 
-  const res = await fetch(url.pathname + url.search, {
+  const data = await requestJson(url.pathname + url.search, {
     method: 'GET',
     headers: {
       accept: 'application/json',
       ...authHeaders(),
     },
-  })
+  }, 'native sources fetch failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `native sources fetch failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    items: data?.items || data?.data?.items || [],
+  }
 }
 
 export async function saveNativeSource(record) {
-  const res = await fetch('/api/native-content-sources', {
+  const data = await requestJson('/api/native-content-sources', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       ...authHeaders(),
     },
     body: JSON.stringify({ record }),
-  })
+  }, 'native source save failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `native source save failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    record: data?.record || data?.data?.record || null,
+  }
 }
 
 export async function removeNativeSource(id) {
   const url = new URL('/api/native-content-sources', window.location.origin)
   url.searchParams.set('id', id)
 
-  const res = await fetch(url.pathname + url.search, {
+  const data = await requestJson(url.pathname + url.search, {
     method: 'DELETE',
     headers: {
       accept: 'application/json',
       ...authHeaders(),
     },
-  })
+  }, 'native source delete failed')
 
-  const data = await safeJson(res)
-  return requireOk(data, res, `native source delete failed: ${res.status}`)
+  return {
+    raw: data,
+    payload: getDataPayload(data),
+    deleted: data?.deleted || data?.data?.deleted || null,
+  }
 }

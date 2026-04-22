@@ -1,5 +1,10 @@
 import { resolvePublicSitePermission } from './_lib/publicSiteAuth.js'
-import { ensureMediaAssetsTable, listMediaAssets, upsertMediaAsset, deleteMediaAsset } from './_lib/mediaAssets.js'
+import {
+  ensureMediaAssetsTable,
+  listMediaAssets,
+  upsertMediaAsset,
+  deleteMediaAsset,
+} from './_lib/mediaAssets.js'
 import { jsonOk, withApiHandler, ensureDb, hasDb, parseJsonBody } from './_lib/api.js'
 import { badRequest, forbidden } from './_lib/errors.js'
 import { APP_SCHEMA_VERSION } from './_lib/migrations.js'

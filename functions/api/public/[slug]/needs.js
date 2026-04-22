@@ -1,4 +1,5 @@
 import { json } from "../../_lib/http.js";
+import { runAppMigrations } from './_lib/migrations.js'
 
 export async function onRequestGet({ env, params }) {
   const slug = params.slug;

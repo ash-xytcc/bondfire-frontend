@@ -1,4 +1,5 @@
 import { requireOrgRole } from "../../../_lib/auth.js";
+import { runAppMigrations } from './_lib/migrations.js'
 
 async function latestStudioSig(db, orgId) {
   const docs = await db.prepare(

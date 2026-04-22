@@ -1,5 +1,6 @@
 import { json, bad, now, uuid } from "../../_lib/http.js";
 import { requireOrgRole } from "../../_lib/auth.js";
+import { runAppMigrations } from './_lib/migrations.js'
 
 // Simple recent activity feed.
 // Columns expected:

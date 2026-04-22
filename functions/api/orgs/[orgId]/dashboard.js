@@ -1,5 +1,6 @@
 import { json } from "../../_lib/http.js";
 import { requireOrgRole } from "../../_lib/auth.js";
+import { runAppMigrations } from './_lib/migrations.js'
 
 async function safeFirst(env, sql, binds = [], fallback = null) {
   try {

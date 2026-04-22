@@ -2,6 +2,7 @@ import { json, bad } from "../../_lib/http.js";
 import { aesGcmDecrypt, totpVerify, sha256Hex } from "../../_lib/crypto.js";
 import { rateLimit } from "../../_lib/rateLimit.js";
 import { issueAccessToken, randomToken, cookieHeadersForAuth } from "../../_lib/session.js";
+import { runAppMigrations } from './_lib/migrations.js'
 
 function normalizeRecovery(code) {
   return String(code || "").trim().toUpperCase();

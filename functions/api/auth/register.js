@@ -1,5 +1,6 @@
 import { json, bad, now, uuid } from "../_lib/http.js";
 import { issueAccessToken, randomToken, sha256Hex, cookieHeadersForAuth } from "../_lib/session.js";
+import { runAppMigrations } from './_lib/migrations.js'
 
 const PBKDF2_ITERS = 100000;
 

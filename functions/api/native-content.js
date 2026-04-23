@@ -8,10 +8,10 @@ import {
   deleteNativeEntry,
   saveRevisionSnapshot,
 } from './_lib/nativePublicContent.js'
-import { resolvePublicSitePermission } from './_lib/publicSiteAuth.js'
 import { jsonOk, withApiHandler, ensureDb, hasDb, parseJsonBody } from './_lib/api.js'
-import { badRequest, forbidden } from './_lib/errors.js'
+import { badRequest } from './_lib/errors.js'
 import { APP_SCHEMA_VERSION } from './_lib/migrations.js'
+import { resolvePublicSitePermission, requireCoreSession } from './_lib/publicSiteAuth.js'
 
 export async function onRequestOptions(context) {
   const permission = await resolvePublicSitePermission(context)
@@ -34,13 +34,21 @@ export async function onRequestGet(context) {
     const status = url.searchParams.get('status') || ''
     const target = url.searchParams.get('target') || ''
     const workflowState = url.searchParams.get('workflowState') || ''
-    const includeFuture = permission.canEdit || url.searchParams.get('includeFuture') === '1'
+    const includeFutureRequested = url.searchParams.get('includeFuture') === '1'
+
+    if (includeFutureRequested || status || workflowState) {
+      await requireCoreSession(context)
+    }
+
+    const includeFuture = permission.canEdit || includeFutureRequested
 
     if (!hasDb(context)) {
       return jsonOk({
         mode: 'scaffold',
+        authMode: permission.mode,
         data: { items: [] },
         items: [],
+        schemaVersion: APP_SCHEMA_VERSION,
       })
     }
 
@@ -52,6 +60,7 @@ export async function onRequestGet(context) {
       const item = await getNativeEntry(db, id || slug, { includeFuture })
       return jsonOk({
         mode: 'd1',
+        authMode: permission.mode,
         data: { item },
         item,
         schemaVersion: APP_SCHEMA_VERSION,
@@ -67,6 +76,7 @@ export async function onRequestGet(context) {
 
     return jsonOk({
       mode: 'd1',
+      authMode: permission.mode,
       data: { items },
       items,
       schemaVersion: APP_SCHEMA_VERSION,
@@ -84,12 +94,7 @@ export async function onRequestPut(context) {
 
 export async function onRequestDelete(context) {
   return withApiHandler(async () => {
-    const permission = await resolvePublicSitePermission(context)
-
-    if (!permission.canEdit) {
-      throw forbidden(permission.reason, { details: { canEdit: false, authMode: permission.mode } })
-    }
-
+    const permission = await requireCoreSession(context)
     const url = new URL(context.request.url)
     const id = url.searchParams.get('id') || url.searchParams.get('slug') || ''
 
@@ -100,14 +105,15 @@ export async function onRequestDelete(context) {
     if (!hasDb(context)) {
       return jsonOk({
         mode: 'scaffold',
+        authMode: permission.mode,
         data: { deleted: id },
         deleted: id,
+        schemaVersion: APP_SCHEMA_VERSION,
       })
     }
 
     const db = await ensureDb(context)
     const existing = await getExistingNativeEntry(db, id)
-
     if (existing) {
       await saveRevisionSnapshot(db, existing, 'delete:before')
     }
@@ -116,6 +122,7 @@ export async function onRequestDelete(context) {
 
     return jsonOk({
       mode: 'd1',
+      authMode: permission.mode,
       data: result,
       ...result,
       schemaVersion: APP_SCHEMA_VERSION,
@@ -125,12 +132,7 @@ export async function onRequestDelete(context) {
 
 async function handleWrite(context) {
   return withApiHandler(async () => {
-    const permission = await resolvePublicSitePermission(context)
-
-    if (!permission.canEdit) {
-      throw forbidden(permission.reason, { details: { canEdit: false, authMode: permission.mode } })
-    }
-
+    const permission = await requireCoreSession(context)
     const body = await parseJsonBody(context.request)
     const item = body?.item || body || {}
     const revisionNote = String(body?.revisionNote || item?.revisionNote || 'save')
@@ -138,8 +140,10 @@ async function handleWrite(context) {
     if (!hasDb(context)) {
       return jsonOk({
         mode: 'scaffold',
+        authMode: permission.mode,
         data: { item },
         item,
+        schemaVersion: APP_SCHEMA_VERSION,
       })
     }
 
@@ -148,7 +152,6 @@ async function handleWrite(context) {
     await ensureNativeRevisionTable(db)
 
     const existing = item?.id ? await getExistingNativeEntry(db, item.id) : null
-
     if (existing) {
       await saveRevisionSnapshot(db, existing, `before:${revisionNote}`)
     }
@@ -158,6 +161,7 @@ async function handleWrite(context) {
 
     return jsonOk({
       mode: 'd1',
+      authMode: permission.mode,
       data: { item: saved },
       item: saved,
       schemaVersion: APP_SCHEMA_VERSION,

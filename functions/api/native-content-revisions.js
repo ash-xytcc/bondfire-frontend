@@ -1,13 +1,8 @@
-import {
-  ensureNativeRevisionTable,
-  getExistingNativeEntry,
-  listRevisionSnapshots,
-  restoreRevisionSnapshot,
-} from './_lib/nativePublicContent.js'
-import { resolvePublicSitePermission } from './_lib/publicSiteAuth.js'
+import { ensureNativeRevisionTable, getExistingNativeEntry, listRevisionSnapshots, restoreRevisionSnapshot } from './_lib/nativePublicContent.js'
 import { jsonOk, withApiHandler, ensureDb, hasDb, parseJsonBody } from './_lib/api.js'
-import { badRequest, forbidden } from './_lib/errors.js'
+import { badRequest } from './_lib/errors.js'
 import { APP_SCHEMA_VERSION } from './_lib/migrations.js'
+import { resolvePublicSitePermission, requireCoreSession } from './_lib/publicSiteAuth.js'
 
 export async function onRequestOptions(context) {
   const permission = await resolvePublicSitePermission(context)
@@ -23,14 +18,16 @@ export async function onRequestOptions(context) {
 
 export async function onRequestGet(context) {
   return withApiHandler(async () => {
-    const permission = await resolvePublicSitePermission(context)
-
-    if (!permission.canEdit) {
-      throw forbidden(permission.reason, { details: { canEdit: false, authMode: permission.mode } })
-    }
+    const permission = await requireCoreSession(context)
 
     if (!hasDb(context)) {
-      return jsonOk({ mode: 'scaffold', data: { items: [] }, items: [] })
+      return jsonOk({
+        mode: 'scaffold',
+        authMode: permission.mode,
+        data: { items: [] },
+        items: [],
+        schemaVersion: APP_SCHEMA_VERSION,
+      })
     }
 
     const db = await ensureDb(context)
@@ -53,6 +50,7 @@ export async function onRequestGet(context) {
 
     return jsonOk({
       mode: 'd1',
+      authMode: permission.mode,
       data: { items },
       items,
       schemaVersion: APP_SCHEMA_VERSION,
@@ -62,14 +60,15 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   return withApiHandler(async () => {
-    const permission = await resolvePublicSitePermission(context)
-
-    if (!permission.canEdit) {
-      throw forbidden(permission.reason, { details: { canEdit: false, authMode: permission.mode } })
-    }
+    const permission = await requireCoreSession(context)
 
     if (!hasDb(context)) {
-      return jsonOk({ mode: 'scaffold', data: {}, schemaVersion: APP_SCHEMA_VERSION })
+      return jsonOk({
+        mode: 'scaffold',
+        authMode: permission.mode,
+        data: {},
+        schemaVersion: APP_SCHEMA_VERSION,
+      })
     }
 
     const db = await ensureDb(context)
@@ -84,6 +83,7 @@ export async function onRequestPost(context) {
 
     return jsonOk({
       mode: 'd1',
+      authMode: permission.mode,
       data: { item: restored },
       item: restored,
       schemaVersion: APP_SCHEMA_VERSION,

@@ -1,13 +1,8 @@
-import { resolvePublicSitePermission } from './_lib/publicSiteAuth.js'
-import {
-  ensureMediaAssetsTable,
-  listMediaAssets,
-  upsertMediaAsset,
-  deleteMediaAsset,
-} from './_lib/mediaAssets.js'
+import { ensureMediaAssetsTable, listMediaAssets, upsertMediaAsset, deleteMediaAsset } from './_lib/mediaAssets.js'
 import { jsonOk, withApiHandler, ensureDb, hasDb, parseJsonBody } from './_lib/api.js'
-import { badRequest, forbidden } from './_lib/errors.js'
+import { badRequest } from './_lib/errors.js'
 import { APP_SCHEMA_VERSION } from './_lib/migrations.js'
+import { resolvePublicSitePermission, requireCoreSession } from './_lib/publicSiteAuth.js'
 
 export async function onRequestOptions(context) {
   const permission = await resolvePublicSitePermission(context)
@@ -23,14 +18,17 @@ export async function onRequestOptions(context) {
 
 export async function onRequestGet(context) {
   return withApiHandler(async () => {
+    const permission = await requireCoreSession(context)
     const url = new URL(context.request.url)
     const mediaType = url.searchParams.get('mediaType') || ''
 
     if (!hasDb(context)) {
       return jsonOk({
         mode: 'scaffold',
+        authMode: permission.mode,
         data: { items: [] },
         items: [],
+        schemaVersion: APP_SCHEMA_VERSION,
       })
     }
 
@@ -40,6 +38,7 @@ export async function onRequestGet(context) {
 
     return jsonOk({
       mode: 'd1',
+      authMode: permission.mode,
       data: { items },
       items,
       schemaVersion: APP_SCHEMA_VERSION,
@@ -49,20 +48,17 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   return withApiHandler(async () => {
-    const permission = await resolvePublicSitePermission(context)
-
-    if (!permission.canEdit) {
-      throw forbidden(permission.reason, { details: { canEdit: false, authMode: permission.mode } })
-    }
-
+    const permission = await requireCoreSession(context)
     const body = await parseJsonBody(context.request)
     const asset = body?.asset || body || {}
 
     if (!hasDb(context)) {
       return jsonOk({
         mode: 'scaffold',
+        authMode: permission.mode,
         data: { asset },
         asset,
+        schemaVersion: APP_SCHEMA_VERSION,
       })
     }
 
@@ -71,6 +67,7 @@ export async function onRequestPost(context) {
 
     return jsonOk({
       mode: 'd1',
+      authMode: permission.mode,
       data: { asset: saved },
       asset: saved,
       schemaVersion: APP_SCHEMA_VERSION,
@@ -80,12 +77,7 @@ export async function onRequestPost(context) {
 
 export async function onRequestDelete(context) {
   return withApiHandler(async () => {
-    const permission = await resolvePublicSitePermission(context)
-
-    if (!permission.canEdit) {
-      throw forbidden(permission.reason, { details: { canEdit: false, authMode: permission.mode } })
-    }
-
+    const permission = await requireCoreSession(context)
     const url = new URL(context.request.url)
     const id = url.searchParams.get('id') || ''
 
@@ -96,8 +88,10 @@ export async function onRequestDelete(context) {
     if (!hasDb(context)) {
       return jsonOk({
         mode: 'scaffold',
+        authMode: permission.mode,
         data: { deleted: id },
         deleted: id,
+        schemaVersion: APP_SCHEMA_VERSION,
       })
     }
 
@@ -106,6 +100,7 @@ export async function onRequestDelete(context) {
 
     return jsonOk({
       mode: 'd1',
+      authMode: permission.mode,
       data: result,
       ...result,
       schemaVersion: APP_SCHEMA_VERSION,

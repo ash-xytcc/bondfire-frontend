@@ -17,6 +17,19 @@ export function getDataPayload(data) {
   return data
 }
 
+export function formatRequestError(error, fallback = 'Request failed') {
+  if (!error) return fallback
+  if (typeof error === 'string') return error
+
+  return (
+    error?.message ||
+    error?.info?.message ||
+    error?.payload?.errorInfo?.message ||
+    error?.payload?.error ||
+    fallback
+  )
+}
+
 export function requireOk(data, res, fallback) {
   if (!res.ok || !data?.ok) {
     const error = new Error(getErrorMessage(data, fallback))

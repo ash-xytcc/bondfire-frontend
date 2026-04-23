@@ -228,8 +228,7 @@ export function normalizeHostname(value) {
 }
 
 function createVerificationToken(hostname, scope) {
-  const base = `${scope}:${hostname}:${Date.now()}`
-  return Buffer.from(base).toString('base64url').slice(0, 24)
+  return `verify-${scope}-${hostname.replace(/[^a-z0-9]/g, '-')}-${Date.now()}`
 }
 
 function mapDomainRow(row) {

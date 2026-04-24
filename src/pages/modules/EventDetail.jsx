@@ -62,23 +62,19 @@ export default function EventDetail() {
         <h2 className="section-title" style={{ margin: 0, flex: 1 }}>
           Event Detail
         </h2>
+        <button className="btn" type="button" onClick={() => refresh().catch(console.error)} disabled={loading}>
+          {loading ? "Refreshing..." : "Refresh"}
+        </button>
         <Link className="btn" to={`/org/${encodeURIComponent(orgId)}/events`}>
           Back
         </Link>
-      </div>
-
-      <div className="helper" style={{ marginTop: 8 }}>
-        Scaffold-level detail surface only. Enough to prove routing and give later event work somewhere to land.
       </div>
 
       {loading ? <div className="helper" style={{ marginTop: 12 }}>Loading event...</div> : null}
 
       {!serverReady ? (
         <div className="card" style={{ padding: 12, marginTop: 12 }}>
-          <div style={{ fontWeight: 800 }}>Event detail API not ready</div>
-          <div className="helper" style={{ marginTop: 6 }}>
-            The page now exists in the repo. Data wiring can come later.
-          </div>
+          <div style={{ fontWeight: 800 }}>Couldn’t load event details</div>
           {err ? (
             <div className="error" style={{ marginTop: 8 }}>
               {err}
@@ -91,7 +87,7 @@ export default function EventDetail() {
         <div className="card" style={{ padding: 12, marginTop: 12 }}>
           <div style={{ fontWeight: 800 }}>Event not found</div>
           <div className="helper" style={{ marginTop: 6 }}>
-            This may just mean the scaffold endpoint has no record yet.
+            It may have been deleted or is not visible to your role.
           </div>
         </div>
       ) : null}
@@ -113,13 +109,6 @@ export default function EventDetail() {
             <div style={{ fontWeight: 800 }}>Description</div>
             <div style={{ marginTop: 8 }}>
               {safeText(item?.description) || "No description yet."}
-            </div>
-          </div>
-
-          <div className="card" style={{ padding: 12 }}>
-            <div style={{ fontWeight: 800 }}>Linked records</div>
-            <div className="helper" style={{ marginTop: 6 }}>
-              Placeholder only. Tagging and linking can land after route exposure is complete.
             </div>
           </div>
         </div>

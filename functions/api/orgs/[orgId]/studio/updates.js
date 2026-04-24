@@ -1,4 +1,4 @@
-import { requireOrgRole } from "../../.../../../_lib/auth.js";
+import { requireOrgRole } from "../../../_lib/auth.js";
 import { runAppMigrations } from '../../../_lib/migrations.js'
 
 async function latestStudioSig(db, orgId) {

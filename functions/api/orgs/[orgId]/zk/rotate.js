@@ -1,6 +1,6 @@
-import { ok, bad, readJSON } from '../../.../../../_lib/http.js';
-import { requireOrgRole } from '../../.../../../_lib/auth.js';
-import { ensureZkSchema, bumpOrgKeyVersion, orgKeyWrappedCapabilities } from '../../.../../../_lib/zkSchema.js';
+import { ok, bad, readJSON } from '../../../_lib/http.js';
+import { requireOrgRole } from '../../../_lib/auth.js';
+import { ensureZkSchema, bumpOrgKeyVersion, orgKeyWrappedCapabilities } from '../../../_lib/zkSchema.js';
 
 export async function onRequestPost({ env, request, params }) {
   try {

@@ -1,6 +1,6 @@
-import { json, now, uuid } from "../../.../../../_lib/http.js";
-import { requireOrgRole } from "../../.../../../_lib/auth.js";
-import { ensureDriveSchema, getDb, normalizeNullableId, parseTags, saveFileBlob } from "../../.../../../_lib/drive.js";
+import { json, now, uuid } from "../../../_lib/http.js";
+import { requireOrgRole } from "../../../_lib/auth.js";
+import { ensureDriveSchema, getDb, normalizeNullableId, parseTags, saveFileBlob } from "../../../_lib/drive.js";
 
 export async function onRequestPost({ env, request, params }) {
   const orgId = params.orgId;

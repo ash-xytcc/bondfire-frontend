@@ -1,6 +1,6 @@
 // functions/api/public/[slug]/meetings.js
 import { getDB } from "../../_bf.js";
-import { getPublicCfg, getOrgIdBySlug } from "../.../../_lib/publicPageStore.js";
+import { getPublicCfg, getOrgIdBySlug } from "../../_lib/publicPageStore.js";
 
 export async function onRequestGet({ env, params }) {
   const slug = params.slug;

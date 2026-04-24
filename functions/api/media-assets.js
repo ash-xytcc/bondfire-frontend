@@ -1,8 +1,8 @@
-import { ensureMediaAssetsTable, listMediaAssets, upsertMediaAsset, deleteMediaAsset } from '_lib/mediaAssets.js'
-import { jsonOk, withApiHandler, ensureDb, hasDb, parseJsonBody } from '_lib/api.js'
-import { badRequest } from '_lib/errors.js'
-import { APP_SCHEMA_VERSION } from '_lib/migrations.js'
-import { resolvePublicSitePermission, requireCoreSession } from '_lib/publicSiteAuth.js'
+import { ensureMediaAssetsTable, listMediaAssets, upsertMediaAsset, deleteMediaAsset } from './_lib/mediaAssets.js'
+import { jsonOk, withApiHandler, ensureDb, hasDb, parseJsonBody } from './_lib/api.js'
+import { badRequest } from './_lib/errors.js'
+import { APP_SCHEMA_VERSION } from './_lib/migrations.js'
+import { resolvePublicSitePermission, requireCoreSession } from './_lib/publicSiteAuth.js'
 
 export async function onRequestOptions(context) {
   const permission = await resolvePublicSitePermission(context)

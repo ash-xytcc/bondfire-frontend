@@ -1,5 +1,5 @@
-import { ok, getCookie } from ".../_lib/http.js";
-import { sha256Hex, clearAuthCookieHeaders } from ".../_lib/session.js";
+import { ok, getCookie } from "../_lib/http.js";
+import { sha256Hex, clearAuthCookieHeaders } from "../_lib/session.js";
 import { runAppMigrations } from '../_lib/migrations.js'
 
 export async function onRequestPost({ env, request }) {

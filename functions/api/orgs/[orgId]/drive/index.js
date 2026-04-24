@@ -1,6 +1,6 @@
-import { json } from "../../.../../../_lib/http.js";
-import { requireOrgRole } from "../../.../../../_lib/auth.js";
-import { listDriveTree } from "../../.../../../_lib/drive.js";
+import { json } from "../../../_lib/http.js";
+import { requireOrgRole } from "../../../_lib/auth.js";
+import { listDriveTree } from "../../../_lib/drive.js";
 
 export async function onRequestGet({ env, request, params }) {
   const orgId = params.orgId;

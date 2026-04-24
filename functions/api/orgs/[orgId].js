@@ -1,5 +1,5 @@
-import { json, bad } from ".../_lib/http.js";
-import { getDb, requireOrgRole } from ".../_lib/auth.js";
+import { json, bad } from "../_lib/http.js";
+import { getDb, requireOrgRole } from "../_lib/auth.js";
 
 export async function onRequestDelete({ env, request, params }) {
   const orgId = params?.orgId;

@@ -1,6 +1,6 @@
-import { json, bad } from ".../_lib/http.js";
-import { rateLimit } from ".../_lib/rateLimit.js";
-import { issueAccessToken, randomToken, sha256Hex, cookieHeadersForAuth } from ".../_lib/session.js";
+import { json, bad } from "../_lib/http.js";
+import { rateLimit } from "../_lib/rateLimit.js";
+import { issueAccessToken, randomToken, sha256Hex, cookieHeadersForAuth } from "../_lib/session.js";
 import { runAppMigrations } from '../_lib/migrations.js'
 
 function fromB64(s) {

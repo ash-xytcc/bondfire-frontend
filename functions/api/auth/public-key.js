@@ -1,5 +1,5 @@
-import { ok, bad } from ".../_lib/http.js";
-import { requireUser } from ".../_lib/auth.js";
+import { ok, bad } from "../_lib/http.js";
+import { requireUser } from "../_lib/auth.js";
 import { runAppMigrations } from '../_lib/migrations.js'
 
 export async function onRequestPost({ env, request }) {

@@ -1,5 +1,5 @@
-import { ok, bad } from "../.../../_lib/http.js";
-import { requireOrgRole, getDb } from "../.../../_lib/auth.js";
+import { ok, bad } from "../../_lib/http.js";
+import { requireOrgRole, getDb } from "../../_lib/auth.js";
 
 export async function onRequestGet(ctx) {
   return onRequest(ctx);

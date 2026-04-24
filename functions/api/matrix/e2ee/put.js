@@ -1,5 +1,5 @@
-import { json, bad } from "../.../../_lib/http.js";
-import { requireUser } from "../.../../_lib/auth.js";
+import { json, bad } from "../../_lib/http.js";
+import { requireUser } from "../../_lib/auth.js";
 
 export async function onRequestPost({ env, request }) {
   const u = await requireUser({ env, request });

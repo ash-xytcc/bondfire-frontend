@@ -1,4 +1,4 @@
-import { runAppMigrations } from '_lib/migrations.js'
+import { runAppMigrations } from './_lib/migrations.js'
 export function getDB(env) {
   return env.DB || env.BF_DB || null;
 }

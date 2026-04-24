@@ -1,5 +1,5 @@
-import { requireOrgRole } from "../../.../../../_lib/auth.js";
-import { ensureDriveSchema, getDb, normalizeNullableId, created, json, now, uuid } from "../../.../../../_lib/drive.js";
+import { requireOrgRole } from "../../../_lib/auth.js";
+import { ensureDriveSchema, getDb, normalizeNullableId, created, json, now, uuid } from "../../../_lib/drive.js";
 
 export async function onRequestGet({ env, request, params }) {
   const orgId = params.orgId;

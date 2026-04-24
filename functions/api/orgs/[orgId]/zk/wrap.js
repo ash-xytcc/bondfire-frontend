@@ -1,6 +1,6 @@
-import { ok, bad, readJSON } from '../../.../../../_lib/http.js';
-import { requireOrgRole } from '../../.../../../_lib/auth.js';
-import { ensureZkSchema, ensureOrgCryptoRow, orgKeyWrappedCapabilities } from '../../.../../../_lib/zkSchema.js';
+import { ok, bad, readJSON } from '../../../_lib/http.js';
+import { requireOrgRole } from '../../../_lib/auth.js';
+import { ensureZkSchema, ensureOrgCryptoRow, orgKeyWrappedCapabilities } from '../../../_lib/zkSchema.js';
 
 function extractKidFromWrappedKey(wrappedKeyStr) {
   try {

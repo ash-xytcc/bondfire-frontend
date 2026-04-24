@@ -1,6 +1,6 @@
-import { ok, bad } from '../../.../../../_lib/http.js';
-import { requireOrgRole } from '../../.../../../_lib/auth.js';
-import { ensureZkSchema, ensureOrgCryptoRow, orgKeyWrappedCapabilities } from '../../.../../../_lib/zkSchema.js';
+import { ok, bad } from '../../../_lib/http.js';
+import { requireOrgRole } from '../../../_lib/auth.js';
+import { ensureZkSchema, ensureOrgCryptoRow, orgKeyWrappedCapabilities } from '../../../_lib/zkSchema.js';
 
 export async function onRequestGet({ env, request, params }) {
   try {

@@ -1,5 +1,5 @@
-import { json } from ".../_lib/http.js";
-import { getDb, requireUser } from ".../_lib/auth.js";
+import { json } from "../_lib/http.js";
+import { getDb, requireUser } from "../_lib/auth.js";
 
 export async function onRequestGet({ env, request }) {
   const auth = await requireUser({ env, request });

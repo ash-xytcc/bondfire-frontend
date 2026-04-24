@@ -1,6 +1,6 @@
-import { ok, err, requireMethod, now, uuid, readJSON } from "../.../../_lib/http.js";
-import { getDb, requireUser } from "../.../../_lib/auth.js";
-import { aesGcmDecrypt, totpVerify, sha256Hex } from "../.../../_lib/crypto.js";
+import { ok, err, requireMethod, now, uuid, readJSON } from "../../_lib/http.js";
+import { getDb, requireUser } from "../../_lib/auth.js";
+import { aesGcmDecrypt, totpVerify, sha256Hex } from "../../_lib/crypto.js";
 
 function makeRecoveryCode() {
   // 10 bytes -> 20 hex chars, format XXXXX-XXXXX-XXXXX (15) too long

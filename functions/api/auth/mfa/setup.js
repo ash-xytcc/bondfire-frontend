@@ -1,6 +1,6 @@
-import { ok, err, requireMethod, now } from "../.../../_lib/http.js";
-import { getDb, requireUser } from "../.../../_lib/auth.js";
-import { randomBase32, aesGcmEncrypt } from "../.../../_lib/crypto.js";
+import { ok, err, requireMethod, now } from "../../_lib/http.js";
+import { getDb, requireUser } from "../../_lib/auth.js";
+import { randomBase32, aesGcmEncrypt } from "../../_lib/crypto.js";
 
 export async function onRequest(context) {
   const { request, env } = context;

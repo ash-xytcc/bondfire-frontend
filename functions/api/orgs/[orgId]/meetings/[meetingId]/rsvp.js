@@ -1,5 +1,5 @@
-import { ok, bad, readJSON, now } from "../../../.../../../../_lib/http.js";
-import { getDb, requireOrgRole } from "../../../.../../../../_lib/auth.js";
+import { ok, bad, readJSON, now } from "../../../../_lib/http.js";
+import { getDb, requireOrgRole } from "../../../../_lib/auth.js";
 
 function normStatus(s) {
   const v = String(s || "").trim().toLowerCase();

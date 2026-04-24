@@ -1,4 +1,4 @@
-import { getPublicCfg } from "../../.../../../_lib/publicPageStore.js";
+import { getPublicCfg } from "../../../_lib/publicPageStore.js";
 
 function authOk(env, request) {
   if (env.BF_WRITE_LOCKED === "true") {

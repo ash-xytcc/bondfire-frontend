@@ -1,6 +1,6 @@
-import { bad, ok, readJSON } from "../.../../_lib/http.js";
-import { getDb, requireUser } from "../.../../_lib/auth.js";
-import { aesGcmDecrypt, totpVerify } from "../.../../_lib/crypto.js";
+import { bad, ok, readJSON } from "../../_lib/http.js";
+import { getDb, requireUser } from "../../_lib/auth.js";
+import { aesGcmDecrypt, totpVerify } from "../../_lib/crypto.js";
 
 /**
  * POST /api/auth/mfa/disable

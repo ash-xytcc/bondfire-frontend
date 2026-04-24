@@ -1,6 +1,6 @@
-import { json, bad, readJSON, requireMethod } from "../.../../_lib/http.js";
-import { getDb, requireUser, requireOrgRole } from "../.../../_lib/auth.js";
-import { ensureZkSchema, getOrgKeyVersion } from "../.../../_lib/zk.js";
+import { json, bad, readJSON, requireMethod } from "../../_lib/http.js";
+import { getDb, requireUser, requireOrgRole } from "../../_lib/auth.js";
+import { ensureZkSchema, getOrgKeyVersion } from "../../_lib/zk.js";
 
 /*
   Org key model (pragmatic ZK v1/v2):

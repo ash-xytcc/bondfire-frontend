@@ -1,6 +1,6 @@
-import { bad } from "../../../.../../../../_lib/http.js";
-import { requireOrgRole } from "../../../.../../../../_lib/auth.js";
-import { ensureDriveSchema, getDb, normalizeNullableId, json, now, getFileRecord, saveFileBlob, deleteFileBlob } from "../../../.../../../../_lib/drive.js";
+import { bad } from "../../../../_lib/http.js";
+import { requireOrgRole } from "../../../../_lib/auth.js";
+import { ensureDriveSchema, getDb, normalizeNullableId, json, now, getFileRecord, saveFileBlob, deleteFileBlob } from "../../../../_lib/drive.js";
 
 export async function onRequestGet({ env, request, params }) {
   const orgId = params.orgId;

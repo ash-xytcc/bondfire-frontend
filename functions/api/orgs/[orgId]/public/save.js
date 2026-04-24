@@ -1,4 +1,5 @@
 import { slugify, uniqueSlug, getPublicCfg, setPublicCfg, setSlugMapping, removeSlugMapping } from "../../../_lib/publicPageStore.js";
+import { bad, ok } from "../../../_lib/http.js";
 
 function authOk(env, request) {
   if (env.BF_WRITE_LOCKED === "true") {
@@ -30,7 +31,7 @@ function cleanStrings(arr, limit) {
 
 export async function onRequestPost({ env, request, params }) {
   if (!authOk(env, request)) {
-    return Response.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+    return bad(401, "UNAUTHORIZED");
   }
 
   const orgId = params.orgId;
@@ -64,7 +65,7 @@ export async function onRequestPost({ env, request, params }) {
 
   if (typeof slug === "string" && slug.trim()) {
     const base = slugify(slug);
-    if (!base) return Response.json({ ok: false, error: "BAD_SLUG" }, { status: 400 });
+    if (!base) return bad(400, "BAD_SLUG");
 
     if (prev.slug) {
       const mapped = await env.BF_PUBLIC.get(`slug:${prev.slug}`);
@@ -106,5 +107,5 @@ export async function onRequestPost({ env, request, params }) {
   };
 
   await setPublicCfg(env, orgId, cleaned);
-  return Response.json({ ok: true, public: cleaned });
+  return ok({ public: cleaned });
 }

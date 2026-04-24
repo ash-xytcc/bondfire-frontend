@@ -1,4 +1,5 @@
 import { getPublicCfg } from "../../../_lib/publicPageStore.js";
+import { bad, ok } from "../../../_lib/http.js";
 
 function authOk(env, request) {
   if (env.BF_WRITE_LOCKED === "true") {
@@ -10,7 +11,7 @@ function authOk(env, request) {
 
 export async function onRequestGet({ env, request, params }) {
   if (!authOk(env, request)) {
-    return Response.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+    return bad(401, "UNAUTHORIZED");
   }
 
   const orgId = params.orgId;
@@ -40,5 +41,5 @@ export async function onRequestGet({ env, request, params }) {
     get_involved_links: Array.isArray(cfg?.get_involved_links) ? cfg.get_involved_links : [],
   };
 
-  return Response.json({ ok: true, public: cleaned });
+  return ok({ public: cleaned });
 }

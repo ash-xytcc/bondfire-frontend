@@ -1,11 +1,12 @@
 import { getPublicSiteDomainState, updatePublicSiteDomainState } from './_lib/publicSiteDomains.js'
 import { resolvePublicSitePermission } from './_lib/publicSiteAuth.js'
+import { jsonOk, jsonError, parseJsonBody } from './_lib/api.js'
+import { forbidden, badRequest } from './_lib/errors.js'
 
 export async function onRequestOptions(context) {
   const permission = await resolvePublicSitePermission(context)
 
-  return json({
-    ok: true,
+  return jsonOk({
     canEdit: permission.canEdit,
     authMode: permission.mode,
     authReason: permission.reason,
@@ -21,8 +22,7 @@ export async function onRequestGet(context) {
     const permission = await resolvePublicSitePermission(context)
 
     if (!hasDb(context)) {
-      return json({
-        ok: true,
+      return jsonOk({
         mode: 'scaffold',
         canEdit: permission.canEdit,
         authMode: permission.mode,
@@ -40,8 +40,7 @@ export async function onRequestGet(context) {
     const requestHost = context.request.headers.get('x-forwarded-host') || context.request.headers.get('host') || ''
     const state = await getPublicSiteDomainState(context.env.BF_DB, 'global', requestHost)
 
-    return json({
-      ok: true,
+    return jsonOk({
       mode: 'd1',
       canEdit: permission.canEdit,
       authMode: permission.mode,
@@ -49,7 +48,7 @@ export async function onRequestGet(context) {
       state,
     })
   } catch (error) {
-    return json({ ok: false, error: String(error?.message || error) }, 500)
+    return jsonError(error)
   }
 }
 
@@ -58,19 +57,15 @@ export async function onRequestPut(context) {
     const permission = await resolvePublicSitePermission(context)
 
     if (!permission.canEdit) {
-      return json({
-        ok: false,
-        error: permission.reason,
-        canEdit: false,
-        authMode: permission.mode,
-      }, 403)
+      throw forbidden(permission.reason, {
+        details: { canEdit: false, authMode: permission.mode },
+      })
     }
 
-    const body = await context.request.json()
+    const body = await parseJsonBody(context.request)
 
     if (!hasDb(context)) {
-      return json({
-        ok: true,
+      return jsonOk({
         mode: 'scaffold',
         saved: true,
         canEdit: true,
@@ -89,8 +84,7 @@ export async function onRequestPut(context) {
 
     const state = await updatePublicSiteDomainState(context.env.BF_DB, body || {}, 'global')
 
-    return json({
-      ok: true,
+    return jsonOk({
       mode: 'd1',
       saved: true,
       canEdit: true,
@@ -99,20 +93,14 @@ export async function onRequestPut(context) {
       state,
     })
   } catch (error) {
-    return json({ ok: false, error: String(error?.message || error) }, 400)
+    const message = String(error?.message || '')
+    if (message.toUpperCase().includes('JSON')) {
+      return jsonError(badRequest('Invalid JSON payload'))
+    }
+    return jsonError(error, { status: 400 })
   }
 }
 
 function hasDb(context) {
   return Boolean(context?.env?.BF_DB)
-}
-
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data, null, 2), {
-    status,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'no-store',
-    },
-  })
 }

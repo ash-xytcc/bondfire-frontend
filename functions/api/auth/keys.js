@@ -16,7 +16,8 @@ export async function onRequestPost({ env, request }) {
   if (!auth.ok) return auth.resp;
   const userId = auth.user?.sub;
   if (!userId) return bad(401, "UNAUTHORIZED");
-  requireMethod(request, "POST");
+  const methodError = requireMethod(request, "POST");
+  if (methodError) return methodError;
   const body = await readJSON(request);
   const publicKey = String(body?.public_key || "");
   if (!publicKey) return bad(400, "MISSING_PUBLIC_KEY");

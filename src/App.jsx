@@ -237,6 +237,7 @@ function Shell() {
 			<Routes>
 				{/* PUBLIC */}
 				<Route path="/p/:slug" element={<PublicPage />} />
+				<Route path="/site/:slug" element={<PublicPage />} />
 				<Route path="/p/*" element={<PublicPage />} />
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/demo" element={<DemoBoot />} />

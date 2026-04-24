@@ -5,6 +5,8 @@ import { decryptWithOrgKey, getCachedOrgKey } from "../lib/zk.js";
 import Security from "./Security.jsx";
 import { isDemoMode } from "../demo/demoMode.js";
 import { demoHandle, getDemoSubscribersCsv, ensureDemoOrgList } from "../demo/demoStore.js";
+import { AdminPublicConfigCard } from "../components/AdminPublicConfigCard.jsx";
+import { PublicDomainCard } from "../components/PublicDomainCard.jsx";
 
 /* ---------- API helper ---------- */
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
@@ -1259,6 +1261,9 @@ React.useEffect(() => {
           </div>
 
           <form id="public-page-settings-form" onSubmit={savePublic} className="grid" style={{ gap: 12, marginTop: 12 }}>
+            <AdminPublicConfigCard />
+            <PublicDomainCard />
+
             <label className="row" style={{ gap: 8, alignItems: "center" }}>
               <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
               <span>Enable public page</span>

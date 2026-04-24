@@ -1,4 +1,4 @@
-import { jsonError } from '../../../_lib/http.js';
+import { json, bad } from '../../../_lib/http.js';
 
 export async function onRequestGet({ env, params }) {
   try {
@@ -31,7 +31,7 @@ export async function onRequestGet({ env, params }) {
     }
 
   } catch (err) {
-    return jsonError(err);
+    return bad(500, 'INTERNAL', { detail: String(err?.message || err || 'Unknown error') });
   }
 }
 
@@ -72,6 +72,6 @@ export async function onRequestPost({ request, env, params }) {
     }
 
   } catch (err) {
-    return jsonError(err);
+    return bad(500, 'INTERNAL', { detail: String(err?.message || err || 'Unknown error') });
   }
 }

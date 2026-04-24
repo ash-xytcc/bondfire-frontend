@@ -22,8 +22,12 @@ function safeText(v) {
   return String(v ?? "");
 }
 
+function getRoomIdentity(room) {
+  return safeText(room?.id || room?.roomId || room?.name);
+}
+
 function getRoomKey(room, index) {
-  return safeText(room?.id || room?.roomId || room?.name || `room-${index}`);
+  return getRoomIdentity(room) || `room-${index}`;
 }
 
 export default function Chat() {
@@ -32,36 +36,39 @@ export default function Chat() {
 
   const [rooms, setRooms] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [loadingRooms, setLoadingRooms] = useState(false);
+  const [roomsError, setRoomsError] = useState("");
   const [createValue, setCreateValue] = useState("");
-  const [creating, setCreating] = useState(false);
+  const [creatingRoom, setCreatingRoom] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   const selectedKey = useMemo(() => {
     if (!selected) return "";
-    return safeText(selected?.id || selected?.roomId || selected?.name);
+    return getRoomIdentity(selected);
   }, [selected]);
 
-  async function refresh({ keepError = false } = {}) {
+  async function refreshRooms({ clearError = true } = {}) {
     if (!orgId) return;
-    setLoading(true);
-    if (!keepError) setError("");
+    setLoadingRooms(true);
+    if (clearError) setRoomsError("");
 
     try {
       const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/chat/rooms`);
-      const nextRooms = toItems(data);
+      const nextRooms = toItems(data).filter((room) => room && typeof room === "object");
+
       setRooms(nextRooms);
       setSelected((previous) => {
         if (!previous) return nextRooms[0] || null;
-        const previousKey = safeText(previous?.id || previous?.roomId || previous?.name);
-        return nextRooms.find((room) => safeText(room?.id || room?.roomId || room?.name) === previousKey) || nextRooms[0] || null;
+
+        const previousKey = getRoomIdentity(previous);
+        return nextRooms.find((room) => getRoomIdentity(room) === previousKey) || nextRooms[0] || null;
       });
     } catch (e) {
       setRooms([]);
       setSelected(null);
-      setError(e?.message || "Failed to load chat rooms.");
+      setRoomsError(e?.message || "Failed to load chat rooms.");
     } finally {
-      setLoading(false);
+      setLoadingRooms(false);
     }
   }
 
@@ -69,21 +76,26 @@ export default function Chat() {
     const name = createValue.trim();
     if (!name || !orgId) return;
 
-    setCreating(true);
-    setError("");
+    setCreatingRoom(true);
+    setCreateError("");
 
     try {
-      await api(`/api/orgs/${encodeURIComponent(orgId)}/chat/rooms`, {
+      const response = await api(`/api/orgs/${encodeURIComponent(orgId)}/chat/rooms`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
+
       setCreateValue("");
-      await refresh();
+      await refreshRooms();
+
+      if (response?.room) {
+        setSelected(response.room);
+      }
     } catch (e) {
-      setError(e?.message || "Failed to create room.");
+      setCreateError(e?.message || "Failed to create room.");
     } finally {
-      setCreating(false);
+      setCreatingRoom(false);
     }
   }
 
@@ -93,7 +105,7 @@ export default function Chat() {
   }
 
   useEffect(() => {
-    refresh().catch(console.error);
+    refreshRooms().catch(console.error);
   }, [orgId]);
 
   if (!orgId) {
@@ -113,8 +125,8 @@ export default function Chat() {
       </div>
 
       <div className="row" style={{ gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-        <button className="btn" type="button" onClick={() => refresh().catch(console.error)} disabled={loading || creating}>
-          {loading ? "Refreshing..." : "Refresh"}
+        <button className="btn" type="button" onClick={() => refreshRooms().catch(console.error)} disabled={loadingRooms || creatingRoom}>
+          {loadingRooms ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
@@ -125,16 +137,22 @@ export default function Chat() {
           placeholder="New room name"
           aria-label="New room name"
           style={{ minWidth: 220, flex: "1 1 240px" }}
-          disabled={creating || loading}
+          disabled={creatingRoom || loadingRooms}
         />
-        <button className="btn" type="submit" disabled={creating || loading || !createValue.trim()}>
-          {creating ? "Creating..." : "Create room"}
+        <button className="btn" type="submit" disabled={creatingRoom || loadingRooms || !createValue.trim()}>
+          {creatingRoom ? "Creating..." : "Create room"}
         </button>
       </form>
 
-      {error ? (
+      {roomsError ? (
         <div className="error" style={{ marginTop: 10 }}>
-          {error}
+          {roomsError}
+        </div>
+      ) : null}
+
+      {createError ? (
+        <div className="error" style={{ marginTop: 10 }}>
+          {createError}
         </div>
       ) : null}
 
@@ -142,13 +160,13 @@ export default function Chat() {
         <div className="card" style={{ padding: 12 }}>
           <div style={{ fontWeight: 800 }}>Rooms</div>
           <div className="grid" style={{ gap: 8, marginTop: 10 }}>
-            {loading ? <div className="helper">Loading rooms...</div> : null}
-            {!loading && rooms.length === 0 ? <div className="helper">No rooms yet. Create the first room above.</div> : null}
-            {!loading &&
+            {loadingRooms ? <div className="helper">Loading rooms...</div> : null}
+            {!loadingRooms && rooms.length === 0 ? <div className="helper">No rooms yet. Create the first room above.</div> : null}
+            {!loadingRooms &&
               rooms.map((room, index) => {
                 const roomKey = getRoomKey(room, index);
                 const roomName = safeText(room?.name) || "Untitled room";
-                const isSelected = selectedKey && selectedKey === safeText(room?.id || room?.roomId || room?.name);
+                const isSelected = selectedKey && selectedKey === getRoomIdentity(room);
 
                 return (
                   <button

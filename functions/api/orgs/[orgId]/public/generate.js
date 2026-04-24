@@ -1,4 +1,5 @@
 import { slugify, uniqueSlug, getPublicCfg, setPublicCfg, setSlugMapping, removeSlugMapping } from "../../../_lib/publicPageStore.js";
+import { bad, ok } from "../../../_lib/http.js";
 
 function authOk(env, request) {
   // Temporary: allow until you wire real auth.
@@ -12,7 +13,7 @@ function authOk(env, request) {
 
 export async function onRequestPost({ env, request, params }) {
   if (!authOk(env, request)) {
-    return Response.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+    return bad(401, "UNAUTHORIZED");
   }
 
   const orgId = params.orgId;
@@ -31,5 +32,5 @@ export async function onRequestPost({ env, request, params }) {
   const saved = { ...prev, slug: final };
   await setPublicCfg(env, orgId, saved);
 
-  return Response.json({ ok: true, public: saved });
+  return ok({ public: saved });
 }

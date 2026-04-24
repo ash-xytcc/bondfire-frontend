@@ -23,6 +23,11 @@ function formatWhen(value) {
   return d.toLocaleString();
 }
 
+function isNotFoundError(message) {
+  const text = safeText(message).toUpperCase();
+  return text.includes("NOT_FOUND") || text.includes("404");
+}
+
 export default function EventDetail() {
   const { orgId: orgIdParam, eventId } = useParams();
   const orgId = orgIdParam || getOrgIdFromHash();
@@ -30,20 +35,24 @@ export default function EventDetail() {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-  const [serverReady, setServerReady] = useState(true);
+  const [missing, setMissing] = useState(false);
 
   async function refresh() {
     if (!orgId || !eventId) return;
     setLoading(true);
     setErr("");
+    setMissing(false);
     try {
       const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/events/${encodeURIComponent(eventId)}`);
       setItem(data?.item || data?.event || data || null);
-      setServerReady(true);
     } catch (e) {
+      const msg = e?.message || String(e);
       setItem(null);
-      setServerReady(false);
-      setErr(e?.message || String(e));
+      if (isNotFoundError(msg)) {
+        setMissing(true);
+      } else {
+        setErr(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -70,29 +79,40 @@ export default function EventDetail() {
         </Link>
       </div>
 
-      {loading ? <div className="helper" style={{ marginTop: 12 }}>Loading event...</div> : null}
-
-      {!serverReady ? (
-        <div className="card" style={{ padding: 12, marginTop: 12 }}>
-          <div style={{ fontWeight: 800 }}>Couldn’t load event details</div>
-          {err ? (
-            <div className="error" style={{ marginTop: 8 }}>
-              {err}
-            </div>
-          ) : null}
+      {loading ? (
+        <div className="helper" style={{ marginTop: 12 }}>
+          Loading event...
         </div>
       ) : null}
 
-      {!loading && serverReady && !item ? (
+      {!loading && err ? (
         <div className="card" style={{ padding: 12, marginTop: 12 }}>
-          <div style={{ fontWeight: 800 }}>Event not found</div>
-          <div className="helper" style={{ marginTop: 6 }}>
-            It may have been deleted or is not visible to your role.
+          <div style={{ fontWeight: 800 }}>Couldn’t load event details</div>
+          <div className="error" style={{ marginTop: 8 }}>
+            {err}
           </div>
         </div>
       ) : null}
 
-      {!loading && item ? (
+      {!loading && missing ? (
+        <div className="card" style={{ padding: 12, marginTop: 12 }}>
+          <div style={{ fontWeight: 800 }}>Event not found</div>
+          <div className="helper" style={{ marginTop: 6 }}>
+            Event ID {safeText(eventId) || "(unknown)"} does not exist in this organization.
+          </div>
+        </div>
+      ) : null}
+
+      {!loading && !err && !missing && !item ? (
+        <div className="card" style={{ padding: 12, marginTop: 12 }}>
+          <div style={{ fontWeight: 800 }}>Event unavailable</div>
+          <div className="helper" style={{ marginTop: 6 }}>
+            This event is missing data or is no longer available.
+          </div>
+        </div>
+      ) : null}
+
+      {!loading && !err && !missing && item ? (
         <div className="grid" style={{ gap: 10, marginTop: 12 }}>
           <div className="card" style={{ padding: 12 }}>
             <div style={{ fontWeight: 800 }}>{safeText(item?.title) || "Untitled event"}</div>
@@ -100,16 +120,12 @@ export default function EventDetail() {
               {formatWhen(item?.starts_at)}
               {item?.ends_at ? ` → ${formatWhen(item.ends_at)}` : ""}
             </div>
-            <div className="helper" style={{ marginTop: 4 }}>
-              {safeText(item?.location) || "Location pending"}
-            </div>
+            <div className="helper" style={{ marginTop: 4 }}>{safeText(item?.location) || "Location pending"}</div>
           </div>
 
           <div className="card" style={{ padding: 12 }}>
             <div style={{ fontWeight: 800 }}>Description</div>
-            <div style={{ marginTop: 8 }}>
-              {safeText(item?.description) || "No description yet."}
-            </div>
+            <div style={{ marginTop: 8 }}>{safeText(item?.description) || "No description yet."}</div>
           </div>
         </div>
       ) : null}

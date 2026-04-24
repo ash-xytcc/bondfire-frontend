@@ -18,6 +18,7 @@ function safeText(v) {
 function toItems(data) {
   if (Array.isArray(data?.items)) return data.items;
   if (Array.isArray(data?.records)) return data.records;
+  if (Array.isArray(data?.witness)) return data.witness;
   if (Array.isArray(data)) return data;
   return [];
 }
@@ -38,7 +39,7 @@ function normalizeItem(raw, index) {
     title: safeText(raw?.title).trim() || "Untitled record",
     summary: safeText(raw?.summary).trim() || "No summary yet.",
     happened_at: raw?.happened_at ?? null,
-    visibility: safeText(raw?.visibility).trim(),
+    visibility: safeText(raw?.visibility).trim() || "private",
   };
 }
 
@@ -50,8 +51,6 @@ export default function WitnessArchive() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-  const [serverReady, setServerReady] = useState(true);
-  const [createReady, setCreateReady] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formErr, setFormErr] = useState("");
@@ -65,6 +64,7 @@ export default function WitnessArchive() {
 
   async function refresh() {
     if (!orgId) return;
+
     const requestId = reqSeq.current + 1;
     reqSeq.current = requestId;
     setLoading(true);
@@ -75,14 +75,10 @@ export default function WitnessArchive() {
       if (reqSeq.current !== requestId) return;
       const normalized = toItems(data).map(normalizeItem);
       setItems(normalized);
-      setServerReady(true);
-      setCreateReady(true);
     } catch (e) {
       if (reqSeq.current !== requestId) return;
       setItems([]);
-      setServerReady(false);
-      setCreateReady(false);
-      setErr(e?.message || String(e));
+      setErr(e?.message || "Unable to load witness records.");
     } finally {
       if (reqSeq.current !== requestId) return;
       setLoading(false);
@@ -90,7 +86,8 @@ export default function WitnessArchive() {
   }
 
   async function createRecord() {
-    if (!orgId || !createReady || saving) return;
+    if (!orgId || saving) return;
+
     const title = safeText(draft.title).trim();
     const summary = safeText(draft.summary).trim();
     const happenedAt = safeText(draft.happened_at).trim();
@@ -119,7 +116,7 @@ export default function WitnessArchive() {
       setCreateOpen(false);
       await refresh();
     } catch (e) {
-      setFormErr(e?.message || String(e));
+      setFormErr(e?.message || "Unable to create witness record.");
     } finally {
       setSaving(false);
     }
@@ -143,17 +140,18 @@ export default function WitnessArchive() {
     return <div style={{ padding: 16 }}>No org selected.</div>;
   }
 
+  const hasSearch = safeText(q).trim().length > 0;
+  const hasError = Boolean(err);
+
   return (
     <div className="card" style={{ margin: 16, padding: 12 }}>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <h2 className="section-title" style={{ margin: 0, flex: 1 }}>
           Witness Archive
         </h2>
-        {createReady ? (
-          <button className="btn" type="button" onClick={() => setCreateOpen((v) => !v)}>
-            {createOpen ? "Close" : "New record"}
-          </button>
-        ) : null}
+        <button className="btn" type="button" onClick={() => setCreateOpen((v) => !v)}>
+          {createOpen ? "Close" : "New record"}
+        </button>
       </div>
 
       <div className="helper" style={{ marginTop: 8 }}>
@@ -173,7 +171,7 @@ export default function WitnessArchive() {
         </button>
       </div>
 
-      {createReady && createOpen ? (
+      {createOpen ? (
         <div className="card" style={{ marginTop: 12, padding: 12 }}>
           <div style={{ fontWeight: 800 }}>Create witness record</div>
           <div className="grid" style={{ gap: 10, marginTop: 8 }}>
@@ -222,41 +220,46 @@ export default function WitnessArchive() {
         </div>
       ) : null}
 
-      {!serverReady ? (
+      {hasError ? (
         <div className="card" style={{ padding: 12, marginTop: 12 }}>
-          <div style={{ fontWeight: 800 }}>Witness API not ready</div>
+          <div style={{ fontWeight: 800 }}>Could not load witness records</div>
           <div className="helper" style={{ marginTop: 6 }}>
-            Expected endpoint: <code>GET/POST /api/orgs/:orgId/witness</code> with fields title, summary, happened_at, visibility.
+            Check your connection and permissions, then refresh.
           </div>
-          {err ? (
-            <div className="error" style={{ marginTop: 8 }}>
-              {err}
-            </div>
-          ) : null}
+          <div className="error" style={{ marginTop: 8 }}>
+            {err}
+          </div>
         </div>
       ) : null}
 
       <div className="grid" style={{ gap: 10, marginTop: 12 }}>
         {loading ? <div className="helper">Loading witness records...</div> : null}
 
-        {!loading && filtered.length === 0 ? (
+        {!loading && !hasError && filtered.length === 0 ? (
           <div className="card" style={{ padding: 12 }}>
-            <div style={{ fontWeight: 800 }}>No witness records yet</div>
+            <div style={{ fontWeight: 800 }}>{hasSearch ? "No matching witness records" : "No witness records yet"}</div>
             <div className="helper" style={{ marginTop: 6 }}>
-              {createReady
-                ? "Create the first record using the New record button."
-                : "The archive will populate once the witness API endpoint is available."}
+              {hasSearch
+                ? "Try a different search term."
+                : "Start the archive by creating your first witness record."}
             </div>
+            {!hasSearch ? (
+              <div className="row" style={{ marginTop: 10 }}>
+                <button className="btn" type="button" onClick={() => setCreateOpen(true)}>
+                  Create first record
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
         {!loading &&
+          !hasError &&
           filtered.map((item) => (
             <div key={item.key} className="card" style={{ padding: 12 }}>
               <div style={{ fontWeight: 800 }}>{item.title}</div>
               <div className="helper" style={{ marginTop: 6 }}>
-                {formatWhen(item.happened_at)}
-                {item.visibility ? ` • ${item.visibility}` : ""}
+                {formatWhen(item.happened_at)} • {item.visibility}
               </div>
               <div style={{ marginTop: 8 }}>{item.summary}</div>
             </div>

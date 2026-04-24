@@ -30,6 +30,15 @@ function formatWhen(value) {
   return d.toLocaleString();
 }
 
+function toMillisOrNull(value) {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  if (Number.isFinite(n)) return n;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.getTime();
+}
+
 export default function Events() {
   const { orgId: orgIdParam } = useParams();
   const orgId = orgIdParam || getOrgIdFromHash();
@@ -38,7 +47,16 @@ export default function Events() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-  const [serverReady, setServerReady] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createErr, setCreateErr] = useState("");
+  const [form, setForm] = useState({
+    title: "",
+    starts_at: "",
+    ends_at: "",
+    location: "",
+    description: "",
+  });
 
   async function refresh() {
     if (!orgId) return;
@@ -47,10 +65,8 @@ export default function Events() {
     try {
       const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/events`);
       setItems(toItems(data));
-      setServerReady(true);
     } catch (e) {
       setItems([]);
-      setServerReady(false);
       setErr(e?.message || String(e));
     } finally {
       setLoading(false);
@@ -76,6 +92,42 @@ export default function Events() {
     );
   }, [items, q]);
 
+  async function onCreateSubmit(e) {
+    e.preventDefault();
+    if (!orgId || creating) return;
+
+    setCreateErr("");
+    const title = safeText(form.title).trim();
+    if (!title) {
+      setCreateErr("Title is required.");
+      return;
+    }
+
+    const startsAt = toMillisOrNull(form.starts_at);
+    const endsAt = toMillisOrNull(form.ends_at);
+
+    setCreating(true);
+    try {
+      await api(`/api/orgs/${encodeURIComponent(orgId)}/events`, {
+        method: "POST",
+        body: JSON.stringify({
+          title,
+          starts_at: startsAt,
+          ends_at: endsAt,
+          location: safeText(form.location).trim(),
+          description: safeText(form.description).trim(),
+        }),
+      });
+      setForm({ title: "", starts_at: "", ends_at: "", location: "", description: "" });
+      setShowCreate(false);
+      await refresh();
+    } catch (e2) {
+      setCreateErr(e2?.message || String(e2));
+    } finally {
+      setCreating(false);
+    }
+  }
+
   if (!orgId) {
     return <div style={{ padding: 16 }}>No org selected.</div>;
   }
@@ -86,10 +138,64 @@ export default function Events() {
         <h2 className="section-title" style={{ margin: 0, flex: 1 }}>
           Events
         </h2>
-        <button className="btn" type="button" disabled title="Creation flow is coming soon.">
-          New event
+        <button className="btn" type="button" onClick={() => setShowCreate((v) => !v)}>
+          {showCreate ? "Cancel" : "New event"}
         </button>
       </div>
+
+      {showCreate ? (
+        <form className="card" style={{ marginTop: 12, padding: 12 }} onSubmit={onCreateSubmit}>
+          <div style={{ fontWeight: 800, marginBottom: 10 }}>Create event</div>
+          <div className="grid" style={{ gap: 10 }}>
+            <input
+              className="input"
+              value={form.title}
+              onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+              placeholder="Title"
+              required
+            />
+            <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+              <input
+                className="input"
+                type="datetime-local"
+                value={form.starts_at}
+                onChange={(e) => setForm((prev) => ({ ...prev, starts_at: e.target.value }))}
+                style={{ minWidth: 220, flex: 1 }}
+              />
+              <input
+                className="input"
+                type="datetime-local"
+                value={form.ends_at}
+                onChange={(e) => setForm((prev) => ({ ...prev, ends_at: e.target.value }))}
+                style={{ minWidth: 220, flex: 1 }}
+              />
+            </div>
+            <input
+              className="input"
+              value={form.location}
+              onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
+              placeholder="Location"
+            />
+            <textarea
+              className="input"
+              value={form.description}
+              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+              placeholder="Description"
+              rows={3}
+            />
+          </div>
+          {createErr ? (
+            <div className="error" style={{ marginTop: 10 }}>
+              {createErr}
+            </div>
+          ) : null}
+          <div className="row" style={{ marginTop: 10, gap: 10 }}>
+            <button className="btn" type="submit" disabled={creating}>
+              {creating ? "Saving..." : "Save event"}
+            </button>
+          </div>
+        </form>
+      ) : null}
 
       <div className="row" style={{ gap: 10, marginTop: 12, flexWrap: "wrap" }}>
         <input
@@ -109,30 +215,36 @@ export default function Events() {
         </button>
       </div>
 
-      {!serverReady ? (
+      {err ? (
         <div className="card" style={{ padding: 12, marginTop: 12 }}>
           <div style={{ fontWeight: 800 }}>Couldn’t load events</div>
-          {err ? (
-            <div className="error" style={{ marginTop: 8 }}>
-              {err}
-            </div>
-          ) : null}
+          <div className="error" style={{ marginTop: 8 }}>
+            {err}
+          </div>
         </div>
       ) : null}
 
       <div className="grid" style={{ gap: 10, marginTop: 12 }}>
         {loading ? <div className="helper">Loading events...</div> : null}
 
-        {!loading && filtered.length === 0 ? (
+        {!loading && !err && filtered.length === 0 ? (
           <div className="card" style={{ padding: 12 }}>
             <div style={{ fontWeight: 800 }}>{q ? "No matching events" : "No events yet"}</div>
             <div className="helper" style={{ marginTop: 6 }}>
-              {q ? "Try a different search term." : "Create your first event to get started."}
+              {q
+                ? "Try a different search term."
+                : "Get started by creating your first event with title, date/time, and location."}
             </div>
+            {!q ? (
+              <button className="btn" type="button" style={{ marginTop: 10 }} onClick={() => setShowCreate(true)}>
+                Create your first event
+              </button>
+            ) : null}
           </div>
         ) : null}
 
         {!loading &&
+          !err &&
           filtered.map((item, idx) => {
             const id = item?.id || item?.event_id || "";
             const href = id ? `/org/${encodeURIComponent(orgId)}/events/${encodeURIComponent(id)}` : "#";
@@ -155,9 +267,7 @@ export default function Events() {
                   {formatWhen(item?.starts_at)}
                   {item?.location ? ` • ${safeText(item.location)}` : ""}
                 </div>
-                {item?.description ? (
-                  <div style={{ marginTop: 8 }}>{safeText(item.description)}</div>
-                ) : null}
+                {item?.description ? <div style={{ marginTop: 8 }}>{safeText(item.description)}</div> : null}
               </div>
             );
           })}

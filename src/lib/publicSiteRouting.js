@@ -1,15 +1,32 @@
+function resolvePublicPath(pathname = '') {
+  const direct = String(pathname || '').trim()
+  if (direct) return direct
+
+  if (typeof window === 'undefined') return ''
+
+  const hashPath = String(window.location?.hash || '').replace(/^#/, '')
+  if (hashPath) return hashPath
+
+  return String(window.location?.pathname || '')
+}
+
 export function getPublicSiteSlug(pathname = '') {
-  const match = String(pathname || '').match(/^\/site\/([^/]+)/)
+  const path = resolvePublicPath(pathname)
+  const match = path.match(/^\/(?:p|site)\/([^/]+)/)
   return match ? decodeURIComponent(match[1]) : ''
 }
 
 export function getPublicSiteBasePath(pathname = '') {
-  const slug = getPublicSiteSlug(pathname || window.location.pathname || '/')
-  return slug ? `/site/${encodeURIComponent(slug)}` : ''
+  const slug = getPublicSiteSlug(pathname)
+  return slug ? `/p/${encodeURIComponent(slug)}` : ''
 }
 
 export function usePublicSiteBasePath() {
-  try { return getPublicSiteBasePath(window.location.pathname || '/') } catch { return '' }
+  try {
+    return getPublicSiteBasePath(resolvePublicPath())
+  } catch {
+    return ''
+  }
 }
 
 export function buildPublicSitePath(basePath = '', path = '/') {
@@ -21,5 +38,6 @@ export function buildPublicSitePath(basePath = '', path = '/') {
 }
 
 export function isPublicSiteRoute(pathname = '') {
-  return String(pathname || '').startsWith('/site/')
+  const path = resolvePublicPath(pathname)
+  return /^\/(?:p|site)\//.test(path)
 }

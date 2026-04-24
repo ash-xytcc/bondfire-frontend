@@ -49,6 +49,19 @@ function toAbsoluteUrl(pathOrUrl) {
   }
 }
 
+function extractSiteSlug(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+
+  const siteMatch = raw.match(/\/site\/([^/?#]+)/i)
+  if (siteMatch?.[1]) return decodeURIComponent(siteMatch[1])
+
+  const publicMatch = raw.match(/\/p\/([^/?#]+)/i)
+  if (publicMatch?.[1]) return decodeURIComponent(publicMatch[1])
+
+  return ''
+}
+
 function toHttpsUrl(hostname) {
   const value = String(hostname || '').trim()
   if (!value) return ''
@@ -156,7 +169,14 @@ export function PublicDomainCard() {
   }
 
   const slugPath = useMemo(() => state?.slugPath || `/site/${siteSlug || 'main'}`, [state, siteSlug])
-  const generatedPublicUrl = useMemo(() => toAbsoluteUrl(slugPath), [slugPath])
+  const previewSlug = useMemo(
+    () => extractSiteSlug(state?.slugPath) || String(siteSlug || 'main').trim() || 'main',
+    [state, siteSlug],
+  )
+  const generatedPublicUrl = useMemo(() => {
+    const hashPath = `#/p/${encodeURIComponent(previewSlug)}`
+    return toAbsoluteUrl(`/${hashPath}`)
+  }, [previewSlug])
   const primaryDomain = useMemo(() => state?.domains?.find((domain) => domain.isPrimary) || null, [state])
   const primaryCustomDomainUrl = useMemo(() => toHttpsUrl(primaryDomain?.hostname), [primaryDomain])
   const statusText = useMemo(() => getPublicSiteStatus({ mode, state }), [mode, state])

@@ -1,4 +1,5 @@
 import { getDB } from "../../../_bf.js";
+import { enforceOrgWriteLockdown } from "../../../_lib/orgLockdown.js";
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -133,6 +134,8 @@ export async function onRequestPut(context) {
   try {
     const orgId = String(params?.orgId || "").trim();
     if (!orgId) return json({ ok: false, error: "BAD_ORG" }, 400);
+    const lockdown = await enforceOrgWriteLockdown({ env, orgId });
+    if (!lockdown.ok) return lockdown.resp;
 
     const body = await request.json().catch(() => ({}));
     const id = body?.id != null ? String(body.id) : "";

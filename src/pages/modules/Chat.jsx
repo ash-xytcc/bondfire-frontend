@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../utils/api.js";
 
@@ -22,6 +22,10 @@ function safeText(v) {
   return String(v ?? "");
 }
 
+function getRoomKey(room, index) {
+  return safeText(room?.id || room?.roomId || room?.name || `room-${index}`);
+}
+
 export default function Chat() {
   const { orgId: orgIdParam } = useParams();
   const orgId = orgIdParam || getOrgIdFromHash();
@@ -29,30 +33,63 @@ export default function Chat() {
   const [rooms, setRooms] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
-  const [serverReady, setServerReady] = useState(true);
+  const [error, setError] = useState("");
+  const [createValue, setCreateValue] = useState("");
+  const [creating, setCreating] = useState(false);
 
-  async function refresh() {
+  const selectedKey = useMemo(() => {
+    if (!selected) return "";
+    return safeText(selected?.id || selected?.roomId || selected?.name);
+  }, [selected]);
+
+  async function refresh({ keepError = false } = {}) {
     if (!orgId) return;
     setLoading(true);
-    setErr("");
+    if (!keepError) setError("");
+
     try {
       const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/chat/rooms`);
-      const next = toItems(data);
-      setRooms(next);
-      setSelected((prev) => {
-        if (!prev) return next[0] || null;
-        return next.find((r) => r?.id === prev?.id) || next[0] || null;
+      const nextRooms = toItems(data);
+      setRooms(nextRooms);
+      setSelected((previous) => {
+        if (!previous) return nextRooms[0] || null;
+        const previousKey = safeText(previous?.id || previous?.roomId || previous?.name);
+        return nextRooms.find((room) => safeText(room?.id || room?.roomId || room?.name) === previousKey) || nextRooms[0] || null;
       });
-      setServerReady(true);
     } catch (e) {
       setRooms([]);
       setSelected(null);
-      setServerReady(false);
-      setErr(e?.message || String(e));
+      setError(e?.message || "Failed to load chat rooms.");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function createRoom() {
+    const name = createValue.trim();
+    if (!name || !orgId) return;
+
+    setCreating(true);
+    setError("");
+
+    try {
+      await api(`/api/orgs/${encodeURIComponent(orgId)}/chat/rooms`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      setCreateValue("");
+      await refresh();
+    } catch (e) {
+      setError(e?.message || "Failed to create room.");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  function onCreateSubmit(event) {
+    event.preventDefault();
+    createRoom().catch(console.error);
   }
 
   useEffect(() => {
@@ -69,32 +106,35 @@ export default function Chat() {
         <h2 className="section-title" style={{ margin: 0, flex: 1 }}>
           Chat
         </h2>
-        <button className="btn" type="button" disabled title="Room creation is not wired in this scaffold pass.">
-          New room
-        </button>
       </div>
 
       <div className="helper" style={{ marginTop: 8 }}>
-        Scaffold-only chat surface. Not realtime, not Matrix, not trying to become a whole other project.
+        Rooms are loaded from this org&apos;s chat rooms endpoint.
       </div>
 
       <div className="row" style={{ gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-        <button className="btn" type="button" onClick={() => refresh().catch(console.error)} disabled={loading}>
+        <button className="btn" type="button" onClick={() => refresh().catch(console.error)} disabled={loading || creating}>
           {loading ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
-      {!serverReady ? (
-        <div className="card" style={{ padding: 12, marginTop: 12 }}>
-          <div style={{ fontWeight: 800 }}>Chat rooms API not ready</div>
-          <div className="helper" style={{ marginTop: 6 }}>
-            The page exists now and can be routed later without exploding into a 404-shaped disappointment.
-          </div>
-          {err ? (
-            <div className="error" style={{ marginTop: 8 }}>
-              {err}
-            </div>
-          ) : null}
+      <form onSubmit={onCreateSubmit} className="row" style={{ gap: 8, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <input
+          value={createValue}
+          onChange={(event) => setCreateValue(event.target.value)}
+          placeholder="New room name"
+          aria-label="New room name"
+          style={{ minWidth: 220, flex: "1 1 240px" }}
+          disabled={creating || loading}
+        />
+        <button className="btn" type="submit" disabled={creating || loading || !createValue.trim()}>
+          {creating ? "Creating..." : "Create room"}
+        </button>
+      </form>
+
+      {error ? (
+        <div className="error" style={{ marginTop: 10 }}>
+          {error}
         </div>
       ) : null}
 
@@ -103,39 +143,41 @@ export default function Chat() {
           <div style={{ fontWeight: 800 }}>Rooms</div>
           <div className="grid" style={{ gap: 8, marginTop: 10 }}>
             {loading ? <div className="helper">Loading rooms...</div> : null}
-            {!loading && rooms.length === 0 ? (
-              <div className="helper">No rooms yet.</div>
-            ) : null}
+            {!loading && rooms.length === 0 ? <div className="helper">No rooms yet. Create the first room above.</div> : null}
             {!loading &&
-              rooms.map((room) => (
-                <button
-                  key={room?.id || room?.name}
-                  className="btn"
-                  type="button"
-                  onClick={() => setSelected(room)}
-                  style={{ textAlign: "left", justifyContent: "flex-start" }}
-                >
-                  {safeText(room?.name) || "Untitled room"}
-                </button>
-              ))}
+              rooms.map((room, index) => {
+                const roomKey = getRoomKey(room, index);
+                const roomName = safeText(room?.name) || "Untitled room";
+                const isSelected = selectedKey && selectedKey === safeText(room?.id || room?.roomId || room?.name);
+
+                return (
+                  <button
+                    key={roomKey}
+                    className="btn"
+                    type="button"
+                    onClick={() => setSelected(room)}
+                    style={{
+                      textAlign: "left",
+                      justifyContent: "flex-start",
+                      borderColor: isSelected ? "var(--brand, #4f46e5)" : undefined,
+                    }}
+                  >
+                    {roomName}
+                  </button>
+                );
+              })}
           </div>
         </div>
 
         <div className="card" style={{ padding: 12 }}>
-          <div style={{ fontWeight: 800 }}>
-            {safeText(selected?.name) || "Room detail"}
-          </div>
+          <div style={{ fontWeight: 800 }}>{safeText(selected?.name) || "Room detail"}</div>
           <div className="helper" style={{ marginTop: 6 }}>
-            {selected
-              ? safeText(selected?.topic) || "No topic yet."
-              : "Select a room once rooms exist."}
+            {selected ? safeText(selected?.topic) || "No topic yet." : "Select a room once rooms exist."}
           </div>
 
           <div className="card" style={{ padding: 12, marginTop: 12 }}>
             <div style={{ fontWeight: 800 }}>Messages</div>
-            <div className="helper" style={{ marginTop: 6 }}>
-              Placeholder only. This batch is about making the page exist in the real repo so later routing and expansion have something concrete to target.
-            </div>
+            <div className="helper" style={{ marginTop: 6 }}>Message UI is not part of this thread.</div>
           </div>
         </div>
       </div>

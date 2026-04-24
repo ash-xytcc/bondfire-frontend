@@ -1,11 +1,11 @@
-import { json } from "../_lib/http.js";
+import { json, bad } from "../_lib/http.js";
 import { getDb, requireUser } from "../_lib/auth.js";
 
 export async function onRequestGet({ env, request }) {
   const auth = await requireUser({ env, request });
   if (!auth.ok) return auth.resp;
   const userId = auth.user?.sub;
-  if (!userId) return json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+  if (!userId) return bad(401, "UNAUTHORIZED");
 
   const db = getDb(env);
   const rows = await db.prepare(

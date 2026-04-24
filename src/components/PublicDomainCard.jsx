@@ -56,6 +56,29 @@ function toHttpsUrl(hostname) {
   return `https://${value}`
 }
 
+function getPublicSiteStatus({ mode, state }) {
+  const domains = state?.domains || []
+  const primary = domains.find((domain) => domain.isPrimary) || null
+
+  if (mode === 'scaffold') {
+    return 'Scaffold mode only: preview URLs are local placeholders until BF_DB is bound.'
+  }
+
+  if (!state?.siteSlug) {
+    return 'Site slug is not set yet.'
+  }
+
+  if (!primary) {
+    return 'Slug preview is ready. No primary custom domain is configured yet.'
+  }
+
+  if (primary.verificationStatus === 'verified') {
+    return `Slug preview is ready. Primary custom domain ${primary.hostname} is marked verified.`
+  }
+
+  return `Slug preview is ready. Primary custom domain ${primary.hostname} still needs verification and external DNS/binding setup.`
+}
+
 export function PublicDomainCard() {
   const [state, setState] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -136,6 +159,7 @@ export function PublicDomainCard() {
   const generatedPublicUrl = useMemo(() => toAbsoluteUrl(slugPath), [slugPath])
   const primaryDomain = useMemo(() => state?.domains?.find((domain) => domain.isPrimary) || null, [state])
   const primaryCustomDomainUrl = useMemo(() => toHttpsUrl(primaryDomain?.hostname), [primaryDomain])
+  const statusText = useMemo(() => getPublicSiteStatus({ mode, state }), [mode, state])
 
   return (
     <>
@@ -154,6 +178,8 @@ export function PublicDomainCard() {
         {!canEdit ? <p>You do not currently have edit permission for this route.</p> : null}
         {error ? <p className="review-card__excerpt">{error}</p> : null}
 
+        <p><strong>Current public site status:</strong> {statusText}</p>
+
         <div className="archive-controls">
           <label className="archive-control">
             <span>public site slug</span>
@@ -166,8 +192,16 @@ export function PublicDomainCard() {
           </div>
         </div>
 
-        <p style={{ wordBreak: 'break-all' }}>generated public URL: {generatedPublicUrl || slugPath}</p>
+        <p style={{ wordBreak: 'break-all' }}>generated slug preview URL: {generatedPublicUrl || slugPath}</p>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <a
+            className="button button--primary"
+            href={generatedPublicUrl || slugPath}
+            target="_blank"
+            rel="noreferrer"
+          >
+            open preview
+          </a>
           <button className="button" type="button" onClick={() => copyText(generatedPublicUrl || slugPath, 'generated public URL')}>
             copy generated URL
           </button>

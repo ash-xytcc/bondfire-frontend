@@ -125,7 +125,7 @@ export async function readEmergencyStatus({ env, request, orgId = null }) {
 }
 
 export async function setOrgLockdownState({ env, request, orgId, enabled, reason = '', rotateKeys = false }) {
-  const gate = await requireOrgRole({ env, request, orgId, minRole: 'admin' });
+  const gate = await requireOrgRole({ env, request, orgId, minRole: 'admin', bypassWriteLockdown: true });
   if (!gate.ok) return gate;
 
   const state = await ensureEmergencySchema(env);
@@ -208,7 +208,7 @@ export async function writeEmergencyReport({
   if (!user.ok) return user;
 
   if (orgId) {
-    const gate = await requireOrgRole({ env, request, orgId, minRole: 'admin' });
+    const gate = await requireOrgRole({ env, request, orgId, minRole: 'admin', bypassWriteLockdown: true });
     if (!gate.ok) return gate;
   }
 

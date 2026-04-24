@@ -34,6 +34,10 @@ import DemoSpotlightTour from "./demo/DemoSpotlightTour.jsx";
 import DemoBoot from "./pages/DemoBoot.jsx";
 import { isDemoMode, disableDemoMode } from "./demo/demoMode.js";
 
+import Events from "./pages/modules/Events.jsx";
+import EventDetail from "./pages/modules/EventDetail.jsx";
+import WitnessArchive from "./pages/modules/WitnessArchive.jsx";
+import ModuleChat from "./pages/modules/Chat.jsx";
 /* -------------------------------- Error Boundary ------------------------------- */
 class ErrorBoundary extends React.Component {
 	constructor(props) {
@@ -268,6 +272,11 @@ function Shell() {
 					<Route path="drive" element={<Drive />} />
 					<Route path="studio" element={<Studio />} />
 					<Route path="public" element={<OrgPublicPreview />} />
+
+					<Route path="events" element={<Events />} />
+					<Route path="events/:eventId" element={<EventDetail />} />
+					<Route path="witness" element={<WitnessArchive />} />
+					<Route path="chat-module" element={<ModuleChat />} />
 					<Route path="chat" element={<BondfireChat />} />
 					<Route path="guard/*" element={<OrgSecretGuard />} />
 				</Route>

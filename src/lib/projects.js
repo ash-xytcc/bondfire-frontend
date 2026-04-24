@@ -1,15 +1,15 @@
-const projects = []
+import {
+  getAllProjects,
+  getProjects,
+  listProjects,
+  getProjectBySlug,
+} from './pieces'
 
-export function getProjects() {
-  return projects
+export {
+  getAllProjects,
+  getProjects,
+  listProjects,
+  getProjectBySlug,
 }
 
-export function listProjects() {
-  return projects
-}
-
-export function getProjectBySlug(slug) {
-  return projects.find((project) => project.slug === slug) || null
-}
-
-export default projects
+export default getAllProjects()

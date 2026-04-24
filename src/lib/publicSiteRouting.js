@@ -1,38 +1,25 @@
-import { useMemo } from 'react'
-import { useLocation, useParams } from 'react-router-dom'
-
-export function normalizePublicSiteSlug(input) {
-  return String(input || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'main'
+export function getPublicSiteSlug(pathname = '') {
+  const match = String(pathname || '').match(/^\/site\/([^/]+)/)
+  return match ? decodeURIComponent(match[1]) : ''
 }
 
-export function buildPublicSiteBasePath(siteSlug = 'main') {
-  return `/site/${normalizePublicSiteSlug(siteSlug)}`
+export function getPublicSiteBasePath(pathname = '') {
+  const slug = getPublicSiteSlug(pathname || window.location.pathname || '/')
+  return slug ? `/site/${encodeURIComponent(slug)}` : ''
 }
 
-export function buildPublicSitePath(siteSlug = 'main', nextPath = '/') {
-  const base = buildPublicSiteBasePath(siteSlug)
-  const cleaned = String(nextPath || '/').trim() || '/'
-  return cleaned === '/' ? base : `${base}${cleaned.startsWith('/') ? cleaned : `/${cleaned}`}`
+export function usePublicSiteBasePath() {
+  try { return getPublicSiteBasePath(window.location.pathname || '/') } catch { return '' }
 }
 
-export function usePublicSiteSlug() {
-  const params = useParams()
-  const location = useLocation()
+export function buildPublicSitePath(basePath = '', path = '/') {
+  const base = String(basePath || '').replace(/\/+$/, '')
+  const next = String(path || '/')
+  if (!base) return next.startsWith('/') ? next : `/${next}`
+  if (next === '/' || next === '') return base || '/'
+  return `${base}/${next.replace(/^\/+/, '')}`
+}
 
-  return useMemo(() => {
-    if (params.siteSlug) {
-      return normalizePublicSiteSlug(params.siteSlug)
-    }
-
-    const match = location.pathname.match(/^\/site\/([^/]+)/)
-    if (match?.[1]) {
-      return normalizePublicSiteSlug(match[1])
-    }
-
-    return 'main'
-  }, [params.siteSlug, location.pathname])
+export function isPublicSiteRoute(pathname = '') {
+  return String(pathname || '').startsWith('/site/')
 }

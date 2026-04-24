@@ -3,7 +3,7 @@ export function AboutPage() {
     <main className="page">
       <section className="card" style={{ margin: 16, padding: 24 }}>
         <h1>About</h1>
-        <p>Bondfire helps groups coordinate public and private work without forcing them into corporate software shapes.</p>
+        <p>Bondfire helps groups coordinate public and private work.</p>
       </section>
     </main>
   )

@@ -33,6 +33,8 @@ import DemoBanner from "./demo/DemoBanner.jsx";
 import DemoSpotlightTour from "./demo/DemoSpotlightTour.jsx";
 import DemoBoot from "./pages/DemoBoot.jsx";
 import { isDemoMode, disableDemoMode } from "./demo/demoMode.js";
+import { createSessionSupportSnapshot } from "./platform/sessionSupport.js";
+import { getPlatformOrgChildRoutes } from "./platform/routeComposer.jsx";
 
 import Events from "./pages/modules/Events.jsx";
 import EventDetail from "./pages/modules/EventDetail.jsx";
@@ -210,6 +212,16 @@ function Shell() {
 	const HomeRoute = () =>
 		state.authed ? <Navigate to="/orgs" replace /> : <Navigate to="/signin" replace />;
 
+	const sessionSupport = React.useMemo(
+		() => createSessionSupportSnapshot({ authed: state.authed, user: state.user }),
+		[state.authed, state.user],
+	);
+
+	const platformOrgRoutes = React.useMemo(
+		() => getPlatformOrgChildRoutes({ sessionSupport }),
+		[sessionSupport],
+	);
+
 	// Hide the header on public routes
 	const hideHeader = path === "/" || path.startsWith("/p/") || path === "/signin" || path === "/demo";
 
@@ -279,6 +291,13 @@ function Shell() {
 					<Route path="chat-module" element={<ModuleChat />} />
 					<Route path="chat" element={<BondfireChat />} />
 					<Route path="guard/*" element={<OrgSecretGuard />} />
+					{platformOrgRoutes.map((route) => (
+						<Route
+							key={`platform-${route.moduleId}-${route.path}`}
+							path={route.path}
+							element={route.element}
+						/>
+					))}
 				</Route>
 
 				<Route path="*" element={<Navigate to="/" replace />} />

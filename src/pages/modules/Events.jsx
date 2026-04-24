@@ -86,13 +86,9 @@ export default function Events() {
         <h2 className="section-title" style={{ margin: 0, flex: 1 }}>
           Events
         </h2>
-        <button className="btn" type="button" disabled title="Create flow is not wired in this scaffold pass.">
+        <button className="btn" type="button" disabled title="Creation flow is coming soon.">
           New event
         </button>
-      </div>
-
-      <div className="helper" style={{ marginTop: 8 }}>
-        Thread 4 scaffold page only. This gives routing a real destination and a safe empty state instead of a blank void.
       </div>
 
       <div className="row" style={{ gap: 10, marginTop: 12, flexWrap: "wrap" }}>
@@ -100,9 +96,14 @@ export default function Events() {
           className="input"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search events"
+          placeholder="Search by title, location, or description"
           style={{ minWidth: 240, flex: 1 }}
         />
+        {q ? (
+          <button className="btn" type="button" onClick={() => setQ("")}>
+            Clear
+          </button>
+        ) : null}
         <button className="btn" type="button" onClick={() => refresh().catch(console.error)} disabled={loading}>
           {loading ? "Refreshing..." : "Refresh"}
         </button>
@@ -110,10 +111,7 @@ export default function Events() {
 
       {!serverReady ? (
         <div className="card" style={{ padding: 12, marginTop: 12 }}>
-          <div style={{ fontWeight: 800 }}>Events API not ready</div>
-          <div className="helper" style={{ marginTop: 6 }}>
-            The page exists in-repo now. Backend wiring can land separately.
-          </div>
+          <div style={{ fontWeight: 800 }}>Couldn’t load events</div>
           {err ? (
             <div className="error" style={{ marginTop: 8 }}>
               {err}
@@ -127,19 +125,20 @@ export default function Events() {
 
         {!loading && filtered.length === 0 ? (
           <div className="card" style={{ padding: 12 }}>
-            <div style={{ fontWeight: 800 }}>No events yet</div>
+            <div style={{ fontWeight: 800 }}>{q ? "No matching events" : "No events yet"}</div>
             <div className="helper" style={{ marginTop: 6 }}>
-              Once routing is wired, this page is ready to receive scaffold-level event records.
+              {q ? "Try a different search term." : "Create your first event to get started."}
             </div>
           </div>
         ) : null}
 
         {!loading &&
-          filtered.map((item) => {
+          filtered.map((item, idx) => {
             const id = item?.id || item?.event_id || "";
             const href = id ? `/org/${encodeURIComponent(orgId)}/events/${encodeURIComponent(id)}` : "#";
+            const fallbackKey = `${safeText(item?.title) || "event"}-${safeText(item?.starts_at) || idx}`;
             return (
-              <div key={id || `${item?.title || "event"}-${item?.starts_at || Math.random()}`} className="card" style={{ padding: 12 }}>
+              <div key={id || fallbackKey} className="card" style={{ padding: 12 }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                   <div style={{ fontWeight: 800, flex: 1 }}>{safeText(item?.title) || "Untitled event"}</div>
                   {id ? (

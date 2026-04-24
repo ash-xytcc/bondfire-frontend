@@ -154,11 +154,14 @@ function OrgNav({ variant = "desktop" }) {
         ["People", `${base}/people`, "nav-people"],
         ["Inventory", `${base}/inventory`, "nav-inventory"],
         ["Needs", `${base}/needs`, "nav-needs"],
-        ["Events", "Meetings", `${base}/meetings`, "nav-meetings"],
+        ["Meetings", `${base}/meetings`, "nav-meetings"],
+        ["Events", `${base}/events`, "nav-events"],
+        ["Witness", `${base}/witness`, "nav-witness"],
         ["Drive", `${base}/drive`, "nav-drive"],
         ["Studio", `${base}/studio`, "nav-studio"],
         ["Settings", `${base}/settings`, "nav-settings"],
         ["Chat", `${base}/chat`, "nav-chat"],
+        ["Module Chat", `${base}/chat-module`, "nav-chat-module"],
       ]
     : [];
 

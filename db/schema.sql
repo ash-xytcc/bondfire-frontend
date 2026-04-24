@@ -186,3 +186,43 @@ CREATE INDEX IF NOT EXISTS idx_drive_files_org_parent ON drive_files(org_id, par
 CREATE UNIQUE INDEX IF NOT EXISTS idx_drive_files_storage_key ON drive_files(storage_key);
 CREATE INDEX IF NOT EXISTS idx_drive_templates_org_updated ON drive_templates(org_id, updated_at DESC);
 
+
+-- Emergency mode backend foundation (non-destructive)
+CREATE TABLE IF NOT EXISTS emergency_status (
+  id TEXT PRIMARY KEY,
+  is_active INTEGER NOT NULL DEFAULT 0,
+  level TEXT NOT NULL DEFAULT 'normal',
+  message TEXT NOT NULL DEFAULT '',
+  started_at INTEGER,
+  ended_at INTEGER,
+  updated_by_user_id TEXT,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS org_emergency_state (
+  org_id TEXT PRIMARY KEY,
+  lockdown_enabled INTEGER NOT NULL DEFAULT 0,
+  lockdown_reason TEXT NOT NULL DEFAULT '',
+  lockdown_set_by_user_id TEXT,
+  lockdown_set_at INTEGER,
+  lockdown_cleared_by_user_id TEXT,
+  lockdown_cleared_at INTEGER,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS emergency_reports (
+  id TEXT PRIMARY KEY,
+  org_id TEXT,
+  event_type TEXT NOT NULL,
+  severity TEXT NOT NULL DEFAULT 'info',
+  status TEXT NOT NULL DEFAULT 'recorded',
+  actor_user_id TEXT,
+  summary TEXT NOT NULL,
+  details_json TEXT,
+  created_at INTEGER NOT NULL,
+  FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_emergency_reports_org_created ON emergency_reports(org_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_emergency_reports_type_created ON emergency_reports(event_type, created_at DESC);

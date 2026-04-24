@@ -30,6 +30,18 @@ function formatWhen(value) {
   return d.toLocaleString();
 }
 
+function normalizeItem(raw, index) {
+  const id = raw?.id ?? raw?._id ?? null;
+  return {
+    id,
+    key: id || `${safeText(raw?.title) || "record"}-${safeText(raw?.happened_at) || index}`,
+    title: safeText(raw?.title).trim() || "Untitled record",
+    summary: safeText(raw?.summary).trim() || "No summary yet.",
+    happened_at: raw?.happened_at ?? null,
+    visibility: safeText(raw?.visibility).trim(),
+  };
+}
+
 export default function WitnessArchive() {
   const { orgId: orgIdParam } = useParams();
   const orgId = orgIdParam || getOrgIdFromHash();
@@ -57,10 +69,12 @@ export default function WitnessArchive() {
     reqSeq.current = requestId;
     setLoading(true);
     setErr("");
+
     try {
       const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/witness`);
       if (reqSeq.current !== requestId) return;
-      setItems(toItems(data));
+      const normalized = toItems(data).map(normalizeItem);
+      setItems(normalized);
       setServerReady(true);
       setCreateReady(true);
     } catch (e) {
@@ -112,7 +126,7 @@ export default function WitnessArchive() {
   }
 
   useEffect(() => {
-    refresh().catch(console.error);
+    void refresh();
   }, [orgId]);
 
   useEffect(() => () => {
@@ -122,12 +136,7 @@ export default function WitnessArchive() {
   const filtered = useMemo(() => {
     const needle = safeText(q).trim().toLowerCase();
     if (!needle) return items;
-    return items.filter((item) =>
-      [safeText(item?.title), safeText(item?.summary), safeText(item?.visibility)]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle)
-    );
+    return items.filter((item) => [item.title, item.summary, item.visibility].join(" ").toLowerCase().includes(needle));
   }, [items, q]);
 
   if (!orgId) {
@@ -148,7 +157,7 @@ export default function WitnessArchive() {
       </div>
 
       <div className="helper" style={{ marginTop: 8 }}>
-        Private metadata-first archive scaffold. The point right now is to make the page real in-repo, not to pretend it is finished.
+        Browse and create witness records for this organization.
       </div>
 
       <div className="row" style={{ gap: 10, marginTop: 12, flexWrap: "wrap" }}>
@@ -159,7 +168,7 @@ export default function WitnessArchive() {
           placeholder="Search witness records"
           style={{ minWidth: 240, flex: 1 }}
         />
-        <button className="btn" type="button" onClick={() => refresh().catch(console.error)} disabled={loading}>
+        <button className="btn" type="button" onClick={() => void refresh()} disabled={loading}>
           {loading ? "Refreshing..." : "Refresh"}
         </button>
       </div>
@@ -202,7 +211,7 @@ export default function WitnessArchive() {
             </div>
             {formErr ? <div className="error">{formErr}</div> : null}
             <div className="row" style={{ gap: 10 }}>
-              <button className="btn" type="button" onClick={() => createRecord().catch(console.error)} disabled={saving}>
+              <button className="btn" type="button" onClick={() => void createRecord()} disabled={saving}>
                 {saving ? "Saving..." : "Create"}
               </button>
               <button className="btn ghost" type="button" onClick={() => setCreateOpen(false)} disabled={saving}>
@@ -217,7 +226,7 @@ export default function WitnessArchive() {
         <div className="card" style={{ padding: 12, marginTop: 12 }}>
           <div style={{ fontWeight: 800 }}>Witness API not ready</div>
           <div className="helper" style={{ marginTop: 6 }}>
-            The page exists now, which is the actual blocker you asked me to fix.
+            Expected endpoint: <code>GET/POST /api/orgs/:orgId/witness</code> with fields title, summary, happened_at, visibility.
           </div>
           {err ? (
             <div className="error" style={{ marginTop: 8 }}>
@@ -234,22 +243,22 @@ export default function WitnessArchive() {
           <div className="card" style={{ padding: 12 }}>
             <div style={{ fontWeight: 800 }}>No witness records yet</div>
             <div className="helper" style={{ marginTop: 6 }}>
-              Later batches can add create and edit flows once routes and server pieces are in place.
+              {createReady
+                ? "Create the first record using the New record button."
+                : "The archive will populate once the witness API endpoint is available."}
             </div>
           </div>
         ) : null}
 
         {!loading &&
           filtered.map((item) => (
-            <div key={item?.id || `${item?.title || "record"}-${item?.happened_at || Math.random()}`} className="card" style={{ padding: 12 }}>
-              <div style={{ fontWeight: 800 }}>{safeText(item?.title) || "Untitled record"}</div>
+            <div key={item.key} className="card" style={{ padding: 12 }}>
+              <div style={{ fontWeight: 800 }}>{item.title}</div>
               <div className="helper" style={{ marginTop: 6 }}>
-                {formatWhen(item?.happened_at)}
-                {item?.visibility ? ` • ${safeText(item.visibility)}` : ""}
+                {formatWhen(item.happened_at)}
+                {item.visibility ? ` • ${item.visibility}` : ""}
               </div>
-              <div style={{ marginTop: 8 }}>
-                {safeText(item?.summary) || "No summary yet."}
-              </div>
+              <div style={{ marginTop: 8 }}>{item.summary}</div>
             </div>
           ))}
       </div>

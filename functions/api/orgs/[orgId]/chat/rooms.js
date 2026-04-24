@@ -1,77 +1,91 @@
-import { json, bad } from '../../../_lib/http.js';
+import { json, bad, uuid } from '../../../_lib/http.js'
+
+function safeRoom(row = {}) {
+  return {
+    id: String(row.id || ''),
+    name: String(row.name || 'room'),
+    createdAt: row.created_at || row.createdAt || null,
+  }
+}
+
+async function ensureChatRoomsTable(db) {
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS chat_rooms (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    )`
+  ).run()
+
+  await db.prepare(
+    'CREATE INDEX IF NOT EXISTS idx_chat_rooms_org_created ON chat_rooms(org_id, created_at DESC)'
+  ).run()
+}
 
 export async function onRequestGet({ env, params }) {
   try {
-    const { orgId } = params;
+    const orgId = String(params?.orgId || '')
+    const db = env?.BF_DB || env?.DB || null
 
-    // If DB not available, return safe scaffold response
-    if (!env.BF_DB) {
-      return new Response(JSON.stringify({
-        rooms: [],
-        scaffold: true
-      }), { headers: { 'Content-Type': 'application/json' } });
-    }
+    if (!orgId) return bad(400, 'MISSING_ORG')
+    if (!db) return json({ ok: true, rooms: [], scaffold: true })
 
-    // Minimal table check / soft fallback
-    try {
-      const { results } = await env.BF_DB.prepare(
-        'SELECT id, name FROM chat_rooms WHERE org_id = ?'
-      ).bind(orgId).all();
+    await ensureChatRoomsTable(db)
 
-      return new Response(JSON.stringify({
-        rooms: results || []
-      }), { headers: { 'Content-Type': 'application/json' } });
+    const result = await db.prepare(
+      'SELECT id, name, created_at FROM chat_rooms WHERE org_id = ? ORDER BY created_at DESC'
+    ).bind(orgId).all()
 
-    } catch (e) {
-      // Table probably doesn't exist yet
-      return new Response(JSON.stringify({
-        rooms: [],
-        warning: 'chat_rooms table missing'
-      }), { headers: { 'Content-Type': 'application/json' } });
-    }
-
-  } catch (err) {
-    return bad(500, 'INTERNAL', { detail: String(err?.message || err || 'Unknown error') });
+    return json({
+      ok: true,
+      rooms: (result.results || []).map(safeRoom),
+    })
+  } catch (error) {
+    return bad(500, 'INTERNAL', { detail: String(error?.message || error || 'Unknown error') })
   }
 }
 
 export async function onRequestPost({ request, env, params }) {
   try {
-    const { orgId } = params;
-    const body = await request.json();
-    const { name } = body || {};
+    const orgId = String(params?.orgId || '')
+    const db = env?.BF_DB || env?.DB || null
+    const payload = await request.json().catch(() => ({}))
+    const roomName = String(payload?.name || '').trim()
 
-    if (!name) {
-      return new Response(JSON.stringify({ error: 'name required' }), { status: 400 });
-    }
+    if (!orgId) return bad(400, 'MISSING_ORG')
+    if (!roomName) return bad(400, 'MISSING_NAME')
 
-    if (!env.BF_DB) {
-      return new Response(JSON.stringify({
+    if (!db) {
+      return json({
         ok: true,
         scaffold: true,
-        room: { id: 'temp-id', name }
-      }), { headers: { 'Content-Type': 'application/json' } });
+        room: {
+          id: uuid(),
+          name: roomName,
+          createdAt: Date.now(),
+        },
+      })
     }
 
-    try {
-      const id = crypto.randomUUID();
+    await ensureChatRoomsTable(db)
 
-      await env.BF_DB.prepare(
-        'INSERT INTO chat_rooms (id, org_id, name) VALUES (?, ?, ?)'
-      ).bind(id, orgId, name).run();
+    const id = uuid()
+    const createdAt = Date.now()
 
-      return new Response(JSON.stringify({
-        ok: true,
-        room: { id, name }
-      }), { headers: { 'Content-Type': 'application/json' } });
+    await db.prepare(
+      'INSERT INTO chat_rooms (id, org_id, name, created_at) VALUES (?, ?, ?, ?)'
+    ).bind(id, orgId, roomName, createdAt).run()
 
-    } catch (e) {
-      return new Response(JSON.stringify({
-        error: 'chat_rooms table missing'
-      }), { status: 500 });
-    }
-
-  } catch (err) {
-    return bad(500, 'INTERNAL', { detail: String(err?.message || err || 'Unknown error') });
+    return json({
+      ok: true,
+      room: {
+        id,
+        name: roomName,
+        createdAt,
+      },
+    })
+  } catch (error) {
+    return bad(500, 'INTERNAL', { detail: String(error?.message || error || 'Unknown error') })
   }
 }

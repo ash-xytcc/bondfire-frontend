@@ -1,5 +1,5 @@
-import { bad } from "../../../_lib/http.js";
-import { getOrgIdBySlug } from "../../../_lib/publicPageStore.js";
+import { bad } from "../../.../../../_lib/http.js";
+import { getOrgIdBySlug } from "../../.../../../_lib/publicPageStore.js";
 import { onRequest as orgSubscribe } from "../../../orgs/[orgId]/newsletter/subscribe.js";
 
 export async function onRequestPost(context) {

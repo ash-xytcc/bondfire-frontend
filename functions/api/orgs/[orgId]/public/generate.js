@@ -1,4 +1,4 @@
-import { slugify, uniqueSlug, getPublicCfg, setPublicCfg, setSlugMapping, removeSlugMapping } from "../../../_lib/publicPageStore.js";
+import { slugify, uniqueSlug, getPublicCfg, setPublicCfg, setSlugMapping, removeSlugMapping } from "../../.../../../_lib/publicPageStore.js";
 
 function authOk(env, request) {
   // Temporary: allow until you wire real auth.

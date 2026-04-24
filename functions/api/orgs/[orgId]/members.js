@@ -1,6 +1,6 @@
-import { ok, bad } from "../../_lib/http.js";
-import { getDb, requireOrgRole } from "../../_lib/auth.js";
-import { ensureZkSchema } from "../../_lib/zk.js";
+import { ok, bad } from "../.../../_lib/http.js";
+import { getDb, requireOrgRole } from "../.../../_lib/auth.js";
+import { ensureZkSchema } from "../.../../_lib/zk.js";
 
 const ALLOWED_ROLES = new Set(["viewer", "member", "admin", "owner"]);
 

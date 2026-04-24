@@ -1,5 +1,5 @@
-import { bad, ok, readJSON, now } from "../../../../_lib/http.js";
-import { getOrgIdBySlug } from "../../../../_lib/publicPageStore.js";
+import { bad, ok, readJSON, now } from "../../../.../../../../_lib/http.js";
+import { getOrgIdBySlug } from "../../../.../../../../_lib/publicPageStore.js";
 import { getDB } from "../../../../_bf.js";
 
 function clean(v, max = 2000) {

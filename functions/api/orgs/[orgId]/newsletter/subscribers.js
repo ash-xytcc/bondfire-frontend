@@ -1,7 +1,7 @@
-import { ok, err } from "../../../_lib/http.js";
-import { requireOrgRole } from "../../../_lib/auth.js";
+import { ok, err } from "../../.../../../_lib/http.js";
+import { requireOrgRole } from "../../.../../../_lib/auth.js";
 import { getDB } from "../../../_bf.js";
-import { ensureZkSchema } from "../../../_lib/zk.js";
+import { ensureZkSchema } from "../../.../../../_lib/zk.js";
 
 
 

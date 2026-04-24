@@ -1,6 +1,6 @@
-import { bad, ok, getCookie } from "../_lib/http.js";
-import { sha256Hex, randomToken, issueAccessToken, cookieHeadersForAuth, clearAuthCookieHeaders } from "../_lib/session.js";
-import { runAppMigrations } from './_lib/migrations.js'
+import { bad, ok, getCookie } from ".../_lib/http.js";
+import { sha256Hex, randomToken, issueAccessToken, cookieHeadersForAuth, clearAuthCookieHeaders } from ".../_lib/session.js";
+import { runAppMigrations } from '../_lib/migrations.js'
 
 export async function onRequestPost({ env, request }) {
   if (!env?.BF_DB) return bad(500, "BF_DB_MISSING");

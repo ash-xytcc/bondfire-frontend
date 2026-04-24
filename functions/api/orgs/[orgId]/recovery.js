@@ -1,6 +1,6 @@
-import { json, bad, readJSON, requireMethod } from "../../_lib/http.js";
-import { getDb, requireUser, requireOrgRole } from "../../_lib/auth.js";
-import { ensureZkSchema } from "../../_lib/zk.js";
+import { json, bad, readJSON, requireMethod } from "../.../../_lib/http.js";
+import { getDb, requireUser, requireOrgRole } from "../.../../_lib/auth.js";
+import { ensureZkSchema } from "../.../../_lib/zk.js";
 
 async function tryRun(db, sql) {
   try {

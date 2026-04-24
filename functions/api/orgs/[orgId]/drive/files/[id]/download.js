@@ -1,6 +1,6 @@
-import { bad } from "../../../../../_lib/http.js";
-import { requireOrgRole } from "../../../../../_lib/auth.js";
-import { getFileRecord, loadFileBlob, bytesFromDataUrl, getDriveBucket } from "../../../../../_lib/drive.js";
+import { bad } from "../../../../.../../../../../_lib/http.js";
+import { requireOrgRole } from "../../../../.../../../../../_lib/auth.js";
+import { getFileRecord, loadFileBlob, bytesFromDataUrl, getDriveBucket } from "../../../../.../../../../../_lib/drive.js";
 
 function buildHeaders({ file, size, asDownload }) {
   const headers = new Headers({

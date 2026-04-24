@@ -3,11 +3,11 @@ import {
   writePublicSiteConfig,
   normalizePublicConfig,
   PUBLIC_CONFIG_SCHEMA_VERSION,
-} from './_lib/publicSiteConfig.js'
-import { resolvePublicSitePermission } from './_lib/publicSiteAuth.js'
-import { jsonOk, withApiHandler, ensureDb, hasDb, parseJsonBody } from './_lib/api.js'
-import { forbidden } from './_lib/errors.js'
-import { APP_SCHEMA_VERSION } from './_lib/migrations.js'
+} from '_lib/publicSiteConfig.js'
+import { resolvePublicSitePermission } from '_lib/publicSiteAuth.js'
+import { jsonOk, withApiHandler, ensureDb, hasDb, parseJsonBody } from '_lib/api.js'
+import { forbidden } from '_lib/errors.js'
+import { APP_SCHEMA_VERSION } from '_lib/migrations.js'
 
 export async function onRequestOptions(context) {
   const permission = await resolvePublicSitePermission(context)

@@ -2,8 +2,8 @@
 // Lists orgs the current user belongs to.
 // Must support cookie-session auth (bf_at) as well as legacy Bearer tokens.
 
-import { json, bad } from "../_lib/http.js";
-import { getDb, requireUser } from "../_lib/auth.js";
+import { json, bad } from ".../_lib/http.js";
+import { getDb, requireUser } from ".../_lib/auth.js";
 
 export async function onRequestGet({ env, request }) {
   if (!env.JWT_SECRET) return bad(500, "JWT_SECRET_MISSING");

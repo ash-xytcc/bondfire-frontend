@@ -1,5 +1,5 @@
-import { ok, err } from "../../_lib/http.js";
-import { requireOrgRole, getUserIdFromRequest } from "../../_lib/auth.js";
+import { ok, err } from "../.../../_lib/http.js";
+import { requireOrgRole, getUserIdFromRequest } from "../.../../_lib/auth.js";
 import { getDB } from "../../_bf.js";
 
 

@@ -1,5 +1,5 @@
-import { jsonOk, withApiHandler, ensureDb, hasDb } from './_lib/api.js'
-import { getSchemaState, APP_SCHEMA_VERSION } from './_lib/migrations.js'
+import { jsonOk, withApiHandler, ensureDb, hasDb } from '_lib/api.js'
+import { getSchemaState, APP_SCHEMA_VERSION } from '_lib/migrations.js'
 
 export async function onRequestGet(context) {
   return withApiHandler(async () => {

@@ -1,4 +1,12 @@
-import { normalizeSiteSlug } from '../../src/lib/publicConfigSchema.js'
+function normalizeSiteSlug(value = '') {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
 import { readPublicSiteConfig, writePublicSiteConfig } from './publicSiteConfig.js'
 
 const HOSTNAME_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))+$/i

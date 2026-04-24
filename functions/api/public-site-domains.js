@@ -1,5 +1,5 @@
-import { getPublicSiteDomainState, updatePublicSiteDomainState } from './_lib/publicSiteDomains.js'
-import { resolvePublicSitePermission } from './_lib/publicSiteAuth.js'
+import { getPublicSiteDomainState, updatePublicSiteDomainState } from '_lib/publicSiteDomains.js'
+import { resolvePublicSitePermission } from '_lib/publicSiteAuth.js'
 
 export async function onRequestOptions(context) {
   const permission = await resolvePublicSitePermission(context)

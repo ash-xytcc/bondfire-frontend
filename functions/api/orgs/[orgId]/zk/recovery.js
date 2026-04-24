@@ -1,6 +1,6 @@
-import { ok, bad, readJSON } from "../../../_lib/http.js";
-import { requireOrgRole } from "../../../_lib/auth.js";
-import { ensureZkSchema } from "../../../_lib/zkSchema.js";
+import { ok, bad, readJSON } from "../../.../../../_lib/http.js";
+import { requireOrgRole } from "../../.../../../_lib/auth.js";
+import { ensureZkSchema } from "../../.../../../_lib/zkSchema.js";
 
 async function getRecoveryTableCaps(db) {
   const info = await db.prepare("PRAGMA table_info(org_key_recovery)").all();

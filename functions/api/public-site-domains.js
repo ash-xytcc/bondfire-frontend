@@ -1,4 +1,4 @@
-import { getPublicSiteDomainState, updatePublicSiteDomainState } from './_lib/publicSiteDomains.js'
+import { getPublicSiteDomainState, normalizeSiteSlug, updatePublicSiteDomainState } from './_lib/publicSiteDomains.js'
 import { resolvePublicSitePermission } from './_lib/publicSiteAuth.js'
 import { jsonOk, jsonError, parseJsonBody } from './_lib/api.js'
 import { forbidden, badRequest } from './_lib/errors.js'
@@ -73,8 +73,8 @@ export async function onRequestPut(context) {
         authReason: permission.reason,
         state: {
           scope: 'global',
-          siteSlug: body?.siteSlug || 'main',
-          slugPath: `/site/${body?.siteSlug || 'main'}`,
+          siteSlug: normalizeSiteSlug(body?.siteSlug || 'main') || 'main',
+          slugPath: `/site/${normalizeSiteSlug(body?.siteSlug || 'main') || 'main'}`,
           domains: [],
           resolvedDomain: null,
         },

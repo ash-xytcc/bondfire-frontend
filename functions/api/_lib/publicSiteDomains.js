@@ -1,4 +1,4 @@
-function normalizeSiteSlug(value = '') {
+export function normalizeSiteSlug(value = '') {
   return String(value || '')
     .trim()
     .toLowerCase()
@@ -17,7 +17,7 @@ export async function ensurePublicSiteDomainsTable(db) {
     CREATE TABLE IF NOT EXISTS public_site_domains (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       scope TEXT NOT NULL,
-      hostname TEXT NOT NULL UNIQUE,
+      hostname TEXT NOT NULL,
       verification_status TEXT NOT NULL DEFAULT 'pending',
       verification_token TEXT NOT NULL DEFAULT '',
       is_primary INTEGER NOT NULL DEFAULT 0,
@@ -31,6 +31,13 @@ export async function ensurePublicSiteDomainsTable(db) {
     CREATE INDEX IF NOT EXISTS idx_public_site_domains_scope
     ON public_site_domains(scope);
   `)
+
+  await db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_public_site_domains_primary_per_scope
+    ON public_site_domains(scope)
+    WHERE is_primary = 1;
+  `)
+
 }
 
 export async function listPublicSiteDomains(db, scope = 'global') {
@@ -111,17 +118,13 @@ export async function addPublicSiteDomain(db, rawInput, scope = 'global') {
     .prepare(`
       SELECT id, scope, hostname, verification_status, verification_token, is_primary, created_at, updated_at, verified_at
       FROM public_site_domains
-      WHERE hostname = ?
+      WHERE scope = ? AND hostname = ?
       LIMIT 1
     `)
-    .bind(parsed.hostname)
+    .bind(scope, parsed.hostname)
     .first()
 
-  if (existing && existing.scope !== scope) {
-    throw new Error('hostname already mapped elsewhere')
-  }
-
-  if (existing && existing.scope === scope) {
+  if (existing) {
     return mapDomainRow(existing)
   }
 

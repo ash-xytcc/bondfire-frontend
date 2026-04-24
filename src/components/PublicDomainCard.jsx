@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchPublicSiteDomainState, savePublicSiteDomainState } from '../lib/publicSiteDomainsApi'
 
-function DomainRow({ domain, onPrimary, onVerify, onRemove, busy, disabled }) {
+function DomainRow({ domain, onPrimary, onVerify, onRemove, onCopy, busy, disabled }) {
   return (
     <article className="admin-card">
       <div className="admin-card__eyebrow">mapped domain</div>
@@ -14,6 +14,11 @@ function DomainRow({ domain, onPrimary, onVerify, onRemove, busy, disabled }) {
         verification token: {domain.verificationToken || 'pending generation'}
       </p>
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        {domain.verificationToken ? (
+          <button className="button" type="button" onClick={() => onCopy(domain.verificationToken, `verification token for ${domain.hostname}`)}>
+            copy token
+          </button>
+        ) : null}
         {!domain.isPrimary ? (
           <button className="button button--primary" type="button" onClick={() => onPrimary(domain.hostname)} disabled={busy || disabled}>
             make primary
@@ -30,6 +35,25 @@ function DomainRow({ domain, onPrimary, onVerify, onRemove, busy, disabled }) {
       </div>
     </article>
   )
+}
+
+function toAbsoluteUrl(pathOrUrl) {
+  const value = String(pathOrUrl || '')
+  if (!value) return ''
+  if (/^https?:\/\//i.test(value)) return value
+  try {
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    return origin ? new URL(value, origin).toString() : value
+  } catch {
+    return value
+  }
+}
+
+function toHttpsUrl(hostname) {
+  const value = String(hostname || '').trim()
+  if (!value) return ''
+  if (/^https?:\/\//i.test(value)) return value
+  return `https://${value}`
 }
 
 export function PublicDomainCard() {
@@ -82,7 +106,36 @@ export function PublicDomainCard() {
     }
   }
 
+  async function copyText(value, label) {
+    if (!value) {
+      setError(`No ${label} available to copy.`)
+      return
+    }
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value)
+        return
+      }
+
+      const input = document.createElement('textarea')
+      input.value = value
+      input.setAttribute('readonly', '')
+      input.style.position = 'absolute'
+      input.style.left = '-9999px'
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+    } catch (err) {
+      setError(`Failed to copy ${label}: ${String(err?.message || err)}`)
+    }
+  }
+
   const slugPath = useMemo(() => state?.slugPath || `/site/${siteSlug || 'main'}`, [state, siteSlug])
+  const generatedPublicUrl = useMemo(() => toAbsoluteUrl(slugPath), [slugPath])
+  const primaryDomain = useMemo(() => state?.domains?.find((domain) => domain.isPrimary) || null, [state])
+  const primaryCustomDomainUrl = useMemo(() => toHttpsUrl(primaryDomain?.hostname), [primaryDomain])
 
   return (
     <>
@@ -90,7 +143,10 @@ export function PublicDomainCard() {
         <div className="admin-card__eyebrow">public domain setup</div>
         <h2>Slug and domain routing</h2>
         <p>
-          This stores public slug and custom domain mapping state inside the repo boundary. Actual DNS verification and deploy host binding still require infrastructure outside this codebase.
+          This stores public slug and custom domain mapping state inside the repo boundary. Verification tokens in this UI reflect repo-side proof state only.
+        </p>
+        <p>
+          Real DNS records and deployment host binding must be configured in your DNS/deployment providers outside this repo. This screen does not perform automatic DNS verification.
         </p>
 
         {mode === 'scaffold' ? <p>Running in scaffold mode (BF_DB not bound).</p> : null}
@@ -110,7 +166,25 @@ export function PublicDomainCard() {
           </div>
         </div>
 
-        <p>current slug path: {slugPath}</p>
+        <p style={{ wordBreak: 'break-all' }}>generated public URL: {generatedPublicUrl || slugPath}</p>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button className="button" type="button" onClick={() => copyText(generatedPublicUrl || slugPath, 'generated public URL')}>
+            copy generated URL
+          </button>
+        </div>
+
+        {primaryCustomDomainUrl ? (
+          <>
+            <p style={{ wordBreak: 'break-all' }}>primary custom domain URL: {primaryCustomDomainUrl}</p>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button className="button" type="button" onClick={() => copyText(primaryCustomDomainUrl, 'primary custom domain URL')}>
+                copy primary domain URL
+              </button>
+            </div>
+          </>
+        ) : (
+          <p>primary custom domain URL: none set yet</p>
+        )}
 
         <div className="archive-controls">
           <label className="archive-control">
@@ -141,6 +215,7 @@ export function PublicDomainCard() {
             onPrimary={(hostname) => save({ setPrimaryHostname: hostname })}
             onVerify={(hostname) => save({ setVerifiedHostname: hostname, verificationStatus: 'verified' })}
             onRemove={(hostname) => save({ removeHostname: hostname })}
+            onCopy={copyText}
             busy={saving}
             disabled={!canEdit}
           />

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchPublicSiteDomainState, savePublicSiteDomainState } from '../lib/publicSiteDomainsApi'
 
-function DomainRow({ domain, onPrimary, onVerify, onRemove, busy }) {
+function DomainRow({ domain, onPrimary, onVerify, onRemove, busy, disabled }) {
   return (
     <article className="admin-card">
       <div className="admin-card__eyebrow">mapped domain</div>
@@ -15,16 +15,16 @@ function DomainRow({ domain, onPrimary, onVerify, onRemove, busy }) {
       </p>
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
         {!domain.isPrimary ? (
-          <button className="button button--primary" type="button" onClick={() => onPrimary(domain.hostname)} disabled={busy}>
+          <button className="button button--primary" type="button" onClick={() => onPrimary(domain.hostname)} disabled={busy || disabled}>
             make primary
           </button>
         ) : null}
         {domain.verificationStatus !== 'verified' ? (
-          <button className="button" type="button" onClick={() => onVerify(domain.hostname)} disabled={busy}>
+          <button className="button" type="button" onClick={() => onVerify(domain.hostname)} disabled={busy || disabled}>
             mark verified
           </button>
         ) : null}
-        <button className="button" type="button" onClick={() => onRemove(domain.hostname)} disabled={busy}>
+        <button className="button" type="button" onClick={() => onRemove(domain.hostname)} disabled={busy || disabled}>
           remove
         </button>
       </div>
@@ -39,14 +39,20 @@ export function PublicDomainCard() {
   const [error, setError] = useState('')
   const [newDomain, setNewDomain] = useState('')
   const [siteSlug, setSiteSlug] = useState('main')
+  const [canEdit, setCanEdit] = useState(false)
+  const [mode, setMode] = useState('scaffold')
+  const [note, setNote] = useState('')
 
   async function refresh() {
     try {
       setLoading(true)
       setError('')
-      const next = await fetchPublicSiteDomainState()
-      setState(next)
-      setSiteSlug(next?.siteSlug || 'main')
+      const result = await fetchPublicSiteDomainState()
+      setState(result.state)
+      setSiteSlug(result.state?.siteSlug || 'main')
+      setCanEdit(result.canEdit)
+      setMode(result.mode || 'scaffold')
+      setNote(result.note || result.authReason || '')
     } catch (err) {
       setError(String(err?.message || err))
     } finally {
@@ -62,9 +68,12 @@ export function PublicDomainCard() {
     try {
       setSaving(true)
       setError('')
-      const next = await savePublicSiteDomainState(payload)
-      setState(next)
-      setSiteSlug(next?.siteSlug || 'main')
+      const result = await savePublicSiteDomainState(payload)
+      setState(result.state)
+      setSiteSlug(result.state?.siteSlug || 'main')
+      setCanEdit(result.canEdit)
+      setMode(result.mode || 'scaffold')
+      setNote(result.note || result.authReason || '')
       setNewDomain('')
     } catch (err) {
       setError(String(err?.message || err))
@@ -84,6 +93,9 @@ export function PublicDomainCard() {
           This stores public slug and custom domain mapping state inside the repo boundary. Actual DNS verification and deploy host binding still require infrastructure outside this codebase.
         </p>
 
+        {mode === 'scaffold' ? <p>Running in scaffold mode (BF_DB not bound).</p> : null}
+        {note ? <p>{note}</p> : null}
+        {!canEdit ? <p>You do not currently have edit permission for this route.</p> : null}
         {error ? <p className="review-card__excerpt">{error}</p> : null}
 
         <div className="archive-controls">
@@ -92,7 +104,7 @@ export function PublicDomainCard() {
             <input value={siteSlug} onChange={(event) => setSiteSlug(event.target.value)} placeholder="main" />
           </label>
           <div style={{ display: 'flex', alignItems: 'end' }}>
-            <button className="button button--primary" type="button" onClick={() => save({ siteSlug })} disabled={saving || loading}>
+            <button className="button button--primary" type="button" onClick={() => save({ siteSlug })} disabled={saving || loading || !canEdit}>
               save slug
             </button>
           </div>
@@ -106,20 +118,10 @@ export function PublicDomainCard() {
             <input value={newDomain} onChange={(event) => setNewDomain(event.target.value)} placeholder="example.com" />
           </label>
           <div style={{ display: 'flex', alignItems: 'end' }}>
-            <button className="button button--primary" type="button" onClick={() => save({ newDomain })} disabled={saving || loading || !newDomain.trim()}>
+            <button className="button button--primary" type="button" onClick={() => save({ newDomain })} disabled={saving || loading || !newDomain.trim() || !canEdit}>
               add domain
             </button>
           </div>
-        </div>
-
-        <div className="review-summary-card" style={{ marginTop: '1rem' }}>
-          <div className="review-summary-card__eyebrow">verification flow</div>
-          <ul>
-            <li><span>1</span><strong>add the hostname here</strong></li>
-            <li><span>2</span><strong>create the TXT or equivalent proof outside the repo using the token</strong></li>
-            <li><span>3</span><strong>point the hostname at the real deploy target outside the repo</strong></li>
-            <li><span>4</span><strong>mark verified here once real DNS is in place</strong></li>
-          </ul>
         </div>
       </section>
 
@@ -140,6 +142,7 @@ export function PublicDomainCard() {
             onVerify={(hostname) => save({ setVerifiedHostname: hostname, verificationStatus: 'verified' })}
             onRemove={(hostname) => save({ removeHostname: hostname })}
             busy={saving}
+            disabled={!canEdit}
           />
         ))}
       </section>

@@ -1,4 +1,13 @@
-import { normalizePublicConfig, PUBLIC_CONFIG_SCHEMA_VERSION } from '../../../src/lib/publicConfigSchema.js'
+const PUBLIC_CONFIG_SCHEMA_VERSION = 1
+
+function normalizePublicConfig(config = {}) {
+  const input = config && typeof config === 'object' ? config : {}
+  return {
+    ...input,
+    schemaVersion: Number(input.schemaVersion || PUBLIC_CONFIG_SCHEMA_VERSION),
+  }
+}
+
 import { runAppMigrations } from './migrations.js'
 
 export async function ensurePublicSiteConfigTable(db) {

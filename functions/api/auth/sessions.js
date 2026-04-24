@@ -9,12 +9,15 @@ export async function onRequestGet({ env, request }) {
   if (!userId) return bad(401, "UNAUTHORIZED");
 
   const db = getDb(env);
-  if (!db) return bad(500, "NO_DB_BINDING");
+  if (!db || typeof db.prepare !== "function") return bad(500, "NO_DB_BINDING");
 
   try {
-    const rows = await db.prepare(
-      "SELECT id, expires_at FROM refresh_tokens WHERE user_id = ? ORDER BY expires_at DESC LIMIT 20"
-    ).bind(userId).all();
+    const rows = await db
+      .prepare(
+        "SELECT id, expires_at FROM refresh_tokens WHERE user_id = ? ORDER BY expires_at DESC LIMIT 20"
+      )
+      .bind(userId)
+      .all();
 
     return json({ ok: true, sessions: rows?.results || [] });
   } catch {

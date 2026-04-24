@@ -1,4 +1,5 @@
 import { json, bad } from '../../../_lib/http.js';
+import { enforceOrgWriteLockdown } from '../../../_lib/orgLockdown.js';
 
 export async function onRequestGet({ env, params }) {
   try {
@@ -38,6 +39,9 @@ export async function onRequestGet({ env, params }) {
 export async function onRequestPost({ request, env, params }) {
   try {
     const { orgId } = params;
+    const lockdown = await enforceOrgWriteLockdown({ env, orgId });
+    if (!lockdown.ok) return lockdown.resp;
+
     const body = await request.json();
     const { name } = body || {};
 

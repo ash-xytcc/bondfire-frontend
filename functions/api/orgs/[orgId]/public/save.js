@@ -1,5 +1,6 @@
 import { slugify, uniqueSlug, getPublicCfg, setPublicCfg, setSlugMapping, removeSlugMapping } from "../../../_lib/publicPageStore.js";
 import { bad, ok } from "../../../_lib/http.js";
+import { enforceOrgWriteLockdown } from "../../../_lib/orgLockdown.js";
 
 function authOk(env, request) {
   if (env.BF_WRITE_LOCKED === "true") {
@@ -35,6 +36,9 @@ export async function onRequestPost({ env, request, params }) {
   }
 
   const orgId = params.orgId;
+  const lockdown = await enforceOrgWriteLockdown({ env, orgId });
+  if (!lockdown.ok) return lockdown.resp;
+
   const body = await request.json().catch(() => ({}));
   const {
     enabled,

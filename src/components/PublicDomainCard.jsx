@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchPublicSiteDomainState, savePublicSiteDomainState } from '../lib/publicSiteDomainsApi'
+import { buildPublicSitePreviewPath, buildPublicSitePreviewUrl, getPublicSiteSlug } from '../lib/publicSiteRouting'
 
 function DomainRow({ domain, onPrimary, onVerify, onRemove, onCopy, busy, disabled }) {
   return (
@@ -37,27 +38,12 @@ function DomainRow({ domain, onPrimary, onVerify, onRemove, onCopy, busy, disabl
   )
 }
 
-function toAbsoluteUrl(pathOrUrl) {
-  const value = String(pathOrUrl || '')
-  if (!value) return ''
-  if (/^https?:\/\//i.test(value)) return value
-  try {
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    return origin ? new URL(value, origin).toString() : value
-  } catch {
-    return value
-  }
-}
-
 function extractSiteSlug(value) {
   const raw = String(value || '').trim()
   if (!raw) return ''
 
-  const siteMatch = raw.match(/\/site\/([^/?#]+)/i)
-  if (siteMatch?.[1]) return decodeURIComponent(siteMatch[1])
-
-  const publicMatch = raw.match(/\/p\/([^/?#]+)/i)
-  if (publicMatch?.[1]) return decodeURIComponent(publicMatch[1])
+  const parsed = getPublicSiteSlug(raw)
+  if (parsed) return parsed
 
   return ''
 }
@@ -168,18 +154,27 @@ export function PublicDomainCard() {
     }
   }
 
-  const slugPath = useMemo(() => state?.slugPath || `/site/${siteSlug || 'main'}`, [state, siteSlug])
-  const previewSlug = useMemo(
-    () => extractSiteSlug(state?.slugPath) || String(siteSlug || 'main').trim() || 'main',
-    [state, siteSlug],
-  )
-  const generatedPublicUrl = useMemo(() => {
-    const hashPath = `#/p/${encodeURIComponent(previewSlug)}`
-    return toAbsoluteUrl(`/${hashPath}`)
-  }, [previewSlug])
+  const resolvedSlug = useMemo(() => {
+    const localSlug = String(siteSlug || '').trim()
+    if (localSlug) return localSlug
+    const savedSlug = String(state?.siteSlug || '').trim()
+    if (savedSlug) return savedSlug
+    return extractSiteSlug(state?.slugPath)
+  }, [siteSlug, state])
+  const previewPath = useMemo(() => buildPublicSitePreviewPath(resolvedSlug), [resolvedSlug])
+  const generatedPublicUrl = useMemo(() => buildPublicSitePreviewUrl(resolvedSlug), [resolvedSlug])
+  const previewUrlReady = Boolean(previewPath && generatedPublicUrl)
+  const urlActionDisabled = loading || saving || !previewUrlReady
   const primaryDomain = useMemo(() => state?.domains?.find((domain) => domain.isPrimary) || null, [state])
   const primaryCustomDomainUrl = useMemo(() => toHttpsUrl(primaryDomain?.hostname), [primaryDomain])
   const statusText = useMemo(() => getPublicSiteStatus({ mode, state }), [mode, state])
+  const previewStatusMessage = useMemo(() => {
+    if (loading) return 'Loading public preview URL…'
+    if (saving) return 'Saving public settings…'
+    if (!String(resolvedSlug || '').trim()) return 'Preview URL unavailable: save a public site slug to generate it.'
+    if (!previewUrlReady) return 'Preview URL unavailable: public route could not be resolved from current state.'
+    return ''
+  }, [loading, saving, resolvedSlug, previewUrlReady])
 
   return (
     <>
@@ -212,20 +207,35 @@ export function PublicDomainCard() {
           </div>
         </div>
 
-        <p style={{ wordBreak: 'break-all' }}>generated slug preview URL: {generatedPublicUrl || slugPath}</p>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <a
-            className="button button--primary"
-            href={generatedPublicUrl || slugPath}
-            target="_blank"
-            rel="noreferrer"
-          >
-            open preview
-          </a>
-          <button className="button" type="button" onClick={() => copyText(generatedPublicUrl || slugPath, 'generated public URL')}>
-            copy generated URL
-          </button>
-        </div>
+        {previewUrlReady ? (
+          <>
+            <p style={{ wordBreak: 'break-all' }}>generated slug preview URL: {generatedPublicUrl}</p>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <a
+                className={`button button--primary${urlActionDisabled ? ' button--disabled' : ''}`}
+                href={generatedPublicUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-disabled={urlActionDisabled}
+                onClick={(event) => {
+                  if (urlActionDisabled) event.preventDefault()
+                }}
+              >
+                {saving ? 'saving…' : loading ? 'loading…' : 'open preview'}
+              </a>
+              <button
+                className="button"
+                type="button"
+                onClick={() => copyText(generatedPublicUrl, 'generated public URL')}
+                disabled={urlActionDisabled}
+              >
+                {saving ? 'saving…' : loading ? 'loading…' : 'copy generated URL'}
+              </button>
+            </div>
+          </>
+        ) : (
+          <p>{previewStatusMessage}</p>
+        )}
 
         {primaryCustomDomainUrl ? (
           <>

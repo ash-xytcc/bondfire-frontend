@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { readPublicCustomizerSettings } from "../lib/publicCustomizerLocal.js";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 
@@ -260,6 +261,17 @@ export default function PublicPage(props) {
   const [intakeExtra, setIntakeExtra] = useState("");
   const [intakeStatus, setIntakeStatus] = useState("yes");
   const [intakeMsg, setIntakeMsg] = useState("");
+  const [customizerCfg, setCustomizerCfg] = useState(() => readPublicCustomizerSettings());
+
+  useEffect(() => {
+    const refreshCustomizer = () => setCustomizerCfg(readPublicCustomizerSettings());
+    window.addEventListener("bf:public-customizer-changed", refreshCustomizer);
+    window.addEventListener("storage", refreshCustomizer);
+    return () => {
+      window.removeEventListener("bf:public-customizer-changed", refreshCustomizer);
+      window.removeEventListener("storage", refreshCustomizer);
+    };
+  }, []);
 
   useEffect(() => {
     if (!slug || injected) return;
@@ -322,10 +334,13 @@ export default function PublicPage(props) {
   }, [slug, state.data]);
 
   const orgInfo = useMemo(() => (orgId ? readOrgInfo(orgId) : { name: "Org", logo: null }), [orgId]);
-  const openNeeds = useMemo(() => publicNeeds.filter(isNeedOpen), [publicNeeds]);
+  const postsPerPage = Number(customizerCfg?.postsPerPage || 10);
+  const openNeeds = useMemo(() => publicNeeds.filter(isNeedOpen).slice(0, postsPerPage), [publicNeeds, postsPerPage]);
   const availableSupplies = useMemo(() => {
-    return (Array.isArray(publicSupplies) ? publicSupplies : []).filter((item) => Number(item?.qty || 0) > 0);
-  }, [publicSupplies]);
+    return (Array.isArray(publicSupplies) ? publicSupplies : [])
+      .filter((item) => Number(item?.qty || 0) > 0)
+      .slice(0, postsPerPage);
+  }, [publicSupplies, postsPerPage]);
   const selectedSupplies = useMemo(() => {
     return availableSupplies
       .filter((item) => {
@@ -339,8 +354,21 @@ export default function PublicPage(props) {
   }, [availableSupplies, supplySelections]);
   const pageStyle = useMemo(() => themeVars(pubCfg?.theme_mode || "light", pubCfg?.accent_color || "#6d5efc"), [pubCfg]);
   const title = pubCfg?.title || orgInfo.name || slug || "Public Page";
+  const resolvedTitle = customizerCfg?.siteTitle || title;
+  const resolvedTagline = customizerCfg?.tagline || [pubCfg?.location, pubCfg?.about].filter(Boolean).join(" · ");
+  const resolvedLogo = customizerCfg?.logoUrl || orgInfo.logo;
+  const mastheadSize = customizerCfg?.mastheadSize || "medium";
+  const mastheadStyle =
+    mastheadSize === "small"
+      ? { padding: "10px 14px" }
+      : mastheadSize === "large"
+      ? { padding: "22px 20px" }
+      : { padding: "16px 18px" };
+  const logoPx = mastheadSize === "small" ? 36 : mastheadSize === "large" ? 68 : 48;
 
   const heroActions = useMemo(() => {
+    const customMenu = Array.isArray(customizerCfg?.menuItems) ? customizerCfg.menuItems : [];
+    if (customMenu.length > 0) return customMenu;
     const configured = cleanLinkArray(pubCfg?.primary_actions, 3);
     if (configured.length > 0) return configured;
     return [
@@ -348,9 +376,10 @@ export default function PublicPage(props) {
       { label: "Offer Help", url: "modal:offer_resources" },
       { label: "Stay Connected", url: "#newsletter" },
     ];
-  }, [pubCfg]);
+  }, [customizerCfg, pubCfg]);
 
   const involvedActions = useMemo(() => cleanLinkArray(pubCfg?.get_involved_links, 6), [pubCfg]);
+  const visibleMeetings = useMemo(() => (Array.isArray(publicMeetings) ? publicMeetings.slice(0, postsPerPage) : []), [publicMeetings, postsPerPage]);
 
   async function subscribe() {
     if (!slug) {
@@ -590,13 +619,13 @@ export default function PublicPage(props) {
   return (
     <div className="bf-public-v2" style={pageStyle}>
       <div className="bf-public-shell">
-        <header className="bf-public-topbar">
+        <header className="bf-public-topbar" style={mastheadStyle}>
           <div className="bf-public-branding">
-            {orgInfo.logo ? <img src={orgInfo.logo} alt="Org logo" className="bf-public-logo" /> : null}
+            {resolvedLogo ? <img src={resolvedLogo} alt="Org logo" className="bf-public-logo" style={{ width: logoPx, height: logoPx }} /> : null}
             <div>
-              <div className="bf-public-titleLine">{title}</div>
+              <div className="bf-public-titleLine">{resolvedTitle}</div>
               <div className="bf-public-metaLine">
-                {[pubCfg?.location, pubCfg?.about].filter(Boolean).join(" · ") || "Mutual aid, coordination, and public needs"}
+                {resolvedTagline || "Mutual aid, coordination, and public needs"}
               </div>
             </div>
           </div>
@@ -627,10 +656,19 @@ export default function PublicPage(props) {
           </section>
         ) : null}
 
-        <section className="bf-public-mainGrid">
+        <section
+          className="bf-public-mainGrid"
+          style={
+            customizerCfg?.layout === "stacked"
+              ? { gridTemplateColumns: "1fr" }
+              : customizerCfg?.layout === "compact"
+              ? { gridTemplateColumns: "minmax(0, 1.5fr) minmax(0, 1fr)", gap: 14 }
+              : undefined
+          }
+        >
           <div className="bf-public-primaryColumn">
             {pubCfg?.show_available_supplies !== false ? (
-              <section className="bf-public-panel">
+              <section className="bf-public-panel" id="supplies">
                 <div className="bf-public-sectionHead">
                   <h2>Available Supplies</h2>
                   <p>Select items you need and send one request to the org.</p>
@@ -719,7 +757,7 @@ export default function PublicPage(props) {
             ) : null}
 
             {pubCfg?.show_needs ? (
-              <section className="bf-public-panel">
+              <section className="bf-public-panel" id="needs">
                 <div className="bf-public-sectionHead">
                   <h2>Current Needs</h2>
                   <p>Public needs this org is sharing right now.</p>
@@ -747,16 +785,16 @@ export default function PublicPage(props) {
             ) : null}
 
             {pubCfg?.show_meetings ? (
-              <section className="bf-public-panel">
+              <section className="bf-public-panel" id="meetings">
                 <div className="bf-public-sectionHead">
                   <h2>Public Meetings</h2>
                   <p>Meetings and events shared on the public page.</p>
                 </div>
                 <div className="bf-public-stack">
-                  {publicMeetings.length === 0 ? (
+                  {visibleMeetings.length === 0 ? (
                     <div className="bf-public-empty">No public meetings right now.</div>
                   ) : (
-                    publicMeetings.map((m) => {
+                    visibleMeetings.map((m) => {
                       const when = m.starts_at ? new Date(m.starts_at).toLocaleString() : "Time TBD";
                       return (
                         <article key={m.id || m.title} className="bf-public-meetingCard">

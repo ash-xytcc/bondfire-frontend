@@ -24,6 +24,7 @@ import SignIn from "./pages/SignIn.jsx";
 import Security from "./pages/Security.jsx";
 import Drive from "./pages/Drive.jsx";
 import Studio from "./pages/Studio.jsx";
+import Customize from "./pages/Customize.jsx";
 
 // COMPONENTS
 import AppHeader from "./components/AppHeader.jsx";
@@ -223,7 +224,7 @@ function Shell() {
 	);
 
 	// Hide the header on public routes
-	const hideHeader = path === "/" || path.startsWith("/p/") || path === "/signin" || path === "/demo";
+	const hideHeader = path === "/" || path.startsWith("/p/") || path === "/signin" || path === "/demo" || path === "/customize";
 
 	return (
 		<AuthCtx.Provider value={ctxValue}>
@@ -241,6 +242,7 @@ function Shell() {
 				<Route path="/p/*" element={<PublicPage />} />
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/demo" element={<DemoBoot />} />
+				<Route path="/customize" element={<Customize />} />
 
 				{/* Landing */}
 				<Route path="/" element={<HomeRoute />} />

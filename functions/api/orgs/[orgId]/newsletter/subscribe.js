@@ -1,4 +1,5 @@
 import { getDB, json, bad, readJson, normalizeEmail } from "../../../_bf.js";
+import { enforceOrgWriteLockdown } from "../../../_lib/orgLockdown.js";
 
 export async function onRequest(context) {
   const { request, env, params } = context;
@@ -8,6 +9,8 @@ export async function onRequest(context) {
   const orgId = String(params.orgId || "");
 
   if (request.method !== "POST") return bad("METHOD_NOT_ALLOWED", 405);
+  const lockdown = await enforceOrgWriteLockdown({ env, orgId });
+  if (!lockdown.ok) return lockdown.resp;
 
   const body = await readJson(request);
   if (!body) return bad("BAD_JSON", 400);

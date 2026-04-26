@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchPublicSiteDomainState, savePublicSiteDomainState } from '../lib/publicSiteDomainsApi'
-import { buildPublicSitePreviewPath, buildPublicSitePreviewUrl, getPublicSiteSlug } from '../lib/publicSiteRouting'
+import { buildPublicSitePreviewPath, buildPublicSitePreviewUrl } from '../lib/publicSiteRouting'
 
 function DomainRow({ domain, onPrimary, onVerify, onRemove, onCopy, busy, disabled }) {
   return (
@@ -38,16 +38,6 @@ function DomainRow({ domain, onPrimary, onVerify, onRemove, onCopy, busy, disabl
   )
 }
 
-function extractSiteSlug(value) {
-  const raw = String(value || '').trim()
-  if (!raw) return ''
-
-  const parsed = getPublicSiteSlug(raw)
-  if (parsed) return parsed
-
-  return ''
-}
-
 function toHttpsUrl(hostname) {
   const value = String(hostname || '').trim()
   if (!value) return ''
@@ -55,7 +45,7 @@ function toHttpsUrl(hostname) {
   return `https://${value}`
 }
 
-function getPublicSiteStatus({ mode, state }) {
+function getPublicSiteStatus({ mode, state, publicSlug }) {
   const domains = state?.domains || []
   const primary = domains.find((domain) => domain.isPrimary) || null
 
@@ -63,7 +53,7 @@ function getPublicSiteStatus({ mode, state }) {
     return 'Scaffold mode only: preview URLs are local placeholders until BF_DB is bound.'
   }
 
-  if (!state?.siteSlug) {
+  if (!String(publicSlug || '').trim()) {
     return 'Site slug is not set yet.'
   }
 
@@ -78,13 +68,12 @@ function getPublicSiteStatus({ mode, state }) {
   return `Slug preview is ready. Primary custom domain ${primary.hostname} still needs verification and external DNS/binding setup.`
 }
 
-export function PublicDomainCard() {
+export function PublicDomainCard({ publicSlug = '' }) {
   const [state, setState] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [newDomain, setNewDomain] = useState('')
-  const [siteSlug, setSiteSlug] = useState('main')
   const [canEdit, setCanEdit] = useState(false)
   const [mode, setMode] = useState('scaffold')
   const [note, setNote] = useState('')
@@ -95,7 +84,6 @@ export function PublicDomainCard() {
       setError('')
       const result = await fetchPublicSiteDomainState()
       setState(result.state)
-      setSiteSlug(result.state?.siteSlug || 'main')
       setCanEdit(result.canEdit)
       setMode(result.mode || 'scaffold')
       setNote(result.note || result.authReason || '')
@@ -116,7 +104,6 @@ export function PublicDomainCard() {
       setError('')
       const result = await savePublicSiteDomainState(payload)
       setState(result.state)
-      setSiteSlug(result.state?.siteSlug || 'main')
       setCanEdit(result.canEdit)
       setMode(result.mode || 'scaffold')
       setNote(result.note || result.authReason || '')
@@ -155,19 +142,15 @@ export function PublicDomainCard() {
   }
 
   const resolvedSlug = useMemo(() => {
-    const localSlug = String(siteSlug || '').trim()
-    if (localSlug) return localSlug
-    const savedSlug = String(state?.siteSlug || '').trim()
-    if (savedSlug) return savedSlug
-    return extractSiteSlug(state?.slugPath)
-  }, [siteSlug, state])
+    return String(publicSlug || '').trim()
+  }, [publicSlug])
   const previewPath = useMemo(() => buildPublicSitePreviewPath(resolvedSlug), [resolvedSlug])
   const generatedPublicUrl = useMemo(() => buildPublicSitePreviewUrl(resolvedSlug), [resolvedSlug])
   const previewUrlReady = Boolean(previewPath && generatedPublicUrl)
   const urlActionDisabled = loading || saving || !previewUrlReady
   const primaryDomain = useMemo(() => state?.domains?.find((domain) => domain.isPrimary) || null, [state])
   const primaryCustomDomainUrl = useMemo(() => toHttpsUrl(primaryDomain?.hostname), [primaryDomain])
-  const statusText = useMemo(() => getPublicSiteStatus({ mode, state }), [mode, state])
+  const statusText = useMemo(() => getPublicSiteStatus({ mode, state, publicSlug: resolvedSlug }), [mode, state, resolvedSlug])
   const previewStatusMessage = useMemo(() => {
     if (loading) return 'Loading public preview URL…'
     if (saving) return 'Saving public settings…'
@@ -182,7 +165,7 @@ export function PublicDomainCard() {
         <div className="admin-card__eyebrow">public domain setup</div>
         <h2>Slug and domain routing</h2>
         <p>
-          This stores public slug and custom domain mapping state inside the repo boundary. Verification tokens in this UI reflect repo-side proof state only.
+          Custom domain mapping is supplemental to your Public Page settings slug. Verification tokens in this UI reflect repo-side proof state only.
         </p>
         <p>
           Real DNS records and deployment host binding must be configured in your DNS/deployment providers outside this repo. This screen does not perform automatic DNS verification.
@@ -195,21 +178,11 @@ export function PublicDomainCard() {
 
         <p><strong>Current public site status:</strong> {statusText}</p>
 
-        <div className="archive-controls">
-          <label className="archive-control">
-            <span>public site slug</span>
-            <input value={siteSlug} onChange={(event) => setSiteSlug(event.target.value)} placeholder="main" />
-          </label>
-          <div style={{ display: 'flex', alignItems: 'end' }}>
-            <button className="button button--primary" type="button" onClick={() => save({ siteSlug })} disabled={saving || loading || !canEdit}>
-              save slug
-            </button>
-          </div>
-        </div>
+        <p><strong>Live public slug:</strong> {resolvedSlug || 'not set'}</p>
 
         {previewUrlReady ? (
           <>
-            <p style={{ wordBreak: 'break-all' }}>generated slug preview URL: {generatedPublicUrl}</p>
+            <p style={{ wordBreak: 'break-all' }}>generated public URL: {generatedPublicUrl}</p>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <a
                 className={`button button--primary${urlActionDisabled ? ' button--disabled' : ''}`}

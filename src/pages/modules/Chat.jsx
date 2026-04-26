@@ -18,6 +18,13 @@ function toItems(data) {
   return [];
 }
 
+function toMessages(data) {
+  if (Array.isArray(data?.messages)) return data.messages;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data)) return data;
+  return [];
+}
+
 function safeText(v) {
   return String(v ?? "");
 }
@@ -28,6 +35,10 @@ function getRoomIdentity(room) {
 
 function getRoomKey(room, index) {
   return getRoomIdentity(room) || `room-${index}`;
+}
+
+function getMessageKey(message, index) {
+  return safeText(message?.id || message?.messageId) || `message-${index}`;
 }
 
 export default function Chat() {
@@ -41,6 +52,12 @@ export default function Chat() {
   const [createValue, setCreateValue] = useState("");
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [createError, setCreateError] = useState("");
+
+  const [messages, setMessages] = useState([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [messagesError, setMessagesError] = useState("");
+  const [draft, setDraft] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   const selectedKey = useMemo(() => {
     if (!selected) return "";
@@ -72,6 +89,38 @@ export default function Chat() {
     }
   }
 
+  async function refreshMessages(room) {
+    if (!orgId || !room) {
+      setMessages([]);
+      setMessagesError("");
+      return;
+    }
+
+    const roomId = getRoomIdentity(room);
+    if (!roomId) {
+      setMessages([]);
+      setMessagesError("");
+      return;
+    }
+
+    setLoadingMessages(true);
+    setMessagesError("");
+
+    try {
+      const data = await api(
+        `/api/orgs/${encodeURIComponent(orgId)}/chat/messages?roomId=${encodeURIComponent(roomId)}`
+      );
+
+      const nextMessages = toMessages(data).filter((message) => message && typeof message === "object");
+      setMessages(nextMessages);
+    } catch (e) {
+      setMessages([]);
+      setMessagesError(e?.message || "Failed to load messages.");
+    } finally {
+      setLoadingMessages(false);
+    }
+  }
+
   async function createRoom() {
     const name = createValue.trim();
     if (!name || !orgId) return;
@@ -99,14 +148,47 @@ export default function Chat() {
     }
   }
 
+  async function sendMessage() {
+    const body = draft.trim();
+    const roomId = selectedKey;
+    if (!orgId || !roomId || !body) return;
+
+    setSendingMessage(true);
+    setMessagesError("");
+
+    try {
+      await api(`/api/orgs/${encodeURIComponent(orgId)}/chat/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId, body }),
+      });
+
+      setDraft("");
+      await refreshMessages(selected);
+    } catch (e) {
+      setMessagesError(e?.message || "Failed to send message.");
+    } finally {
+      setSendingMessage(false);
+    }
+  }
+
   function onCreateSubmit(event) {
     event.preventDefault();
     createRoom().catch(console.error);
   }
 
+  function onSendSubmit(event) {
+    event.preventDefault();
+    sendMessage().catch(console.error);
+  }
+
   useEffect(() => {
     refreshRooms().catch(console.error);
   }, [orgId]);
+
+  useEffect(() => {
+    refreshMessages(selected).catch(console.error);
+  }, [orgId, selectedKey]);
 
   if (!orgId) {
     return <div style={{ padding: 16 }}>No org selected.</div>;
@@ -195,7 +277,47 @@ export default function Chat() {
 
           <div className="card" style={{ padding: 12, marginTop: 12 }}>
             <div style={{ fontWeight: 800 }}>Messages</div>
-            <div className="helper" style={{ marginTop: 6 }}>Message UI is not part of this thread.</div>
+
+            {messagesError ? (
+              <div className="error" style={{ marginTop: 8 }}>
+                {messagesError}
+              </div>
+            ) : null}
+
+            {loadingMessages ? <div className="helper" style={{ marginTop: 8 }}>Loading messages...</div> : null}
+
+            {!loadingMessages && selected && messages.length === 0 ? (
+              <div className="helper" style={{ marginTop: 8 }}>No messages yet.</div>
+            ) : null}
+
+            {!loadingMessages && !selected ? (
+              <div className="helper" style={{ marginTop: 8 }}>Select a room to view messages.</div>
+            ) : null}
+
+            {!loadingMessages && messages.length > 0 ? (
+              <div className="grid" style={{ gap: 8, marginTop: 10 }}>
+                {messages.map((message, index) => (
+                  <div key={getMessageKey(message, index)} className="card" style={{ padding: 10 }}>
+                    <div style={{ fontWeight: 700 }}>{safeText(message?.authorLabel) || "Member"}</div>
+                    <div style={{ marginTop: 4, whiteSpace: "pre-wrap" }}>{safeText(message?.body)}</div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            <form onSubmit={onSendSubmit} className="row" style={{ gap: 8, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <input
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder={selected ? "Type a message" : "Select a room first"}
+                aria-label="Message draft"
+                style={{ minWidth: 220, flex: "1 1 240px" }}
+                disabled={!selected || sendingMessage || loadingMessages}
+              />
+              <button className="btn" type="submit" disabled={!selected || sendingMessage || loadingMessages || !draft.trim()}>
+                {sendingMessage ? "Sending..." : "Send"}
+              </button>
+            </form>
           </div>
         </div>
       </div>

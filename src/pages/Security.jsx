@@ -49,6 +49,15 @@ export default function Security() {
   const [recoveryPassA, setRecoveryPassA] = React.useState("");
   const [recoveryPassB, setRecoveryPassB] = React.useState("");
   const [recoveryRestorePass, setRecoveryRestorePass] = React.useState("");
+  const [emergencyStatus, setEmergencyStatus] = React.useState({
+    loading: true,
+    error: "",
+    globalActive: false,
+    orgLockdownActive: false,
+    globalUpdatedAt: null,
+    orgUpdatedAt: null,
+  });
+  const [lockdownBusy, setLockdownBusy] = React.useState(false);
 
   React.useEffect(() => {
     (async () => {
@@ -67,6 +76,40 @@ export default function Security() {
       }
     })();
   }, [orgId]);
+
+  const loadEmergencyStatus = React.useCallback(async () => {
+    if (!orgId) return;
+    setEmergencyStatus((s) => ({ ...s, loading: true, error: "" }));
+    try {
+      const [globalRes, orgRes] = await Promise.all([
+        api("/api/emergency/status", { method: "GET" }),
+        api(`/api/orgs/${orgId}/emergency`, { method: "GET" }),
+      ]);
+
+      const globalActive = !!(globalRes?.isActive ?? globalRes?.status?.isActive);
+      const globalUpdatedAt = globalRes?.updatedAt ?? globalRes?.status?.updatedAt ?? null;
+      const orgLockdown = orgRes?.orgLockdown || null;
+
+      setEmergencyStatus({
+        loading: false,
+        error: "",
+        globalActive,
+        orgLockdownActive: !!orgLockdown?.enabled,
+        globalUpdatedAt,
+        orgUpdatedAt: orgLockdown?.updatedAt || null,
+      });
+    } catch (e) {
+      setEmergencyStatus((s) => ({
+        ...s,
+        loading: false,
+        error: e?.message || "Failed to load emergency status",
+      }));
+    }
+  }, [orgId]);
+
+  React.useEffect(() => {
+    loadEmergencyStatus();
+  }, [loadEmergencyStatus]);
 
   async function startMfa() {
     setMsg("");
@@ -294,9 +337,68 @@ export default function Security() {
     }
   }
 
+  async function setLockdownEnabled(enabled) {
+    const prompt = enabled
+      ? "Enable org lockdown? This will block org write actions."
+      : "Disable org lockdown?";
+    if (!confirm(prompt)) return;
+
+    setEmergencyStatus((s) => ({ ...s, error: "" }));
+    setLockdownBusy(true);
+    try {
+      await api(`/api/orgs/${orgId}/emergency/lockdown`, {
+        method: "POST",
+        body: JSON.stringify({ enabled }),
+      });
+      await loadEmergencyStatus();
+    } catch (e) {
+      setEmergencyStatus((s) => ({
+        ...s,
+        error: e?.message || "Failed to update lockdown",
+      }));
+    } finally {
+      setLockdownBusy(false);
+    }
+  }
+
   return (
     <div style={{ maxWidth: 920, margin: "0 auto", padding: 16 }}>
       <h2>security</h2>
+
+      <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
+        <h3>Emergency status</h3>
+        {emergencyStatus.loading ? (
+          <div>loading emergency status…</div>
+        ) : (
+          <div style={{ fontSize: 14, opacity: 0.9 }}>
+            <div>global emergency: {emergencyStatus.globalActive ? "active" : "inactive"}</div>
+            <div>org lockdown: {emergencyStatus.orgLockdownActive ? "active" : "inactive"}</div>
+            <div>
+              global updated:{" "}
+              {emergencyStatus.globalUpdatedAt
+                ? new Date(emergencyStatus.globalUpdatedAt).toLocaleString()
+                : "—"}
+            </div>
+            <div>
+              org updated:{" "}
+              {emergencyStatus.orgUpdatedAt
+                ? new Date(emergencyStatus.orgUpdatedAt).toLocaleString()
+                : "—"}
+            </div>
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+          <button disabled={lockdownBusy} onClick={() => setLockdownEnabled(true)}>
+            Enable lockdown
+          </button>
+          <button disabled={lockdownBusy} onClick={() => setLockdownEnabled(false)}>
+            Disable lockdown
+          </button>
+        </div>
+        {emergencyStatus.error ? (
+          <div style={{ marginTop: 10, color: "#8b1d1d" }}>{emergencyStatus.error}</div>
+        ) : null}
+      </section>
 
       <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
         <h3>mfa</h3>

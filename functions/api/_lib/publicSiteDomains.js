@@ -13,30 +13,37 @@ const HOSTNAME_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?
 const STATUS_VALUES = new Set(['pending', 'verified'])
 
 export async function ensurePublicSiteDomainsTable(db) {
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS public_site_domains (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      scope TEXT NOT NULL,
-      hostname TEXT NOT NULL,
-      verification_status TEXT NOT NULL DEFAULT 'pending',
-      verification_token TEXT NOT NULL DEFAULT '',
-      is_primary INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      verified_at TEXT
-    );
-  `)
+  await db
+    .prepare(`
+      CREATE TABLE IF NOT EXISTS public_site_domains (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        scope TEXT NOT NULL,
+        hostname TEXT NOT NULL,
+        verification_status TEXT NOT NULL DEFAULT 'pending',
+        verification_token TEXT NOT NULL DEFAULT '',
+        is_primary INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        verified_at TEXT,
+        UNIQUE(scope, hostname)
+      )
+    `)
+    .run()
 
-  await db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_public_site_domains_scope
-    ON public_site_domains(scope);
-  `)
+  await db
+    .prepare(`
+      CREATE INDEX IF NOT EXISTS idx_public_site_domains_scope
+      ON public_site_domains(scope)
+    `)
+    .run()
 
-  await db.exec(`
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_public_site_domains_primary_per_scope
-    ON public_site_domains(scope)
-    WHERE is_primary = 1;
-  `)
+  await db
+    .prepare(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_public_site_domains_primary_per_scope
+      ON public_site_domains(scope)
+      WHERE is_primary = 1
+    `)
+    .run()
 
 }
 
@@ -66,7 +73,7 @@ export async function getPublicSiteDomainState(db, scope = 'global', requestHost
   return {
     scope,
     siteSlug,
-    slugPath: `/site/${siteSlug}`,
+    slugPath: `/p/${siteSlug}`,
     domains,
     resolvedDomain,
   }

@@ -10,8 +10,8 @@ export async function onRequestOptions(context) {
     canEdit: permission.canEdit,
     authMode: permission.mode,
     authReason: permission.reason,
-    mode: hasDb(context) ? 'd1' : 'scaffold',
-    note: hasDb(context)
+    mode: hasBfDb(context) ? 'd1' : 'scaffold',
+    note: hasBfDb(context)
       ? 'D1-backed public site domain route available.'
       : 'No BF_DB binding detected. Using scaffold mode.',
   })
@@ -21,7 +21,7 @@ export async function onRequestGet(context) {
   try {
     const permission = await resolvePublicSitePermission(context)
 
-    if (!hasDb(context)) {
+    if (!hasBfDb(context)) {
       return jsonOk({
         mode: 'scaffold',
         canEdit: permission.canEdit,
@@ -30,7 +30,7 @@ export async function onRequestGet(context) {
         state: {
           scope: 'global',
           siteSlug: 'main',
-          slugPath: '/site/main',
+          slugPath: '/p/main',
           domains: [],
           resolvedDomain: null,
         },
@@ -64,7 +64,7 @@ export async function onRequestPut(context) {
 
     const body = await parseJsonBody(context.request)
 
-    if (!hasDb(context)) {
+    if (!hasBfDb(context)) {
       return jsonOk({
         mode: 'scaffold',
         saved: true,
@@ -74,7 +74,7 @@ export async function onRequestPut(context) {
         state: {
           scope: 'global',
           siteSlug: normalizeSiteSlug(body?.siteSlug || 'main') || 'main',
-          slugPath: `/site/${normalizeSiteSlug(body?.siteSlug || 'main') || 'main'}`,
+          slugPath: `/p/${normalizeSiteSlug(body?.siteSlug || 'main') || 'main'}`,
           domains: [],
           resolvedDomain: null,
         },
@@ -101,6 +101,6 @@ export async function onRequestPut(context) {
   }
 }
 
-function hasDb(context) {
+function hasBfDb(context) {
   return Boolean(context?.env?.BF_DB)
 }

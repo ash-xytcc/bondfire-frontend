@@ -337,8 +337,9 @@ export default function Security() {
     }
   }
 
-  async function setLockdownEnabled(enabled) {
-    const prompt = enabled
+  async function toggleLockdown() {
+    const nextEnabled = !emergencyStatus.orgLockdownActive;
+    const prompt = nextEnabled
       ? "Enable org lockdown? This will block org write actions."
       : "Disable org lockdown?";
     if (!confirm(prompt)) return;
@@ -348,7 +349,7 @@ export default function Security() {
     try {
       await api(`/api/orgs/${orgId}/emergency/lockdown`, {
         method: "POST",
-        body: JSON.stringify({ enabled }),
+        body: { enabled: nextEnabled },
       });
       await loadEmergencyStatus();
     } catch (e) {
@@ -388,11 +389,12 @@ export default function Security() {
           </div>
         )}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          <button disabled={lockdownBusy} onClick={() => setLockdownEnabled(true)}>
-            Enable lockdown
-          </button>
-          <button disabled={lockdownBusy} onClick={() => setLockdownEnabled(false)}>
-            Disable lockdown
+          <button disabled={lockdownBusy || emergencyStatus.loading} onClick={toggleLockdown}>
+            {lockdownBusy
+              ? "Updating…"
+              : emergencyStatus.orgLockdownActive
+              ? "Disable lockdown"
+              : "Enable lockdown"}
           </button>
         </div>
         {emergencyStatus.error ? (

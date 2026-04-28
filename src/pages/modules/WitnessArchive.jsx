@@ -23,6 +23,12 @@ function toItems(data) {
   return [];
 }
 
+function toLinkItems(data) {
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.results)) return data.results;
+  return [];
+}
+
 
 function normalizeTags(value) {
   if (Array.isArray(value)) {
@@ -74,6 +80,7 @@ export default function WitnessArchive() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [related, setRelated] = useState([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formErr, setFormErr] = useState("");
@@ -153,6 +160,32 @@ export default function WitnessArchive() {
     reqSeq.current += 1;
   }, []);
 
+  useEffect(() => {
+    let canceled = false;
+    async function loadRelated() {
+      const needle = safeText(q).trim();
+      if (!orgId || !needle) {
+        setRelated([]);
+        return;
+      }
+      try {
+        const data = await api(
+          `/api/orgs/${encodeURIComponent(orgId)}/links/search?q=${encodeURIComponent(needle)}`
+        );
+        if (canceled) return;
+        const items = toLinkItems(data).filter((item) => safeText(item?.type).toLowerCase() === "event");
+        setRelated(items.slice(0, 5));
+      } catch {
+        if (canceled) return;
+        setRelated([]);
+      }
+    }
+    loadRelated().catch(() => setRelated([]));
+    return () => {
+      canceled = true;
+    };
+  }, [orgId, q]);
+
   const filtered = useMemo(() => {
     const needle = safeText(q).trim().toLowerCase();
     if (!needle) return items;
@@ -193,6 +226,24 @@ export default function WitnessArchive() {
           {loading ? "Refreshing..." : "Refresh"}
         </button>
       </div>
+
+      {related.length ? (
+        <div className="card" style={{ padding: 12, marginTop: 12 }}>
+          <div style={{ fontWeight: 800 }}>Related events</div>
+          <div className="grid" style={{ gap: 8, marginTop: 8 }}>
+            {related.map((item, idx) => {
+              const key = safeText(item?.id) || `related-${idx}`;
+              const href = safeText(item?.href).trim() || "#";
+              return (
+                <a key={key} href={`#${href}`} className="helper" style={{ textDecoration: "none" }}>
+                  {safeText(item?.title) || "Untitled event"}
+                  {item?.subtitle ? ` — ${safeText(item.subtitle)}` : ""}
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {createOpen ? (
         <div className="card" style={{ marginTop: 12, padding: 12 }}>

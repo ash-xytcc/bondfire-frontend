@@ -125,11 +125,18 @@ export async function onRequestGet({ env, request, params }) {
 
   const url = new URL(request.url);
   const q = asText(url.searchParams.get("q")).trim().toLowerCase();
-  if (!q) return json({ ok: true, items: [] });
+  if (!q) return json({ ok: true, items: [], results: [] });
 
   const likeNeedle = `%${q}%`;
-  const eventItems = await queryEvents(env.BF_DB, orgId, likeNeedle);
-  const witnessItems = await queryWitness(env.BF_DB, orgId, likeNeedle);
+  let eventItems = [];
+  let witnessItems = [];
+  try {
+    eventItems = await queryEvents(env.BF_DB, orgId, likeNeedle);
+  } catch {}
+  try {
+    witnessItems = await queryWitness(env.BF_DB, orgId, likeNeedle);
+  } catch {}
+  const items = [...eventItems, ...witnessItems];
 
-  return json({ ok: true, items: [...eventItems, ...witnessItems] });
+  return json({ ok: true, items, results: items });
 }

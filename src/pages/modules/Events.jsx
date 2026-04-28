@@ -18,6 +18,12 @@ function toItems(data) {
   return [];
 }
 
+function toLinkItems(data) {
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.results)) return data.results;
+  return [];
+}
+
 function safeText(v) {
   return String(v ?? "");
 }
@@ -69,6 +75,7 @@ export default function Events() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [related, setRelated] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createErr, setCreateErr] = useState("");
@@ -98,6 +105,32 @@ export default function Events() {
   useEffect(() => {
     refresh().catch(console.error);
   }, [orgId]);
+
+  useEffect(() => {
+    let canceled = false;
+    async function loadRelated() {
+      const needle = safeText(q).trim();
+      if (!orgId || !needle) {
+        setRelated([]);
+        return;
+      }
+      try {
+        const data = await api(
+          `/api/orgs/${encodeURIComponent(orgId)}/links/search?q=${encodeURIComponent(needle)}`
+        );
+        if (canceled) return;
+        const items = toLinkItems(data).filter((item) => safeText(item?.type).toLowerCase() === "witness");
+        setRelated(items.slice(0, 5));
+      } catch {
+        if (canceled) return;
+        setRelated([]);
+      }
+    }
+    loadRelated().catch(() => setRelated([]));
+    return () => {
+      canceled = true;
+    };
+  }, [orgId, q]);
 
   const filtered = useMemo(() => {
     const needle = safeText(q).trim().toLowerCase();
@@ -237,6 +270,24 @@ export default function Events() {
           {loading ? "Refreshing..." : "Refresh"}
         </button>
       </div>
+
+      {related.length ? (
+        <div className="card" style={{ padding: 12, marginTop: 12 }}>
+          <div style={{ fontWeight: 800 }}>Related witness records</div>
+          <div className="grid" style={{ gap: 8, marginTop: 8 }}>
+            {related.map((item, idx) => {
+              const key = safeText(item?.id) || `related-${idx}`;
+              const href = safeText(item?.href).trim() || "#";
+              return (
+                <Link key={key} to={href} className="helper" style={{ textDecoration: "none" }}>
+                  {safeText(item?.title) || "Untitled witness record"}
+                  {item?.subtitle ? ` — ${safeText(item.subtitle)}` : ""}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {err ? (
         <div className="card" style={{ padding: 12, marginTop: 12 }}>

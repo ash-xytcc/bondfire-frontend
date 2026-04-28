@@ -45,6 +45,12 @@ function normalizeTags(value) {
   return [];
 }
 
+function toLinkItems(data) {
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.results)) return data.results;
+  return [];
+}
+
 function isNotFoundError(message) {
   const text = safeText(message).toUpperCase();
   return text.includes("NOT_FOUND") || text.includes("404");
@@ -58,6 +64,7 @@ export default function EventDetail() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [missing, setMissing] = useState(false);
+  const [related, setRelated] = useState([]);
 
   async function refresh() {
     if (!orgId || !eventId) return;
@@ -83,6 +90,30 @@ export default function EventDetail() {
   useEffect(() => {
     refresh().catch(console.error);
   }, [orgId, eventId]);
+
+  useEffect(() => {
+    let canceled = false;
+    async function loadRelated() {
+      const seed = safeText(item?.title).trim();
+      if (!orgId || !seed) {
+        setRelated([]);
+        return;
+      }
+      try {
+        const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/links/search?q=${encodeURIComponent(seed)}`);
+        if (canceled) return;
+        const items = toLinkItems(data).filter((entry) => safeText(entry?.type).toLowerCase() === "witness");
+        setRelated(items.slice(0, 5));
+      } catch {
+        if (canceled) return;
+        setRelated([]);
+      }
+    }
+    loadRelated().catch(() => setRelated([]));
+    return () => {
+      canceled = true;
+    };
+  }, [orgId, item?.title]);
 
   if (!orgId) return <div style={{ padding: 16 }}>No org selected.</div>;
   if (!eventId) return <div style={{ padding: 16 }}>No event selected.</div>;
@@ -154,6 +185,24 @@ export default function EventDetail() {
             <div style={{ fontWeight: 800 }}>Description</div>
             <div style={{ marginTop: 8 }}>{safeText(item?.description) || "No description yet."}</div>
           </div>
+
+          {related.length ? (
+            <div className="card" style={{ padding: 12 }}>
+              <div style={{ fontWeight: 800 }}>Related witness records</div>
+              <div className="grid" style={{ gap: 8, marginTop: 8 }}>
+                {related.map((entry, idx) => {
+                  const key = safeText(entry?.id) || `related-${idx}`;
+                  const href = safeText(entry?.href).trim() || "#";
+                  return (
+                    <Link key={key} to={href} className="helper" style={{ textDecoration: "none" }}>
+                      {safeText(entry?.title) || "Untitled witness record"}
+                      {entry?.subtitle ? ` — ${safeText(entry.subtitle)}` : ""}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

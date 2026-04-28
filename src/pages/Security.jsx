@@ -58,6 +58,11 @@ export default function Security() {
     orgUpdatedAt: null,
   });
   const [lockdownBusy, setLockdownBusy] = React.useState(false);
+  const [emergencyReports, setEmergencyReports] = React.useState({
+    loading: true,
+    error: "",
+    rows: [],
+  });
 
   React.useEffect(() => {
     (async () => {
@@ -110,6 +115,29 @@ export default function Security() {
   React.useEffect(() => {
     loadEmergencyStatus();
   }, [loadEmergencyStatus]);
+
+  const loadEmergencyReports = React.useCallback(async () => {
+    if (!orgId) return;
+    setEmergencyReports((s) => ({ ...s, loading: true, error: "" }));
+    try {
+      const res = await api(`/api/orgs/${orgId}/emergency/reports`, { method: "GET" });
+      setEmergencyReports({
+        loading: false,
+        error: "",
+        rows: Array.isArray(res?.reports) ? res.reports : [],
+      });
+    } catch (e) {
+      setEmergencyReports((s) => ({
+        ...s,
+        loading: false,
+        error: e?.message || "Failed to load emergency reports",
+      }));
+    }
+  }, [orgId]);
+
+  React.useEffect(() => {
+    loadEmergencyReports();
+  }, [loadEmergencyReports]);
 
   async function startMfa() {
     setMsg("");
@@ -351,7 +379,7 @@ export default function Security() {
         method: "POST",
         body: { enabled: nextEnabled },
       });
-      await loadEmergencyStatus();
+      await Promise.all([loadEmergencyStatus(), loadEmergencyReports()]);
     } catch (e) {
       setEmergencyStatus((s) => ({
         ...s,
@@ -399,6 +427,47 @@ export default function Security() {
         </div>
         {emergencyStatus.error ? (
           <div style={{ marginTop: 10, color: "#8b1d1d" }}>{emergencyStatus.error}</div>
+        ) : null}
+      </section>
+
+      <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
+        <h3>Emergency reports</h3>
+        {emergencyReports.loading ? <div>loading emergency reports…</div> : null}
+        {!emergencyReports.loading && emergencyReports.error ? (
+          <div style={{ color: "#8b1d1d" }}>{emergencyReports.error}</div>
+        ) : null}
+        {!emergencyReports.loading && !emergencyReports.error && emergencyReports.rows.length === 0 ? (
+          <div style={{ opacity: 0.85 }}>No emergency reports yet.</div>
+        ) : null}
+        {!emergencyReports.loading && !emergencyReports.error && emergencyReports.rows.length > 0 ? (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "6px 4px" }}>Event</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "6px 4px" }}>Outcome</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "6px 4px" }}>When</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "6px 4px" }}>Actor</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "6px 4px" }}>Org</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "6px 4px" }}>Summary</th>
+                </tr>
+              </thead>
+              <tbody>
+                {emergencyReports.rows.map((row) => (
+                  <tr key={row.id}>
+                    <td style={{ borderBottom: "1px solid #eee", padding: "6px 4px" }}>{row.eventType || "—"}</td>
+                    <td style={{ borderBottom: "1px solid #eee", padding: "6px 4px" }}>{row.outcome || "—"}</td>
+                    <td style={{ borderBottom: "1px solid #eee", padding: "6px 4px" }}>
+                      {row.createdAt ? new Date(row.createdAt).toLocaleString() : "—"}
+                    </td>
+                    <td style={{ borderBottom: "1px solid #eee", padding: "6px 4px" }}>{row.actorUserId || "—"}</td>
+                    <td style={{ borderBottom: "1px solid #eee", padding: "6px 4px" }}>{row.orgId || "—"}</td>
+                    <td style={{ borderBottom: "1px solid #eee", padding: "6px 4px" }}>{row.summary || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : null}
       </section>
 

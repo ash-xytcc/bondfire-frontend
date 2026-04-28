@@ -239,6 +239,61 @@ export async function writeEmergencyReport({
   return { ok: true, reportId: id };
 }
 
+export async function readEmergencyReports({ env, request, orgId, limit = 25 }) {
+  const gate = await requireOrgRole({ env, request, orgId, minRole: 'viewer' });
+  if (!gate.ok) return gate;
+
+  const db = getDb(env);
+  if (!db) return { ok: false, resp: bad(500, 'NO_DB_BINDING') };
+
+  const safeLimit = Math.max(1, Math.min(100, Number(limit) || 25));
+
+  let hasReportsTable = false;
+  try {
+    const tableRow = await db.prepare(
+      `SELECT name
+       FROM sqlite_master
+       WHERE type = 'table' AND name = 'emergency_reports'
+       LIMIT 1`
+    ).first();
+    hasReportsTable = !!tableRow?.name;
+  } catch {
+    hasReportsTable = false;
+  }
+
+  if (!hasReportsTable) {
+    return { ok: true, reports: [] };
+  }
+
+  let rows = [];
+  try {
+    const result = await db.prepare(
+      `SELECT id, org_id, event_type, status, actor_user_id, summary, created_at
+       FROM emergency_reports
+       WHERE org_id = ?
+       ORDER BY created_at DESC
+       LIMIT ?`
+    ).bind(orgId, safeLimit).all();
+
+    rows = Array.isArray(result?.results) ? result.results : [];
+  } catch {
+    rows = [];
+  }
+
+  return {
+    ok: true,
+    reports: rows.map((row) => ({
+      id: row.id,
+      orgId: row.org_id || null,
+      eventType: String(row.event_type || 'emergency.report'),
+      outcome: String(row.status || 'recorded'),
+      actorUserId: row.actor_user_id || null,
+      summary: String(row.summary || '').slice(0, 500),
+      createdAt: Number(row.created_at) || null,
+    })),
+  };
+}
+
 async function rotateOrgKeysIfSupported(env, orgId) {
   try {
     const { db } = await ensureZkSchema(env);

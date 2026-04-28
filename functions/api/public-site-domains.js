@@ -10,8 +10,8 @@ export async function onRequestOptions(context) {
     canEdit: permission.canEdit,
     authMode: permission.mode,
     authReason: permission.reason,
-    mode: hasBfDb(context) ? 'd1' : 'scaffold',
-    note: hasBfDb(context)
+    mode: hasBoundD1(context) ? 'd1' : 'scaffold',
+    note: hasBoundD1(context)
       ? 'D1-backed public site domain route available.'
       : 'No BF_DB binding detected. Using scaffold mode.',
   })
@@ -21,7 +21,7 @@ export async function onRequestGet(context) {
   try {
     const permission = await resolvePublicSitePermission(context)
 
-    if (!hasBfDb(context)) {
+    if (!hasBoundD1(context)) {
       return jsonOk({
         mode: 'scaffold',
         canEdit: permission.canEdit,
@@ -64,7 +64,7 @@ export async function onRequestPut(context) {
 
     const body = await parseJsonBody(context.request)
 
-    if (!hasBfDb(context)) {
+    if (!hasBoundD1(context)) {
       return jsonOk({
         mode: 'scaffold',
         saved: true,
@@ -101,6 +101,7 @@ export async function onRequestPut(context) {
   }
 }
 
-function hasBfDb(context) {
-  return Boolean(context?.env?.BF_DB)
+function hasBoundD1(context) {
+  const binding = context?.env?.BF_DB
+  return Boolean(binding && (typeof binding.prepare === 'function' || typeof binding.exec === 'function'))
 }

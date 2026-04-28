@@ -68,14 +68,14 @@ function getPublicSiteStatus({ mode, state, publicSlug }) {
   return `Slug preview is ready. Primary custom domain ${primary.hostname} still needs verification and external DNS/binding setup.`
 }
 
-export function PublicDomainCard() {
+export function PublicDomainCard({ publicSlug = "" } = {}) {
   const [state, setState] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [newDomain, setNewDomain] = useState('')
   const [canEdit, setCanEdit] = useState(false)
-  const [mode, setMode] = useState('scaffold')
+  const [mode, setMode] = useState('unknown')
   const [note, setNote] = useState('')
 
   async function refresh() {
@@ -141,7 +141,11 @@ export function PublicDomainCard() {
     }
   }
 
-  const resolvedSlug = useMemo(() => String(state?.siteSlug || '').trim(), [state?.siteSlug])
+  const resolvedSlug = useMemo(() => {
+    const canonicalSlug = String(publicSlug || '').trim()
+    if (canonicalSlug) return canonicalSlug
+    return String(state?.siteSlug || '').trim()
+  }, [publicSlug, state?.siteSlug])
   const previewPath = useMemo(() => buildPublicSitePreviewPath(resolvedSlug), [resolvedSlug])
   const generatedPublicUrl = useMemo(() => buildPublicSitePreviewUrl(resolvedSlug), [resolvedSlug])
   const previewUrlReady = Boolean(previewPath && generatedPublicUrl)

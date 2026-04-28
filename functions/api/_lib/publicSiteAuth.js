@@ -1,4 +1,5 @@
 import { unauthorized, forbidden } from './errors.js'
+import { requireUser } from './auth.js'
 
 export async function resolvePublicSitePermission(context) {
   const token = context?.env?.SABOT_ADMIN_TOKEN
@@ -24,6 +25,17 @@ export async function resolvePublicSitePermission(context) {
       canEdit: true,
       mode: 'open',
       reason: 'PUBLIC_CONFIG_OPEN_EDIT=true',
+      hasConfiguredAuth: true,
+      presentedAuth: true,
+    }
+  }
+
+  const auth = await requireUser({ env: context?.env, request: context?.request })
+  if (auth?.ok) {
+    return {
+      canEdit: true,
+      mode: 'session',
+      reason: 'authenticated user session',
       hasConfiguredAuth: true,
       presentedAuth: true,
     }

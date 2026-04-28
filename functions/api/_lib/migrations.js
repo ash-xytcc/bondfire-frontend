@@ -148,6 +148,7 @@ export async function ensureMigrationTables(db) {
 
 
 async function runStatement(db, statement) {
+  if (!String(statement || '').trim()) return
   if (db?.prepare) {
     await db.prepare(statement).run()
     return
@@ -186,7 +187,7 @@ export async function runAppMigrations(db) {
     if (appliedNames.has(migration.name)) continue
 
     for (const statement of migration.sql) {
-      await db.exec(statement)
+      await runStatement(db, String(statement || '').trim())
     }
 
     await db

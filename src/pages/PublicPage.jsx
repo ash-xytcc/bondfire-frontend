@@ -228,6 +228,11 @@ function normalizeSupplyQty(value) {
   return Math.floor(n);
 }
 
+function isMissingPublicPageError(errorMessage) {
+  const msg = String(errorMessage || "").trim().toUpperCase();
+  return msg === "NOT_FOUND" || msg === "NOT_PUBLIC" || msg.includes("HTTP 404");
+}
+
 export default function PublicPage(props) {
   const injected = props?.data || null;
   const { slug } = useParams();
@@ -618,7 +623,22 @@ export default function PublicPage(props) {
   }
 
   if (state.loading) return <div style={{ padding: 16 }}>Loading…</div>;
-  if (state.error) return <div style={{ padding: 16, color: "crimson" }}>Error: {state.error}</div>;
+  if (state.error) {
+    if (isMissingPublicPageError(state.error)) {
+      return (
+        <div style={{ padding: 16, color: "#232947" }}>
+          <h2 style={{ margin: "0 0 8px" }}>Public page not found</h2>
+          <p style={{ margin: 0 }}>This page is not published or the link is incorrect.</p>
+        </div>
+      );
+    }
+    return (
+      <div style={{ padding: 16, color: "#232947" }}>
+        <h2 style={{ margin: "0 0 8px" }}>Unable to load public page</h2>
+        <p style={{ margin: 0 }}>Please try again in a moment.</p>
+      </div>
+    );
+  }
   if (!injected && !hasPublicSlug) return <div style={{ padding: 16, color: "#232947" }}>Public page not found.</div>;
 
   const copy = modalCopy();

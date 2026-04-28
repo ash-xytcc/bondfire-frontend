@@ -97,11 +97,20 @@ export function PublicDomainCard({ slug = '' }) {
     refresh()
   }, [])
 
+  const resolvedSlug = useMemo(() => {
+    const fromProp = String(slug || '').trim()
+    if (fromProp) return fromProp
+    return String(state?.siteSlug || '').trim()
+  }, [slug, state?.siteSlug])
+
   async function save(payload) {
     try {
       setSaving(true)
       setError('')
-      const result = await savePublicSiteDomainState(payload)
+      const result = await savePublicSiteDomainState({
+        ...(payload || {}),
+        siteSlug: resolvedSlug || undefined,
+      })
       setState(result.state)
       setCanEdit(result.canEdit)
       setMode(result.mode || 'scaffold')
@@ -140,7 +149,6 @@ export function PublicDomainCard({ slug = '' }) {
     }
   }
 
-  const resolvedSlug = useMemo(() => String(slug || '').trim(), [slug])
   const generatedPublicUrl = useMemo(() => {
     if (!resolvedSlug) return ''
     const origin = typeof window !== 'undefined' ? window.location.origin : ''

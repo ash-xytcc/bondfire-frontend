@@ -5,15 +5,16 @@ import { forbidden, badRequest } from './_lib/errors.js'
 
 export async function onRequestOptions(context) {
   const permission = await resolvePublicSitePermission(context)
+  const d1Status = getD1Status(context)
 
   return jsonOk({
     canEdit: permission.canEdit,
     authMode: permission.mode,
     authReason: permission.reason,
-    mode: hasBoundD1(context) ? 'd1' : 'scaffold',
-    note: hasBoundD1(context)
+    mode: d1Status.bound ? 'd1' : 'scaffold',
+    note: d1Status.bound
       ? 'D1-backed public site domain route available.'
-      : 'No BF_DB binding detected. Using scaffold mode.',
+      : d1Status.reason,
   })
 }
 
@@ -21,12 +22,14 @@ export async function onRequestGet(context) {
   try {
     const permission = await resolvePublicSitePermission(context)
 
-    if (!hasBoundD1(context)) {
+    const d1Status = getD1Status(context)
+    if (!d1Status.bound) {
       return jsonOk({
         mode: 'scaffold',
         canEdit: permission.canEdit,
         authMode: permission.mode,
         authReason: permission.reason,
+        note: d1Status.reason,
         state: {
           scope: 'global',
           siteSlug: 'main',
@@ -64,7 +67,8 @@ export async function onRequestPut(context) {
 
     const body = await parseJsonBody(context.request)
 
-    if (!hasBoundD1(context)) {
+    const d1Status = getD1Status(context)
+    if (!d1Status.bound) {
       return jsonOk({
         mode: 'scaffold',
         saved: true,
@@ -78,7 +82,7 @@ export async function onRequestPut(context) {
           domains: [],
           resolvedDomain: null,
         },
-        note: 'BF_DB binding missing. Save accepted in scaffold mode only.',
+        note: d1Status.reason,
       })
     }
 
@@ -101,7 +105,11 @@ export async function onRequestPut(context) {
   }
 }
 
-function hasBoundD1(context) {
+function getD1Status(context) {
   const binding = context?.env?.BF_DB
-  return Boolean(binding && (typeof binding.prepare === 'function' || typeof binding.exec === 'function'))
+  if (!binding) return { bound: false, reason: 'No BF_DB binding detected. Using scaffold mode.' }
+  if (typeof binding.prepare === 'function' || typeof binding.exec === 'function') {
+    return { bound: true, reason: '' }
+  }
+  return { bound: false, reason: 'BF_DB binding exists but does not expose D1 methods (prepare/exec).' }
 }

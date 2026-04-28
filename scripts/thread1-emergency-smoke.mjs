@@ -6,6 +6,10 @@ import { onRequestGet as globalEmergencyGet } from '../functions/api/emergency/s
 import { onRequestGet as orgEmergencyGet } from '../functions/api/orgs/[orgId]/emergency/index.js';
 import { onRequestPost as orgLockdownPost } from '../functions/api/orgs/[orgId]/emergency/lockdown.js';
 import { onRequestPost as orgNeedsPost } from '../functions/api/orgs/[orgId]/needs.js';
+import { onRequestPut as orgNeedsPut, onRequestDelete as orgNeedsDelete } from '../functions/api/orgs/[orgId]/needs.js';
+import { onRequestPatch as orgDriveFolderPatch, onRequestDelete as orgDriveFolderDelete } from '../functions/api/orgs/[orgId]/drive/folders/[id].js';
+import { onRequestPost as orgChatRoomsPost } from '../functions/api/orgs/[orgId]/chat/rooms.js';
+import { onRequestPost as orgChatMessagesPost } from '../functions/api/orgs/[orgId]/chat/messages.js';
 
 class D1Stmt {
   constructor(stmt) {
@@ -81,11 +85,15 @@ async function main() {
   await BF_DB.prepare('CREATE TABLE orgs (id TEXT PRIMARY KEY, name TEXT)').run();
   await BF_DB.prepare('CREATE TABLE org_memberships (org_id TEXT, user_id TEXT, role TEXT)').run();
   await BF_DB.prepare('CREATE TABLE needs (id TEXT PRIMARY KEY, org_id TEXT, title TEXT, description TEXT, status TEXT, priority INTEGER NOT NULL DEFAULT 0, is_public INTEGER NOT NULL DEFAULT 0, encrypted_description TEXT, encrypted_blob TEXT, key_version INTEGER, created_at INTEGER, updated_at INTEGER)').run();
+  await BF_DB.prepare('CREATE TABLE org_crypto (org_id TEXT PRIMARY KEY, version INTEGER NOT NULL DEFAULT 1, key_version INTEGER NOT NULL DEFAULT 1)').run();
+  await BF_DB.prepare('INSERT INTO org_crypto (org_id, version, key_version) VALUES (?, ?, ?)').bind('org-1', 1, 1).run();
 
   await BF_DB.prepare('INSERT INTO orgs (id, name) VALUES (?, ?)').bind('org-1', 'Org One').run();
   await BF_DB.prepare('INSERT INTO org_memberships (org_id, user_id, role) VALUES (?, ?, ?)').bind('org-1', 'user-admin', 'admin').run();
 
   const token = await signJwt(env.JWT_SECRET, { sub: 'user-admin', email: 'admin@example.com' }, 3600);
+  const now = Date.now();
+  await BF_DB.prepare('INSERT INTO needs (id, org_id, title, description, status, priority, is_public, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').bind('need-1', 'org-1', 'Need 1', '', 'open', 1, 0, now, now).run();
 
   // 1) Global status
   const globalRes = await globalEmergencyGet({ env, request: makeRequest('https://test.local/api/emergency/status', { token }) });
@@ -109,13 +117,44 @@ async function main() {
   const lockOnJson = await readJson(lockOnRes);
   assert.equal(lockOnJson.state.enabled, true);
 
-  // 4) confirm write blocking
+  // 4) confirm representative write blocking across methods
   const blockedRes = await orgNeedsPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/needs', { method: 'POST', token, body: { title: 'Blocked write' } }) });
   assert.equal(blockedRes.status, 403);
   const blockedJson = await readJson(blockedRes);
   assert.equal(blockedJson.ok, false);
   assert.equal(blockedJson.error, 'ORG_LOCKDOWN_ACTIVE');
   assertNoSensitive(blockedJson);
+
+  const blockedPutRes = await orgNeedsPut({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/needs', { method: 'PUT', token, body: { id: 'need-1', title: 'Blocked put' } }) });
+  assert.equal(blockedPutRes.status, 403);
+  const blockedPutJson = await readJson(blockedPutRes);
+  assert.equal(blockedPutJson.error, 'ORG_LOCKDOWN_ACTIVE');
+  assertNoSensitive(blockedPutJson);
+
+  const blockedPatchRes = await orgDriveFolderPatch({ env, params: { orgId: 'org-1', id: 'folder-1' }, request: makeRequest('https://test.local/api/orgs/org-1/drive/folders/folder-1', { method: 'PATCH', token, body: { name: 'Blocked patch' } }) });
+  assert.equal(blockedPatchRes.status, 403);
+  const blockedPatchJson = await readJson(blockedPatchRes);
+  assert.equal(blockedPatchJson.error, 'ORG_LOCKDOWN_ACTIVE');
+  assertNoSensitive(blockedPatchJson);
+
+  const blockedDeleteRes = await orgNeedsDelete({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/needs', { method: 'DELETE', token, body: { id: 'need-1' } }) });
+  assert.equal(blockedDeleteRes.status, 403);
+  const blockedDeleteJson = await readJson(blockedDeleteRes);
+  assert.equal(blockedDeleteJson.error, 'ORG_LOCKDOWN_ACTIVE');
+  assertNoSensitive(blockedDeleteJson);
+
+  // chat write routes must also be blocked under lockdown
+  const blockedRoomRes = await orgChatRoomsPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/chat/rooms', { method: 'POST', token, body: { name: 'Ops' } }) });
+  assert.equal(blockedRoomRes.status, 403);
+  const blockedRoomJson = await readJson(blockedRoomRes);
+  assert.equal(blockedRoomJson.error, 'ORG_LOCKDOWN_ACTIVE');
+  assertNoSensitive(blockedRoomJson);
+
+  const blockedMessageRes = await orgChatMessagesPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/chat/messages', { method: 'POST', token, body: { roomId: 'r1', body: 'hello' } }) });
+  assert.equal(blockedMessageRes.status, 403);
+  const blockedMessageJson = await readJson(blockedMessageRes);
+  assert.equal(blockedMessageJson.error, 'ORG_LOCKDOWN_ACTIVE');
+  assertNoSensitive(blockedMessageJson);
 
   // 5) confirm safe reads still work
   const orgResDuring = await orgEmergencyGet({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/emergency', { token }) });
@@ -137,6 +176,16 @@ async function main() {
   assert.equal(allowedRes.status, 200);
   const allowedJson = await readJson(allowedRes);
   assert.equal(allowedJson.ok, true);
+
+  const allowedRoomRes = await orgChatRoomsPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/chat/rooms', { method: 'POST', token, body: { name: 'Ops' } }) });
+  assert.equal(allowedRoomRes.status, 200);
+  const allowedRoomJson = await readJson(allowedRoomRes);
+  assert.equal(allowedRoomJson.ok, true);
+
+  const allowedMessageRes = await orgChatMessagesPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/chat/messages', { method: 'POST', token, body: { roomId: allowedRoomJson.room.id, body: 'Unlocked write' } }) });
+  assert.equal(allowedMessageRes.status, 200);
+  const allowedMessageJson = await readJson(allowedMessageRes);
+  assert.equal(allowedMessageJson.ok, true);
 
   console.log('THREAD 1 smoke passed.');
 }

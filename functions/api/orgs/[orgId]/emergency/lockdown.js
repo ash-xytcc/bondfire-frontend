@@ -9,7 +9,7 @@ export async function onRequestPost(ctx) {
     env: ctx.env,
     request: ctx.request,
     orgId,
-    enabled: !!body.enabled,
+    enabled: typeof body.enabled === 'boolean' ? body.enabled : !!body.locked,
     reason: body.reason || '',
     rotateKeys: !!body.rotateKeys
   });

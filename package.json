@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --port 5174",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "smoke:thread1": "node scripts/thread1-emergency-smoke.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.577.0",

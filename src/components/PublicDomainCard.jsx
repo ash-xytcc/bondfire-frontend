@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchPublicSiteDomainState, savePublicSiteDomainState } from '../lib/publicSiteDomainsApi'
-import { buildPublicSitePreviewPath, buildPublicSitePreviewUrl } from '../lib/publicSiteRouting'
 
 function DomainRow({ domain, onPrimary, onVerify, onRemove, onCopy, busy, disabled }) {
   return (
@@ -68,14 +67,14 @@ function getPublicSiteStatus({ mode, state, publicSlug }) {
   return `Slug preview is ready. Primary custom domain ${primary.hostname} still needs verification and external DNS/binding setup.`
 }
 
-export function PublicDomainCard() {
+export function PublicDomainCard({ slug = '' }) {
   const [state, setState] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [newDomain, setNewDomain] = useState('')
   const [canEdit, setCanEdit] = useState(false)
-  const [mode, setMode] = useState('scaffold')
+  const [mode, setMode] = useState('')
   const [note, setNote] = useState('')
 
   async function refresh() {
@@ -141,10 +140,14 @@ export function PublicDomainCard() {
     }
   }
 
-  const resolvedSlug = useMemo(() => String(state?.siteSlug || '').trim(), [state?.siteSlug])
-  const previewPath = useMemo(() => buildPublicSitePreviewPath(resolvedSlug), [resolvedSlug])
-  const generatedPublicUrl = useMemo(() => buildPublicSitePreviewUrl(resolvedSlug), [resolvedSlug])
-  const previewUrlReady = Boolean(previewPath && generatedPublicUrl)
+  const resolvedSlug = useMemo(() => String(slug || '').trim(), [slug])
+  const generatedPublicUrl = useMemo(() => {
+    if (!resolvedSlug) return ''
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    if (!origin) return `/#/p/${resolvedSlug}`
+    return `${origin}/#/p/${resolvedSlug}`
+  }, [resolvedSlug])
+  const previewUrlReady = Boolean(generatedPublicUrl)
   const urlActionDisabled = loading || saving || !previewUrlReady
   const primaryDomain = useMemo(() => state?.domains?.find((domain) => domain.isPrimary) || null, [state])
   const primaryCustomDomainUrl = useMemo(() => toHttpsUrl(primaryDomain?.hostname), [primaryDomain])

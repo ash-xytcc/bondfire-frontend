@@ -1262,7 +1262,7 @@ React.useEffect(() => {
 
           <form id="public-page-settings-form" onSubmit={savePublic} className="grid" style={{ gap: 12, marginTop: 12 }}>
             <AdminPublicConfigCard />
-            <PublicDomainCard />
+            <PublicDomainCard slug={slug} />
 
             <label className="row" style={{ gap: 8, alignItems: "center" }}>
               <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />

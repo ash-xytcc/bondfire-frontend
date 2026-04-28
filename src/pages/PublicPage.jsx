@@ -231,9 +231,15 @@ function normalizeSupplyQty(value) {
 export default function PublicPage(props) {
   const injected = props?.data || null;
   const { slug } = useParams();
+  const publicSlug = String(slug || "").trim();
+  const hasPublicSlug = !!publicSlug;
 
   const [state, setState] = useState(() =>
-    injected ? { loading: false, error: "", data: injected } : slug ? { loading: true, error: "", data: null } : { loading: false, error: "", data: null }
+    injected
+      ? { loading: false, error: "", data: injected }
+      : hasPublicSlug
+      ? { loading: true, error: "", data: null }
+      : { loading: false, error: "", data: null }
   );
   const [publicNeeds, setPublicNeeds] = useState([]);
   const [publicMeetings, setPublicMeetings] = useState([]);
@@ -274,17 +280,17 @@ export default function PublicPage(props) {
   }, []);
 
   useEffect(() => {
-    if (!slug || injected) return;
+    if (!hasPublicSlug || injected) return;
     let mounted = true;
     (async () => {
       try {
-        const j = await apiFetch(`/api/public/${encodeURIComponent(slug)}`);
+        const j = await apiFetch(`/api/public/${encodeURIComponent(publicSlug)}`);
         if (!mounted) return;
         setState({ loading: false, error: "", data: j });
         const [nData, mData, sData] = await Promise.all([
-          apiFetch(`/api/public/${encodeURIComponent(slug)}/needs`).catch(() => ({ needs: [] })),
-          apiFetch(`/api/public/${encodeURIComponent(slug)}/meetings`).catch(() => ({ meetings: [] })),
-          apiFetch(`/api/public/${encodeURIComponent(slug)}/inventory`).catch(() => ({ items: [] })),
+          apiFetch(`/api/public/${encodeURIComponent(publicSlug)}/needs`).catch(() => ({ needs: [] })),
+          apiFetch(`/api/public/${encodeURIComponent(publicSlug)}/meetings`).catch(() => ({ meetings: [] })),
+          apiFetch(`/api/public/${encodeURIComponent(publicSlug)}/inventory`).catch(() => ({ items: [] })),
         ]);
         if (!mounted) return;
         setPublicNeeds(Array.isArray(nData.needs) ? nData.needs : []);
@@ -297,14 +303,14 @@ export default function PublicPage(props) {
     return () => {
       mounted = false;
     };
-  }, [slug, injected]);
+  }, [hasPublicSlug, publicSlug, injected]);
 
   const { pubCfg, orgId } = useMemo(() => {
-    if (slug && state.data?.public) {
+    if (hasPublicSlug && state.data?.public) {
       const pub = state.data.public;
       return {
         pubCfg: {
-          title: pub.title || slug,
+          title: pub.title || publicSlug,
           about: pub.about || "",
           location: pub.location || "",
           logo: pub.logoDataUrl || pub.logoUrl || null,
@@ -331,7 +337,7 @@ export default function PublicPage(props) {
     }
     const oid = parseOrgIdFromHash();
     return { pubCfg: getPreviewConfig(oid), orgId: oid };
-  }, [slug, state.data]);
+  }, [hasPublicSlug, publicSlug, state.data]);
 
   const orgInfo = useMemo(() => (orgId ? readOrgInfo(orgId) : { name: "Org", logo: null }), [orgId]);
   const postsPerPage = Number(customizerCfg?.postsPerPage || 10);
@@ -353,7 +359,7 @@ export default function PublicPage(props) {
       }));
   }, [availableSupplies, supplySelections]);
   const pageStyle = useMemo(() => themeVars(pubCfg?.theme_mode || "light", pubCfg?.accent_color || "#6d5efc"), [pubCfg]);
-  const title = pubCfg?.title || orgInfo.name || slug || "Public Page";
+  const title = pubCfg?.title || orgInfo.name || publicSlug || "Public Page";
   const resolvedTitle = customizerCfg?.siteTitle || title;
   const resolvedTagline = customizerCfg?.tagline || [pubCfg?.location, pubCfg?.about].filter(Boolean).join(" · ");
   const resolvedLogo = customizerCfg?.logoUrl || orgInfo.logo;
@@ -382,13 +388,13 @@ export default function PublicPage(props) {
   const visibleMeetings = useMemo(() => (Array.isArray(publicMeetings) ? publicMeetings.slice(0, postsPerPage) : []), [publicMeetings, postsPerPage]);
 
   async function subscribe() {
-    if (!slug) {
+    if (!hasPublicSlug) {
       setNlMsg("Newsletter signup works on the live public page.");
       return;
     }
     setNlMsg("");
     try {
-      await apiFetch(`/api/p/${encodeURIComponent(slug)}/newsletter/subscribe`, {
+      await apiFetch(`/api/p/${encodeURIComponent(publicSlug)}/newsletter/subscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: nlName, email: nlEmail }),
@@ -402,13 +408,13 @@ export default function PublicPage(props) {
   }
 
   async function submitPledge(needId) {
-    if (!slug) {
+    if (!hasPublicSlug) {
       setPledgeMsg("Pledges work on the live public page.");
       return;
     }
     setPledgeMsg("");
     try {
-      await apiFetch(`/api/p/${encodeURIComponent(slug)}/pledges`, {
+      await apiFetch(`/api/p/${encodeURIComponent(publicSlug)}/pledges`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -458,7 +464,7 @@ export default function PublicPage(props) {
   }
 
   async function submitSupplyRequest() {
-    if (!slug) {
+    if (!hasPublicSlug) {
       setSupplyMsg("Supply requests work on the live public page.");
       return;
     }
@@ -473,7 +479,7 @@ export default function PublicPage(props) {
 
     setSupplyMsg("");
     try {
-      await apiFetch(`/api/p/${encodeURIComponent(slug)}/intake`, {
+      await apiFetch(`/api/p/${encodeURIComponent(publicSlug)}/intake`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -534,7 +540,7 @@ export default function PublicPage(props) {
 
   async function submitIntake() {
     if (!activeModal?.kind) return;
-    if (!slug) {
+    if (!hasPublicSlug) {
       setIntakeMsg("This form works on the live public page.");
       return;
     }
@@ -543,7 +549,7 @@ export default function PublicPage(props) {
       if (activeModal.kind === "meeting_rsvp") {
         const meetingId = activeModal?.payload?.id;
         if (!meetingId) throw new Error("Missing meeting.");
-        await apiFetch(`/api/p/${encodeURIComponent(slug)}/meetings/${encodeURIComponent(meetingId)}/rsvp`, {
+        await apiFetch(`/api/p/${encodeURIComponent(publicSlug)}/meetings/${encodeURIComponent(meetingId)}/rsvp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -555,7 +561,7 @@ export default function PublicPage(props) {
         });
         setIntakeMsg("RSVP saved.");
       } else {
-        await apiFetch(`/api/p/${encodeURIComponent(slug)}/intake`, {
+        await apiFetch(`/api/p/${encodeURIComponent(publicSlug)}/intake`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -613,6 +619,7 @@ export default function PublicPage(props) {
 
   if (state.loading) return <div style={{ padding: 16 }}>Loading…</div>;
   if (state.error) return <div style={{ padding: 16, color: "crimson" }}>Error: {state.error}</div>;
+  if (!injected && !hasPublicSlug) return <div style={{ padding: 16, color: "#232947" }}>Public page not found.</div>;
 
   const copy = modalCopy();
 

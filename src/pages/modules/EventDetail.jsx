@@ -23,6 +23,28 @@ function formatWhen(value) {
   return d.toLocaleString();
 }
 
+
+function normalizeTags(value) {
+  if (Array.isArray(value)) {
+    return value.map((tag) => safeText(tag).trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) return [];
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return normalizeTags(parsed);
+    } catch {}
+    return text
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
 function isNotFoundError(message) {
   const text = safeText(message).toUpperCase();
   return text.includes("NOT_FOUND") || text.includes("404");
@@ -121,6 +143,11 @@ export default function EventDetail() {
               {item?.ends_at ? ` → ${formatWhen(item.ends_at)}` : ""}
             </div>
             <div className="helper" style={{ marginTop: 4 }}>{safeText(item?.location) || "Location pending"}</div>
+            {normalizeTags(item?.tags ?? item?.tags_json).length ? (
+              <div className="helper" style={{ marginTop: 4 }}>
+                Tags: {normalizeTags(item?.tags ?? item?.tags_json).join(", ")}
+              </div>
+            ) : null}
           </div>
 
           <div className="card" style={{ padding: 12 }}>

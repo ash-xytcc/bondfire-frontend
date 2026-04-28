@@ -23,6 +23,28 @@ function toItems(data) {
   return [];
 }
 
+
+function normalizeTags(value) {
+  if (Array.isArray(value)) {
+    return value.map((tag) => safeText(tag).trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) return [];
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return normalizeTags(parsed);
+    } catch {}
+    return text
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
 function formatWhen(value) {
   if (value == null || value === "") return "Date unknown";
   const n = Number(value);
@@ -40,6 +62,7 @@ function normalizeItem(raw, index) {
     summary: safeText(raw?.summary).trim() || "No summary yet.",
     happened_at: raw?.happened_at ?? null,
     visibility: safeText(raw?.visibility).trim() || "private",
+    tags: normalizeTags(raw?.tags ?? raw?.tags_json),
   };
 }
 
@@ -133,7 +156,7 @@ export default function WitnessArchive() {
   const filtered = useMemo(() => {
     const needle = safeText(q).trim().toLowerCase();
     if (!needle) return items;
-    return items.filter((item) => [item.title, item.summary, item.visibility].join(" ").toLowerCase().includes(needle));
+    return items.filter((item) => [item.title, item.summary, item.visibility, item.tags.join(" ")].join(" ").toLowerCase().includes(needle));
   }, [items, q]);
 
   if (!orgId) {
@@ -262,6 +285,11 @@ export default function WitnessArchive() {
                 {formatWhen(item.happened_at)} • {item.visibility}
               </div>
               <div style={{ marginTop: 8 }}>{item.summary}</div>
+              {item.tags.length ? (
+                <div className="helper" style={{ marginTop: 6 }}>
+                  Tags: {item.tags.join(", ")}
+                </div>
+              ) : null}
             </div>
           ))}
       </div>

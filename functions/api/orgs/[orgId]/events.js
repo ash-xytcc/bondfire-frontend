@@ -11,14 +11,56 @@ async function ensureEventsTable(db) {
       location TEXT,
       starts_at INTEGER,
       ends_at INTEGER,
+      tags_json TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     )`)
     .run();
 
+  try {
+    await db.prepare("ALTER TABLE events ADD COLUMN tags_json TEXT").run();
+  } catch {}
+
   await db
     .prepare("CREATE INDEX IF NOT EXISTS idx_events_org_time ON events(org_id, starts_at DESC, created_at DESC)")
     .run();
+}
+
+function normalizeTags(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((tag) => String(tag ?? "").trim())
+      .filter(Boolean)
+      .slice(0, 50);
+  }
+
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) return [];
+
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return normalizeTags(parsed);
+    } catch {}
+
+    return text
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .slice(0, 50);
+  }
+
+  return [];
+}
+
+function toTagsJson(body) {
+  const tags = normalizeTags(body?.tags ?? body?.tags_json);
+  return JSON.stringify(tags);
+}
+
+function eventWithTags(row) {
+  const tags = normalizeTags(row?.tags ?? row?.tags_json);
+  return { ...row, tags };
 }
 
 export async function onRequestGet({ env, request, params }) {
@@ -30,7 +72,7 @@ export async function onRequestGet({ env, request, params }) {
 
   const rows = await env.BF_DB
     .prepare(
-      `SELECT id, title, description, location, starts_at, ends_at, created_at, updated_at
+      `SELECT id, title, description, location, starts_at, ends_at, tags_json, created_at, updated_at
        FROM events
        WHERE org_id = ?
        ORDER BY starts_at DESC, created_at DESC`
@@ -38,7 +80,8 @@ export async function onRequestGet({ env, request, params }) {
     .bind(orgId)
     .all();
 
-  return json({ ok: true, events: rows.results || [] });
+  const events = (rows.results || []).map(eventWithTags);
+  return json({ ok: true, events });
 }
 
 export async function onRequestPost({ env, request, params }) {
@@ -54,13 +97,14 @@ export async function onRequestPost({ env, request, params }) {
 
   const startsAt = Number.isFinite(Number(body.starts_at)) ? Number(body.starts_at) : null;
   const endsAt = Number.isFinite(Number(body.ends_at)) ? Number(body.ends_at) : null;
+  const tagsJson = toTagsJson(body);
   const t = now();
 
   const id = uuid();
   await env.BF_DB
     .prepare(
-      `INSERT INTO events (id, org_id, title, description, location, starts_at, ends_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO events (id, org_id, title, description, location, starts_at, ends_at, tags_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .bind(
       id,
@@ -70,6 +114,7 @@ export async function onRequestPost({ env, request, params }) {
       String(body.location || ""),
       startsAt,
       endsAt,
+      tagsJson,
       t,
       t
     )
@@ -91,6 +136,7 @@ export async function onRequestPut({ env, request, params }) {
 
   const startsAt = body.starts_at === undefined ? null : Number(body.starts_at);
   const endsAt = body.ends_at === undefined ? null : Number(body.ends_at);
+  const tagsJson = body.tags === undefined && body.tags_json === undefined ? null : toTagsJson(body);
 
   await env.BF_DB
     .prepare(
@@ -100,6 +146,7 @@ export async function onRequestPut({ env, request, params }) {
            location = COALESCE(?, location),
            starts_at = COALESCE(?, starts_at),
            ends_at = COALESCE(?, ends_at),
+           tags_json = COALESCE(?, tags_json),
            updated_at = ?
        WHERE id = ? AND org_id = ?`
     )
@@ -109,6 +156,7 @@ export async function onRequestPut({ env, request, params }) {
       body.location ?? null,
       Number.isFinite(startsAt) ? startsAt : null,
       Number.isFinite(endsAt) ? endsAt : null,
+      tagsJson,
       now(),
       id,
       orgId

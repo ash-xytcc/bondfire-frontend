@@ -30,6 +30,28 @@ function formatWhen(value) {
   return d.toLocaleString();
 }
 
+
+function normalizeTags(value) {
+  if (Array.isArray(value)) {
+    return value.map((tag) => safeText(tag).trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) return [];
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return normalizeTags(parsed);
+    } catch {}
+    return text
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
 function toMillisOrNull(value) {
   if (value == null || value === "") return null;
   const n = Number(value);
@@ -85,6 +107,7 @@ export default function Events() {
         safeText(item?.title),
         safeText(item?.description),
         safeText(item?.location),
+        normalizeTags(item?.tags ?? item?.tags_json).join(" "),
       ]
         .join(" ")
         .toLowerCase()
@@ -268,6 +291,11 @@ export default function Events() {
                   {item?.location ? ` • ${safeText(item.location)}` : ""}
                 </div>
                 {item?.description ? <div style={{ marginTop: 8 }}>{safeText(item.description)}</div> : null}
+                {normalizeTags(item?.tags ?? item?.tags_json).length ? (
+                  <div className="helper" style={{ marginTop: 8 }}>
+                    Tags: {normalizeTags(item?.tags ?? item?.tags_json).join(", ")}
+                  </div>
+                ) : null}
               </div>
             );
           })}

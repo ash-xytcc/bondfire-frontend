@@ -10,10 +10,15 @@ async function ensureWitnessTable(db) {
       summary TEXT,
       happened_at TEXT,
       visibility TEXT,
+      tags_json TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     )`)
     .run();
+
+  try {
+    await db.prepare("ALTER TABLE witness_records ADD COLUMN tags_json TEXT").run();
+  } catch {}
 
   await db
     .prepare(
@@ -28,6 +33,43 @@ function asText(value, fallback = "") {
   return text || fallback;
 }
 
+function normalizeTags(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((tag) => String(tag ?? "").trim())
+      .filter(Boolean)
+      .slice(0, 50);
+  }
+
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) return [];
+
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return normalizeTags(parsed);
+    } catch {}
+
+    return text
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .slice(0, 50);
+  }
+
+  return [];
+}
+
+function toTagsJson(body) {
+  const tags = normalizeTags(body?.tags ?? body?.tags_json);
+  return JSON.stringify(tags);
+}
+
+function witnessWithTags(row) {
+  const tags = normalizeTags(row?.tags ?? row?.tags_json);
+  return { ...row, tags };
+}
+
 export async function onRequestGet({ env, request, params }) {
   const orgId = params.orgId;
   const auth = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
@@ -37,7 +79,7 @@ export async function onRequestGet({ env, request, params }) {
 
   const rows = await env.BF_DB
     .prepare(
-      `SELECT id, title, summary, happened_at, visibility, created_at, updated_at
+      `SELECT id, title, summary, happened_at, visibility, tags_json, created_at, updated_at
        FROM witness_records
        WHERE org_id = ?
        ORDER BY updated_at DESC, created_at DESC`
@@ -45,7 +87,7 @@ export async function onRequestGet({ env, request, params }) {
     .bind(orgId)
     .all();
 
-  const items = rows?.results || [];
+  const items = (rows?.results || []).map(witnessWithTags);
   return json({ ok: true, items, records: items });
 }
 
@@ -64,15 +106,16 @@ export async function onRequestPost({ env, request, params }) {
   const summary = asText(body.summary);
   const happenedAt = asText(body.happened_at, null);
   const visibility = asText(body.visibility, "private");
+  const tagsJson = toTagsJson(body);
   const timestamp = now();
   const id = uuid();
 
   await env.BF_DB
     .prepare(
-      `INSERT INTO witness_records (id, org_id, title, summary, happened_at, visibility, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO witness_records (id, org_id, title, summary, happened_at, visibility, tags_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, orgId, title, summary, happenedAt, visibility, timestamp, timestamp)
+    .bind(id, orgId, title, summary, happenedAt, visibility, tagsJson, timestamp, timestamp)
     .run();
 
   return json({ ok: true, id });

@@ -26,14 +26,14 @@ export async function ensurePublicSiteDomainsTable(db) {
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         verified_at TEXT,
         UNIQUE(scope, hostname)
-      )
+      );
     `)
     .run()
 
   await db
     .prepare(`
       CREATE INDEX IF NOT EXISTS idx_public_site_domains_scope
-      ON public_site_domains(scope)
+      ON public_site_domains(scope);
     `)
     .run()
 
@@ -41,7 +41,7 @@ export async function ensurePublicSiteDomainsTable(db) {
     .prepare(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_public_site_domains_primary_per_scope
       ON public_site_domains(scope)
-      WHERE is_primary = 1
+      WHERE is_primary = 1;
     `)
     .run()
 

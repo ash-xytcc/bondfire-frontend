@@ -1,4 +1,5 @@
 import { json, bad, uuid } from '../../../_lib/http.js'
+import { enforceOrgWriteLockdown } from '../../../_lib/orgLockdown.js'
 
 function safeMessage(row = {}) {
   return {
@@ -65,6 +66,8 @@ export async function onRequestPost({ env, params, request }) {
     if (!orgId) return bad(400, 'MISSING_ORG')
     if (!roomId) return bad(400, 'MISSING_ROOM')
     if (!body) return bad(400, 'MISSING_BODY')
+    const lockdown = await enforceOrgWriteLockdown({ env, orgId })
+    if (!lockdown.ok) return lockdown.resp
 
     if (!db) {
       return json({

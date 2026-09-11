@@ -314,6 +314,16 @@ function Shell() {
 					}
 				/>
 
+				{/* Authenticated new-organization builder */}
+				<Route
+					path="/build"
+					element={
+						<RequireAuth>
+							<BuildModules />
+						</RequireAuth>
+					}
+				/>
+
 				{/* User security */}
 				<Route
 					path="/security"

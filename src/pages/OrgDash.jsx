@@ -107,7 +107,6 @@ export default function OrgDash() {
   const [busy, setBusy] = React.useState(false);
   const [msg, setMsg] = React.useState("");
 
-  const [newOrgName, setNewOrgName] = React.useState("");
   const [inviteCode, setInviteCode] = React.useState("");
   const deleteOrg = async (org) => {
     const id = org?.id;
@@ -148,38 +147,6 @@ export default function OrgDash() {
   React.useEffect(() => {
     load();
   }, [load]);
-
-  const createOrg = async (e) => {
-    e?.preventDefault();
-    const name = (newOrgName || "").trim();
-    if (!name) return;
-    setBusy(true);
-    setMsg("");
-    try {
-      if (demoMode) {
-        setMsg("Demo mode uses a seeded org. Use Reset Demo to start fresh.");
-        return;
-      }
-      const r = await authFetch("/api/orgs/create", { method: "POST", body: { name } });
-      setNewOrgName("");
-      // Update list immediately. Do NOT auto-enter the org.
-      if (r?.org?.id) {
-        setOrgs((prev) => {
-          const exists = prev.some((o) => o?.id === r.org.id);
-          return exists ? prev : [r.org, ...prev];
-        });
-        setMsg(`Created "${r.org.name || r.org.id}".`);
-      } else {
-        setMsg("Created.");
-      }
-      // Refresh from server as a follow-up (if auth is healthy, it will confirm membership).
-      await load();
-    } catch (e2) {
-      setMsg(e2.message || "Failed to create org");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const joinWithInvite = async (e) => {
     e?.preventDefault();
@@ -229,20 +196,17 @@ export default function OrgDash() {
       >
         <div className="card" style={{ padding: 16 }}>
           <h2 style={{ marginTop: 0 }}>Create a new org</h2>
-          <form onSubmit={createOrg} className="grid" style={{ gap: 10 }}>
-            <label className="grid" style={{ gap: 6 }}>
-              <span className="helper">Organization name</span>
-              <input
-                className="input"
-                value={newOrgName}
-                onChange={(e) => setNewOrgName(e.target.value)}
-                placeholder="e.g. Bondfire Team"
-              />
-            </label>
-            <button className="btn-red" disabled={busy || !newOrgName.trim()}>
-              Create
-            </button>
-          </form>
+          <p className="helper" style={{ lineHeight: 1.55 }}>
+            Choose the modules first, then name the organization and bring it into the room.
+          </p>
+          <button
+            className="btn-red"
+            type="button"
+            onClick={() => nav("/build?new=1")}
+            disabled={busy}
+          >
+            Build a new org
+          </button>
         </div>
 
         <div className="card" style={{ padding: 16 }}>

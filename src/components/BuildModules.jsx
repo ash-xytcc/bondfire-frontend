@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { isDemoMode } from "../demo/demoMode.js";
 import {
   getAvailablePlatformModules,
@@ -66,9 +66,13 @@ export default function BuildModules() {
   const { orgId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const isStandalone = !orgId;
-  const isOnboarding =
-    new URLSearchParams(location.search || "").get("first") === "1";
+  const queryParams = React.useMemo(
+    () => new URLSearchParams(location.search || ""),
+    [location.search]
+  );
+  const isNewOrg = !orgId && queryParams.get("new") === "1";
+  const isStandalone = !orgId && !isNewOrg;
+  const isOnboarding = queryParams.get("first") === "1";
   const liveModules = React.useMemo(() => getAvailablePlatformModules(), []);
   const onDeckModules = React.useMemo(
     () => getPlatformModules().filter((moduleDef) => !moduleDef.available),
@@ -78,9 +82,9 @@ export default function BuildModules() {
   const defaults = React.useMemo(() => getDefaultEnabledModuleIds(), []);
 
   const initialIds = React.useMemo(() => {
-    const pending = readPendingBuild();
+    const pending = isStandalone ? readPendingBuild() : [];
     return normalizeSelectedModuleIds(pending.length ? pending : defaults);
-  }, [defaults]);
+  }, [defaults, isStandalone]);
 
   const [selected, setSelected] = React.useState(() => new Set(initialIds));
   const [savedIds, setSavedIds] = React.useState(() => initialIds);
@@ -90,6 +94,7 @@ export default function BuildModules() {
   const [query, setQuery] = React.useState("");
   const [notice, setNotice] = React.useState("");
   const [error, setError] = React.useState("");
+  const [orgName, setOrgName] = React.useState("New Bondfire");
 
   const selectedIds = React.useMemo(
     () => normalizeSelectedModuleIds([...selected]),
@@ -115,7 +120,7 @@ export default function BuildModules() {
     setNotice("");
 
     if (!orgId) {
-      const pending = readPendingBuild();
+      const pending = isStandalone ? readPendingBuild() : [];
       const nextIds = normalizeSelectedModuleIds(
         pending.length ? pending : defaults
       );
@@ -173,7 +178,7 @@ export default function BuildModules() {
     } finally {
       setLoading(false);
     }
-  }, [defaults, isOnboarding, orgId]);
+  }, [defaults, isOnboarding, isStandalone, orgId]);
 
   React.useEffect(() => {
     loadConfig();
@@ -203,12 +208,70 @@ export default function BuildModules() {
     setBusy(true);
     setError("");
     setNotice("");
+    let createdOrgId = "";
 
     try {
-      if (!orgId) {
+      if (isStandalone) {
         writePendingBuild(selectedIds);
         setSavedIds(selectedIds);
         navigate("/signin?mode=register&from=builder");
+        return;
+      }
+
+      if (isNewOrg) {
+        const trimmedName = String(orgName || "").trim();
+        if (!trimmedName) {
+          setError("Give this new organization a name first.");
+          return;
+        }
+
+        const orgResponse = await fetch("/api/orgs/create", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: trimmedName }),
+        });
+        const orgPayload = await orgResponse.json().catch(() => ({}));
+        if (!orgResponse.ok || !orgPayload?.ok || !orgPayload?.org?.id) {
+          throw new Error(
+            orgPayload?.error || "Could not create this organization."
+          );
+        }
+
+        createdOrgId = String(orgPayload.org.id);
+        await requestModuleConfig(createdOrgId, {
+          method: "PUT",
+          body: { enabled_modules: selectedIds },
+        });
+        clearPendingBuild();
+
+        try {
+          const orgsResponse = await fetch("/api/orgs", {
+            credentials: "include",
+            headers: { Accept: "application/json" },
+          });
+          const orgsPayload = await orgsResponse.json().catch(() => ({}));
+          if (
+            orgsResponse.ok &&
+            orgsPayload?.ok &&
+            Array.isArray(orgsPayload.orgs)
+          ) {
+            localStorage.setItem("bf_orgs", JSON.stringify(orgsPayload.orgs));
+          }
+        } catch {}
+
+        setSavedIds(selectedIds);
+        window.dispatchEvent(
+          new CustomEvent("bf:modules_changed", {
+            detail: { orgId: createdOrgId, enabled_modules: selectedIds },
+          })
+        );
+        navigate("/org/" + encodeURIComponent(createdOrgId) + "/overview", {
+          replace: true,
+        });
         return;
       }
 
@@ -233,6 +296,14 @@ export default function BuildModules() {
         })
       );
     } catch (saveError) {
+      if (createdOrgId) {
+        writePendingBuild(selectedIds);
+        navigate(
+          "/org/" + encodeURIComponent(createdOrgId) + "/build?first=1",
+          { replace: true }
+        );
+        return;
+      }
       setError(saveError?.message || "Could not save this build.");
     } finally {
       setBusy(false);
@@ -248,7 +319,9 @@ export default function BuildModules() {
           <p className="bf-build-lede">
             {isStandalone
               ? "Choose what your group needs. When you build, Bondfire will ask for the account that owns this space."
-              : "Start with the core. Keep the pieces that serve the group. Add more when the work asks for it."}
+              : isNewOrg
+                ? "Name the new organization, choose its modules, and Bondfire will open the new workspace when you build."
+                : "Start with the core. Keep the pieces that serve the group. Add more when the work asks for it."}
           </p>
         </div>
         <div className="bf-build-counter" aria-live="polite">
@@ -276,6 +349,23 @@ export default function BuildModules() {
           <p className="bf-build-rail-copy">
             The core stays present: dashboard, settings, security, and the build room. Everything else is yours to shape.
           </p>
+          {isNewOrg ? (
+            <label
+              style={{
+                display: "grid",
+                gap: 6,
+                margin: "18px 0",
+              }}
+            >
+              <span className="bf-build-label">NEW ORGANIZATION</span>
+              <input
+                className="input"
+                value={orgName}
+                onChange={(event) => setOrgName(event.target.value)}
+                placeholder="Organization name"
+              />
+            </label>
+          ) : null}
           <ul className="bf-build-core-list">
             <li><span>01</span>Overview</li>
             <li><span>02</span>Settings</li>
@@ -295,16 +385,19 @@ export default function BuildModules() {
                 !canEdit ||
                 loading ||
                 busy ||
-                (Boolean(orgId) && !dirty && !isOnboarding)
+                (Boolean(orgId) && !dirty && !isOnboarding) ||
+                (isNewOrg && !orgName.trim())
               }
             >
               {busy
                 ? "Building…"
                 : isStandalone
                   ? "Build & continue"
-                  : dirty || isOnboarding
-                    ? "Build this Bondfire"
-                    : "Build is current"}
+                  : isNewOrg
+                    ? "Create this Bondfire"
+                    : dirty || isOnboarding
+                      ? "Build this Bondfire"
+                      : "Build is current"}
             </button>
             {!canEdit && !loading ? (
               <p className="bf-build-permission">
@@ -315,6 +408,16 @@ export default function BuildModules() {
               <p className="bf-build-message is-error">{error}</p>
             ) : null}
             {notice ? <p className="bf-build-message">{notice}</p> : null}
+            {isStandalone ? (
+              <Link
+                className="helper"
+                to="/signin?mode=login"
+                onClick={clearPendingBuild}
+                style={{ display: "inline-block", marginTop: 12 }}
+              >
+                Already have an account? Sign in instead.
+              </Link>
+            ) : null}
           </div>
         </aside>
 

@@ -51,6 +51,57 @@ export default function SignIn() {
 		return { res, data };
 	}
 
+	async function finishNewBuildAfterAuth() {
+		const pending = readPendingBuild();
+		if (!fromBuilder || !pending.length) return false;
+
+		const newOrgName = String(orgName || "").trim() || "New Bondfire";
+		const { res: orgRes, data: orgData } = await postJson("/api/orgs/create", {
+			name: newOrgName,
+		});
+		if (!orgRes.ok || !orgData?.ok || !orgData?.org?.id) {
+			throw new Error(orgData?.error || "Could not create the new organization");
+		}
+
+		const orgId = String(orgData.org.id);
+		const moduleRes = await fetch(
+			"/api/orgs/" + encodeURIComponent(orgId) + "/modules",
+			{
+				method: "PUT",
+				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "application/json",
+				},
+				body: JSON.stringify({ enabled_modules: pending }),
+			}
+		);
+		const moduleData = await safeJson(moduleRes);
+
+		try {
+			const orgsRes = await fetch("/api/orgs", { credentials: "include" });
+			const orgsData = await safeJson(orgsRes);
+			if (orgsRes.ok && orgsData?.ok && Array.isArray(orgsData.orgs)) {
+				localStorage.setItem("bf_orgs", JSON.stringify(orgsData.orgs));
+			}
+		} catch {}
+
+		if (!moduleRes.ok || moduleData?.ok === false) {
+			fireAuthChanged();
+			navigate("/org/" + encodeURIComponent(orgId) + "/build?first=1", {
+				replace: true,
+			});
+			return true;
+		}
+
+		clearPendingBuild();
+		fireAuthChanged();
+		navigate("/org/" + encodeURIComponent(orgId) + "/overview", {
+			replace: true,
+		});
+		return true;
+	}
+
 	async function handleSubmit(e) {
 		e.preventDefault();
 		setErr("");
@@ -88,10 +139,17 @@ export default function SignIn() {
 				throw new Error("SESSION_NOT_ESTABLISHED");
 			}
 
+			// If an existing user signs in from an intentional builder flow,
+			// create the new organization under that account and apply the staged build.
+			if (mode === "login" && fromBuilder && readPendingBuild().length) {
+				await finishNewBuildAfterAuth();
+				return;
+			}
+
 			// New accounts go through the builder. A staged anonymous build is
 			// applied first so the user only has to press Build once.
 			if (mode === "register" && data?.org?.id) {
-				const pending = readPendingBuild();
+				const pending = fromBuilder ? readPendingBuild() : [];
 				let pendingApplied = false;
 				if (pending.length) {
 					try {
@@ -177,6 +235,11 @@ export default function SignIn() {
 				throw new Error("SESSION_NOT_ESTABLISHED");
 			}
 
+			if (fromBuilder && readPendingBuild().length) {
+				await finishNewBuildAfterAuth();
+				return;
+			}
+
 			// Cache org list for UX
 			try {
 				const orgsRes = await fetch("/api/orgs", { credentials: "include" });
@@ -202,7 +265,13 @@ export default function SignIn() {
 		<div style={{ maxWidth: 520, margin: "8vh auto", padding: 16 }}>
 			<h1 style={{ marginBottom: 6 }}>Welcome to Bondfire</h1>
 			<p className="helper" style={{ marginTop: 0 }}>
-				{mode === "login" ? "Sign in to continue." : "Create your account and your first org."}
+				{fromBuilder
+					? mode === "login"
+						? "Sign in and Bondfire will create the new organization from the build you just chose."
+						: "Create your account and your first organization from the build you just chose."
+					: mode === "login"
+						? "Sign in to continue."
+						: "Create your account and your first org."}
 			</p>
 
 			<div style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -283,19 +352,25 @@ export default function SignIn() {
 				</form>
 			) : (
 				<form onSubmit={handleSubmit} className="grid" style={{ gap: 10, marginTop: 12 }}>
-					{mode === "register" && (
+					{(mode === "register" || fromBuilder) && (
 						<>
+							{mode === "register" ? (
+								<input
+									className="input"
+									type="text"
+									placeholder="Name"
+									value={name}
+									onChange={(e) => setName(e.target.value)}
+								/>
+							) : null}
 							<input
 								className="input"
 								type="text"
-								placeholder="Name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-							/>
-							<input
-								className="input"
-								type="text"
-								placeholder="Org name"
+								placeholder={
+									fromBuilder && mode === "login"
+										? "New organization name"
+										: "Org name"
+								}
 								value={orgName}
 								onChange={(e) => setOrgName(e.target.value)}
 							/>
@@ -329,7 +404,11 @@ export default function SignIn() {
 					)}
 
 					<button className="btn-red" disabled={busy}>
-						{busy ? "Working…" : mode === "register" ? "Create account" : "Sign in"}
+						{busy ? "Working…" : mode === "register"
+							? "Create account"
+							: fromBuilder
+								? "Sign in & create org"
+								: "Sign in"}
 					</button>
 				</form>
 			)}

@@ -118,12 +118,21 @@ const Brand = ({ orgId, logoSrc }) => {
   }, [inferredOrgId]);
 
   const label = orgName || "Org";
-  const imgSrc = logoSrc || "/logo-bondfire.png";
+  const imgSrc = logoSrc || "/logos/core.png";
 
   return (
     <div className="bf-brand-wrap">
       <Link className="bf-brand" to={homeHref}>
-        <img src={imgSrc} alt="Bondfire logo" />
+        <img
+          src={imgSrc}
+          alt="Bondfire logo"
+          onError={(event) => {
+            if (!logoSrc && !event.currentTarget.dataset.fallback) {
+              event.currentTarget.dataset.fallback = "true";
+              event.currentTarget.src = "/logo-bondfire.png";
+            }
+          }}
+        />
         <span>Bondfire</span>
       </Link>
 

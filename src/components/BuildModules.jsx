@@ -15,6 +15,20 @@ import {
 } from "../platform/pendingBuild.js";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+const CORE_LOGO_PATH = "/logos/core.png";
+const MODULE_LOGO_PATHS = Object.freeze({
+  needs: "/logos/needs.png",
+  pledges: "/logos/pledges.png",
+  inventory: "/logos/inventory.png",
+  meetings: "/logos/meetings.png",
+  drive: "/logos/drive.png",
+  events: "/logos/events.png",
+  "witness-archive": "/logos/rec.png",
+  "bondfire-chat": "/logos/firechat.png",
+  intake: "/logos/intake.png",
+  studio: "/logos/studio.png",
+  "publishing-colophon": "/logos/colophon.png",
+});
 
 function modulePath(orgId) {
   return "/api/orgs/" + encodeURIComponent(orgId) + "/modules";
@@ -340,6 +354,13 @@ export default function BuildModules() {
       <div className="bf-build-layout">
         <aside className="bf-build-rail">
           <div className="bf-build-rail-brand">
+            <img
+              className="bf-build-core-logo"
+              src={CORE_LOGO_PATH}
+              alt=""
+              aria-hidden="true"
+              onError={(event) => event.currentTarget.remove()}
+            />
             <span className="bf-build-mark">BF</span>
             <span>Bondfire</span>
           </div>
@@ -457,15 +478,29 @@ export default function BuildModules() {
           <div className="bf-build-grid">
             {visibleModules.map((moduleDef) => {
               const isSelected = selected.has(moduleDef.id);
+              const logoPath = MODULE_LOGO_PATHS[moduleDef.id] || "";
               return (
                 <article
                   className={
                     "bf-build-module-card" + (isSelected ? " is-selected" : "")
                   }
                   key={moduleDef.id}
+                  data-module-id={moduleDef.id}
                 >
                   <div className="bf-build-module-meta">
-                    <span className="bf-build-module-mark">{moduleDef.mark}</span>
+                    <span className="bf-build-module-logo-wrap" aria-hidden="true">
+                      {logoPath ? (
+                        <img
+                          className="bf-build-module-logo"
+                          src={logoPath}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          onError={(event) => event.currentTarget.remove()}
+                        />
+                      ) : null}
+                      <span className="bf-build-module-mark">{moduleDef.mark}</span>
+                    </span>
                     <span className="bf-build-module-state">
                       {isSelected ? "ADDED" : "AVAILABLE"}
                     </span>

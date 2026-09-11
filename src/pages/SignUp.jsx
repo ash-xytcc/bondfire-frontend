@@ -1,6 +1,7 @@
 // src/pages/SignUp.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { clearPendingBuild, readPendingBuild } from "../platform/pendingBuild.js";
 
 export default function SignUp() {
   const nav = useNavigate();
@@ -29,9 +30,35 @@ export default function SignUp() {
       localStorage.removeItem("demo_user");
 
       if (data?.org?.id) {
+        const pending = readPendingBuild();
+        let pendingApplied = false;
+        if (pending.length) {
+          try {
+            const moduleRes = await fetch(
+              "/api/orgs/" + encodeURIComponent(data.org.id) + "/modules",
+              {
+                method: "PUT",
+                credentials: "include",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+                body: JSON.stringify({ enabled_modules: pending }),
+              }
+            );
+            const moduleData = await moduleRes.json().catch(() => ({}));
+            pendingApplied = moduleRes.ok && moduleData?.ok !== false;
+          } catch {}
+        }
+        if (pendingApplied) clearPendingBuild();
         const orgs = [{ id: data.org.id, name: data.org.name, role: data.org.role || "owner" }];
         localStorage.setItem("bf_orgs", JSON.stringify(orgs));
-        nav(`/org/${data.org.id}`, { replace: true });
+        nav(
+          pending.length && pendingApplied
+            ? "/org/" + data.org.id + "/overview"
+            : "/org/" + data.org.id + "/build?first=1",
+          { replace: true }
+        );
       } else {
         nav("/orgs", { replace: true });
       }

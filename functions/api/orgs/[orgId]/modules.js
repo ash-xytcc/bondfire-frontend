@@ -1,17 +1,25 @@
 import { bad, json, now } from "../../_lib/http.js";
 import { getDb, requireOrgRole } from "../../_lib/auth.js";
 
+const CORE_MODULE_IDS = Object.freeze(["people", "public-site"]);
+
 const DEFAULT_ENABLED_MODULES = Object.freeze([
-  "people",
+  ...CORE_MODULE_IDS,
   "needs",
+  "pledges",
   "inventory",
   "meetings",
+  "drive",
   "events",
   "witness-archive",
-  "drive",
-  "studio",
-  "public-site",
   "bondfire-chat",
+  "intake",
+  "studio",
+  "publishing-colophon",
+]);
+
+const MODULE_ORDER = Object.freeze([
+  ...DEFAULT_ENABLED_MODULES,
   "module-chat",
 ]);
 
@@ -35,8 +43,12 @@ function parseEnabledModules(value) {
     try { parsed = JSON.parse(value); } catch { parsed = []; }
   }
   const requested = Array.isArray(parsed) ? parsed : [];
-  const wanted = new Set(requested.map((id) => String(id || "").trim()).filter(Boolean));
-  return DEFAULT_ENABLED_MODULES.filter((id) => wanted.has(id));
+  const wanted = new Set(
+    [...CORE_MODULE_IDS, ...requested]
+      .map((id) => String(id || "").trim())
+      .filter(Boolean)
+  );
+  return MODULE_ORDER.filter((id) => wanted.has(id));
 }
 
 function currentUserId(auth) {

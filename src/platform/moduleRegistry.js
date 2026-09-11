@@ -1,12 +1,15 @@
 /**
  * Bondfire V3 module registry.
  *
- * The registry is the shared vocabulary for the builder, navigation, and
- * future phased rollouts. Core modules are available now; on-deck modules
- * stay visible as honest placeholders until their routes are ready.
+ * Core is always present. The selectable modules below are the canonical
+ * initial Bondfire slate. The on-deck list is deliberately separate: those
+ * ideas are visible as future work, but cannot be selected or silently appear
+ * in a build until they have a real surface behind them.
  */
 
-const LIVE_MODULES = [
+const CORE_MODULE_IDS = Object.freeze(["people", "public-site"]);
+
+const CORE_MODULES = [
   {
     id: "people",
     label: "People",
@@ -14,14 +17,30 @@ const LIVE_MODULES = [
     mark: "PE",
     description: "Keep the human map close: members, roles, skills, and the people who make the work possible.",
     routeBase: "people",
-    tier: "live",
+    tier: "core",
     available: true,
+    builderVisible: false,
     defaultEnabled: true,
   },
   {
+    id: "public-site",
+    label: "Public site",
+    name: "Public page",
+    mark: "PB",
+    description: "Choose what the outside world can see while the private room stays private.",
+    routeBase: "public",
+    tier: "core",
+    available: true,
+    builderVisible: false,
+    defaultEnabled: true,
+  },
+];
+
+const LIVE_MODULES = [
+  {
     id: "needs",
     label: "Needs",
-    name: "Needs board",
+    name: "Needs",
     mark: "ND",
     description: "Turn requests into visible work without losing the context, care, or follow-through around them.",
     routeBase: "needs",
@@ -30,10 +49,21 @@ const LIVE_MODULES = [
     defaultEnabled: true,
   },
   {
+    id: "pledges",
+    label: "Pledges",
+    name: "Pledges",
+    mark: "PL",
+    description: "Track concrete offers of time, money, supplies, rides, and other forms of support.",
+    routeBase: "pledges",
+    tier: "live",
+    available: true,
+    defaultEnabled: true,
+  },
+  {
     id: "inventory",
     label: "Inventory",
-    name: "Shared inventory",
-    mark: "IN",
+    name: "Inventory",
+    mark: "IV",
     description: "Know what is on hand, what is moving, and what the collective can share right now.",
     routeBase: "inventory",
     tier: "live",
@@ -43,10 +73,21 @@ const LIVE_MODULES = [
   {
     id: "meetings",
     label: "Meetings",
-    name: "Meeting notes + rhythm",
+    name: "Meetings",
     mark: "MT",
     description: "Give decisions a home and let the group keep its own cadence instead of chasing productivity theater.",
     routeBase: "meetings",
+    tier: "live",
+    available: true,
+    defaultEnabled: true,
+  },
+  {
+    id: "drive",
+    label: "Drive",
+    name: "Drive / documents",
+    mark: "DR",
+    description: "Keep working documents, notes, templates, forms, and files somewhere the whole crew can find them.",
+    routeBase: "drive",
     tier: "live",
     available: true,
     defaultEnabled: true,
@@ -64,22 +105,33 @@ const LIVE_MODULES = [
   },
   {
     id: "witness-archive",
-    label: "Witness",
-    name: "Witness archive",
-    mark: "WI",
-    description: "Hold memory with intention: what happened, what mattered, and what should not be erased.",
+    label: "REC",
+    name: "REC / witness archive",
+    mark: "RC",
+    description: "Record and preserve what happened, what mattered, and what should not be erased.",
     routeBase: "witness",
     tier: "live",
     available: true,
     defaultEnabled: true,
   },
   {
-    id: "drive",
-    label: "Drive",
-    name: "Shared drive",
-    mark: "DR",
-    description: "Keep working documents, notes, templates, and files somewhere the whole crew can find them.",
-    routeBase: "drive",
+    id: "bondfire-chat",
+    label: "FireChat",
+    name: "FireChat",
+    mark: "FC",
+    description: "Keep the quick talk close to the work, in a room that belongs to the organization.",
+    routeBase: "chat",
+    tier: "live",
+    available: true,
+    defaultEnabled: true,
+  },
+  {
+    id: "intake",
+    label: "Intake",
+    name: "Public intake",
+    mark: "IT",
+    description: "Receive requests, offers, volunteer interest, and meeting responses through the public front door.",
+    routeBase: "intake",
     tier: "live",
     available: true,
     defaultEnabled: true,
@@ -96,37 +148,33 @@ const LIVE_MODULES = [
     defaultEnabled: true,
   },
   {
-    id: "public-site",
-    label: "Public site",
-    name: "Public page",
-    mark: "PB",
-    description: "Choose what the outside world can see, find, and act on while the private room stays private.",
-    routeBase: "public",
+    id: "publishing-colophon",
+    label: "Colophon",
+    name: "Colophon publishing",
+    mark: "CO",
+    description: "Open the existing Colophon publishing workspace when the group is ready to publish.",
+    routeBase: "colophon",
+    externalUrl: "https://colophon-hub.github.io/colophon/",
     tier: "live",
     available: true,
     defaultEnabled: true,
+    status: "available-external",
   },
-  {
-    id: "bondfire-chat",
-    label: "Chat",
-    name: "Bondfire chat",
-    mark: "CH",
-    description: "Keep the quick talk close to the work, with a room that belongs to the organization.",
-    routeBase: "chat",
-    tier: "live",
-    available: true,
-    defaultEnabled: true,
-  },
+];
+
+const LEGACY_MODULES = [
   {
     id: "module-chat",
     label: "Module chat",
     name: "Module chat",
     mark: "MC",
-    description: "A focused conversation surface for teams that want a dedicated module room.",
+    description: "Legacy focused conversation surface retained for existing organizations.",
     routeBase: "chat-module",
-    tier: "live",
+    tier: "legacy",
     available: true,
-    defaultEnabled: true,
+    builderVisible: false,
+    defaultEnabled: false,
+    status: "legacy",
   },
 ];
 
@@ -159,17 +207,6 @@ const ON_DECK_MODULES = [
     name: "Campaign coordination",
     mark: "CA",
     description: "Bring a campaign from intention to action with shared tasks, signals, and accountability.",
-    tier: "on-deck",
-    available: false,
-    defaultEnabled: false,
-    status: "planned",
-  },
-  {
-    id: "publishing-colophon",
-    label: "Colophon",
-    name: "Publishing + colophon",
-    mark: "CO",
-    description: "Publish the work with its sources, conditions, and people named instead of flattened away.",
     tier: "on-deck",
     available: false,
     defaultEnabled: false,
@@ -209,36 +246,47 @@ const ON_DECK_MODULES = [
   },
 ];
 
-export const platformModuleRegistry = [...LIVE_MODULES, ...ON_DECK_MODULES];
+export const platformModuleRegistry = [
+  ...CORE_MODULES,
+  ...LIVE_MODULES,
+  ...LEGACY_MODULES,
+  ...ON_DECK_MODULES,
+];
 
 export const DEFAULT_ENABLED_MODULE_IDS = Object.freeze(
-  LIVE_MODULES.filter((moduleDef) => moduleDef.defaultEnabled).map((moduleDef) => moduleDef.id)
+  platformModuleRegistry
+    .filter((moduleDef) => moduleDef.available && moduleDef.defaultEnabled)
+    .map((moduleDef) => moduleDef.id)
 );
+
+function withCore(modules) {
+  return [...new Set([...CORE_MODULE_IDS, ...(Array.isArray(modules) ? modules : [])])];
+}
 
 export const STARTER_PACKS = Object.freeze([
   {
     id: "full-house",
     label: "Full house",
-    description: "Every live module, ready to go.",
+    description: "Every current Bondfire module, including the Colophon launch surface.",
     modules: DEFAULT_ENABLED_MODULE_IDS,
   },
   {
     id: "organizing",
     label: "Organizing cell",
-    description: "People, rhythm, needs, events, and the shared room.",
-    modules: ["people", "meetings", "needs", "events", "bondfire-chat", "witness-archive", "drive"],
+    description: "Needs, pledges, inventory, meetings, events, and the shared room.",
+    modules: withCore(["needs", "pledges", "inventory", "meetings", "events", "bondfire-chat", "drive", "intake"]),
   },
   {
     id: "community",
     label: "Community desk",
     description: "The public front door plus the practical basics.",
-    modules: ["people", "needs", "events", "bondfire-chat", "public-site"],
+    modules: withCore(["needs", "inventory", "events", "intake", "bondfire-chat"]),
   },
   {
-    id: "story",
-    label: "Story room",
-    description: "Memory, making, publishing, and the room behind it.",
-    modules: ["witness-archive", "studio", "drive", "public-site", "bondfire-chat"],
+    id: "publishing",
+    label: "Publishing room",
+    description: "REC, Drive, Studio, Intake, and the existing Colophon workspace.",
+    modules: withCore(["witness-archive", "drive", "studio", "intake", "publishing-colophon"]),
   },
 ]);
 
@@ -247,7 +295,12 @@ export function getPlatformModules() {
 }
 
 export function getAvailablePlatformModules() {
-  return getPlatformModules().filter((moduleDef) => moduleDef.available);
+  return getPlatformModules().filter(
+    (moduleDef) =>
+      moduleDef.available &&
+      moduleDef.builderVisible !== false &&
+      moduleDef.tier !== "core"
+  );
 }
 
 export function getModuleById(id) {
@@ -269,8 +322,12 @@ export function normalizeSelectedModuleIds(value) {
     : typeof value === "string"
       ? value.split(",")
       : [];
-  const wanted = new Set(requested.map((id) => String(id || "").trim()).filter(Boolean));
-  return getAvailablePlatformModules()
-    .filter((moduleDef) => wanted.has(moduleDef.id))
+  const wanted = new Set(
+    [...CORE_MODULE_IDS, ...requested]
+      .map((id) => String(id || "").trim())
+      .filter(Boolean)
+  );
+  return getPlatformModules()
+    .filter((moduleDef) => moduleDef.available && wanted.has(moduleDef.id))
     .map((moduleDef) => moduleDef.id);
 }

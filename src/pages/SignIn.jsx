@@ -1,6 +1,7 @@
 // src/pages/SignIn.jsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { clearPendingBuild, readPendingBuild } from "../platform/pendingBuild.js";
 
 function fireAuthChanged() {
 	try {
@@ -18,8 +19,12 @@ function startDemo(navigate) {
 
 export default function SignIn() {
 	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
+	const fromBuilder = searchParams.get("from") === "builder";
 
-	const [mode, setMode] = useState("login");
+	const [mode, setMode] = useState(() =>
+		fromBuilder || searchParams.get("mode") === "register" ? "register" : "login"
+	);
 
 	const [email, setEmail] = useState("");
 	const [pass, setPass] = useState("");
@@ -83,13 +88,39 @@ export default function SignIn() {
 				throw new Error("SESSION_NOT_ESTABLISHED");
 			}
 
-			// Register convenience: if register returned org id, jump in.
+			// New accounts go through the builder. A staged anonymous build is
+			// applied first so the user only has to press Build once.
 			if (mode === "register" && data?.org?.id) {
+				const pending = readPendingBuild();
+				let pendingApplied = false;
+				if (pending.length) {
+					try {
+						const moduleRes = await fetch(
+							"/api/orgs/" + encodeURIComponent(data.org.id) + "/modules",
+							{
+								method: "PUT",
+								credentials: "include",
+								headers: {
+									"Content-Type": "application/json",
+									Accept: "application/json",
+								},
+								body: JSON.stringify({ enabled_modules: pending }),
+							}
+						);
+						const moduleData = await safeJson(moduleRes);
+						pendingApplied = moduleRes.ok && moduleData?.ok !== false;
+					} catch {}
+				}
+				if (pendingApplied) clearPendingBuild();
 				try {
 					localStorage.setItem("bf_orgs", JSON.stringify([data.org]));
 				} catch {}
 				fireAuthChanged();
-				navigate(`/org/${data.org.id}`, { replace: true });
+				const destination =
+					pending.length && pendingApplied
+						? "/org/" + data.org.id + "/overview"
+						: "/org/" + data.org.id + "/build?first=1";
+				navigate(destination, { replace: true });
 				return;
 			}
 

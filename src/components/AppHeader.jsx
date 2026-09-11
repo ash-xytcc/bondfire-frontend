@@ -189,19 +189,22 @@ function OrgNav({ variant = "desktop" }) {
   const base = orgId ? `/org/${orgId}` : null;
   const items = base
     ? [
-        ["Dashboard", `${base}/overview`, "nav-overview", null],
-        ["Build", `${base}/settings?tab=build`, "nav-build", null],
-        ["People", `${base}/people`, "nav-people", "people"],
-        ["Inventory", `${base}/inventory`, "nav-inventory", "inventory"],
-        ["Needs", `${base}/needs`, "nav-needs", "needs"],
-        ["Meetings", `${base}/meetings`, "nav-meetings", "meetings"],
-        ["Events", `${base}/events`, "nav-events", "events"],
-        ["Witness", `${base}/witness`, "nav-witness", "witness-archive"],
-        ["Drive", `${base}/drive`, "nav-drive", "drive"],
-        ["Studio", `${base}/studio`, "nav-studio", "studio"],
-        ["Settings", `${base}/settings`, "nav-settings", null],
-        ["Chat", `${base}/chat`, "nav-chat", "bondfire-chat"],
-        ["Module Chat", `${base}/chat-module`, "nav-chat-module", "module-chat"],
+        ["Dashboard", base + "/overview", "nav-overview", null],
+        ["Build", base + "/build", "nav-build", null],
+        ["People", base + "/people", "nav-people", "people"],
+        ["Needs", base + "/needs", "nav-needs", "needs"],
+        ["Pledges", base + "/pledges", "nav-pledges", "pledges"],
+        ["Inventory", base + "/inventory", "nav-inventory", "inventory"],
+        ["Meetings", base + "/meetings", "nav-meetings", "meetings"],
+        ["Events", base + "/events", "nav-events", "events"],
+        ["REC", base + "/witness", "nav-witness", "witness-archive"],
+        ["FireChat", base + "/chat", "nav-chat", "bondfire-chat"],
+        ["Intake", base + "/intake", "nav-intake", "intake"],
+        ["Drive", base + "/drive", "nav-drive", "drive"],
+        ["Studio", base + "/studio", "nav-studio", "studio"],
+        ["Colophon", base + "/colophon", "nav-colophon", "publishing-colophon"],
+        ["Settings", base + "/settings", "nav-settings", null],
+        ["Module Chat", base + "/chat-module", "nav-chat-module", "module-chat"],
       ]
     : [];
 

@@ -26,6 +26,8 @@ import Security from "./pages/Security.jsx";
 import Drive from "./pages/Drive.jsx";
 import Studio from "./pages/Studio.jsx";
 import Customize from "./pages/Customize.jsx";
+import Colophon from "./pages/Colophon.jsx";
+import BuildModules from "./components/BuildModules.jsx";
 
 // COMPONENTS
 import AppHeader from "./components/AppHeader.jsx";
@@ -263,8 +265,10 @@ function Shell() {
 		logout,
 	}), [state, refresh, logout]);
 
-	const HomeRoute = () =>
-		state.authed ? <Navigate to="/orgs" replace /> : <Navigate to="/signin" replace />;
+	const HomeRoute = () => {
+		if (state.loading) return <div style={{ padding: 16 }} className="helper">Checking session…</div>;
+		return state.authed ? <Navigate to="/orgs" replace /> : <BuildModules />;
+	};
 
 	const sessionSupport = React.useMemo(
 		() => createSessionSupportSnapshot({ authed: state.authed, user: state.user }),
@@ -329,6 +333,10 @@ function Shell() {
 						</RequireAuth>
 					}
 				>
+					<Route path="build" element={<BuildModules />} />
+					<Route path="pledges" element={<ModuleRouteGate moduleId="pledges"><Navigate to="../settings?tab=pledges" replace /></ModuleRouteGate>} />
+					<Route path="intake" element={<ModuleRouteGate moduleId="intake"><Navigate to="../settings?tab=public-inbox" replace /></ModuleRouteGate>} />
+					<Route path="colophon" element={<ModuleRouteGate moduleId="publishing-colophon"><Colophon /></ModuleRouteGate>} />
 					<Route index element={<Overview />} />
 					<Route path="overview" element={<Overview />} />
 					<Route path="people" element={<ModuleRouteGate moduleId="people"><People /></ModuleRouteGate>} />

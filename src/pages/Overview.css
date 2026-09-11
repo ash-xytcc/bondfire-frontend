@@ -20,19 +20,20 @@
 }
 
 .bfDashCard {
-  transition: box-shadow 140ms ease, transform 140ms ease;
+  border-radius: 2px;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
 }
 
 .bfDashCard:hover {
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.10),
-    0 0 22px rgba(255, 0, 80, 0.10);
+  border-color: rgba(255, 91, 69, 0.62);
+  background: #171a18;
+  box-shadow: none;
   transform: translateY(-1px);
 }
 
 .bfSkel {
-  border-radius: 12px;
-  background: rgba(255,255,255,0.06);
+  border-radius: 0;
+  background: rgba(238,232,217,0.06);
   overflow: hidden;
   position: relative;
 }
@@ -99,9 +100,9 @@
 }
 
 .react-grid-placeholder {
-  background: rgba(255, 0, 80, 0.12);
-  border: 1px dashed rgba(255, 0, 80, 0.35);
-  border-radius: 16px;
+  background: rgba(255, 91, 69, 0.09);
+  border: 1px dashed rgba(255, 91, 69, 0.72);
+  border-radius: 0;
 }
 
 .bfDashMobileStack {

@@ -121,6 +121,14 @@ function readInvPar(orgId) {
   }
 }
 
+function ModuleGlyph({ label }) {
+  return (
+    <span className="bf-module-glyph" aria-hidden="true">
+      {label}
+    </span>
+  );
+}
+
 function deltaBadge(delta) {
   if (!Number.isFinite(delta) || delta === 0) return null;
   const up = delta > 0;
@@ -142,7 +150,7 @@ function pill(text, tone) {
   };
   const t = tones[tone] || tones.low;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: 999, fontSize: 12, fontWeight: 800, background: t.bg, border: `1px solid ${t.bd}`, color: t.fg, letterSpacing: ".2px" }}>
+    <span className="bf-status-pill" style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: 999, fontSize: 12, fontWeight: 800, background: t.bg, border: `1px solid ${t.bd}`, color: t.fg, letterSpacing: ".2px" }}>
       {text}
     </span>
   );
@@ -182,6 +190,7 @@ function Sparkline({ values, width = 120, height = 32 }) {
 function SkeletonBox({ w = "100%", h = 12, r = 10, style }) {
   return (
     <div
+      className="bf-skeleton-box"
       style={{
         width: w,
         height: h,
@@ -195,11 +204,11 @@ function SkeletonBox({ w = "100%", h = 12, r = 10, style }) {
   );
 }
 
-function MetricCardSkeleton({ icon = "⬛" }) {
+function MetricCardSkeleton({ icon = "BF" }) {
   return (
     <div className="card bfDashCard" style={{ padding: 14, position: "relative", minHeight: 98 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ fontSize: 18, opacity: 0.75 }}>{icon}</div>
+        <div className="bf-metric-glyph">{icon}</div>
         <SkeletonBox w={78} h={14} r={8} />
       </div>
       <div style={{ marginTop: 12 }}>
@@ -643,7 +652,7 @@ export default function Overview() {
         to,
         badge: db,
         extra: (
-          <div style={{ marginTop: 8, borderRadius: 8, padding: "4px 6px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", width: "100%", boxSizing: "border-box" }} title={`${title.toLowerCase()} trend`}>
+          <div className="bf-dashboard-sparkline" style={{ marginTop: 8, borderRadius: 8, padding: "4px 6px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", width: "100%", boxSizing: "border-box" }} title={`${title.toLowerCase()} trend`}>
             <div style={{ width: "100%", height: 18, overflow: "hidden" }}>
               <Sparkline values={historySeries[key]} width={96} height={18} />
             </div>
@@ -652,13 +661,13 @@ export default function Overview() {
       };
     };
     return [
-      mk("people", "People", "👥", countsNormalized.people, "members", "people"),
-      mk("inventory", "Inventory", "📦", countsNormalized.inventory, "items", "inventory"),
-      mk("needsOpen", "Needs", "🧾", countsNormalized.needsOpen, "open", "needs"),
-      mk("meetingsUpcoming", "Meetings", "📅", countsNormalized.meetingsUpcoming, "upcoming", "meetings"),
-      mk("pledgesActive", "Pledges", "🤝", countsNormalized.pledgesActive, "active", "settings?tab=pledges"),
-      mk("subsTotal", "New Subs", "📰", countsNormalized.subsTotal, "total", "settings?tab=newsletter"),
-      mk("publicInbox", "Inbox", "📨", countsNormalized.publicInbox, "open items", "settings?tab=public-inbox"),
+      mk("people", "People", <ModuleGlyph label="PE" />, countsNormalized.people, "members", "people"),
+      mk("inventory", "Inventory", <ModuleGlyph label="IV" />, countsNormalized.inventory, "items", "inventory"),
+      mk("needsOpen", "Needs", <ModuleGlyph label="ND" />, countsNormalized.needsOpen, "open", "needs"),
+      mk("meetingsUpcoming", "Meetings", <ModuleGlyph label="MT" />, countsNormalized.meetingsUpcoming, "upcoming", "meetings"),
+      mk("pledgesActive", "Pledges", <ModuleGlyph label="PL" />, countsNormalized.pledgesActive, "active", "settings?tab=pledges"),
+      mk("subsTotal", "New Subs", <ModuleGlyph label="NS" />, countsNormalized.subsTotal, "total", "settings?tab=newsletter"),
+      mk("publicInbox", "Inbox", <ModuleGlyph label="IB" />, countsNormalized.publicInbox, "open items", "settings?tab=public-inbox"),
     ];
   }, [countsNormalized, deltas, historySeries]);
 
@@ -838,15 +847,15 @@ export default function Overview() {
       <div className="bfTopMetricsRow">
         {!hasLoadedOnce && loading ? (
           <>
-            {["👥", "📦", "🧾", "📅", "🤝", "📨", "📰"].map((ic, i) => <div key={i}><MetricCardSkeleton icon={ic} /></div>)}
+            {["PE", "IV", "ND", "MT", "PL", "IB", "NS"].map((ic, i) => <div key={i}><MetricCardSkeleton icon={ic} /></div>)}
           </>
         ) : (
           topCards.map((c) => (
             <button key={c.key} type="button" style={cardBtnStyle} onClick={() => go(c.to)}>
               <div className="card bfDashCard" style={{ padding: 14, position: "relative", minHeight: 118, overflow: "hidden" }}>
-                {c.badge ? <div style={{ position: "absolute", top: 12, right: 12 }}><span style={c.badge.style}>{c.badge.txt}</span></div> : null}
+                {c.badge ? <div style={{ position: "absolute", top: 12, right: 12 }}><span className="bf-delta-pill" style={c.badge.style}>{c.badge.txt}</span></div> : null}
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ fontSize: 18 }}>{c.icon}</div>
+                  <div className="bf-metric-glyph">{c.icon}</div>
                   <div style={{ fontWeight: 900 }}>{c.title}</div>
                 </div>
                 <div style={{ marginTop: 10, fontSize: 34, fontWeight: 900, lineHeight: 1 }}>{c.value}</div>

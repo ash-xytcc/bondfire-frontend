@@ -10,30 +10,38 @@ function useEnabledOrgModules(orgId) {
   React.useEffect(() => {
     let alive = true;
     setEnabledModules(null);
-    if (!orgId) return undefined;
 
-    fetch(`/api/orgs/${encodeURIComponent(orgId)}/modules`, {
-      credentials: "include",
-      headers: { Accept: "application/json" },
-    })
-      .then(async (response) => {
+    const load = async () => {
+      if (!orgId) return;
+      try {
+        const response = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/modules`, {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
         const payload = await response.json().catch(() => ({}));
-        return response.ok && payload?.ok !== false ? payload : null;
-      })
-      .then((payload) => {
-        if (!alive || !Array.isArray(payload?.enabled_modules)) return;
+        if (!alive || !response.ok || !Array.isArray(payload?.enabled_modules)) return;
         setEnabledModules(new Set(payload.enabled_modules.map((id) => String(id))));
-      })
-      .catch(() => {});
+      } catch {
+        // Keep the existing full navigation visible if the module read fails.
+      }
+    };
 
+    const onModulesChanged = (event) => {
+      const changedOrgId = event?.detail?.orgId;
+      if (changedOrgId && String(changedOrgId) !== String(orgId)) return;
+      load();
+    };
+
+    load();
+    window.addEventListener("bf:modules_changed", onModulesChanged);
     return () => {
       alive = false;
+      window.removeEventListener("bf:modules_changed", onModulesChanged);
     };
   }, [orgId]);
 
   return enabledModules;
 }
-
 function useOrgIdFromPath() {
   const loc = useLocation();
   const pathname = loc.pathname || "";

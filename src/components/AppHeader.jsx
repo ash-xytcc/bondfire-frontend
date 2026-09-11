@@ -4,6 +4,36 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 
 const homeHref = "/orgs";
 
+function useEnabledOrgModules(orgId) {
+  const [enabledModules, setEnabledModules] = React.useState(null);
+
+  React.useEffect(() => {
+    let alive = true;
+    setEnabledModules(null);
+    if (!orgId) return undefined;
+
+    fetch(`/api/orgs/${encodeURIComponent(orgId)}/modules`, {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+    })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        return response.ok && payload?.ok !== false ? payload : null;
+      })
+      .then((payload) => {
+        if (!alive || !Array.isArray(payload?.enabled_modules)) return;
+        setEnabledModules(new Set(payload.enabled_modules.map((id) => String(id))));
+      })
+      .catch(() => {});
+
+    return () => {
+      alive = false;
+    };
+  }, [orgId]);
+
+  return enabledModules;
+}
+
 function useOrgIdFromPath() {
   const loc = useLocation();
   const pathname = loc.pathname || "";
@@ -121,6 +151,7 @@ const Brand = ({ orgId, logoSrc }) => {
 
 function OrgNav({ variant = "desktop" }) {
   const orgId = useOrgIdFromPath();
+  const enabledModules = useEnabledOrgModules(orgId);
 
   const isDrawer = variant === "drawer";
 
@@ -150,21 +181,25 @@ function OrgNav({ variant = "desktop" }) {
   const base = orgId ? `/org/${orgId}` : null;
   const items = base
     ? [
-        ["Dashboard", `${base}/overview`, "nav-overview"],
-        ["People", `${base}/people`, "nav-people"],
-        ["Inventory", `${base}/inventory`, "nav-inventory"],
-        ["Needs", `${base}/needs`, "nav-needs"],
-        ["Meetings", `${base}/meetings`, "nav-meetings"],
-        ["Events", `${base}/events`, "nav-events"],
-        ["Witness", `${base}/witness`, "nav-witness"],
-        ["Drive", `${base}/drive`, "nav-drive"],
-        ["Studio", `${base}/studio`, "nav-studio"],
-        ["Settings", `${base}/settings`, "nav-settings"],
-        ["Chat", `${base}/chat`, "nav-chat"],
-        ["Module Chat", `${base}/chat-module`, "nav-chat-module"],
+        ["Dashboard", `${base}/overview`, "nav-overview", null],
+        ["Build", `${base}/settings?tab=build`, "nav-build", null],
+        ["People", `${base}/people`, "nav-people", "people"],
+        ["Inventory", `${base}/inventory`, "nav-inventory", "inventory"],
+        ["Needs", `${base}/needs`, "nav-needs", "needs"],
+        ["Meetings", `${base}/meetings`, "nav-meetings", "meetings"],
+        ["Events", `${base}/events`, "nav-events", "events"],
+        ["Witness", `${base}/witness`, "nav-witness", "witness-archive"],
+        ["Drive", `${base}/drive`, "nav-drive", "drive"],
+        ["Studio", `${base}/studio`, "nav-studio", "studio"],
+        ["Settings", `${base}/settings`, "nav-settings", null],
+        ["Chat", `${base}/chat`, "nav-chat", "bondfire-chat"],
+        ["Module Chat", `${base}/chat-module`, "nav-chat-module", "module-chat"],
       ]
     : [];
 
+  const visibleItems = enabledModules
+    ? items.filter((item) => !item[3] || enabledModules.has(item[3]))
+    : items;
   return (
     <nav
       className={`bf-appnav${isDrawer ? " is-drawer" : ""}`}
@@ -189,7 +224,7 @@ function OrgNav({ variant = "desktop" }) {
         All Orgs
       </NavLink>
 
-      {items.map(([label, to, tourId]) => (
+      {visibleItems.map(([label, to, tourId]) => (
         <NavLink
           key={to}
           to={to}

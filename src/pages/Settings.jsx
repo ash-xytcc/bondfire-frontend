@@ -7,6 +7,7 @@ import { isDemoMode } from "../demo/demoMode.js";
 import { demoHandle, getDemoSubscribersCsv, ensureDemoOrgList } from "../demo/demoStore.js";
 import { AdminPublicConfigCard } from "../components/AdminPublicConfigCard.jsx";
 import { PublicDomainCard } from "../components/PublicDomainCard.jsx";
+import BuildModules from "../components/BuildModules.jsx";
 
 /* ---------- API helper ---------- */
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
@@ -134,6 +135,7 @@ export default function Settings() {
   const tabs = React.useMemo(
     () => [
       ["org", "Organization"],
+      ["build", "Build"],
       ["invites", "Invites"],
       ["members", "Members"],
       ["public", "Public page"],
@@ -1018,6 +1020,9 @@ React.useEffect(() => {
           })}
         </div>
       </div>
+
+      {/* Build */}
+      {tab === "build" && <BuildModules />}
 
       {/* Security */}
       {tab === "security" && (

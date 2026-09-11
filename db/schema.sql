@@ -26,6 +26,15 @@ CREATE TABLE IF NOT EXISTS org_memberships (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS org_module_configs (
+  org_id TEXT PRIMARY KEY,
+  enabled_modules_json TEXT NOT NULL DEFAULT '[]',
+  version INTEGER NOT NULL DEFAULT 1,
+  updated_at INTEGER NOT NULL,
+  updated_by TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_org_module_configs_updated_at ON org_module_configs(updated_at DESC);
 CREATE TABLE IF NOT EXISTS people (
   id TEXT PRIMARY KEY,
   org_id TEXT NOT NULL,

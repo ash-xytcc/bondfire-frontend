@@ -1,4 +1,4 @@
-export const APP_SCHEMA_VERSION = 5
+export const APP_SCHEMA_VERSION = 6
 
 const MIGRATIONS = [
   {
@@ -114,6 +114,14 @@ const MIGRATIONS = [
     sql: [
       `INSERT OR IGNORE INTO app_schema_state (scope, version, updated_at)
        VALUES ('global', 0, CURRENT_TIMESTAMP);`,
+    ],
+  },
+  {
+    version: 6,
+    name: '006_org_module_configs',
+    sql: [
+      "CREATE TABLE IF NOT EXISTS org_module_configs (org_id TEXT PRIMARY KEY, enabled_modules_json TEXT NOT NULL DEFAULT '[]', version INTEGER NOT NULL DEFAULT 1, updated_at INTEGER NOT NULL, updated_by TEXT);",
+      "CREATE INDEX IF NOT EXISTS idx_org_module_configs_updated_at ON org_module_configs(updated_at DESC);",
     ],
   },
 ]

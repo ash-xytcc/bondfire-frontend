@@ -369,83 +369,25 @@ input[type="radio"] {
   box-shadow: inset 0 -2px var(--bf-v3-lime);
 }
 
-/* Module marks stay restrained in navigation: visible in the mobile drawer,
-   plus the active desktop module only. That gives the logos a job without
-   turning a crowded header into a parade of tiny posters. */
-.bf-appnav.is-drawer .bf-appnav-link[href$="/needs"]::before,
-.bf-appnav.is-drawer .bf-appnav-link[href$="/pledges"]::before,
-.bf-appnav.is-drawer .bf-appnav-link[href$="/inventory"]::before,
-.bf-appnav.is-drawer .bf-appnav-link[href$="/meetings"]::before,
-.bf-appnav.is-drawer .bf-appnav-link[href$="/drive"]::before,
-.bf-appnav.is-drawer .bf-appnav-link[href$="/events"]::before,
-.bf-appnav.is-drawer .bf-appnav-link[href$="/witness"]::before,
-.bf-appnav.is-drawer .bf-appnav-link[href$="/chat"]::before,
-.bf-appnav.is-drawer .bf-appnav-link[href$="/intake"]::before,
-.bf-appnav.is-drawer .bf-appnav-link[href$="/studio"]::before,
-.bf-appnav.is-drawer .bf-appnav-link[href$="/colophon"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/needs"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/pledges"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/inventory"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/meetings"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/drive"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/events"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/witness"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/chat"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/intake"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/studio"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/colophon"]::before {
-  content: "";
+/* Keep the dense desktop nav quiet: only the active module gets its mark.
+   The mobile drawer can show every canonical module mark because it has room. */
+.bf-appnav-module-logo {
+  display: none;
   width: 18px;
   height: 18px;
   flex: 0 0 18px;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
+  object-fit: contain;
 }
 
-.bf-appnav.is-drawer .bf-appnav-link[href$="/needs"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/needs"]::before {
-  background-image: url("/logos/needs.png");
+.bf-appnav.is-drawer .bf-appnav-module-logo,
+.bf-nav-desktop .bf-appnav-link.is-active .bf-appnav-module-logo {
+  display: block;
 }
-.bf-appnav.is-drawer .bf-appnav-link[href$="/pledges"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/pledges"]::before {
-  background-image: url("/logos/pledges.png");
-}
-.bf-appnav.is-drawer .bf-appnav-link[href$="/inventory"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/inventory"]::before {
-  background-image: url("/logos/inventory.png");
-}
-.bf-appnav.is-drawer .bf-appnav-link[href$="/meetings"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/meetings"]::before {
-  background-image: url("/logos/meetings.png");
-}
-.bf-appnav.is-drawer .bf-appnav-link[href$="/drive"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/drive"]::before {
-  background-image: url("/logos/drive.png");
-}
-.bf-appnav.is-drawer .bf-appnav-link[href$="/events"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/events"]::before {
-  background-image: url("/logos/events.png");
-}
-.bf-appnav.is-drawer .bf-appnav-link[href$="/witness"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/witness"]::before {
-  background-image: url("/logos/rec.png");
-}
-.bf-appnav.is-drawer .bf-appnav-link[href$="/chat"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/chat"]::before {
-  background-image: url("/logos/firechat.png");
-}
-.bf-appnav.is-drawer .bf-appnav-link[href$="/intake"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/intake"]::before {
-  background-image: url("/logos/intake.png");
-}
-.bf-appnav.is-drawer .bf-appnav-link[href$="/studio"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/studio"]::before {
-  background-image: url("/logos/studio.png");
-}
-.bf-appnav.is-drawer .bf-appnav-link[href$="/colophon"]::before,
-.bf-nav-desktop .bf-appnav-link.is-active[href$="/colophon"]::before {
-  background-image: url("/logos/colophon.png");
+
+.bf-appnav.is-drawer .bf-appnav-link {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
 }
 
 .bf-hamburger {

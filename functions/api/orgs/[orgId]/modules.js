@@ -1,5 +1,5 @@
-import { bad, json, now } from "../../../_lib/http.js";
-import { getDb, requireOrgRole } from "../../../_lib/auth.js";
+import { bad, json, now } from "../../_lib/http.js";
+import { getDb, requireOrgRole } from "../../_lib/auth.js";
 
 const DEFAULT_ENABLED_MODULES = Object.freeze([
   "people",

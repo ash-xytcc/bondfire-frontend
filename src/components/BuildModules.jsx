@@ -9,7 +9,7 @@ import {
   normalizeSelectedModuleIds,
 } from "../platform/moduleRegistry.js";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\\/+$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 
 function modulePath(orgId) {
   return "/api/orgs/" + encodeURIComponent(orgId) + "/modules";

@@ -5,6 +5,7 @@ import {
 	Route,
 	Navigate,
 	useLocation,
+	useParams,
 } from "react-router-dom";
 
 // PAGES
@@ -124,6 +125,58 @@ function RequireAuth({ children }) {
 		return <div style={{ padding: 16 }} className="helper">Checking session…</div>;
 	}
 	if (!authed) return <Navigate to="/signin" replace />;
+	return children;
+}
+
+function ModuleRouteGate({ moduleId, children }) {
+	const { orgId } = useParams();
+	const [state, setState] = React.useState({ loading: true, enabled: true });
+
+	React.useEffect(() => {
+		let alive = true;
+
+		const load = async () => {
+			if (!orgId || isDemoMode()) {
+				if (alive) setState({ loading: false, enabled: true });
+				return;
+			}
+
+			try {
+				const response = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/modules`, {
+					credentials: "include",
+					headers: { Accept: "application/json" },
+				});
+				const payload = await response.json().catch(() => ({}));
+				if (!alive) return;
+
+				// If this new endpoint is unavailable during a rollout, keep the
+				// existing route reachable rather than breaking an otherwise healthy app.
+				if (!response.ok || !Array.isArray(payload?.enabled_modules)) {
+					setState({ loading: false, enabled: true });
+					return;
+				}
+
+				setState({
+					loading: false,
+					enabled: payload.enabled_modules.map(String).includes(String(moduleId)),
+				});
+			} catch {
+				if (alive) setState({ loading: false, enabled: true });
+			}
+		};
+
+		load();
+		return () => {
+			alive = false;
+		};
+	}, [moduleId, orgId]);
+
+	if (state.loading) {
+		return <div style={{ padding: 16 }} className="helper">Checking module access…</div>;
+	}
+	if (!state.enabled) {
+		return <Navigate to={`/org/${encodeURIComponent(orgId)}/overview`} replace />;
+	}
 	return children;
 }
 
@@ -278,21 +331,21 @@ function Shell() {
 				>
 					<Route index element={<Overview />} />
 					<Route path="overview" element={<Overview />} />
-					<Route path="people" element={<People />} />
-					<Route path="inventory" element={<Inventory />} />
-					<Route path="needs" element={<Needs />} />
-					<Route path="meetings" element={<Meetings />} />
-					<Route path="meetings/:meetingId" element={<MeetingDetail />} />
+					<Route path="people" element={<ModuleRouteGate moduleId="people"><People /></ModuleRouteGate>} />
+					<Route path="inventory" element={<ModuleRouteGate moduleId="inventory"><Inventory /></ModuleRouteGate>} />
+					<Route path="needs" element={<ModuleRouteGate moduleId="needs"><Needs /></ModuleRouteGate>} />
+					<Route path="meetings" element={<ModuleRouteGate moduleId="meetings"><Meetings /></ModuleRouteGate>} />
+					<Route path="meetings/:meetingId" element={<ModuleRouteGate moduleId="meetings"><MeetingDetail /></ModuleRouteGate>} />
 					<Route path="settings" element={<Settings />} />
-					<Route path="drive" element={<Drive />} />
-					<Route path="studio" element={<Studio />} />
-					<Route path="public" element={<OrgPublicPreview />} />
+					<Route path="drive" element={<ModuleRouteGate moduleId="drive"><Drive /></ModuleRouteGate>} />
+					<Route path="studio" element={<ModuleRouteGate moduleId="studio"><Studio /></ModuleRouteGate>} />
+					<Route path="public" element={<ModuleRouteGate moduleId="public-site"><OrgPublicPreview /></ModuleRouteGate>} />
 
-					<Route path="events" element={<Events />} />
-					<Route path="events/:eventId" element={<EventDetail />} />
-					<Route path="witness" element={<WitnessArchive />} />
-					<Route path="chat-module" element={<ModuleChat />} />
-					<Route path="chat" element={<BondfireChat />} />
+					<Route path="events" element={<ModuleRouteGate moduleId="events"><Events /></ModuleRouteGate>} />
+					<Route path="events/:eventId" element={<ModuleRouteGate moduleId="events"><EventDetail /></ModuleRouteGate>} />
+					<Route path="witness" element={<ModuleRouteGate moduleId="witness-archive"><WitnessArchive /></ModuleRouteGate>} />
+					<Route path="chat-module" element={<ModuleRouteGate moduleId="module-chat"><ModuleChat /></ModuleRouteGate>} />
+					<Route path="chat" element={<ModuleRouteGate moduleId="bondfire-chat"><BondfireChat /></ModuleRouteGate>} />
 					<Route path="guard/*" element={<OrgSecretGuard />} />
 					{platformOrgRoutes.map((route) => (
 						<Route

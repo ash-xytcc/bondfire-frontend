@@ -3,6 +3,19 @@ import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
 const homeHref = "/orgs";
+const NAV_MODULE_LOGOS = Object.freeze({
+  needs: "/logos/needs.png",
+  pledges: "/logos/pledges.png",
+  inventory: "/logos/inventory.png",
+  meetings: "/logos/meetings.png",
+  drive: "/logos/drive.png",
+  events: "/logos/events.png",
+  "witness-archive": "/logos/rec.png",
+  "bondfire-chat": "/logos/firechat.png",
+  intake: "/logos/intake.png",
+  studio: "/logos/studio.png",
+  "publishing-colophon": "/logos/colophon.png",
+});
 
 function useEnabledOrgModules(orgId) {
   const [enabledModules, setEnabledModules] = React.useState(null);
@@ -244,25 +257,39 @@ function OrgNav({ variant = "desktop" }) {
         All Orgs
       </NavLink>
 
-      {visibleItems.map(([label, to, tourId]) => (
-        <NavLink
-          key={to}
-          to={to}
-          style={({ isActive }) =>
-            isDrawer
-              ? {
-                  ...drawerLinkStyle,
-                  background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
-                  border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
-                }
-              : undefined
-          }
-          className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
-          data-tour={tourId}
-        >
-          {label}
-        </NavLink>
-      ))}
+      {visibleItems.map(([label, to, tourId, moduleId]) => {
+        const logoPath = NAV_MODULE_LOGOS[moduleId] || "";
+        return (
+          <NavLink
+            key={to}
+            to={to}
+            style={({ isActive }) =>
+              isDrawer
+                ? {
+                    ...drawerLinkStyle,
+                    background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
+                    border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
+                  }
+                : undefined
+            }
+            className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
+            data-tour={tourId}
+          >
+            {logoPath ? (
+              <img
+                className="bf-appnav-module-logo"
+                src={logoPath}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                onError={(event) => event.currentTarget.remove()}
+              />
+            ) : null}
+            <span>{label}</span>
+          </NavLink>
+        );
+      })}
     </nav>
   );
 }

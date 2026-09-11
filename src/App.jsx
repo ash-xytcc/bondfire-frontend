@@ -11,6 +11,8 @@ import {
 // PAGES
 import OrgPublicPreview from "./pages/OrgPublicPreview.jsx";
 import PublicPage from "./pages/PublicPage.jsx";
+import PublicStart from "./pages/PublicStart.jsx";
+import PublicCapture from "./pages/PublicCapture.jsx";
 import Overview from "./pages/Overview.jsx";
 import OrgDash from "./pages/OrgDash.jsx";
 import InnerSanctum from "./pages/InnerSanctum.jsx";
@@ -267,7 +269,7 @@ function Shell() {
 
 	const HomeRoute = () => {
 		if (state.loading) return <div style={{ padding: 16 }} className="helper">Checking session…</div>;
-		return state.authed ? <Navigate to="/orgs" replace /> : <BuildModules />;
+		return state.authed ? <Navigate to="/orgs" replace /> : <PublicStart />;
 	};
 
 	const sessionSupport = React.useMemo(
@@ -281,7 +283,7 @@ function Shell() {
 	);
 
 	// Hide the header on public routes
-	const hideHeader = path === "/" || path.startsWith("/p/") || path === "/signin" || path === "/demo" || path === "/customize";
+	const hideHeader = path === "/" || path === "/capture" || path === "/build" || path.startsWith("/p/") || path === "/signin" || path === "/demo" || path === "/customize";
 
 	return (
 		<AuthCtx.Provider value={ctxValue}>
@@ -298,11 +300,15 @@ function Shell() {
 				<Route path="/site/:slug" element={<PublicPage />} />
 				<Route path="/p/*" element={<PublicPage />} />
 				<Route path="/signin" element={<SignIn />} />
+				<Route path="/capture" element={<PublicCapture authed={state.authed} />} />
 				<Route path="/demo" element={<DemoBoot />} />
 				<Route path="/customize" element={<Customize />} />
 
 				{/* Landing */}
 				<Route path="/" element={<HomeRoute />} />
+
+				{/* Public builder; save hands anonymous users to auth, while ?new=1 serves signed-in creation */}
+				<Route path="/build" element={<BuildModules />} />
 
 				{/* Orgs list */}
 				<Route
@@ -310,16 +316,6 @@ function Shell() {
 					element={
 						<RequireAuth>
 							<OrgDash />
-						</RequireAuth>
-					}
-				/>
-
-				{/* Authenticated new-organization builder */}
-				<Route
-					path="/build"
-					element={
-						<RequireAuth>
-							<BuildModules />
 						</RequireAuth>
 					}
 				/>

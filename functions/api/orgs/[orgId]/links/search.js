@@ -1,5 +1,5 @@
-import { json } from "../../../../_lib/http.js";
-import { requireOrgRole } from "../../../../_lib/auth.js";
+import { json } from "../../../_lib/http.js";
+import { requireOrgRole } from "../../../_lib/auth.js";
 
 function asText(value) {
   return String(value ?? "");

@@ -1,3 +1,4 @@
+import { bad } from "../../../_lib/http.js";
 import { requireOrgRole } from "../../../_lib/auth.js";
 import { ensureDriveSchema, getDb, created, json, now, uuid } from "../../../_lib/drive.js";
 
@@ -16,9 +17,11 @@ export async function onRequestPost({ env, request, params }) {
   if (!auth.ok) return auth.resp;
   await ensureDriveSchema(env);
   const body = await request.json().catch(() => ({}));
+  const encryptedBlob = String(body.encryptedBlob || "").trim();
+  if (!encryptedBlob) return bad(400, "ENCRYPTED_BLOB_REQUIRED");
   const id = uuid();
   const t = now();
-  const template = { id, name: String(body.name || "template").trim() || "template", title: String(body.title || "untitled"), body: String(body.body || body.content || ""), encryptedBlob: String(body.encryptedBlob || ""), createdAt: t, updatedAt: t };
-  await getDb(env).prepare(`INSERT INTO drive_templates (id, org_id, name, title, content, encrypted_blob, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, orgId, template.encryptedBlob ? "encrypted template" : template.name, template.encryptedBlob ? "encrypted template" : template.title, template.encryptedBlob ? "" : template.body, template.encryptedBlob || null, t, t).run();
+  const template = { id, name: "encrypted template", title: "encrypted template", body: "", encryptedBlob, createdAt: t, updatedAt: t };
+  await getDb(env).prepare(`INSERT INTO drive_templates (id, org_id, name, title, content, encrypted_blob, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, orgId, "encrypted template", "encrypted template", "", encryptedBlob, t, t).run();
   return created("template", template);
 }

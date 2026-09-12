@@ -25,6 +25,7 @@ import Settings from "./pages/Settings.jsx";
 import BondfireChat from "./pages/BondfireChat.jsx";
 import SignIn from "./pages/SignIn.jsx";
 import Security from "./pages/Security.jsx";
+import Support from "./pages/Support.jsx";
 import Drive from "./pages/Drive.jsx";
 import Studio from "./pages/Studio.jsx";
 import Customize from "./pages/Customize.jsx";
@@ -330,13 +331,22 @@ function Shell() {
 					}
 				/>
 
+				{/* Account support */}
+				<Route
+					path="/support"
+					element={
+						<RequireAuth>
+							<Support />
+						</RequireAuth>
+					}
+				/>
+
 				{/* ORG SPACE */}
 				<Route
 					path="/org/:orgId/*"
 					element={
 						<RequireAuth>
 							<InnerSanctum />
-						</RequireAuth>
 					}
 				>
 					<Route path="build" element={<BuildModules />} />
@@ -351,6 +361,7 @@ function Shell() {
 					<Route path="meetings" element={<ModuleRouteGate moduleId="meetings"><Meetings /></ModuleRouteGate>} />
 					<Route path="meetings/:meetingId" element={<ModuleRouteGate moduleId="meetings"><MeetingDetail /></ModuleRouteGate>} />
 					<Route path="settings" element={<Settings />} />
+					<Route path="support" element={<Support />} />
 					<Route path="drive" element={<ModuleRouteGate moduleId="drive"><Drive /></ModuleRouteGate>} />
 					<Route path="studio" element={<ModuleRouteGate moduleId="studio"><Studio /></ModuleRouteGate>} />
 					<Route path="public" element={<ModuleRouteGate moduleId="public-site"><OrgPublicPreview /></ModuleRouteGate>} />

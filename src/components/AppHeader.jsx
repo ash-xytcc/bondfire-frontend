@@ -159,11 +159,12 @@ function Brand({ orgId }) {
   );
 }
 
-function DrawerLink({ to, label, moduleId, tourId, onNavigate, isActiveOverride }) {
+function DrawerLink({ to, state, label, moduleId, tourId, onNavigate, isActiveOverride }) {
   const logoPath = moduleId ? NAV_MODULE_LOGOS[moduleId] || "" : "";
   return (
     <NavLink
       to={to}
+      state={state}
       onClick={onNavigate}
       data-tour={tourId || undefined}
       className={({ isActive }) =>
@@ -202,6 +203,7 @@ export default function AppHeader({ onLogout, showLogout }) {
   const enabledModules = useEnabledOrgModules(orgId);
   const menuButtonRef = React.useRef(null);
   const closeButtonRef = React.useRef(null);
+  const drawerPanelRef = React.useRef(null);
 
   const closeMenu = React.useCallback((restoreFocus = false) => {
     setOpen(false);
@@ -225,6 +227,28 @@ export default function AppHeader({ onLogout, showLogout }) {
       if (event.key === "Escape") {
         event.preventDefault();
         closeMenu(true);
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const panel = drawerPanelRef.current;
+      if (!panel) return;
+      const focusable = Array.from(
+        panel.querySelectorAll(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => !element.hasAttribute("hidden") && element.getAttribute("aria-hidden") !== "true");
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !panel.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !panel.contains(active))) {
+        event.preventDefault();
+        first.focus();
       }
     };
 
@@ -250,17 +274,17 @@ export default function AppHeader({ onLogout, showLogout }) {
         { label: "Pledges", to: `${base}/pledges`, tourId: "nav-pledges", moduleId: "pledges" },
         { label: "Inventory", to: `${base}/inventory`, tourId: "nav-inventory", moduleId: "inventory" },
         { label: "Meetings", to: `${base}/meetings`, tourId: "nav-meetings", moduleId: "meetings" },
+        { label: "Drive", to: `${base}/drive`, tourId: "nav-drive", moduleId: "drive" },
         { label: "Events", to: `${base}/events`, tourId: "nav-events", moduleId: "events" },
         { label: "REC", to: `${base}/witness`, tourId: "nav-witness", moduleId: "witness-archive" },
         { label: "FireChat", to: `${base}/chat`, tourId: "nav-chat", moduleId: "bondfire-chat" },
         { label: "Intake", to: `${base}/intake`, tourId: "nav-intake", moduleId: "intake" },
-        { label: "Drive", to: `${base}/drive`, tourId: "nav-drive", moduleId: "drive" },
         { label: "Studio", to: `${base}/studio`, tourId: "nav-studio", moduleId: "studio" },
         { label: "Colophon", to: `${base}/colophon`, tourId: "nav-colophon", moduleId: "publishing-colophon" },
         { label: "Module Chat", to: `${base}/chat-module`, tourId: "nav-chat-module", moduleId: "module-chat" },
       ].filter((item) => !enabledModules || enabledModules.has(item.moduleId))
     : [];
-  const supportTo = base ? `${base}/support` : "/support";
+  const supportTo = "/support";
 
   return (
     <>
@@ -303,9 +327,11 @@ export default function AppHeader({ onLogout, showLogout }) {
       <div className={`bf-globalDrawerLayer${open ? " is-open" : ""}`} aria-hidden={!open}>
         <div className="bf-globalDrawerBackdrop" onClick={() => closeMenu(true)} aria-hidden="true" />
         <aside
+          ref={drawerPanelRef}
           id="bf-global-navigation-drawer"
           className="bf-globalDrawerPanel"
           role="dialog"
+          aria-modal="true"
           aria-labelledby="bf-global-navigation-title"
         >
           <div className="bf-globalDrawerTop">
@@ -351,7 +377,12 @@ export default function AppHeader({ onLogout, showLogout }) {
             ) : null}
 
             <DrawerSection title="ACCOUNT">
-              <DrawerLink to={supportTo} label="Support" onNavigate={() => closeMenu(false)} />
+              <DrawerLink
+                to={supportTo}
+                state={orgId ? { supportOrgId: orgId } : undefined}
+                label="Support"
+                onNavigate={() => closeMenu(false)}
+              />
               {showLogout ? (
                 <button
                   className="bf-globalDrawerLink bf-globalDrawerLogout"

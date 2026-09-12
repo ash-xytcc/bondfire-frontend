@@ -88,3 +88,34 @@ export async function onRequestPost({ env, params, request }) {
     return bad(500, 'INTERNAL', { detail: String(error?.message || error || 'Unknown error') })
   }
 }
+
+export async function onRequestPut({ env, params, request }) {
+  try {
+    const orgId = String(params?.orgId || '')
+    const db = env?.BF_DB || env?.DB || null
+    const payload = await request.json().catch(() => ({}))
+    const id = String(payload?.id || '').trim()
+    const roomId = String(payload?.roomId || '').trim()
+    const encryptedBlob = String(payload?.encrypted_blob || '').trim()
+    if (!orgId) return bad(400, 'MISSING_ORG')
+    if (!id) return bad(400, 'MISSING_ID')
+    if (!encryptedBlob) return bad(400, 'ENCRYPTED_BLOB_REQUIRED')
+    const lockdown = await enforceOrgWriteLockdown({ env, orgId })
+    if (!lockdown.ok) return lockdown.resp
+    if (!db) return json({ ok: true, scaffold: true })
+    await ensureChatMessagesTable(db)
+    const keyVersion = await getOrgCryptoKeyVersion(db, orgId)
+    if (roomId) {
+      await db.prepare(
+        "UPDATE chat_messages SET body = '__encrypted__', author_label = '', encrypted_blob = ?, key_version = ? WHERE id = ? AND org_id = ? AND room_id = ?"
+      ).bind(encryptedBlob, keyVersion, id, orgId, roomId).run()
+    } else {
+      await db.prepare(
+        "UPDATE chat_messages SET body = '__encrypted__', author_label = '', encrypted_blob = ?, key_version = ? WHERE id = ? AND org_id = ?"
+      ).bind(encryptedBlob, keyVersion, id, orgId).run()
+    }
+    return json({ ok: true })
+  } catch (error) {
+    return bad(500, 'INTERNAL', { detail: String(error?.message || error || 'Unknown error') })
+  }
+}

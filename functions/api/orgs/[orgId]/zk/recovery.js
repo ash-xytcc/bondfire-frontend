@@ -1,3 +1,4 @@
+import { validRecoveryPayload } from '../../../_lib/wrappedKeyValidation.js';
 import { ok, bad, readJSON } from "../../../_lib/http.js";
 import { requireOrgRole } from "../../../_lib/auth.js";
 import { ensureZkSchema } from "../../../_lib/zkSchema.js";
@@ -123,7 +124,7 @@ export async function onRequestPost(ctx) {
     const body = await readJSON(request);
     const payload = normalizePayload(body?.payload ?? body);
 
-    if (!payload) {
+    if (!validRecoveryPayload(payload)) {
       return bad(400, "INVALID_RECOVERY_PAYLOAD");
     }
 

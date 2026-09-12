@@ -62,7 +62,7 @@ export function scopeColophonSql(sql, orgId) {
 
 function wrapStatement(statement) {
   if (!statement) return statement;
-  const wrapper = {
+  return {
     __colophonInnerStatement: statement,
     bind(...values) {
       return wrapStatement(statement.bind(...values));
@@ -80,7 +80,6 @@ function wrapStatement(statement) {
       return statement.raw(...args);
     },
   };
-  return wrapper;
 }
 
 export function createOrgScopedD1(db, orgId) {
@@ -88,15 +87,11 @@ export function createOrgScopedD1(db, orgId) {
 
   return new Proxy(db, {
     get(target, prop) {
-      if (prop === "prepare") {
-        return (sql) => wrapStatement(target.prepare(scopeColophonSql(sql, orgId)));
-      }
+      if (prop === "prepare") return (sql) => wrapStatement(target.prepare(scopeColophonSql(sql, orgId)));
       if (prop === "batch") {
         return (statements) => target.batch((statements || []).map((statement) => statement?.__colophonInnerStatement || statement));
       }
-      if (prop === "exec") {
-        return (sql) => target.exec(scopeColophonSql(sql, orgId));
-      }
+      if (prop === "exec") return (sql) => target.exec(scopeColophonSql(sql, orgId));
       const value = target[prop];
       return typeof value === "function" ? value.bind(target) : value;
     },
@@ -128,15 +123,10 @@ export function createOrgScopedBucket(bucket, orgId) {
       if (prop === "get" || prop === "head" || prop === "delete") {
         return (key, ...args) => target[prop](scopedObjectKey(key, orgId), ...args);
       }
-      if (prop === "put") {
-        return (key, value, ...args) => target.put(scopedObjectKey(key, orgId), value, ...args);
-      }
+      if (prop === "put") return (key, value, ...args) => target.put(scopedObjectKey(key, orgId), value, ...args);
       if (prop === "list") {
         return async (options = {}) => {
-          const result = await target.list({
-            ...options,
-            prefix: scopedObjectKey(options.prefix || "", orgId),
-          });
+          const result = await target.list({ ...options, prefix: scopedObjectKey(options.prefix || "", orgId) });
           return {
             ...result,
             objects: Array.isArray(result?.objects) ? result.objects.map((item) => stripListedObject(item, orgId)) : result?.objects,
@@ -222,11 +212,5 @@ export async function createColophonGatewayRequest(request, orgId, actor = {}) {
   headers.set("x-bondfire-colophon-org", String(orgId));
   headers.set("x-bondfire-colophon-role", String(actor.role || "viewer"));
 
-  return new Request(request.url, {
-    method: request.method,
-    headers,
-    body: ["GET", "HEAD"].includes(request.method.toUpperCase()) ? undefined : request.body,
-    redirect: request.redirect,
-    duplex: request.body ? "half" : undefined,
-  });
+  return new Request(request, { headers });
 }

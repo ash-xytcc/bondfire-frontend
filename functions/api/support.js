@@ -252,10 +252,6 @@ function formatPrivateBody({ type, subject, description, replyEmail, diagnostics
 }
 
 async function sendPrivateSupport(env, requestData) {
-  if (!env.SUPPORT_EMAIL || typeof env.SUPPORT_EMAIL.send !== "function") {
-    throw new Error("PRIVATE_SUPPORT_EMAIL_BINDING_MISSING");
-  }
-
   const deploymentMode = cleanOneLine(env.BONDFIRE_DEPLOYMENT_MODE || "hosted", 80).toLowerCase();
   const publicSupportEmail = cleanOneLine(
     env.SUPPORT_PUBLIC_EMAIL || (deploymentMode === "self-hosted" ? "" : HOSTED_SUPPORT_EMAIL),
@@ -267,13 +263,44 @@ async function sendPrivateSupport(env, requestData) {
     throw new Error("PRIVATE_SUPPORT_EMAIL_DESTINATION_MISSING");
   }
 
-  await env.SUPPORT_EMAIL.send({
+  const message = {
     to,
     from,
     replyTo: requestData.replyEmail,
     subject: `[Bondfire Support] ${TYPE_LABELS[requestData.type]}: ${requestData.subject}`,
     text: formatPrivateBody(requestData),
-  });
+  };
+
+  if (env.SUPPORT_EMAIL && typeof env.SUPPORT_EMAIL.send === "function") {
+    await env.SUPPORT_EMAIL.send(message);
+    return;
+  }
+
+  const accountId = cleanOneLine(env.CLOUDFLARE_ACCOUNT_ID, 80);
+  const apiToken = String(env.CLOUDFLARE_EMAIL_API_TOKEN || "").trim();
+  if (!accountId || !apiToken) {
+    throw new Error("PRIVATE_SUPPORT_EMAIL_CONFIGURATION_MISSING");
+  }
+
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/email/sending/send`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(message),
+    },
+  );
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success !== true) {
+    const detail = cleanOneLine(
+      payload?.errors?.[0]?.message || `Cloudflare Email Service returned ${response.status}`,
+      240,
+    );
+    throw new Error(detail || "PRIVATE_SUPPORT_EMAIL_DELIVERY_FAILED");
+  }
 }
 
 export async function onRequestGet({ env, request }) {

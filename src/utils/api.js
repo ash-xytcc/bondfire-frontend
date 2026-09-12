@@ -142,9 +142,14 @@ export async function api(path, options = {}) {
   const isBlob = typeof Blob !== "undefined" && body instanceof Blob;
   const isArrayBuffer = typeof ArrayBuffer !== "undefined" && (body instanceof ArrayBuffer || ArrayBuffer.isView(body));
   if (!headers.has("Content-Type") && body != null && !isFormData && !isBlob && !isArrayBuffer) headers.set("Content-Type", "application/json");
+  try {
+    const csrf = document.cookie.split(';').map((part) => part.trim()).find((part) => part.startsWith('bf_csrf='));
+    if (csrf && !headers.has('x-csrf')) headers.set('x-csrf', decodeURIComponent(csrf.slice(8)));
+  } catch {}
   const token = pickToken();
   if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
 
+  const safeToRetry = ['GET', 'HEAD'].includes(String(fetchOpts.method || 'GET').toUpperCase());
   let chosenUrl = candidates[0];
   let firstRes = null;
   for (let i = 0; i < candidates.length; i++) {
@@ -152,8 +157,11 @@ export async function api(path, options = {}) {
     try {
       const r = await fetch(chosenUrl, { ...fetchOpts, headers, credentials: "include" });
       firstRes = r;
-      if (!(i < candidates.length - 1 && (r.status === 404 || r.status >= 500))) break;
-    } catch { firstRes = null; }
+      if (!(i < candidates.length - 1 && (r.status === 404 || (safeToRetry && r.status >= 500)))) break;
+    } catch {
+      firstRes = null;
+      if (!safeToRetry) break;
+    }
   }
   if (!firstRes) throw new Error("Network error");
 
@@ -166,7 +174,13 @@ export async function api(path, options = {}) {
   }
   if (!firstRes.ok) {
     const text = await firstRes.text().catch(() => "");
-    throw new Error(text || `Request failed (${firstRes.status})`);
+    let payload;
+    try { payload = JSON.parse(text); } catch {}
+    const error = new Error(payload?.error || text || `Request failed (${firstRes.status})`);
+    error.code = payload?.error;
+    error.status = firstRes.status;
+    error.details = payload;
+    throw error;
   }
   const data = (await readJsonMaybe(firstRes)) || {};
   return __skipContentCrypto ? data : revealResponse(rel, data);

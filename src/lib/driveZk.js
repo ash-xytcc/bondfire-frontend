@@ -23,7 +23,7 @@ export function isZkString(value) {
 }
 export async function encryptDriveText(orgId, plaintext) {
   const key = getDriveOrgKey(orgId);
-  if (!key) return String(plaintext || '');
+  if (!key) throw new Error('ORG_KEY_MISSING');
   return DRIVE_ZK_PREFIX + await encryptWithOrgKey(key, String(plaintext || ''));
 }
 export async function decryptDriveText(orgId, value, fallback = '') {

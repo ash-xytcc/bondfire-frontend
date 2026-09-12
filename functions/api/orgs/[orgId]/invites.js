@@ -12,7 +12,10 @@ export async function onRequestPost(ctx) {
 function randCode(len = 10) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // avoids 0/O/1/I
   let out = "";
-  for (let i = 0; i < len; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  while (out.length < len) {
+    const byte=crypto.getRandomValues(new Uint8Array(1))[0];
+    if(byte < 256 - (256 % alphabet.length)) out += alphabet[byte % alphabet.length];
+  }
   return out;
 }
 
@@ -87,6 +90,7 @@ export async function onRequest(ctx) {
       }
 
       const role = (body.role || "member").toString();
+      if (!["viewer","member","admin"].includes(role)) return bad(400,"INVALID_INVITE_ROLE");
       const maxUses = toInt(body.maxUses ?? body.max_uses ?? body.maxUses, 1) || 1;
       const expiresInDays = toInt(body.expiresInDays, 14);
 

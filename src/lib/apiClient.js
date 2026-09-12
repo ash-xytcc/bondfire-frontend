@@ -1,3 +1,4 @@
+import { api as contentApi } from '../utils/api.js';
 export async function safeJson(res) {
   try {
     return await res.json()
@@ -42,6 +43,7 @@ export function requireOk(data, res, fallback) {
 }
 
 export async function requestJson(input, init = {}, fallback = 'Request failed') {
+  if (typeof input === 'string' && /^\/api\/orgs\//.test(input)) return contentApi(input, init)
   const res = await fetch(input, init)
   const data = await safeJson(res)
   requireOk(data, res, `${fallback}: ${res.status}`)

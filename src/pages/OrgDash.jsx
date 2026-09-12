@@ -1,3 +1,5 @@
+import { api } from '../utils/api.js';
+import CreatePrivateOrg from '../components/CreatePrivateOrg.jsx';
 // src/pages/OrgDash.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -117,7 +119,13 @@ export default function OrgDash() {
         return;
       }
       const r = await authFetch("/api/orgs", { method: "GET" });
-      setOrgs(Array.isArray(r.orgs) ? r.orgs : []);
+      const list = Array.isArray(r.orgs) ? r.orgs : [];
+      const revealed = await Promise.all(list.map(async org => {
+        if (org.name !== 'Private organization') return org;
+        try { const data = await api(`/api/orgs/${encodeURIComponent(org.id)}/organization`); return { ...org, name: data.organization?.name || 'Locked private organization' }; }
+        catch { return { ...org, name: 'Locked private organization' }; }
+      }));
+      setOrgs(revealed);
     } catch (e) {
       setMsg(e.message || "Failed to load orgs");
     }
@@ -186,6 +194,7 @@ export default function OrgDash() {
           >
             Build a new org
           </button>
+          {!demoMode && <CreatePrivateOrg />}
         </div>
 
         <div className="card" style={{ padding: 16 }}>

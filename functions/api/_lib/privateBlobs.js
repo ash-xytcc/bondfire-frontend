@@ -1,0 +1,42 @@
+import { getDriveBucket } from './drive.js';
+import { getDb } from './auth.js';
+import { contentContext, isCiphertext } from '../../../shared/privateContent.js';
+
+export async function ensurePrivateBlobs(db) {
+  await db.prepare('CREATE TABLE IF NOT EXISTS org_private_blobs (org_id TEXT NOT NULL,id TEXT NOT NULL,file_id TEXT NOT NULL,inline_ciphertext TEXT,created_at INTEGER NOT NULL,PRIMARY KEY(org_id,id))').run();
+}
+const objectKey=(orgId,id)=>`${orgId}/drive/private/${id}`;
+export async function putPrivateBlob(env,orgId,id,ciphertext,fileId) {
+  if(!/^[a-f0-9-]{36}$/.test(id)||!isCiphertext(ciphertext,contentContext(orgId,'drive/blob',id))) throw new Error('VALID_CIPHERTEXT_REQUIRED');
+  if(!/^[A-Za-z0-9_.:-]{1,160}$/.test(fileId))throw new Error('INVALID_FILE_ID');
+  const db=getDb(env); await ensurePrivateBlobs(db);
+  const file=await db.prepare("SELECT deleting FROM org_private_records WHERE org_id=? AND kind='drive/files' AND id=?").bind(orgId,fileId).first();
+  if(file?.deleting)throw new Error('PRIVATE_FILE_DELETION_IN_PROGRESS');
+  const exists=await db.prepare('SELECT id FROM org_private_blobs WHERE org_id=? AND id=?').bind(orgId,id).first();
+  if(exists) throw new Error('BLOB_ALREADY_EXISTS');
+  const bucket=getDriveBucket(env);
+  if(!bucket&&ciphertext.length>512*1024) throw new Error('ENCRYPTED_FILE_BUCKET_REQUIRED');
+  if(bucket) await bucket.put(objectKey(orgId,id),ciphertext,{httpMetadata:{contentType:'application/octet-stream'}});
+  await db.prepare('INSERT INTO org_private_blobs(org_id,id,file_id,inline_ciphertext,created_at) VALUES(?,?,?,?,?)').bind(orgId,id,fileId,bucket?null:ciphertext,Date.now()).run();
+}
+export async function getPrivateBlob(env,orgId,id) {
+  const db=getDb(env); await ensurePrivateBlobs(db);
+  const row=await db.prepare('SELECT inline_ciphertext FROM org_private_blobs WHERE org_id=? AND id=?').bind(orgId,id).first();
+  if(!row) throw new Error('BLOB_NOT_FOUND');
+  if(row.inline_ciphertext!==null) return row.inline_ciphertext;
+  const object=await getDriveBucket(env)?.get(objectKey(orgId,id));
+  if(!object) throw new Error('BLOB_NOT_FOUND');
+  return await object.text();
+}
+
+export async function deletePrivateFileBlobs(env,orgId,fileId) {
+  const db=getDb(env);await ensurePrivateBlobs(db);
+  const rows=await db.prepare('SELECT id,inline_ciphertext FROM org_private_blobs WHERE org_id=? AND file_id=?').bind(orgId,fileId).all();
+  for(const row of rows.results||[]) {
+    if(row.inline_ciphertext===null) {
+      const bucket=getDriveBucket(env);if(!bucket)throw new Error('ENCRYPTED_FILE_BUCKET_REQUIRED');
+      await bucket.delete(objectKey(orgId,row.id));
+    }
+  }
+  await db.prepare('DELETE FROM org_private_blobs WHERE org_id=? AND file_id=?').bind(orgId,fileId).run();
+}

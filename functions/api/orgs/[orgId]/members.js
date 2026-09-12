@@ -1,3 +1,4 @@
+import { ensureDeviceKeySchema } from '../../_lib/deviceKeys.js';
 import { ok, bad } from "../../_lib/http.js";
 import { getDb, requireOrgRole } from "../../_lib/auth.js";
 import { ensureZkSchema } from "../../_lib/zk.js";
@@ -44,6 +45,7 @@ export async function onRequest(ctx) {
 
   // Ensure member avatar column exists.
   await ensureMembersSchema(db);
+  await ensureDeviceKeySchema(db);
 
   // Members can view the member list and update their own avatar.
   // Admin is only required for role changes and removals.
@@ -83,6 +85,7 @@ export async function onRequest(ctx) {
         .bind(orgId)
         .all();
 
+      const devices = await db.prepare('SELECT d.user_id,d.device_id,d.public_key FROM user_device_keys d JOIN org_memberships m ON m.user_id=d.user_id WHERE m.org_id=?').bind(orgId).all();
       return ok({
         meUserId: gate.user.sub,
         members: (rows.results || []).map((r) => {
@@ -93,6 +96,7 @@ export async function onRequest(ctx) {
             // Default: do not ship plaintext PII.
             // For one-time backfill/encrypt-existing, caller can use ?plaintext=1.
             email: allowPlaintext ? (r.email || "") : (hasEnc ? "__encrypted__" : ""),
+            devices: (devices.results || []).filter(d => d.user_id === r.user_id),
             publicKey: r.public_key || null,
             public_key: r.public_key || null,
             name: allowPlaintext ? (r.name || "") : (hasEnc ? "__encrypted__" : ""),
@@ -198,10 +202,12 @@ export async function onRequest(ctx) {
         if (owners <= 1) return bad(400, "CANNOT_REMOVE_LAST_OWNER");
       }
 
-      await db
-        .prepare("DELETE FROM org_memberships WHERE org_id = ? AND user_id = ?")
-        .bind(orgId, userId)
-        .run();
+      await db.batch([
+        db.prepare("DELETE FROM org_private_device_wraps WHERE org_id=? AND user_id=?").bind(orgId,userId),
+        db.prepare("DELETE FROM org_key_wrapped WHERE org_id=? AND user_id=?").bind(orgId,userId),
+        db.prepare("DELETE FROM org_key_recovery WHERE org_id=? AND user_id=?").bind(orgId,userId),
+        db.prepare("DELETE FROM org_memberships WHERE org_id=? AND user_id=?").bind(orgId,userId),
+      ]);
 
       return ok({ deleted: true });
     }

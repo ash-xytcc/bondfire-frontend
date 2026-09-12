@@ -1,3 +1,4 @@
+import { createPrivateOrg } from '../_lib/privateCreate.js';
 import { json, bad, now, uuid } from "../_lib/http.js";
 import { getDb, requireUser } from "../_lib/auth.js";
 
@@ -14,6 +15,7 @@ export async function onRequestPost({ request, env }) {
   if (!db) return bad(500, "NO_DB_BINDING");
 
   const body = await request.json().catch(() => ({}));
+  if (body.private_mode === true) return createPrivateOrg({ db, request, userId: meId, body });
   const name = String(body?.name || "").trim();
   if (!name) return bad(400, "Missing org name");
 

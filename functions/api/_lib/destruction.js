@@ -2,8 +2,8 @@ import { getDriveBucket } from './drive.js';
 import { orgPrefix, scopedObjectKey } from './colophonScopedRuntime.js';
 
 const SAFE_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
-const ORG_KEY_TABLES = new Set(['org_crypto', 'org_keys', 'org_key_wrapped', 'org_key_recovery']);
-const ACCOUNT_ORG_TABLES = new Set(['org_memberships', 'org_key_wrapped', 'org_key_recovery']);
+const ORG_KEY_TABLES = new Set(['org_private_device_wraps', 'org_crypto', 'org_keys', 'org_key_wrapped', 'org_key_recovery']);
+const ACCOUNT_ORG_TABLES = new Set(['org_private_device_wraps', 'org_memberships', 'org_key_wrapped', 'org_key_recovery']);
 
 function quoted(name) {
   if (!SAFE_IDENTIFIER.test(String(name || ''))) throw new Error('UNSAFE_TABLE_NAME');

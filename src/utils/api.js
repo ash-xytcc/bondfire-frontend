@@ -5,6 +5,8 @@
 import { isDemoMode } from "../demo/demoMode.js";
 import { demoHandle, ensureDemoOrgList } from "../demo/demoStore.js";
 
+const PRIVATE_TRANSPORT = Symbol("private transport");
+
 const API_BASE = (import.meta?.env?.VITE_API_BASE || "").replace(/\/$/, "");
 
 function pickToken() {
@@ -133,7 +135,12 @@ export async function api(path, options = {}) {
     if (handled) return handled;
   }
 
-  const opts = await protectWrite(rel, options);
+  if (!options[PRIVATE_TRANSPORT]) {
+    const { dispatchPrivate } = await import('../lib/privateClient.js');
+    const result = await dispatchPrivate(path, options, (p, o = {}) => api(p, { ...o, [PRIVATE_TRANSPORT]: true, __skipContentCrypto: true }));
+    if (result?.handled) return result.data;
+  }
+  const opts = options[PRIVATE_TRANSPORT] ? options : await protectWrite(rel, options);
   const { __skipContentCrypto, ...fetchOpts } = opts;
   const candidates = path.startsWith("http") ? [path] : !API_BASE ? [rel] : rel.startsWith("/api/") ? [rel, `${API_BASE}${rel}`] : [`${API_BASE}${rel}`];
   const headers = new Headers(fetchOpts.headers || {});

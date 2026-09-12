@@ -1,3 +1,4 @@
+import { validWrappedKey } from '../../../_lib/wrappedKeyValidation.js';
 import { ok, bad, readJSON } from '../../../_lib/http.js';
 import { requireOrgRole } from '../../../_lib/auth.js';
 import { ensureZkSchema, ensureOrgCryptoRow, orgKeyWrappedCapabilities } from '../../../_lib/zkSchema.js';
@@ -41,6 +42,11 @@ export async function onRequestPost({ env, request, params }) {
     const wraps = normalizeWraps(body, gate.user.sub);
     if (!wraps.length) return bad(400, 'MISSING_WRAPS');
 
+    for (const w of wraps) {
+      if (!validWrappedKey(String(w.wrapped_key))) return bad(400, 'INVALID_WRAPPED_KEY');
+      const member = await db.prepare('SELECT role FROM org_memberships WHERE org_id=? AND user_id=?').bind(orgId,w.user_id).first();
+      if (!member) return bad(400,'KEY_RECIPIENT_NOT_MEMBER');
+    }
     const now = Date.now();
     let stored = 0;
 

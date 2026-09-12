@@ -39,6 +39,7 @@ export default defineConfig({
 
         // Only precache immutable hashed assets. NO html.
         globPatterns: ["**/*.{js,css,ico,png,svg,webmanifest}"],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
 
         // Keep update behavior conservative. No surprise takeovers mid-session.
         clientsClaim: false,

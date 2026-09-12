@@ -1,19 +1,7 @@
 import { json, bad, now, uuid } from "../../_lib/http.js";
 import { requireOrgRole } from "../../_lib/auth.js";
 import { logActivity } from "../../_lib/activity.js";
-import { runAppMigrations } from '../../_lib/migrations.js'
-async function getOrgCryptoKeyVersion(db, orgId) {
-	// org_crypto historically used either key_version or version.
-	try {
-		const r = await db.prepare("SELECT key_version FROM org_crypto WHERE org_id = ?").bind(orgId).first();
-		return Number(r?.key_version) || 1;
-	} catch (e) {
-		const msg = String(e?.message || "");
-		if (!msg.includes("no such column: key_version")) throw e;
-		const r = await db.prepare("SELECT version AS key_version FROM org_crypto WHERE org_id = ?").bind(orgId).first();
-		return Number(r?.key_version) || 1;
-	}
-}
+import { getOrgKeyVersion } from "../../_lib/zk.js";
 
 function asString(v) {
   if (v == null) return "";
@@ -30,232 +18,144 @@ function asBool(v, fallback = false) {
   return fallback;
 }
 
-function asInt(v, fallback = null) {
-  if (v == null || v === "") return fallback;
-  const n = Number(v);
-  return Number.isFinite(n) ? Math.trunc(n) : fallback;
-}
-
-// UI sends urgency as free text ("high") but DB stores priority as int (NOT NULL).
 function parsePriority(v, fallback = 0) {
   if (v == null || v === "") return fallback;
-
-  if (typeof v === "number") {
-    return Number.isFinite(v) ? Math.max(0, Math.trunc(v)) : fallback;
-  }
-
+  if (typeof v === "number") return Number.isFinite(v) ? Math.max(0, Math.trunc(v)) : fallback;
   const s = asString(v).trim().toLowerCase();
   if (!s) return fallback;
-
   const n = Number(s);
   if (Number.isFinite(n)) return Math.max(0, Math.trunc(n));
-
   if (["high", "urgent", "h"].includes(s)) return 3;
   if (["medium", "med", "m"].includes(s)) return 2;
   if (["low", "l"].includes(s)) return 1;
-
   return fallback;
 }
 
-async function safeLog(env, payload) {
-  try {
-    await logActivity(env, payload);
-  } catch (e) {
-    // Logging should never block the actual user action.
-    console.warn("activity log failed", e);
-  }
+function hasCiphertext(value) {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 async function ensureNeedsZkColumns(db) {
-	try { await db.prepare("ALTER TABLE needs ADD COLUMN encrypted_description TEXT").run(); } catch {}
-	try { await db.prepare("ALTER TABLE needs ADD COLUMN encrypted_blob TEXT").run(); } catch {}
-	try { await db.prepare("ALTER TABLE needs ADD COLUMN key_version INTEGER").run(); } catch {}
+  try { await db.prepare("ALTER TABLE needs ADD COLUMN encrypted_description TEXT").run(); } catch {}
+  try { await db.prepare("ALTER TABLE needs ADD COLUMN encrypted_blob TEXT").run(); } catch {}
+  try { await db.prepare("ALTER TABLE needs ADD COLUMN key_version INTEGER").run(); } catch {}
+}
+
+async function scrubEncryptedPlaintext(db, orgId) {
+  await db.prepare(
+    `UPDATE needs
+     SET title = '', description = '', encrypted_description = NULL
+     WHERE org_id = ? AND encrypted_blob IS NOT NULL AND encrypted_blob <> ''`
+  ).bind(orgId).run();
 }
 
 export async function onRequestGet({ env, request, params }) {
-	await ensureNeedsZkColumns(env.BF_DB);
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!a.ok) return a.resp;
+  await ensureNeedsZkColumns(env.BF_DB);
+  await scrubEncryptedPlaintext(env.BF_DB, orgId);
 
   const r = await env.BF_DB.prepare(
-    `SELECT
-       id,
-       title,
-       description,
-       status,
-       priority,
-       CASE
-         WHEN priority >= 3 THEN 'high'
-         WHEN priority = 2 THEN 'medium'
-         WHEN priority = 1 THEN 'low'
-         ELSE ''
-       END AS urgency,
-	     is_public,
-	     encrypted_description,
-	     encrypted_blob,
-	     key_version,
-       created_at,
-       updated_at
+    `SELECT id, title, description, status, priority,
+       CASE WHEN priority >= 3 THEN 'high' WHEN priority = 2 THEN 'medium' WHEN priority = 1 THEN 'low' ELSE '' END AS urgency,
+       is_public, encrypted_description, encrypted_blob, key_version, created_at, updated_at
      FROM needs
      WHERE org_id = ?
      ORDER BY COALESCE(updated_at, created_at) DESC`
-  )
-    .bind(orgId)
-    .all();
+  ).bind(orgId).all();
 
   return json({ ok: true, needs: r?.results || [] });
 }
 
 export async function onRequestPost({ env, request, params }) {
-	await ensureNeedsZkColumns(env.BF_DB);
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "member" });
   if (!a.ok) return a.resp;
+  await ensureNeedsZkColumns(env.BF_DB);
 
   const body = await request.json().catch(() => ({}));
+  const isPublic = asBool(body.is_public, false);
+  const encryptedBlob = hasCiphertext(body.encrypted_blob) ? body.encrypted_blob : null;
+  if (!isPublic && !encryptedBlob) return bad(400, "ENCRYPTED_PAYLOAD_REQUIRED");
 
-	const title = asString(body.title).trim();
-	if (!title) return bad(400, "Title is required");
-
-	const description = asString(body.description).trim();
+  const title = isPublic ? asString(body.title).trim() : "";
+  if (isPublic && !title) return bad(400, "Title is required");
+  const description = isPublic ? asString(body.description).trim() : "";
   const status = asString(body.status).trim() || "open";
-
-  // Always an int, never null, because DB column is NOT NULL
   const priority = parsePriority(body.priority ?? body.urgency, 0);
-
-  const is_public = asBool(body.is_public, false) ? 1 : 0;
-
   const id = uuid();
   const t = now();
+  const keyVersion = encryptedBlob ? await getOrgKeyVersion(env.BF_DB, orgId) : null;
 
-	let keyVersion = null;
-	if (body.encrypted_blob) {
-		keyVersion = await getOrgCryptoKeyVersion(env.BF_DB, orgId);
-	}
+  await env.BF_DB.prepare(
+    `INSERT INTO needs (id, org_id, title, description, status, priority, is_public, encrypted_description, encrypted_blob, key_version, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(id, orgId, title, description, status, priority, isPublic ? 1 : 0, null, encryptedBlob, keyVersion, t, t).run();
 
-	await env.BF_DB.prepare(
-	  `INSERT INTO needs (id, org_id, title, description, status, priority, is_public, encrypted_description, encrypted_blob, key_version, created_at, updated_at)
-	   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	)
-	  .bind(
-		id,
-		orgId,
-		title,
-		description,
-		status,
-		priority,
-		is_public,
-		body.encrypted_description ?? null,
-		body.encrypted_blob ?? null,
-		keyVersion,
-		t,
-		t
-	  )
-	  .run();
-
-  await safeLog(env, {
+  logActivity(env, {
     orgId,
     kind: "need.created",
-    message: title,
-    actorUserId: a?.user?.sub || null,
+    message: isPublic ? `Public need created: ${title}` : `Encrypted need created: ${id}`,
+    actorUserId: a?.user?.sub || a?.user?.id || null,
     entityType: "need",
     entityId: id,
-    entityTitle: title,
-  });
+    entityTitle: isPublic ? title : "",
+  }).catch(() => {});
 
   return json({ ok: true, id });
 }
 
 export async function onRequestPut({ env, request, params }) {
-	await ensureNeedsZkColumns(env.BF_DB);
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "member" });
   if (!a.ok) return a.resp;
+  await ensureNeedsZkColumns(env.BF_DB);
 
   const body = await request.json().catch(() => ({}));
   const id = asString(body.id).trim();
   if (!id) return bad(400, "id is required");
 
-	const existing = await env.BF_DB.prepare(
-	  `SELECT id, title, description, status, priority, is_public, encrypted_description, encrypted_blob, key_version
-	   FROM needs
-	   WHERE org_id = ? AND id = ?`
-	)
-    .bind(orgId, id)
-    .first();
-
+  const existing = await env.BF_DB.prepare(
+    `SELECT id, title, description, status, priority, is_public, encrypted_blob, key_version
+     FROM needs WHERE org_id = ? AND id = ?`
+  ).bind(orgId, id).first();
   if (!existing) return bad(404, "Need not found");
 
-  const nextTitle =
-    body.title === undefined ? existing.title : asString(body.title).trim();
-  const nextDescription =
-    body.description === undefined
-      ? existing.description
-      : asString(body.description).trim();
-  const nextStatus =
-    body.status === undefined ? existing.status : asString(body.status).trim();
+  const isPublic = body.is_public === undefined ? !!existing.is_public : asBool(body.is_public, false);
+  const encryptedBlob = hasCiphertext(body.encrypted_blob) ? body.encrypted_blob : existing.encrypted_blob;
+  if (!isPublic && !hasCiphertext(encryptedBlob)) return bad(400, "ENCRYPTED_PAYLOAD_REQUIRED");
 
-  const basePriority = Number.isFinite(Number(existing.priority))
-    ? Math.max(0, Math.trunc(Number(existing.priority)))
-    : 0;
+  const title = isPublic
+    ? (body.title === undefined ? existing.title : asString(body.title).trim())
+    : "";
+  if (isPublic && !title) return bad(400, "Title is required");
+  const description = isPublic
+    ? (body.description === undefined ? existing.description : asString(body.description).trim())
+    : "";
+  const status = body.status === undefined ? existing.status : asString(body.status).trim();
+  const basePriority = Number.isFinite(Number(existing.priority)) ? Math.max(0, Math.trunc(Number(existing.priority))) : 0;
+  const priority = body.priority === undefined && body.urgency === undefined
+    ? basePriority
+    : parsePriority(body.priority ?? body.urgency, basePriority);
+  const keyVersion = hasCiphertext(body.encrypted_blob) ? await getOrgKeyVersion(env.BF_DB, orgId) : existing.key_version;
 
-  const nextPriority =
-    body.priority === undefined && body.urgency === undefined
-      ? basePriority
-      : parsePriority(body.priority ?? body.urgency, basePriority);
+  await env.BF_DB.prepare(
+    `UPDATE needs
+     SET title = ?, description = ?, status = ?, priority = ?, is_public = ?,
+         encrypted_description = NULL, encrypted_blob = ?, key_version = ?, updated_at = ?
+     WHERE org_id = ? AND id = ?`
+  ).bind(title, description, status, priority, isPublic ? 1 : 0, encryptedBlob || null, keyVersion || null, now(), orgId, id).run();
 
-  const nextPublic =
-    body.is_public === undefined
-      ? existing.is_public
-      : asBool(body.is_public, false)
-      ? 1
-      : 0;
-
-  const t = now();
-
-	let keyVersion = null;
-	if (body.encrypted_blob) {
-		keyVersion = await getOrgCryptoKeyVersion(env.BF_DB, orgId);
-	}
-
-	await env.BF_DB.prepare(
-	  `UPDATE needs
-	   SET title = ?,
-	       description = ?,
-	       status = ?,
-	       priority = ?,
-	       is_public = ?,
-	       encrypted_description = COALESCE(?, encrypted_description),
-	       encrypted_blob = COALESCE(?, encrypted_blob),
-	       key_version = COALESCE(?, key_version),
-	       updated_at = ?
-	   WHERE org_id = ? AND id = ?`
-	)
-	  .bind(
-	    nextTitle,
-	    nextDescription,
-	    nextStatus,
-	    nextPriority,
-	    nextPublic,
-	    body.encrypted_description ?? null,
-	    body.encrypted_blob ?? null,
-	    keyVersion,
-	    t,
-	    orgId,
-	    id
-	  )
-	  .run();
-
-  await safeLog(env, {
+  logActivity(env, {
     orgId,
     kind: "need.updated",
-    message: nextTitle || id,
-    actorUserId: a?.user?.sub || null,
+    message: isPublic ? `Public need updated: ${title}` : `Encrypted need updated: ${id}`,
+    actorUserId: a?.user?.sub || a?.user?.id || null,
     entityType: "need",
     entityId: id,
-    entityTitle: nextTitle || "",
-  });
+    entityTitle: isPublic ? title : "",
+  }).catch(() => {});
 
   return json({ ok: true });
 }
@@ -267,7 +167,6 @@ export async function onRequestDelete({ env, request, params }) {
 
   const url = new URL(request.url);
   let id = url.searchParams.get("id");
-
   if (!id) {
     const body = await request.json().catch(() => ({}));
     id = asString(body.id).trim();
@@ -275,25 +174,16 @@ export async function onRequestDelete({ env, request, params }) {
   id = asString(id).trim();
   if (!id) return bad(400, "id is required");
 
-  const before = await env.BF_DB.prepare(
-    `SELECT title FROM needs WHERE org_id = ? AND id = ?`
-  )
-    .bind(orgId, id)
-    .first();
+  await env.BF_DB.prepare("DELETE FROM needs WHERE org_id = ? AND id = ?").bind(orgId, id).run();
 
-  await env.BF_DB.prepare(`DELETE FROM needs WHERE org_id = ? AND id = ?`)
-    .bind(orgId, id)
-    .run();
-
-  await safeLog(env, {
+  logActivity(env, {
     orgId,
     kind: "need.deleted",
-    message: before?.title || id,
-    actorUserId: a?.user?.sub || null,
+    message: `Need deleted: ${id}`,
+    actorUserId: a?.user?.sub || a?.user?.id || null,
     entityType: "need",
     entityId: id,
-    entityTitle: before?.title || "",
-  });
+  }).catch(() => {});
 
   return json({ ok: true });
 }

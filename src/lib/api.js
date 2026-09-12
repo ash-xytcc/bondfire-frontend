@@ -1,3 +1,4 @@
+import { api as contentApi } from '../utils/api.js';
 // src/lib/api.js
 import { debugLog } from "./debugBus.js";
 
@@ -21,6 +22,15 @@ async function readJsonMaybe(res) {
 }
 
 export async function apiFetch(path, opts = {}) {
+  if (/^\/api\/orgs\//.test(path)) {
+    try {
+      const body = opts.body && typeof opts.body === 'object' && !(opts.body instanceof Blob) && !(opts.body instanceof FormData) ? JSON.stringify(opts.body) : opts.body;
+      const data = await contentApi(path, { ...opts, body });
+      return new Response(JSON.stringify(data), {status:200,headers:{'content-type':'application/json'}});
+    } catch (error) {
+      return new Response(JSON.stringify({ok:false,error:error.message}), {status:error.status||400,headers:{'content-type':'application/json'}});
+    }
+  }
   const startedAt = Date.now();
 
   const rel = path.startsWith("/") ? path : `/${path}`;

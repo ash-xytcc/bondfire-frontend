@@ -16,14 +16,12 @@ import * as backupStatus from "../../../../../node_modules/colophon/functions/ap
 import * as campaignContributorAuth from "../../../../../node_modules/colophon/functions/api/campaign-contributor-auth.js";
 import * as campaignContributorMedia from "../../../../../node_modules/colophon/functions/api/campaign-contributor-media.js";
 import * as campaignCorrespondence from "../../../../../node_modules/colophon/functions/api/campaign-correspondence.js";
-import * as campaignCoverage from "../../../../../node_modules/colophon/functions/api/campaign-coverage.js";
 import * as campaignInstagramAuth from "../../../../../node_modules/colophon/functions/api/campaign-instagram-auth.js";
 import * as campaignInstagramCallback from "../../../../../node_modules/colophon/functions/api/campaign-instagram-callback.js";
 import * as campaignInstagramSync from "../../../../../node_modules/colophon/functions/api/campaign-instagram-sync.js";
 import * as campaignMonitor from "../../../../../node_modules/colophon/functions/api/campaign-monitor.js";
 import * as campaignRevisions from "../../../../../node_modules/colophon/functions/api/campaign-revisions.js";
 import * as campaignSignatures from "../../../../../node_modules/colophon/functions/api/campaign-signatures.js";
-import * as campaignSocial from "../../../../../node_modules/colophon/functions/api/campaign-social.js";
 import * as campaigns from "../../../../../node_modules/colophon/functions/api/campaigns.js";
 import * as collections from "../../../../../node_modules/colophon/functions/api/collections.js";
 import * as courses from "../../../../../node_modules/colophon/functions/api/courses.js";
@@ -65,14 +63,12 @@ const HANDLERS = Object.freeze({
   "campaign-contributor-auth": campaignContributorAuth,
   "campaign-contributor-media": campaignContributorMedia,
   "campaign-correspondence": campaignCorrespondence,
-  "campaign-coverage": campaignCoverage,
   "campaign-instagram-auth": campaignInstagramAuth,
   "campaign-instagram-callback": campaignInstagramCallback,
   "campaign-instagram-sync": campaignInstagramSync,
   "campaign-monitor": campaignMonitor,
   "campaign-revisions": campaignRevisions,
   "campaign-signatures": campaignSignatures,
-  "campaign-social": campaignSocial,
   campaigns,
   collections,
   courses,

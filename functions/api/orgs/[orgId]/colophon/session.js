@@ -1,5 +1,6 @@
 import { bad, json } from "../../../_lib/http.js";
 import { requireOrgRole } from "../../../_lib/auth.js";
+import { isOrgModuleEnabled } from "../../../_lib/orgModules.js";
 
 const ROLE_CAPABILITIES = Object.freeze({
   viewer: Object.freeze(["content:read", "media:read"]),
@@ -28,6 +29,10 @@ export async function onRequestGet({ env, request, params }) {
 
   const auth = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!auth.ok) return auth.resp;
+
+  if (!(await isOrgModuleEnabled(env, orgId, "publishing-colophon"))) {
+    return bad(403, "MODULE_DISABLED", { moduleId: "publishing-colophon" });
+  }
 
   const user = auth.user || {};
   const role = String(auth.role || "viewer").toLowerCase();

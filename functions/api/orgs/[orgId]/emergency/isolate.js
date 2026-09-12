@@ -8,6 +8,27 @@ export async function onRequestPost({ env, request, params }) {
   const gate = await requireOrgRole({ env, request, orgId, minRole: 'owner', bypassWriteLockdown: true });
   if (!gate.ok) return gate.resp;
 
+  const state = await ensureEmergencySchema(env);
+  if (!state.ok) return state.resp;
+
+  const protocol = await state.db.prepare(
+    'SELECT stage, isolated FROM emergency_protocol_state WHERE org_id = ?'
+  ).bind(orgId).first();
+  const stage = String(protocol?.stage || 'normal');
+  if (stage === 'isolated') {
+    return ok({ protocol: { stage: 'isolated', isolated: true } });
+  }
+  if (stage !== 'lockdown') {
+    return bad(409, 'LOCKDOWN_REQUIRED', { stage });
+  }
+
+  const lockdownState = await state.db.prepare(
+    'SELECT lockdown_enabled FROM org_emergency_state WHERE org_id = ?'
+  ).bind(orgId).first();
+  if (!lockdownState?.lockdown_enabled) {
+    return bad(409, 'LOCKDOWN_REQUIRED', { stage });
+  }
+
   const body = await readJSON(request);
   const fresh = await requireSensitiveAction({
     env,
@@ -30,10 +51,7 @@ export async function onRequestPost({ env, request, params }) {
   });
   if (!lockdown.ok) return lockdown.resp;
 
-  const state = await ensureEmergencySchema(env);
-  if (!state.ok) return state.resp;
   const t = now();
-
   await state.db.prepare(
     `INSERT INTO emergency_protocol_state (
       org_id, stage, isolated, isolated_by_user_id, isolated_at,

@@ -1,4 +1,5 @@
 import React from "react";
+import Colophon from "../pages/Colophon.jsx";
 import { getPlatformModules } from "./moduleRegistry.js";
 import { isFeatureEnabled } from "./featureFlags.js";
 
@@ -11,6 +12,10 @@ function PlatformRoutePlaceholder({ moduleId }) {
 }
 
 function renderRouteElement(route) {
+	if (route.kind === "colophon-native") {
+		return <Colophon />;
+	}
+
 	if (route.kind === "placeholder") {
 		return <PlatformRoutePlaceholder moduleId={route.moduleId} />;
 	}

@@ -38,6 +38,7 @@ export default function MeetingDetail() {
 
   const [myRsvp, setMyRsvp] = useState(null);
   const [rsvpCounts, setRsvpCounts] = useState({ combined: { yes: 0, maybe: 0, no: 0, total: 0 }, member: { yes: 0, maybe: 0, no: 0, total: 0 }, public: { yes: 0, maybe: 0, no: 0, total: 0 } });
+  const [privateMode, setPrivateMode] = useState(false);
   const [rsvpBusy, setRsvpBusy] = useState(false);
   const [rsvpMsg, setRsvpMsg] = useState("");
 
@@ -46,6 +47,8 @@ export default function MeetingDetail() {
     const bust = `ts=${Date.now()}`;
     const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/meetings/${encodeURIComponent(meetingId)}?${bust}`);
     setM(data.meeting || null);
+    setPrivateMode(!!data.private_mode);
+    if(data.private_mode)return;
     setRsvpCounts(data?.meeting?.rsvp_counts || { combined: { yes: 0, maybe: 0, no: 0, total: 0 }, member: { yes: 0, maybe: 0, no: 0, total: 0 }, public: { yes: 0, maybe: 0, no: 0, total: 0 } });
 
     // Load current user's RSVP (members can read their own RSVP; admins can read lists).
@@ -146,6 +149,7 @@ export default function MeetingDetail() {
       )}
 
       <div className="grid" style={{ gap: 10, marginTop: 12 }}>
+        {privateMode ? <p>Meeting details are encrypted. RSVP collection is not available in member-only mode yet.</p> : <>
         <div className="card" style={{ padding: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <div style={{ fontWeight: 800 }}>RSVP Summary</div>
@@ -194,6 +198,7 @@ export default function MeetingDetail() {
             </button>
           </div>
         </div>
+        </>}
 
         <input
           className="input"

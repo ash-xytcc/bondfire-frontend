@@ -123,7 +123,7 @@ function buildDriveFileUrls(orgId, fileId) {
   return { previewUrl: base, downloadUrl: `${base}?download=1`, url: base };
 }
 function withFileUrls(orgId, file) {
-  if (!file?.id) return file;
+  if (!file?.id || file.encrypted) return file;
   return { ...file, ...buildDriveFileUrls(orgId, file.id) };
 }
 
@@ -628,7 +628,7 @@ export default function Drive() {
   async function openFile(file) {
     let nextFile = withFileUrls(orgId, file);
     if (!nextFile) return;
-    if (isEditableTextFile(nextFile) && !nextFile.textContent && !nextFile.dataUrl) {
+    if ((nextFile.encrypted || isEditableTextFile(nextFile)) && !nextFile.textContent && !nextFile.dataUrl) {
       nextFile = await hydrateFile(nextFile.id);
       if (!nextFile) return;
       nextFile = withFileUrls(orgId, nextFile);
@@ -644,7 +644,12 @@ export default function Drive() {
     }
     openFileInBrowser(nextFile);
   }
-  function downloadFile(file) {
+  async function downloadFile(file) {
+    if (file.encrypted) {
+      const hydrated = file.dataUrl ? file : await hydrateFile(file.id);
+      if (!hydrated?.dataUrl) throw new Error('Encrypted file could not be opened.');
+      const link = document.createElement('a'); link.href = hydrated.dataUrl; link.download = hydrated.name || 'download'; link.click(); return;
+    }
     const a = document.createElement("a");
     a.href = file?.downloadUrl || `/api/orgs/${encodeURIComponent(orgId)}/drive/files/${encodeURIComponent(file.id)}/download?download=1`;
     a.download = file.name || "download";
@@ -745,25 +750,9 @@ export default function Drive() {
       if (parentId) headers["x-drive-parent-id"] = String(parentId);
       if (relativePath) headers["x-drive-relative-path"] = String(relativePath);
 
-      let res;
-      try {
-        res = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/files`, {
-          method: "POST",
-          headers,
-          body: rawFile,
-        });
-      } catch {
-        const form = new FormData();
-        form.append("file", rawFile, rawFile.name || record.name || "file");
-        form.append("name", record.name || rawFile.name || "file");
-        form.append("mime", record.mime || rawFile.type || "application/octet-stream");
-        if (parentId) form.append("parentId", String(parentId));
-        if (relativePath) form.append("relativePath", String(relativePath));
-        res = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/files`, {
-          method: "POST",
-          body: form,
-        });
-      }
+      const res = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/files`, {
+        method: "POST", headers, body: rawFile,
+      });
 
       const createdFile = res?.file || (res?.id ? { id: res.id } : null);
       if (!createdFile?.id) throw new Error("UPLOAD_FAILED");

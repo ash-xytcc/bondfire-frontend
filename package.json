@@ -10,7 +10,7 @@
     "smoke:thread1": "node scripts/thread1-emergency-smoke.mjs"
   },
   "dependencies": {
-    "colophon": "https://github.com/colophon-hub/colophon/archive/88704da059381593928a843ee3e64d83638a6ebc.tar.gz",
+    "colophon": "https://github.com/colophon-hub/colophon/archive/3c3eebf22cbc28703452250a3bad1d4ee7709be1.tar.gz",
     "lucide-react": "^0.577.0",
     "matrix-js-sdk": "^37.13.0",
     "react": "^18.3.1",

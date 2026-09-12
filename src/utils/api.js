@@ -1,8 +1,7 @@
 // src/utils/api.js
-// Central fetch wrapper with:
-// - Bearer token support (multiple key names for back-compat)
-// - Cookie/session support
-// - Optional silent refresh on 401
+// Central fetch wrapper with auth/session support plus client-side protection
+// for private org content. Sensitive private fields are encrypted before they
+// leave the browser; ciphertext is authoritative on the server.
 import { isDemoMode } from "../demo/demoMode.js";
 import { demoHandle, ensureDemoOrgList } from "../demo/demoStore.js";
 
@@ -10,153 +9,165 @@ const API_BASE = (import.meta?.env?.VITE_API_BASE || "").replace(/\/$/, "");
 
 function pickToken() {
   try {
-    return (
-      localStorage.getItem("bf_token") ||
-      localStorage.getItem("bf_auth_token") ||
-      localStorage.getItem("bf_access_token") ||
-      localStorage.getItem("bf_accessToken") ||
-      ""
-    );
-  } catch {
-    return "";
-  }
+    return localStorage.getItem("bf_token") || localStorage.getItem("bf_auth_token") || localStorage.getItem("bf_access_token") || localStorage.getItem("bf_accessToken") || "";
+  } catch { return ""; }
 }
-
-function saveToken(tok) {
-  if (!tok) return;
-  try {
-    localStorage.setItem("bf_token", tok);
-  } catch {}
-}
-
-// Robust JSON parsing: tolerate 204 and empty bodies.
+function saveToken(tok) { if (!tok) return; try { localStorage.setItem("bf_token", tok); } catch {} }
 async function readJsonMaybe(res) {
-  if (!res) return null;
-  if (res.status === 204 || res.status === 205) return null;
-
+  if (!res || res.status === 204 || res.status === 205) return null;
   const text = await res.text().catch(() => "");
   if (!text) return null;
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    // Sometimes servers return plain text. Keep it available for debugging.
-    return { raw: text };
-  }
+  try { return JSON.parse(text); } catch { return { raw: text }; }
 }
-
 async function tryRefresh() {
-  // If your backend doesn't support refresh, this just fails quietly.
-  const rel = `/api/auth/refresh`;
+  const rel = "/api/auth/refresh";
   const url = API_BASE ? `${API_BASE}${rel}` : rel;
-  const res = await fetch(url, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: "{}",
-  });
-
+  const res = await fetch(url, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: "{}" });
   if (!res.ok) return null;
-
   const data = await readJsonMaybe(res);
-
-  // Support either cookie-only refresh or token-in-body refresh.
   if (data?.token) saveToken(data.token);
   if (data?.access_token) saveToken(data.access_token);
-
   return data;
 }
 
-export async function api(path, opts = {}) {
-  const rel = path.startsWith("/") ? path : `/${path}`;
+function orgRoute(rel) {
+  const m = String(rel || "").match(/^\/api\/orgs\/([^/?]+)\/(needs|meetings|inventory|people|chat\/messages|drive\/notes)(?:\/([^/?]+))?(?:\?.*)?$/);
+  if (!m) return null;
+  let orgId = m[1];
+  try { orgId = decodeURIComponent(orgId); } catch {}
+  return { orgId, kind: m[2], itemId: m[3] || "" };
+}
 
+async function cryptoTools(orgId) {
+  const zk = await import("../lib/zk.js");
+  const key = zk.getCachedOrgKey(orgId);
+  if (!key) throw new Error("This private content cannot be saved until this device has the organization encryption key.");
+  return { key, encrypt: zk.encryptWithOrgKey, decrypt: zk.decryptWithOrgKey };
+}
+
+function parseJsonBody(body) {
+  if (typeof body !== "string") return null;
+  try { return JSON.parse(body); } catch { return null; }
+}
+
+async function protectWrite(rel, opts) {
+  if (opts.__skipContentCrypto) return opts;
+  const route = orgRoute(rel);
+  const method = String(opts.method || "GET").toUpperCase();
+  if (!route || !["POST", "PUT", "PATCH"].includes(method)) return opts;
+  const body = parseJsonBody(opts.body);
+  if (!body) return opts;
+
+  const privateRecord = route.kind === "people" || route.kind === "chat/messages" || route.kind === "drive/notes" || !body.is_public;
+  if (!privateRecord) return opts;
+  const { key, encrypt } = await cryptoTools(route.orgId);
+
+  let sensitive = null;
+  let next = { ...body };
+  if (route.kind === "needs") {
+    if (body.encrypted_blob) return opts;
+    sensitive = { title: String(body.title || ""), description: String(body.description || ""), urgency: String(body.urgency || "") };
+    next = { ...next, title: "__encrypted__", description: "", urgency: "" };
+  } else if (route.kind === "meetings") {
+    if (body.encrypted_blob) return opts;
+    sensitive = { title: String(body.title || ""), location: String(body.location || ""), agenda: String(body.agenda || ""), notes: String(body.notes || "") };
+    next = { ...next, title: "__encrypted__", location: "", agenda: "", notes: "" };
+  } else if (route.kind === "inventory") {
+    if (body.encrypted_blob) return opts;
+    sensitive = { name: String(body.name || ""), category: String(body.category || ""), location: String(body.location || ""), notes: String(body.notes || "") };
+    next = { ...next, name: "__encrypted__", category: "", location: "", notes: "" };
+  } else if (route.kind === "people") {
+    if (body.encrypted_blob) return opts;
+    sensitive = { name: String(body.name || ""), role: String(body.role || ""), phone: String(body.phone || ""), skills: String(body.skills || ""), notes: String(body.notes || "") };
+    next = { ...next, name: "__encrypted__", role: "", phone: "", skills: "", notes: "" };
+  } else if (route.kind === "chat/messages") {
+    if (body.encrypted_blob) return opts;
+    sensitive = { body: String(body.body || "") };
+    next = { ...next, body: "__encrypted__" };
+  } else if (route.kind === "drive/notes") {
+    if (body.encryptedBlob) return opts;
+    sensitive = { title: String(body.title || "untitled"), body: String(body.body ?? body.content ?? ""), tags: Array.isArray(body.tags) ? body.tags : String(body.tags || "").split(",").map((x) => x.trim()).filter(Boolean) };
+    next = { ...next, title: "encrypted note", body: "", content: "", tags: [] };
+  }
+  if (!sensitive) return opts;
+  const encrypted = await encrypt(key, JSON.stringify(sensitive));
+  if (route.kind === "drive/notes") next.encryptedBlob = encrypted;
+  else next.encrypted_blob = encrypted;
+  return { ...opts, body: JSON.stringify(next) };
+}
+
+async function revealOne(route, row) {
+  if (!row || typeof row !== "object") return row;
+  const blob = route.kind === "drive/notes" ? row.encryptedBlob : row.encrypted_blob;
+  if (!blob) return row;
+  try {
+    const { key, decrypt } = await cryptoTools(route.orgId);
+    const clear = JSON.parse(await decrypt(key, blob));
+    return { ...row, ...clear };
+  } catch { return row; }
+}
+
+async function revealResponse(rel, data) {
+  const route = orgRoute(rel);
+  if (!route || !data || typeof data !== "object") return data;
+  if (route.kind === "needs" && Array.isArray(data.needs)) return { ...data, needs: await Promise.all(data.needs.map((r) => revealOne(route, r))) };
+  if (route.kind === "meetings" && Array.isArray(data.meetings)) return { ...data, meetings: await Promise.all(data.meetings.map((r) => revealOne(route, r))) };
+  if (route.kind === "inventory") {
+    const key = Array.isArray(data.inventory) ? "inventory" : Array.isArray(data.items) ? "items" : null;
+    if (key) return { ...data, [key]: await Promise.all(data[key].map((r) => revealOne(route, r))) };
+  }
+  if (route.kind === "people" && Array.isArray(data.people)) return { ...data, people: await Promise.all(data.people.map((r) => revealOne(route, r))) };
+  if (route.kind === "chat/messages" && Array.isArray(data.messages)) return { ...data, messages: await Promise.all(data.messages.map((r) => revealOne(route, r))) };
+  if (route.kind === "drive/notes") {
+    if (Array.isArray(data.notes)) return { ...data, notes: await Promise.all(data.notes.map((r) => revealOne(route, r))) };
+    if (data.note) return { ...data, note: await revealOne(route, data.note) };
+  }
+  return data;
+}
+
+export async function api(path, options = {}) {
+  const rel = path.startsWith("/") ? path : `/${path}`;
   if (isDemoMode()) {
     ensureDemoOrgList();
-    const handled = demoHandle(rel, opts);
+    const handled = demoHandle(rel, options);
     if (handled) return handled;
   }
-  const candidates = (() => {
-    if (path.startsWith("http")) return [path];
-    if (!API_BASE) return [rel];
-    if (rel.startsWith("/api/")) return [rel, `${API_BASE}${rel}`];
-    return [`${API_BASE}${rel}`];
-  })();
 
-  const headers = new Headers(opts.headers || {});
-  const body = opts.body;
+  const opts = await protectWrite(rel, options);
+  const { __skipContentCrypto, ...fetchOpts } = opts;
+  const candidates = path.startsWith("http") ? [path] : !API_BASE ? [rel] : rel.startsWith("/api/") ? [rel, `${API_BASE}${rel}`] : [`${API_BASE}${rel}`];
+  const headers = new Headers(fetchOpts.headers || {});
+  const body = fetchOpts.body;
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
   const isBlob = typeof Blob !== "undefined" && body instanceof Blob;
   const isArrayBuffer = typeof ArrayBuffer !== "undefined" && (body instanceof ArrayBuffer || ArrayBuffer.isView(body));
-  if (!headers.has("Content-Type") && body != null && !isFormData && !isBlob && !isArrayBuffer) {
-    headers.set("Content-Type", "application/json");
-  }
-
+  if (!headers.has("Content-Type") && body != null && !isFormData && !isBlob && !isArrayBuffer) headers.set("Content-Type", "application/json");
   const token = pickToken();
-  if (token && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
+  if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
 
-  // Always include cookies if the server uses httpOnly sessions.
   let chosenUrl = candidates[0];
   let firstRes = null;
-
   for (let i = 0; i < candidates.length; i++) {
-    const u = candidates[i];
-    chosenUrl = u;
+    chosenUrl = candidates[i];
     try {
-      const r = await fetch(u, { ...opts, headers, credentials: "include" });
+      const r = await fetch(chosenUrl, { ...fetchOpts, headers, credentials: "include" });
       firstRes = r;
-
-      const shouldTryNext =
-        i < candidates.length - 1 && (r.status === 404 || r.status >= 500);
-
-      if (!shouldTryNext) break;
-    } catch {
-      firstRes = null;
-      // try next
-    }
+      if (!(i < candidates.length - 1 && (r.status === 404 || r.status >= 500))) break;
+    } catch { firstRes = null; }
   }
-
   if (!firstRes) throw new Error("Network error");
 
-  if (firstRes.status !== 401) {
-    if (!firstRes.ok) {
-      const text = await firstRes.text().catch(() => "");
-      throw new Error(text || `Request failed (${firstRes.status})`);
-    }
-    return readJsonMaybe(firstRes) || {};
+  if (firstRes.status === 401) {
+    try { await tryRefresh(); } catch {}
+    const retryHeaders = new Headers(headers);
+    const token2 = pickToken();
+    if (token2) retryHeaders.set("Authorization", `Bearer ${token2}`);
+    firstRes = await fetch(chosenUrl, { ...fetchOpts, headers: retryHeaders, credentials: "include" });
   }
-
-  // 401: attempt silent refresh once, then retry.
-  try {
-    await tryRefresh();
-  } catch {
-    // ignore
+  if (!firstRes.ok) {
+    const text = await firstRes.text().catch(() => "");
+    throw new Error(text || `Request failed (${firstRes.status})`);
   }
-
-  const token2 = pickToken();
-  const headers2 = new Headers(opts.headers || {});
-  const retryBody = opts.body;
-  const retryIsFormData = typeof FormData !== "undefined" && retryBody instanceof FormData;
-  const retryIsBlob = typeof Blob !== "undefined" && retryBody instanceof Blob;
-  const retryIsArrayBuffer = typeof ArrayBuffer !== "undefined" && (retryBody instanceof ArrayBuffer || ArrayBuffer.isView(retryBody));
-  if (!headers2.has("Content-Type") && retryBody != null && !retryIsFormData && !retryIsBlob && !retryIsArrayBuffer) {
-    headers2.set("Content-Type", "application/json");
-  }
-  if (token2 && !headers2.has("Authorization")) {
-    headers2.set("Authorization", `Bearer ${token2}`);
-  }
-
-  const retryRes = await fetch(chosenUrl, {
-    ...opts,
-    headers: headers2,
-    credentials: "include",
-  });
-
-  if (!retryRes.ok) {
-    const text = await retryRes.text().catch(() => "");
-    throw new Error(text || `Unauthorized (${retryRes.status})`);
-  }
-
-  return readJsonMaybe(retryRes) || {};
+  const data = (await readJsonMaybe(firstRes)) || {};
+  return __skipContentCrypto ? data : revealResponse(rel, data);
 }

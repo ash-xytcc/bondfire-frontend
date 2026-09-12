@@ -1,5 +1,7 @@
 import React from 'react';
 import { api } from '../utils/api.js';
+import AccountDestructionPanel from './AccountDestructionPanel.jsx';
+import { clearOrgDeviceData, emergencyError } from '../lib/emergencyUi.js';
 
 const basePanel = {
   marginTop: 16,
@@ -26,6 +28,7 @@ function Credentials({ password, setPassword, mfaCode, setMfaCode }) {
     <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
       <input
         type="password"
+        aria-label="Current password"
         autoComplete="current-password"
         value={password}
         onChange={(event) => setPassword(event.target.value)}
@@ -33,6 +36,7 @@ function Credentials({ password, setPassword, mfaCode, setMfaCode }) {
         style={fieldStyle}
       />
       <input
+        aria-label="Authenticator code"
         inputMode="numeric"
         autoComplete="one-time-code"
         value={mfaCode}
@@ -44,13 +48,8 @@ function Credentials({ password, setPassword, mfaCode, setMfaCode }) {
   );
 }
 
-function cleanClientOrgKey(orgId) {
-  try {
-    localStorage.removeItem(`bf_orgkey_cache_v1:${orgId}`);
-  } catch {}
-}
-
 function stepForStage(stage, lockdown, isolated) {
+  if (stage === 'destroying') return 7;
   if (stage === 'prepared') return 6;
   if (stage === 'isolated' || isolated) return 3;
   if (stage === 'lockdown' || lockdown) return 2;
@@ -67,21 +66,42 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
   const [acknowledgeHistoricalLimit, setAcknowledgeHistoricalLimit] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState('');
+  const [statusKnown, setStatusKnown] = React.useState(false);
+  const [permissions, setPermissions] = React.useState({ canLockdown: false, canDestroy: false });
+  const finished = React.useRef(false);
 
-  const loadProtocol = React.useCallback(async () => {
-    if (!orgId) return null;
-    const result = await api(`/api/orgs/${orgId}/emergency/protocol`, { method: 'GET' });
-    setPreview(result?.preview || null);
+  const loadProtocol = React.useCallback(async ({ review = false, signal } = {}) => {
+    if (!orgId || finished.current) return null;
+    const result = await api(`/api/orgs/${encodeURIComponent(orgId)}/emergency/protocol${review ? '?preview=1' : ''}`, { method: 'GET', signal });
+    if (finished.current || signal?.aborted) return null;
+    if (result?.preview) setPreview(result.preview);
+    setPermissions(result?.permissions || { canLockdown: false, canDestroy: false });
     const stage = String(result?.protocol?.stage || 'normal');
-    setStep(stepForStage(stage, lockdown, result?.protocol?.isolated || isolated));
+    setStep((current) => {
+      if (stage === 'isolated' && current >= 3 && current <= 5) return current;
+      if (stage === 'normal' && current === 1) return current;
+      return stepForStage(stage, false, result?.protocol?.isolated);
+    });
+    setStatusKnown(true);
     return result;
-  }, [orgId, lockdown, isolated]);
+  }, [orgId]);
 
   React.useEffect(() => {
-    loadProtocol().catch(() => {
-      setStep(stepForStage('normal', lockdown, isolated));
+    const controller = new AbortController();
+    finished.current = false;
+    setStatusKnown(false);
+    setPermissions({ canLockdown: false, canDestroy: false });
+    setPreview(null); setPassword(''); setMfaCode(''); setPrepareConfirmation(''); setConfirmation(''); setError('');
+    setAcknowledgeHistoricalLimit(false); setStep(0);
+    loadProtocol({ signal: controller.signal }).catch((err) => {
+      if (!controller.signal.aborted) setError(emergencyError(err));
     });
-  }, [loadProtocol, lockdown, isolated]);
+    return () => controller.abort();
+  }, [loadProtocol]);
+
+  function notifyChanged() {
+    Promise.resolve(onChanged?.()).catch(() => {});
+  }
 
   async function enableLockdown() {
     setBusy(true);
@@ -91,11 +111,15 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
         method: 'POST',
         body: JSON.stringify({ enabled: true, reason: 'Emergency protocol' }),
       });
-      await loadProtocol();
       setStep(2);
-      onChanged?.();
+      notifyChanged();
+      try {
+        await loadProtocol();
+      } catch {
+        setError('Lockdown is enabled. Could not refresh the next protocol stage; reload to retry.');
+      }
     } catch (err) {
-      setError(err?.message || 'Lockdown failed');
+      setError(emergencyError(err));
     } finally {
       setBusy(false);
     }
@@ -111,9 +135,9 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
       });
       setPreview(null);
       setStep(0);
-      onChanged?.();
+      notifyChanged();
     } catch (err) {
-      setError(err?.message || 'Could not disable lockdown');
+      setError(emergencyError(err));
     } finally {
       setBusy(false);
     }
@@ -129,11 +153,11 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
       });
       setPassword('');
       setMfaCode('');
-      await loadProtocol();
       setStep(3);
-      onChanged?.();
+      notifyChanged();
+      try { await loadProtocol(); } catch { setError('Isolation is active. Refresh the protocol status to continue.'); }
     } catch (err) {
-      setError(err?.message || 'Isolation failed');
+      setError(emergencyError(err));
     } finally {
       setBusy(false);
     }
@@ -154,9 +178,9 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
       setAcknowledgeHistoricalLimit(false);
       setPreview(null);
       setStep(0);
-      onChanged?.();
+      notifyChanged();
     } catch (err) {
-      setError(err?.message || 'Recovery failed');
+      setError(emergencyError(err));
     } finally {
       setBusy(false);
     }
@@ -166,11 +190,11 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
     setBusy(true);
     setError('');
     try {
-      const result = await loadProtocol();
+      const result = await loadProtocol({ review: true });
       setPreview(result?.preview || null);
       setStep(4);
     } catch (err) {
-      setError(err?.message || 'Could not load destruction preview');
+      setError(emergencyError(err));
     } finally {
       setBusy(false);
     }
@@ -194,9 +218,9 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
       setMfaCode('');
       setPrepareConfirmation('');
       setStep(6);
-      onChanged?.();
+      notifyChanged();
     } catch (err) {
-      setError(err?.message || 'Could not prepare destruction');
+      setError(emergencyError(err));
     } finally {
       setBusy(false);
     }
@@ -216,11 +240,13 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
           acknowledgeHistoricalLimit,
         }),
       });
-      cleanClientOrgKey(orgId);
-      window.location.assign('/');
+      finished.current = true;
+      setStep(8); setPassword(''); setMfaCode(''); setConfirmation(''); setBusy(false);
+      try { await clearOrgDeviceData(orgId); } catch { setError('Organization deleted. Clear this site’s browser data to remove any remaining local copies.'); }
     } catch (err) {
-      setError(err?.message || 'Destruction failed');
-      setBusy(false);
+      setError(emergencyError(err));
+      try { await loadProtocol(); } catch {}
+      setPassword(''); setMfaCode(''); setBusy(false);
     }
   }
 
@@ -247,7 +273,8 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
           <p style={{ maxWidth: 720 }}>
             This is the deliberate emergency path. It begins with a recoverable write lockdown, then owner-only isolation. Permanent destruction stays unavailable until the recoverable stages and a separate preparation step are complete.
           </p>
-          <button onClick={() => setStep(1)}>Enter emergency protocol</button>
+          <button disabled={!statusKnown || !permissions.canLockdown} onClick={() => setStep(1)}>Enter emergency protocol</button>
+          {statusKnown && !permissions.canLockdown ? <p>An administrator or owner must enable lockdown.</p> : null}
         </>
       ) : null}
 
@@ -273,7 +300,7 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
           <Credentials password={password} setPassword={setPassword} mfaCode={mfaCode} setMfaCode={setMfaCode} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
             <button disabled={busy} onClick={disableLockdown}>{busy ? 'Working…' : 'Restore normal operation'}</button>
-            <button disabled={busy || !password} onClick={isolateOrg}>{busy ? 'Isolating…' : 'Continue to owner-only isolation'}</button>
+            <button disabled={busy || !password || !permissions.canDestroy} onClick={isolateOrg}>{busy ? 'Isolating…' : 'Continue to owner-only isolation'}</button>
           </div>
         </>
       ) : null}
@@ -295,7 +322,7 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
       {step === 4 ? (
         <>
           <h4>Stage 4 · destruction review</h4>
-          <p>This step deletes nothing. It shows the exact active scope before the protocol can be armed for destruction.</p>
+          <p>This step deletes nothing. It shows the currently identified scope before the protocol can be armed for destruction.</p>
           {preview ? (
             <div style={{ display: 'grid', gap: 5, margin: '12px 0' }}>
               <div><strong>Organization:</strong> {preview.org?.name || orgId}</div>
@@ -306,7 +333,7 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
             </div>
           ) : null}
           <div style={{ padding: 10, border: '1px solid #d9897e', borderRadius: 8, background: 'rgba(0,0,0,0.2)' }}>
-            Bondfire can delete active organization data, storage objects, memberships, recovery material, and encryption-key records. Legacy plaintext may still exist in provider-managed historical backups outside Bondfire control. Key-protected data becomes unrecoverable when its keys are destroyed.
+            Bondfire can delete active organization data, storage objects, memberships, recovery material, and encryption-key records. Legacy plaintext may still exist in provider-managed historical backups outside Bondfire control. Copies downloaded earlier, exported keys, and keys on other devices cannot be recalled by this action.
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
             <button disabled={busy} onClick={() => setStep(3)}>Back to recoverable isolation</button>
@@ -323,6 +350,7 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
           </p>
           <p>Type <code>{preparePhrase || 'PREPARE …'}</code> exactly.</p>
           <input
+            aria-label="Preparation confirmation phrase"
             value={prepareConfirmation}
             onChange={(event) => setPrepareConfirmation(event.target.value)}
             placeholder={preparePhrase || 'Preparation phrase'}
@@ -342,14 +370,16 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
         </>
       ) : null}
 
-      {step === 6 ? (
+      {step === 6 || step === 7 ? (
         <>
-          <h4>Stage 6 · irreversible destruction</h4>
+          <h4>{step === 7 ? 'Deletion started · completion required' : 'Stage 6 · irreversible destruction'}</h4>
+          {step === 7 ? <p role="status">Some data may already be deleted. Recovery is no longer available. Keep the organization isolated and retry to finish removing the remaining data.</p> : null}
           <p style={{ fontWeight: 700 }}>
             After this succeeds, Bondfire has no restore path for the organization. Memberships, active data, Drive objects, and key/recovery material are destroyed.
           </p>
           <p>Type <code>{preview?.confirmationPhrase || 'DESTROY …'}</code> exactly.</p>
           <input
+            aria-label="Deletion confirmation phrase"
             value={confirmation}
             onChange={(event) => setConfirmation(event.target.value)}
             placeholder={preview?.confirmationPhrase || 'Confirmation phrase'}
@@ -365,19 +395,27 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
             <span>I understand the provider-history limitation for legacy plaintext and still want Bondfire to destroy all active organization data and cryptographic recovery material now.</span>
           </label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-            <button disabled={busy || !password} onClick={recoverOrg}>Recover organization instead</button>
+            {step !== 7 ? <button disabled={busy || !password} onClick={recoverOrg}>Recover organization instead</button> : null}
             <button
-              disabled={busy || !password || !acknowledgeHistoricalLimit || confirmation !== preview?.confirmationPhrase}
+              disabled={busy || !statusKnown || !preview?.confirmationPhrase || !password || !acknowledgeHistoricalLimit || confirmation !== preview?.confirmationPhrase}
               onClick={destroyOrg}
               style={{ fontWeight: 800 }}
             >
-              {busy ? 'Destroying…' : 'Destroy organization permanently'}
+              {busy ? 'Destroying…' : step === 7 ? 'Retry and finish deletion' : 'Destroy organization permanently'}
             </button>
           </div>
         </>
       ) : null}
 
-      {error ? <div style={{ marginTop: 12, padding: 10, borderRadius: 8, background: 'rgba(0,0,0,0.28)' }}>{error}</div> : null}
+      {step === 8 ? <>
+        <h4>Organization deleted</h4>
+        <p>The organization’s active data and server-held recovery material have been removed. Your personal account still exists.</p>
+        <a href="#/orgs">Return to your organizations</a>
+        <AccountDestructionPanel />
+      </> : null}
+      {!statusKnown && !finished.current ? <p role="status">Protocol status must load before actions are available.</p> : null}
+      {error && !finished.current ? <button disabled={busy} onClick={() => { setError(''); loadProtocol().catch((err) => setError(emergencyError(err))); }}>Refresh protocol status</button> : null}
+      {error ? <div role="alert" style={{ marginTop: 12, padding: 10, borderRadius: 8, background: 'rgba(0,0,0,0.28)' }}>{error}</div> : null}
     </section>
   );
 }

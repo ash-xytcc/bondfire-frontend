@@ -29,6 +29,10 @@ export async function requireUser({ env, request }) {
   const payload = await verifyJwt(env.JWT_SECRET, token);
   if (!payload) return { ok: false, resp: bad(401, "UNAUTHORIZED") };
 
+  const db = getDb(env);
+  if (!db) return { ok: false, resp: bad(503, "AUTH_STATE_UNAVAILABLE") };
+  const account = await db.prepare("SELECT id FROM users WHERE id = ?").bind(payload.sub || '').first();
+  if (!account) return { ok: false, resp: bad(401, "UNAUTHORIZED") };
   return { ok: true, user: payload };
 }
 

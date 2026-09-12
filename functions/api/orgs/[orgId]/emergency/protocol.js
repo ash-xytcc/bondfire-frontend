@@ -5,29 +5,19 @@ import { bad, ok } from '../../../_lib/http.js';
 
 export async function onRequestGet({ env, request, params }) {
   const orgId = String(params?.orgId || '');
-  const gate = await requireOrgRole({ env, request, orgId, minRole: 'owner', bypassWriteLockdown: true });
+  const gate = await requireOrgRole({ env, request, orgId, minRole: 'viewer', bypassWriteLockdown: true });
   if (!gate.ok) return gate.resp;
-
   const state = await ensureEmergencySchema(env);
   if (!state.ok) return state.resp;
-
-  const preview = await getOrgDestructionPreview({ db: state.db, orgId });
-  if (!preview) return bad(404, 'ORG_NOT_FOUND');
-
-  const protocol = await state.db.prepare(
-    `SELECT stage, isolated, isolated_by_user_id, isolated_at, recovered_by_user_id, recovered_at, updated_at
-     FROM emergency_protocol_state WHERE org_id = ?`
-  ).bind(orgId).first();
-
-  return ok({
-    protocol: protocol
-      ? {
-          stage: String(protocol.stage || 'normal'),
-          isolated: !!protocol.isolated,
-          isolatedAt: protocol.isolated_at || null,
-          updatedAt: protocol.updated_at || null,
-        }
-      : { stage: 'normal', isolated: false, isolatedAt: null, updatedAt: null },
-    preview,
-  });
+  const row = await state.db.prepare('SELECT stage, isolated, isolated_at, updated_at FROM emergency_protocol_state WHERE org_id = ?').bind(orgId).first();
+  const lockdown = await state.db.prepare('SELECT lockdown_enabled FROM org_emergency_state WHERE org_id = ?').bind(orgId).first();
+  const stage = String(row?.stage || (lockdown?.lockdown_enabled ? 'lockdown' : 'normal'));
+  const owner = gate.role === 'owner';
+  let preview = null;
+  if (owner && (new URL(request.url).searchParams.get('preview') === '1' || ['prepared', 'destroying'].includes(stage))) {
+    preview = await getOrgDestructionPreview({ db: state.db, orgId });
+    if (!preview) return bad(404, 'ORG_NOT_FOUND');
+  }
+  return ok({ protocol: { stage, isolated: !!row?.isolated, isolatedAt: row?.isolated_at || null, updatedAt: row?.updated_at || null },
+    permissions: { canLockdown: owner || gate.role === 'admin', canDestroy: owner }, preview }, { headers: { 'cache-control': 'no-store' } });
 }

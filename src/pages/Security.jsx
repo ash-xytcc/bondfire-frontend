@@ -60,7 +60,7 @@ export default function Security() {
     globalUpdatedAt: null,
     orgUpdatedAt: null,
   });
-  const [lockdownBusy, setLockdownBusy] = React.useState(false);
+
   const [emergencyReports, setEmergencyReports] = React.useState({
     loading: true,
     error: "",
@@ -370,31 +370,6 @@ export default function Security() {
     }
   }
 
-  async function toggleLockdown() {
-    const nextEnabled = !emergencyStatus.orgLockdownActive;
-    const prompt = nextEnabled
-      ? "Enable org lockdown? This will block org write actions."
-      : "Disable org lockdown?";
-    if (!confirm(prompt)) return;
-
-    setEmergencyStatus((s) => ({ ...s, error: "" }));
-    setLockdownBusy(true);
-    try {
-      await api(`/api/orgs/${orgId}/emergency/lockdown`, {
-        method: "POST",
-        body: JSON.stringify({ enabled: nextEnabled }),
-      });
-      await Promise.all([loadEmergencyStatus(), loadEmergencyReports()]);
-    } catch (e) {
-      setEmergencyStatus((s) => ({
-        ...s,
-        error: e?.message || "Failed to update lockdown",
-      }));
-    } finally {
-      setLockdownBusy(false);
-    }
-  }
-
   async function refreshEmergencyPanels() {
     await Promise.all([loadEmergencyStatus(), loadEmergencyReports()]);
   }
@@ -402,6 +377,8 @@ export default function Security() {
   return (
     <div style={{ maxWidth: 920, margin: "0 auto", padding: 16 }}>
       <h2>security</h2>
+      {!orgId ? <p>For organization lockdown or deletion, <a href="#/orgs">open your organization</a> and choose Settings → Security.</p> : null}
+      {orgId ? <>
 
       <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
         <h3>Emergency status</h3>
@@ -426,15 +403,6 @@ export default function Security() {
             </div>
           </div>
         )}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          <button disabled={lockdownBusy || emergencyStatus.loading || emergencyStatus.orgIsolationActive} onClick={toggleLockdown}>
-            {lockdownBusy
-              ? "Updating…"
-              : emergencyStatus.orgLockdownActive
-              ? "Disable lockdown"
-              : "Enable lockdown"}
-          </button>
-        </div>
         {emergencyStatus.error ? (
           <div style={{ marginTop: 10, color: "#8b1d1d" }}>{emergencyStatus.error}</div>
         ) : null}
@@ -442,6 +410,7 @@ export default function Security() {
 
       <EmergencyProtocolPanel
         orgId={orgId}
+        lockdown={emergencyStatus.orgLockdownActive}
         isolated={emergencyStatus.orgIsolationActive}
         onChanged={refreshEmergencyPanels}
       />
@@ -487,6 +456,8 @@ export default function Security() {
         ) : null}
       </section>
 
+      </> : null}
+
       <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
         <h3>mfa</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -525,7 +496,7 @@ export default function Security() {
         ) : null}
       </section>
 
-      <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
+      {orgId ?       <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
         <h3>zero knowledge storage</h3>
         <div style={{ fontSize: 14, opacity: 0.9 }}>
           device key: {zkStatus.deviceKey ? "ok" : "missing"} | org key cached: {zkStatus.orgKey ? "yes" : "no"} | org key version: {orgKeyVersion}
@@ -575,7 +546,7 @@ export default function Security() {
 
           {recoveryMsg ? <div style={{ marginTop: 10, color: "#8b1d1d" }}>{recoveryMsg}</div> : null}
         </div>
-      </section>
+      </section> : null}
 
       <AccountDestructionPanel />
 

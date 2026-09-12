@@ -1,3 +1,4 @@
+import { transitionEmergency } from '../../../_lib/emergencyTransition.js';
 import { requireOrgRole } from '../../../_lib/auth.js';
 import { destroyOrgData, getOrgDestructionPreview } from '../../../_lib/destruction.js';
 import { ensureEmergencySchema } from '../../../_lib/emergency.js';
@@ -16,7 +17,7 @@ export async function onRequestPost({ env, request, params }) {
     'SELECT stage, isolated FROM emergency_protocol_state WHERE org_id = ?'
   ).bind(orgId).first();
   const stage = String(protocol?.stage || 'normal');
-  if (stage !== 'prepared' || !protocol?.isolated) {
+  if (!['prepared', 'destroying'].includes(stage) || !protocol?.isolated) {
     return bad(409, 'DESTRUCTION_NOT_PREPARED', { stage });
   }
 
@@ -39,6 +40,10 @@ export async function onRequestPost({ env, request, params }) {
     return bad(400, 'HISTORICAL_ERASURE_ACK_REQUIRED');
   }
 
+  const transition = await transitionEmergency({ env, orgId, userId: fresh.user.sub,
+    from: ['prepared', 'destroying'], stage: 'destroying', summary: 'Permanent organization destruction started' });
+  if (!transition.ok) return transition.resp;
+
   let result;
   try {
     result = await destroyOrgData({ env, db: fresh.db, orgId });
@@ -53,6 +58,6 @@ export async function onRequestPost({ env, request, params }) {
   return ok({
     destroyed: true,
     result,
-    erasure: preview.erasure,
+    erasure: { ...preview.erasure, activeDataDeleted: true, keyMaterialDestroyed: true },
   });
 }

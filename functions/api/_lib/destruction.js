@@ -1,4 +1,5 @@
 import { getDriveBucket } from './drive.js';
+import { orgPrefix, scopedObjectKey } from './colophonScopedRuntime.js';
 
 const SAFE_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const ORG_KEY_TABLES = new Set(['org_crypto', 'org_keys', 'org_key_wrapped', 'org_key_recovery']);
@@ -17,7 +18,9 @@ async function listTables(db) {
   ).all();
   return (result?.results || [])
     .map((row) => String(row?.name || ''))
-    .filter((name) => SAFE_IDENTIFIER.test(name));
+    // D1 exposes internal tables such as _cf_KV in sqlite_master, but
+    // rejects inspecting them with SQLITE_AUTH. They are not org data.
+    .filter((name) => SAFE_IDENTIFIER.test(name) && !/^(?:sqlite_|_cf_)/i.test(name));
 }
 
 async function tableColumns(db, tableName) {
@@ -36,22 +39,41 @@ async function tableExists(db, tableName) {
   return !!row?.name;
 }
 
-async function tablesWithColumn(db, columnName) {
-  const names = await listTables(db);
-  const matches = [];
+async function organizationScope(db, orgId) {
+  const names = await listTables(db), prefix = orgPrefix(orgId);
+  const scope = [{ name: 'orgs', columns: await tableColumns(db, 'orgs'), where: '"id" = ?', args: [orgId] }];
+  const orgs = await db.prepare('SELECT id FROM orgs').all();
+  if ((orgs.results || []).some((row) => row.id !== orgId && orgPrefix(row.id) === prefix)) throw new Error('STORAGE_NAMESPACE_COLLISION');
   for (const name of names) {
     const columns = await tableColumns(db, name);
-    if (columns.some((col) => col.name === columnName)) matches.push({ name, columns });
+    if (name.startsWith(prefix)) scope.push({ name, columns, where: '1=1', args: [] });
+    else if (name !== 'orgs' && columns.some((column) => column.name === 'org_id')) scope.push({ name, columns, where: '"org_id" = ?', args: [orgId] });
   }
-  return matches;
-}
-
-async function countByColumn(db, tableName, columnName, value) {
-  const row = await db
-    .prepare(`SELECT COUNT(*) AS n FROM ${quoted(tableName)} WHERE ${quoted(columnName)} = ?`)
-    .bind(value)
-    .first();
-  return Number(row?.n || 0);
+  // Include child tables which reference organization records but have no org_id.
+  const unresolved = names.filter((name) => name !== 'orgs' && !scope.some((entry) => entry.name === name));
+  for (let pass = 0; pass < names.length; pass += 1) {
+    let added = false;
+    for (const name of unresolved) {
+      if (scope.some((entry) => entry.name === name)) continue;
+      const keys = await db.prepare(`PRAGMA foreign_key_list(${quoted(name)})`).all();
+      const predicates = [], args = [];
+      const groups = new Map();
+      for (const key of keys.results || []) {
+        if (!groups.has(key.id)) groups.set(key.id, []);
+        groups.get(key.id).push(key);
+      }
+      for (const group of groups.values()) {
+        // Composite references need every column to match.
+        const parent = scope.find((entry) => entry.name === group[0].table);
+        if (!parent || group.some((key) => !key.to || !SAFE_IDENTIFIER.test(key.from) || !SAFE_IDENTIFIER.test(key.to))) continue;
+        predicates.push(`(${group.map((key) => quoted(key.from)).join(',')}) IN (SELECT ${group.map((key) => quoted(key.to)).join(',')} FROM ${quoted(parent.name)} WHERE ${parent.where})`);
+        args.push(...parent.args);
+      }
+      if (predicates.length) { scope.push({ name, columns: await tableColumns(db, name), where: predicates.map((clause) => `(${clause})`).join(' OR '), args }); added = true; }
+    }
+    if (!added) break;
+  }
+  return scope;
 }
 
 async function driveStorageKeys(db, orgId) {
@@ -67,11 +89,11 @@ export async function getOrgDestructionPreview({ db, orgId }) {
   const org = await db.prepare('SELECT id, name FROM orgs WHERE id = ? LIMIT 1').bind(orgId).first();
   if (!org) return null;
 
-  const orgTables = await tablesWithColumn(db, 'org_id');
+  const orgTables = await organizationScope(db, orgId);
   const tableCounts = {};
   let totalRows = 0;
-  for (const { name } of orgTables) {
-    const count = await countByColumn(db, name, 'org_id', orgId);
+  for (const { name, where, args } of orgTables) {
+    const count = Number((await db.prepare(`SELECT COUNT(*) AS n FROM ${quoted(name)} WHERE ${where}`).bind(...args).first())?.n || 0);
     if (count > 0) tableCounts[name] = count;
     totalRows += count;
   }
@@ -90,82 +112,80 @@ export async function getOrgDestructionPreview({ db, orgId }) {
     tableCounts,
     confirmationPhrase: `DESTROY ${String(org.name || '').trim()}`,
     erasure: {
-      activeDataDeleted: true,
-      keyMaterialDestroyed: keyRows > 0,
+      activeDataDeleted: false,
+      keyMaterialDestroyed: false,
       fullHistoricalGuarantee: false,
-      limitation: 'Legacy plaintext may still exist in provider-managed historical backups outside Bondfire control. Key-protected data becomes unrecoverable when its keys are destroyed.',
+      limitation: 'Provider backups, previously downloaded data, and keys saved on other devices are outside this deletion. Removing server keys alone does not erase copies held elsewhere.',
     },
   };
 }
 
-async function deleteOrgRowsWithRetries(db, orgId, excluded = new Set()) {
-  const orgTables = (await tablesWithColumn(db, 'org_id'))
-    .map((entry) => entry.name)
-    .filter((name) => !excluded.has(name));
+async function deletePublicCopies(env, orgId) {
+  const store = env?.BF_PUBLIC;
+  if (!store) return;
+  // Remove all aliases, including old slugs, rather than just the current one.
+  let cursor;
+  do {
+    const page = await store.list({ prefix: 'slug:', ...(cursor ? { cursor } : {}) });
+    for (const key of page.keys || []) if (await store.get(key.name) === orgId) await store.delete(key.name);
+    cursor = page.list_complete ? null : page.cursor;
+    if (!page.list_complete && !cursor) throw new Error('PUBLIC_COPY_LIST_INCOMPLETE');
+  } while (cursor);
+  await store.delete(`org:${orgId}`);
+}
 
-  let pending = [...orgTables];
-  let lastErrors = [];
-  for (let pass = 0; pass < 4 && pending.length; pass += 1) {
-    const next = [];
-    lastErrors = [];
-    for (const tableName of pending) {
-      try {
-        await db.prepare(`DELETE FROM ${quoted(tableName)} WHERE org_id = ?`).bind(orgId).run();
-      } catch (error) {
-        next.push(tableName);
-        lastErrors.push({ tableName, message: error?.message || String(error) });
+async function deleteStorageCopies(env, db, orgId) {
+  const drive = getDriveBucket(env), keys = await driveStorageKeys(db, orgId);
+  const buckets = [...new Set(Object.values(env || {}).filter((value) => value && typeof value.get === 'function' && typeof value.put === 'function' && typeof value.delete === 'function' && typeof value.list === 'function' && value !== env.BF_PUBLIC))];
+  if (drive && !buckets.includes(drive)) buckets.push(drive);
+  if (!drive && keys.length) {
+    // Inline D1 storage legitimately has storage_key values too.
+    if (!(await tableExists(db, 'drive_file_blobs'))) throw new Error('DRIVE_STORAGE_UNAVAILABLE');
+    const missing = await db.prepare(`SELECT f.id FROM drive_files f LEFT JOIN drive_file_blobs b ON b.file_id=f.id AND b.org_id=f.org_id
+      WHERE f.org_id=? AND f.storage_key IS NOT NULL AND b.file_id IS NULL LIMIT 1`).bind(orgId).first();
+    if (missing) throw new Error('DRIVE_STORAGE_UNAVAILABLE');
+  }
+  let deleted = 0;
+  for (const bucket of buckets) {
+    const prefixes = [scopedObjectKey('', orgId), ...(bucket === drive ? [`${orgId}/drive/`] : [])];
+    for (const prefix of prefixes) {
+      // Restart at the beginning after deletion so pagination cannot skip keys.
+      for (;;) {
+        const page = await bucket.list({ prefix, limit: 1000 });
+        const objects = page.objects || [];
+        if (!objects.length) {
+          if (page.truncated) throw new Error('STORAGE_LIST_INCOMPLETE');
+          break;
+        }
+        for (const object of objects) {
+          if (!String(object.key).startsWith(prefix)) throw new Error('STORAGE_SCOPE_MISMATCH');
+          await bucket.delete(object.key); deleted += 1;
+        }
       }
     }
-    if (next.length === pending.length) break;
-    pending = next;
   }
-
-  if (pending.length) {
-    const error = new Error('ORG_DELETE_INCOMPLETE');
-    error.tables = pending;
-    error.details = lastErrors;
-    throw error;
+  if (drive) for (const key of new Set(keys)) {
+    const other = await db.prepare('SELECT id FROM drive_files WHERE storage_key=? AND org_id<>? LIMIT 1').bind(key, orgId).first();
+    if (other) throw new Error('STORAGE_SCOPE_MISMATCH');
+    // Covers older keys stored outside the current prefix.
+    await drive.delete(key);
   }
+  return deleted;
 }
 
 export async function destroyOrgData({ env, db, orgId }) {
   const preview = await getOrgDestructionPreview({ db, orgId });
   if (!preview) return null;
-
-  const storageKeys = await driveStorageKeys(db, orgId);
-  const bucket = getDriveBucket(env);
-  if (bucket && storageKeys.length) {
-    const failed = [];
-    for (const key of storageKeys) {
-      try {
-        await bucket.delete(key);
-      } catch {
-        failed.push(key);
-      }
-    }
-    if (failed.length) {
-      const error = new Error('R2_DELETE_INCOMPLETE');
-      error.failedCount = failed.length;
-      throw error;
-    }
-  }
-
-  for (const tableName of ORG_KEY_TABLES) {
-    if (!(await tableExists(db, tableName))) continue;
-    const columns = await tableColumns(db, tableName);
-    if (!columns.some((col) => col.name === 'org_id')) continue;
-    await db.prepare(`DELETE FROM ${quoted(tableName)} WHERE org_id = ?`).bind(orgId).run();
-  }
-
-  await deleteOrgRowsWithRetries(db, orgId, ORG_KEY_TABLES);
-  await db.prepare('DELETE FROM orgs WHERE id = ?').bind(orgId).run();
-
-  return {
-    orgId,
-    deletedRows: preview.totalRows,
-    deletedDriveObjects: storageKeys.length,
-    destroyedKeyMaterialRows: preview.keyMaterialRows,
-  };
+  const scope = await organizationScope(db, orgId);
+  // Keep metadata and owner access until every external deletion succeeds.
+  await deletePublicCopies(env, orgId);
+  const deletedObjects = await deleteStorageCopies(env, db, orgId);
+  // Descendants precede parents; deferred foreign keys handle cyclic references.
+  // A failed batch rolls back the complete database deletion, retaining retry access.
+  const statements = [db.prepare('PRAGMA defer_foreign_keys = ON')];
+  for (const { name, where, args } of [...scope].reverse()) statements.push(db.prepare(`DELETE FROM ${quoted(name)} WHERE ${where}`).bind(...args));
+  await db.batch(statements);
+  return { orgId, deletedRows: preview.totalRows, deletedDriveObjects: Math.max(preview.driveObjectCount, deletedObjects), destroyedKeyMaterialRows: preview.keyMaterialRows };
 }
 
 export async function listSoleOwnedOrgs({ db, userId }) {
@@ -184,49 +204,38 @@ export async function listSoleOwnedOrgs({ db, userId }) {
   return (result?.results || []).map((row) => ({ id: row.id, name: row.name }));
 }
 
-async function nullIdentityReferences(db, userId) {
-  const referenceColumns = new Set([
-    'actor_user_id',
-    'created_by',
-    'updated_by',
-    'updated_by_user_id',
-    'lockdown_set_by_user_id',
-    'lockdown_cleared_by_user_id',
-  ]);
-  const tables = await listTables(db);
-  for (const tableName of tables) {
-    if (tableName === 'users') continue;
-    const columns = await tableColumns(db, tableName);
-    for (const column of columns) {
-      if (!referenceColumns.has(column.name) || column.notNull) continue;
-      try {
-        await db
-          .prepare(`UPDATE ${quoted(tableName)} SET ${quoted(column.name)} = NULL WHERE ${quoted(column.name)} = ?`)
-          .bind(userId)
-          .run();
-      } catch {
-        // Identity scrubbing is best-effort for legacy tables with unusual constraints.
-      }
-    }
-  }
-}
-
 export async function destroyAccountData({ db, userId }) {
   const blockers = await listSoleOwnedOrgs({ db, userId });
   if (blockers.length) return { ok: false, blockers };
-
-  const tables = await listTables(db);
+  const referenceColumns = new Set(['actor_user_id', 'author_user_id', 'created_by', 'updated_by', 'updated_by_user_id',
+    'lockdown_set_by_user_id', 'lockdown_cleared_by_user_id', 'isolated_by_user_id', 'recovered_by_user_id']);
+  const tables = await listTables(db), statements = [db.prepare('PRAGMA defer_foreign_keys = ON')];
+  const allowed = tables.includes('org_memberships') ? `NOT EXISTS (
+    SELECT 1 FROM org_memberships mine WHERE mine.user_id=? AND mine.role='owner'
+    AND NOT EXISTS (SELECT 1 FROM org_memberships other WHERE other.org_id=mine.org_id AND other.role='owner' AND other.user_id<>?)
+  )` : '1=1';
+  const guardArgs = tables.includes('org_memberships') ? [userId, userId] : [];
   for (const tableName of tables) {
     if (tableName === 'users') continue;
     const columns = await tableColumns(db, tableName);
     const hasUserId = columns.some((col) => col.name === 'user_id');
-    if (!hasUserId) continue;
     const hasOrgId = columns.some((col) => col.name === 'org_id');
-    if (hasOrgId && !ACCOUNT_ORG_TABLES.has(tableName)) continue;
-    await db.prepare(`DELETE FROM ${quoted(tableName)} WHERE user_id = ?`).bind(userId).run();
+    if (hasUserId && (!hasOrgId || ACCOUNT_ORG_TABLES.has(tableName))) {
+      statements.push(db.prepare(`DELETE FROM ${quoted(tableName)} WHERE user_id = ? AND ${allowed}`).bind(userId, ...guardArgs));
+    }
+    for (const column of columns) {
+      if (referenceColumns.has(column.name) && !column.notNull) statements.push(db.prepare(`UPDATE ${quoted(tableName)} SET ${quoted(column.name)} = NULL WHERE ${quoted(column.name)} = ? AND ${allowed}`).bind(userId, ...guardArgs));
+    }
   }
-
-  await nullIdentityReferences(db, userId);
-  await db.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
+  if (tables.includes('rate_limits')) statements.push(db.prepare(`DELETE FROM rate_limits WHERE key = ? AND ${allowed}`).bind(`sensitive:${userId}`, ...guardArgs));
+  statements.push(db.prepare(`DELETE FROM users WHERE id = ? AND ${allowed}`).bind(userId, ...guardArgs));
+  const results = await db.batch(statements);
+  if (Number(results.at(-1)?.meta?.changes) !== 1) {
+    const remaining = await db.prepare('SELECT id FROM users WHERE id = ?').bind(userId).first();
+    if (!remaining) return { ok: true };
+    const currentBlockers = await listSoleOwnedOrgs({ db, userId });
+    if (currentBlockers.length) return { ok: false, blockers: currentBlockers };
+    throw new Error('ACCOUNT_DELETE_INCOMPLETE');
+  }
   return { ok: true };
 }

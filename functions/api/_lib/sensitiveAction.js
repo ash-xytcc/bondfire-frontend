@@ -1,7 +1,8 @@
+import { requireCookieCsrf } from './csrf.js';
 import { getDb, requireUser } from './auth.js';
 import { bad } from './http.js';
 import { aesGcmDecrypt, totpVerify } from './crypto.js';
-import { rateLimit } from './rateLimit.js';
+
 
 function fromB64(value) {
   const bin = atob(String(value || ''));
@@ -50,8 +51,8 @@ async function verifyMfaIfEnabled({ db, env, userId, code }) {
       .prepare('SELECT totp_secret_encrypted, mfa_enabled FROM user_mfa WHERE user_id = ?')
       .bind(userId)
       .first();
-  } catch {
-    row = null;
+  } catch (error) {
+    if (!String(error?.message || '').includes('no such table: user_mfa')) throw error;
   }
 
   if (!row || Number(row.mfa_enabled) !== 1) return { ok: true, required: false };
@@ -87,6 +88,8 @@ async function verifyMfaIfEnabled({ db, env, userId, code }) {
 }
 
 export async function requireSensitiveAction({ env, request, password, mfaCode }) {
+  const csrf = requireCookieCsrf(request);
+  if (csrf) return { ok: false, resp: csrf };
   const auth = await requireUser({ env, request });
   if (!auth.ok) return auth;
 
@@ -96,9 +99,15 @@ export async function requireSensitiveAction({ env, request, password, mfaCode }
   const userId = auth.user?.sub || auth.user?.userId || auth.user?.id || null;
   if (!userId) return { ok: false, resp: bad(401, 'UNAUTHORIZED') };
 
-  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || '';
-  const rl = await rateLimit({ env, key: `sensitive:${ip}:${userId}`, limit: 8, windowSec: 600 });
-  if (!rl.ok) return { ok: false, resp: bad(429, 'RATE_LIMIT', { retry_after: rl.retry_after }) };
+  if (!String(password || '')) return { ok: false, resp: bad(400, 'PASSWORD_REQUIRED') };
+  // Atomic, per-account limits cannot be bypassed by changing IP addresses.
+  await db.prepare('CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, reset_at INTEGER NOT NULL)').run();
+  const timestamp = Date.now(), limitKey = `sensitive:${userId}`;
+  const attempt = await db.prepare(`INSERT INTO rate_limits (key,count,reset_at) VALUES (?,1,?)
+    ON CONFLICT(key) DO UPDATE SET count=CASE WHEN reset_at<=? THEN 1 ELSE count+1 END,
+      reset_at=CASE WHEN reset_at<=? THEN excluded.reset_at ELSE reset_at END RETURNING count,reset_at`)
+    .bind(limitKey, timestamp + 600000, timestamp, timestamp).first();
+  if (Number(attempt?.count) > 12) return { ok: false, resp: bad(429, 'RATE_LIMIT', { retry_after: Math.max(1, Math.ceil((attempt.reset_at-timestamp)/1000)) }) };
 
   const account = await db
     .prepare('SELECT id, email, name, password_hash FROM users WHERE id = ? LIMIT 1')

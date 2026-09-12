@@ -13,7 +13,8 @@ export async function onRequestGet(ctx) {
 
   return new Response(JSON.stringify({
     status: res.status,
-    orgLockdown: res.orgLockdown
+    orgLockdown: res.orgLockdown,
+    orgProtocol: res.orgProtocol
   }), {
     headers: { 'Content-Type': 'application/json' }
   });

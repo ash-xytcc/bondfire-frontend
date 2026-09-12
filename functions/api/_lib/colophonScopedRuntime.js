@@ -9,7 +9,7 @@ function fnv1a(value) {
   return (hash >>> 0).toString(36);
 }
 
-function orgPrefix(orgId) {
+export function orgPrefix(orgId) {
   return `bf_colophon_${fnv1a(orgId)}_`;
 }
 
@@ -98,7 +98,7 @@ export function createOrgScopedD1(db, orgId) {
   });
 }
 
-function scopedObjectKey(key, orgId) {
+export function scopedObjectKey(key, orgId) {
   const prefix = `bondfire-colophon/${fnv1a(orgId)}/`;
   const value = String(key || "").replace(/^\/+/, "");
   return value.startsWith(prefix) ? value : `${prefix}${value}`;

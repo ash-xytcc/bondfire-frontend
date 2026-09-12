@@ -51,7 +51,7 @@ function cleanClientOrgKey(orgId) {
 }
 
 function stepForStage(stage, lockdown, isolated) {
-  if (stage === 'prepared') return 5;
+  if (stage === 'prepared') return 6;
   if (stage === 'isolated' || isolated) return 3;
   if (stage === 'lockdown' || lockdown) return 2;
   return 0;
@@ -193,7 +193,7 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
       setPassword('');
       setMfaCode('');
       setPrepareConfirmation('');
-      setStep(5);
+      setStep(6);
       onChanged?.();
     } catch (err) {
       setError(err?.message || 'Could not prepare destruction');
@@ -338,19 +338,9 @@ export default function EmergencyProtocolPanel({ orgId, lockdown = false, isolat
               {busy ? 'Preparing…' : 'Prepare permanent destruction'}
             </button>
           </div>
-          {preview?.confirmationPhrase && !prepareConfirmation ? (
-            <button disabled={busy} onClick={() => setStep(4)} style={{ marginTop: 8 }}>Back to review</button>
-          ) : null}
+          <button disabled={busy} onClick={() => setStep(4)} style={{ marginTop: 8 }}>Back to review</button>
         </>
       ) : null}
-
-      {step === 6 || (step === 5 && preview && !preparePhrase) ? null : null}
-
-      {step === 5 && preview?.confirmationPhrase && preparePhrase === '' ? null : null}
-
-      {step === 5 && false ? null : null}
-
-      {step === 5 ? null : null}
 
       {step === 6 ? (
         <>

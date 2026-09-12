@@ -1,6 +1,8 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../utils/api.js";
+import EmergencyProtocolPanel from "../components/EmergencyProtocolPanel.jsx";
+import AccountDestructionPanel from "../components/AccountDestructionPanel.jsx";
 import {
   ensureDeviceKeypair,
   randomOrgKey,
@@ -54,6 +56,7 @@ export default function Security() {
     error: "",
     globalActive: false,
     orgLockdownActive: false,
+    orgIsolationActive: false,
     globalUpdatedAt: null,
     orgUpdatedAt: null,
   });
@@ -94,14 +97,16 @@ export default function Security() {
       const globalActive = !!(globalRes?.isActive ?? globalRes?.status?.isActive);
       const globalUpdatedAt = globalRes?.updatedAt ?? globalRes?.status?.updatedAt ?? null;
       const orgLockdown = orgRes?.orgLockdown || null;
+      const orgProtocol = orgRes?.orgProtocol || null;
 
       setEmergencyStatus({
         loading: false,
         error: "",
         globalActive,
         orgLockdownActive: !!orgLockdown?.enabled,
+        orgIsolationActive: !!orgProtocol?.isolated,
         globalUpdatedAt,
-        orgUpdatedAt: orgLockdown?.updatedAt || null,
+        orgUpdatedAt: orgProtocol?.updatedAt || orgLockdown?.updatedAt || null,
       });
     } catch (e) {
       setEmergencyStatus((s) => ({
@@ -377,7 +382,7 @@ export default function Security() {
     try {
       await api(`/api/orgs/${orgId}/emergency/lockdown`, {
         method: "POST",
-        body: { enabled: nextEnabled },
+        body: JSON.stringify({ enabled: nextEnabled }),
       });
       await Promise.all([loadEmergencyStatus(), loadEmergencyReports()]);
     } catch (e) {
@@ -388,6 +393,10 @@ export default function Security() {
     } finally {
       setLockdownBusy(false);
     }
+  }
+
+  async function refreshEmergencyPanels() {
+    await Promise.all([loadEmergencyStatus(), loadEmergencyReports()]);
   }
 
   return (
@@ -402,6 +411,7 @@ export default function Security() {
           <div style={{ fontSize: 14, opacity: 0.9 }}>
             <div>global emergency: {emergencyStatus.globalActive ? "active" : "inactive"}</div>
             <div>org lockdown: {emergencyStatus.orgLockdownActive ? "active" : "inactive"}</div>
+            <div>org isolation: {emergencyStatus.orgIsolationActive ? "active" : "inactive"}</div>
             <div>
               global updated:{" "}
               {emergencyStatus.globalUpdatedAt
@@ -417,7 +427,7 @@ export default function Security() {
           </div>
         )}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          <button disabled={lockdownBusy || emergencyStatus.loading} onClick={toggleLockdown}>
+          <button disabled={lockdownBusy || emergencyStatus.loading || emergencyStatus.orgIsolationActive} onClick={toggleLockdown}>
             {lockdownBusy
               ? "Updating…"
               : emergencyStatus.orgLockdownActive
@@ -429,6 +439,12 @@ export default function Security() {
           <div style={{ marginTop: 10, color: "#8b1d1d" }}>{emergencyStatus.error}</div>
         ) : null}
       </section>
+
+      <EmergencyProtocolPanel
+        orgId={orgId}
+        isolated={emergencyStatus.orgIsolationActive}
+        onChanged={refreshEmergencyPanels}
+      />
 
       <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
         <h3>Emergency reports</h3>
@@ -560,6 +576,8 @@ export default function Security() {
           {recoveryMsg ? <div style={{ marginTop: 10, color: "#8b1d1d" }}>{recoveryMsg}</div> : null}
         </div>
       </section>
+
+      <AccountDestructionPanel />
 
       {msg ? <div style={{ marginTop: 12, color: "#f88" }}>{msg}</div> : null}
     </div>

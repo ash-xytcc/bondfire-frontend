@@ -1,6 +1,6 @@
 import { bad } from "./http.js";
 import { verifyJwt } from "./jwt.js";
-import { enforceOrgWriteLockdown, isWriteMethod } from "./orgLockdown.js";
+import { enforceOrgIsolationAccess, enforceOrgWriteLockdown, isWriteMethod } from "./orgLockdown.js";
 
 // Bindings can be named differently across environments.
 // Try a few common ones so we don't explode into a Cloudflare 500 HTML page.
@@ -48,6 +48,11 @@ export async function requireOrgRole({ env, request, orgId, minRole, bypassWrite
 
   if (!row) return { ok: false, resp: bad(403, "NOT_A_MEMBER") };
   if ((roleRank[row.role] || 0) < need) return { ok: false, resp: bad(403, "INSUFFICIENT_ROLE") };
+
+  if (String(row.role || '').toLowerCase() !== 'owner') {
+    const isolation = await enforceOrgIsolationAccess({ env, orgId });
+    if (!isolation.ok) return isolation;
+  }
 
   if (!bypassWriteLockdown && isWriteMethod(request?.method)) {
     const lockdown = await enforceOrgWriteLockdown({ env, orgId });

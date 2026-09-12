@@ -116,6 +116,8 @@ async function main() {
   assert.equal(lockOnRes.status, 200);
   const lockOnJson = await readJson(lockOnRes);
   assert.equal(lockOnJson.state.enabled, true);
+  assert.equal(lockOnJson.protocol.stage, 'lockdown');
+  assert.equal(lockOnJson.protocol.isolated, false);
 
   // 4) confirm representative write blocking across methods
   const blockedRes = await orgNeedsPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/needs', { method: 'POST', token, body: { title: 'Blocked write' } }) });
@@ -156,11 +158,13 @@ async function main() {
   assert.equal(blockedMessageJson.error, 'ORG_LOCKDOWN_ACTIVE');
   assertNoSensitive(blockedMessageJson);
 
-  // 5) confirm safe reads still work
+  // 5) confirm safe reads still work and the protocol stage is visible
   const orgResDuring = await orgEmergencyGet({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/emergency', { token }) });
   assert.equal(orgResDuring.status, 200);
   const orgJsonDuring = await readJson(orgResDuring);
   assert.equal(orgJsonDuring.orgLockdown?.enabled, true);
+  assert.equal(orgJsonDuring.orgProtocol?.stage, 'lockdown');
+  assert.equal(orgJsonDuring.orgProtocol?.isolated, false);
 
   const globalResDuring = await globalEmergencyGet({ env, request: makeRequest('https://test.local/api/emergency/status', { token }) });
   assert.equal(globalResDuring.status, 200);
@@ -170,6 +174,7 @@ async function main() {
   assert.equal(lockOffRes.status, 200);
   const lockOffJson = await readJson(lockOffRes);
   assert.equal(lockOffJson.state.enabled, false);
+  assert.equal(lockOffJson.protocol.stage, 'normal');
 
   // 6b) writes unblocked again
   const allowedRes = await orgNeedsPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/needs', { method: 'POST', token, body: { title: 'Allowed write' } }) });

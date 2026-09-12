@@ -30,6 +30,36 @@ export async function getOrgLockdownState({ env, orgId }) {
   return { enabled: !!row?.lockdown_enabled };
 }
 
+export async function getOrgIsolationState({ env, orgId }) {
+  const db = getDb(env);
+  if (!db || !orgId) return { isolated: false, stage: 'normal' };
+
+  const table = await db
+    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'emergency_protocol_state'")
+    .first()
+    .catch(() => null);
+  if (!table?.name) return { isolated: false, stage: 'normal' };
+
+  const row = await db
+    .prepare('SELECT isolated, stage FROM emergency_protocol_state WHERE org_id = ?')
+    .bind(orgId)
+    .first()
+    .catch(() => null);
+
+  return {
+    isolated: !!row?.isolated,
+    stage: String(row?.stage || 'normal'),
+  };
+}
+
+export async function enforceOrgIsolationAccess({ env, orgId }) {
+  const state = await getOrgIsolationState({ env, orgId });
+  if (state.isolated) {
+    return { ok: false, resp: bad(403, 'ORG_ISOLATED') };
+  }
+  return { ok: true };
+}
+
 export async function enforceOrgWriteLockdown({ env, orgId }) {
   const state = await getOrgLockdownState({ env, orgId });
   if (state.enabled) {

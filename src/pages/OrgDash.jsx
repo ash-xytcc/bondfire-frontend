@@ -108,27 +108,6 @@ export default function OrgDash() {
   const [msg, setMsg] = React.useState("");
 
   const [inviteCode, setInviteCode] = React.useState("");
-  const deleteOrg = async (org) => {
-    const id = org?.id;
-    if (!id) return;
-
-    const name = org?.name || id;
-    const ok = window.confirm(`Delete org "${name}"?\n\nThis cannot be undone.`);
-    if (!ok) return;
-
-    setBusy(true);
-    setMsg("");
-    try {
-      await authFetch(`/api/orgs/${encodeURIComponent(id)}`, { method: "DELETE" });
-      await load();
-      setMsg(`Deleted "${name}".`);
-    } catch (e) {
-      setMsg(e?.message || "Failed to delete org");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const load = React.useCallback(async () => {
     setMsg("");
     try {
@@ -277,16 +256,11 @@ export default function OrgDash() {
                   >
                     Open
                   </button>
-
-                  <button
-                    className="btn"
-                    style={{ whiteSpace: "nowrap" }}
-                    onClick={() => deleteOrg(o)}
-                    disabled={busy}
-                    title="Delete this org"
-                  >
-                    Delete
-                  </button>
+                  {['owner', 'admin'].includes(o.role) ? (
+                    <button className="btn" disabled={busy} onClick={() => nav(`/org/${encodeURIComponent(o.id)}/settings?tab=security`)}>
+                      Security
+                    </button>
+                  ) : null}
                 </div>
 
               </div>

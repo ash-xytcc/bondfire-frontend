@@ -347,6 +347,7 @@ function Shell() {
 					element={
 						<RequireAuth>
 							<InnerSanctum />
+						</RequireAuth>
 					}
 				>
 					<Route path="build" element={<BuildModules />} />

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 
+import { encryptWithOrgKey } from '../src/lib/zk.js';
 import { signJwt } from '../functions/api/_lib/jwt.js';
 import { onRequestGet as globalEmergencyGet } from '../functions/api/emergency/status.js';
 import { onRequestGet as orgEmergencyGet } from '../functions/api/orgs/[orgId]/emergency/index.js';
@@ -40,6 +41,15 @@ class D1Like {
   }
   prepare(sql) {
     return new D1Stmt(this.db.prepare(sql));
+  }
+  async batch(statements) {
+    this.db.exec('BEGIN');
+    try {
+      const results = [];
+      for (const statement of statements) results.push(await statement.run());
+      this.db.exec('COMMIT');
+      return results;
+    } catch (error) { this.db.exec('ROLLBACK'); throw error; }
   }
 }
 
@@ -81,6 +91,9 @@ function assertNoSensitive(obj, path = '') {
 async function main() {
   const BF_DB = new D1Like();
   const env = { BF_DB, JWT_SECRET: 'thread1-secret' };
+  const encryptedMessage = await encryptWithOrgKey(crypto.getRandomValues(new Uint8Array(32)), JSON.stringify({ body: 'test message' }));
+  await BF_DB.prepare('CREATE TABLE users (id TEXT PRIMARY KEY)').run();
+  await BF_DB.prepare("INSERT INTO users VALUES ('user-admin')").run();
 
   await BF_DB.prepare('CREATE TABLE orgs (id TEXT PRIMARY KEY, name TEXT)').run();
   await BF_DB.prepare('CREATE TABLE org_memberships (org_id TEXT, user_id TEXT, role TEXT)').run();
@@ -152,7 +165,7 @@ async function main() {
   assert.equal(blockedRoomJson.error, 'ORG_LOCKDOWN_ACTIVE');
   assertNoSensitive(blockedRoomJson);
 
-  const blockedMessageRes = await orgChatMessagesPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/chat/messages', { method: 'POST', token, body: { roomId: 'r1', body: 'hello' } }) });
+  const blockedMessageRes = await orgChatMessagesPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/chat/messages', { method: 'POST', token, body: { roomId: 'r1', encrypted_blob: encryptedMessage } }) });
   assert.equal(blockedMessageRes.status, 403);
   const blockedMessageJson = await readJson(blockedMessageRes);
   assert.equal(blockedMessageJson.error, 'ORG_LOCKDOWN_ACTIVE');
@@ -177,7 +190,7 @@ async function main() {
   assert.equal(lockOffJson.protocol.stage, 'normal');
 
   // 6b) writes unblocked again
-  const allowedRes = await orgNeedsPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/needs', { method: 'POST', token, body: { title: 'Allowed write' } }) });
+  const allowedRes = await orgNeedsPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/needs', { method: 'POST', token, body: { title: 'Allowed write', is_public: true } }) });
   assert.equal(allowedRes.status, 200);
   const allowedJson = await readJson(allowedRes);
   assert.equal(allowedJson.ok, true);
@@ -187,7 +200,7 @@ async function main() {
   const allowedRoomJson = await readJson(allowedRoomRes);
   assert.equal(allowedRoomJson.ok, true);
 
-  const allowedMessageRes = await orgChatMessagesPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/chat/messages', { method: 'POST', token, body: { roomId: allowedRoomJson.room.id, body: 'Unlocked write' } }) });
+  const allowedMessageRes = await orgChatMessagesPost({ env, params: { orgId: 'org-1' }, request: makeRequest('https://test.local/api/orgs/org-1/chat/messages', { method: 'POST', token, body: { roomId: allowedRoomJson.room.id, encrypted_blob: encryptedMessage } }) });
   assert.equal(allowedMessageRes.status, 200);
   const allowedMessageJson = await readJson(allowedMessageRes);
   assert.equal(allowedMessageJson.ok, true);

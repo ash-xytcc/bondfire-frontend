@@ -1,3 +1,5 @@
+import { ensureDeviceKeySchema } from '../../_lib/deviceKeys.js';
+import { validWrappedKey } from '../../_lib/wrappedKeyValidation.js';
 import { json, bad, readJSON, requireMethod } from "../../_lib/http.js";
 import { getDb, requireUser, requireOrgRole } from "../../_lib/auth.js";
 import { ensureZkSchema, getOrgKeyVersion } from "../../_lib/zk.js";
@@ -38,9 +40,10 @@ export async function onRequestGet({ env, request, params }) {
   const db = getDb(env);
   if (!db) return bad(500, "NO_DB_BINDING");
   await ensureZkColumns(db);
+  await ensureDeviceKeySchema(db);
 
   // Any org member can fetch their wrapped key + org key version.
-  const role = await requireOrgRole({ env, request, orgId, minRole: "member" });
+  const role = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!role.ok) return role.resp;
 
   const org = await db
@@ -56,12 +59,14 @@ export async function onRequestGet({ env, request, params }) {
     .bind(orgId, userId)
     .first();
 
+  const deviceId = new URL(request.url).searchParams.get('device_id');
+  const deviceWrap = deviceId ? await db.prepare('SELECT wrapped_key FROM org_private_device_wraps WHERE org_id=? AND user_id=? AND device_id=?').bind(orgId,userId,deviceId).first() : null;
   return json({
     ok: true,
     has_org_key: !!org,
     key_version: keyVersion,
     encrypted_org_metadata: org?.encrypted_org_metadata || null,
-    wrapped_key: wk?.wrapped_key || null,
+    wrapped_key: deviceWrap?.wrapped_key || wk?.wrapped_key || null,
     wrapped_key_version: wk?.key_version ?? null,
     wrapped_kid: wk?.kid ?? null,
   });
@@ -80,6 +85,7 @@ export async function onRequestPost({ env, request, params }) {
   const db = getDb(env);
   if (!db) return bad(500, "NO_DB_BINDING");
   await ensureZkColumns(db);
+  await ensureDeviceKeySchema(db);
 
   // Only admin/owner can publish wrapped keys for the org.
   const role = await requireOrgRole({ env, request, orgId, minRole: "admin" });
@@ -91,6 +97,16 @@ export async function onRequestPost({ env, request, params }) {
   const keyVersion = Number.isFinite(Number(body?.key_version)) ? Number(body.key_version) : null;
 
   if (!wrappedKeys || wrappedKeys.length === 0) return bad(400, "MISSING_WRAPPED_KEYS");
+
+  for (const wk of wrappedKeys) {
+    if (!validWrappedKey(wk?.wrapped_key)) return bad(400, "INVALID_WRAPPED_KEY");
+    const member = await db.prepare("SELECT role FROM org_memberships WHERE org_id=? AND user_id=?").bind(orgId, String(wk.user_id || '')).first();
+    if (!member || !['viewer','member','admin','owner'].includes(member.role)) return bad(400, "KEY_RECIPIENT_NOT_MEMBER");
+    if (wk.device_id) {
+      const device = await db.prepare('SELECT device_id FROM user_device_keys WHERE user_id=? AND device_id=?').bind(wk.user_id,wk.device_id).first();
+      if (!device) return bad(400,'KEY_RECIPIENT_DEVICE_UNKNOWN');
+    }
+  }
 
   await db
     .prepare("INSERT OR REPLACE INTO org_keys (org_id, encrypted_org_metadata) VALUES (?, ?)")
@@ -106,6 +122,7 @@ export async function onRequestPost({ env, request, params }) {
 
     const userId = String(wk.user_id);
     const wrappedKey = String(wk.wrapped_key);
+    if (wk.device_id) await db.prepare('INSERT INTO org_private_device_wraps(org_id,user_id,device_id,wrapped_key) VALUES(?,?,?,?) ON CONFLICT(org_id,user_id,device_id) DO UPDATE SET wrapped_key=excluded.wrapped_key').bind(orgId,userId,wk.device_id,wrappedKey).run();
     const kid = wk.kid ? String(wk.kid) : null;
     const kv = Number.isFinite(Number(wk.key_version)) ? Number(wk.key_version) : keyVersion;
 

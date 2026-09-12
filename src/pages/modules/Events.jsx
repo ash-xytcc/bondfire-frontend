@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../../utils/api.js";
+import { encryptWithOrgKey, getCachedOrgKey } from "../../lib/zk.js";
+import { decryptRows } from "../../utils/decryptRow.js";
 
 function getOrgIdFromHash() {
   try {
@@ -24,9 +26,7 @@ function toLinkItems(data) {
   return [];
 }
 
-function safeText(v) {
-  return String(v ?? "");
-}
+function safeText(v) { return String(v ?? ""); }
 
 function formatWhen(value) {
   if (value == null || value === "") return "Date pending";
@@ -36,12 +36,8 @@ function formatWhen(value) {
   return d.toLocaleString();
 }
 
-
 function normalizeTags(value) {
-  if (Array.isArray(value)) {
-    return value.map((tag) => safeText(tag).trim()).filter(Boolean);
-  }
-
+  if (Array.isArray(value)) return value.map((tag) => safeText(tag).trim()).filter(Boolean);
   if (typeof value === "string") {
     const text = value.trim();
     if (!text) return [];
@@ -49,12 +45,8 @@ function normalizeTags(value) {
       const parsed = JSON.parse(text);
       if (Array.isArray(parsed)) return normalizeTags(parsed);
     } catch {}
-    return text
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean);
+    return text.split(",").map((tag) => tag.trim()).filter(Boolean);
   }
-
   return [];
 }
 
@@ -67,10 +59,18 @@ function toMillisOrNull(value) {
   return d.getTime();
 }
 
+async function encryptEvent(orgKey, item) {
+  return encryptWithOrgKey(orgKey, JSON.stringify({
+    title: safeText(item?.title).trim(),
+    description: safeText(item?.description).trim(),
+    location: safeText(item?.location).trim(),
+    tags: normalizeTags(item?.tags ?? item?.tags_json),
+  }));
+}
+
 export default function Events() {
   const { orgId: orgIdParam } = useParams();
   const orgId = orgIdParam || getOrgIdFromHash();
-
   const [items, setItems] = useState([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
@@ -79,13 +79,7 @@ export default function Events() {
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createErr, setCreateErr] = useState("");
-  const [form, setForm] = useState({
-    title: "",
-    starts_at: "",
-    ends_at: "",
-    location: "",
-    description: "",
-  });
+  const [form, setForm] = useState({ title: "", starts_at: "", ends_at: "", location: "", description: "" });
 
   async function refresh() {
     if (!orgId) return;
@@ -93,7 +87,26 @@ export default function Events() {
     setErr("");
     try {
       const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/events`);
-      setItems(toItems(data));
+      const raw = toItems(data);
+      const orgKey = getCachedOrgKey(orgId);
+      if (!orgKey) {
+        setItems(raw.map((item) => item?.encrypted_blob ? { ...item, title: "(encrypted)", description: "", location: "", tags: [] } : item));
+        return;
+      }
+      const legacy = raw.filter((item) => item?.id && !item?.encrypted_blob);
+      if (legacy.length) {
+        for (const item of legacy) {
+          const encrypted_blob = await encryptEvent(orgKey, item);
+          await api(`/api/orgs/${encodeURIComponent(orgId)}/events`, {
+            method: "PUT",
+            body: JSON.stringify({ id: item.id, starts_at: item.starts_at, ends_at: item.ends_at, encrypted_blob }),
+          });
+        }
+        const migrated = await api(`/api/orgs/${encodeURIComponent(orgId)}/events`);
+        setItems(await decryptRows(orgKey, toItems(migrated)));
+      } else {
+        setItems(await decryptRows(orgKey, raw));
+      }
     } catch (e) {
       setItems([]);
       setErr(e?.message || String(e));
@@ -102,77 +115,47 @@ export default function Events() {
     }
   }
 
-  useEffect(() => {
-    refresh().catch(console.error);
-  }, [orgId]);
+  useEffect(() => { refresh().catch(console.error); }, [orgId]);
 
   useEffect(() => {
     let canceled = false;
     async function loadRelated() {
       const needle = safeText(q).trim();
-      if (!orgId || !needle) {
-        setRelated([]);
-        return;
-      }
+      if (!orgId || !needle) { setRelated([]); return; }
       try {
-        const data = await api(
-          `/api/orgs/${encodeURIComponent(orgId)}/links/search?q=${encodeURIComponent(needle)}`
-        );
+        const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/links/search?q=${encodeURIComponent(needle)}`);
         if (canceled) return;
-        const items = toLinkItems(data).filter((item) => safeText(item?.type).toLowerCase() === "witness");
-        setRelated(items.slice(0, 5));
+        setRelated(toLinkItems(data).filter((item) => safeText(item?.type).toLowerCase() === "witness").slice(0, 5));
       } catch {
-        if (canceled) return;
-        setRelated([]);
+        if (!canceled) setRelated([]);
       }
     }
     loadRelated().catch(() => setRelated([]));
-    return () => {
-      canceled = true;
-    };
+    return () => { canceled = true; };
   }, [orgId, q]);
 
   const filtered = useMemo(() => {
     const needle = safeText(q).trim().toLowerCase();
     if (!needle) return items;
-    return items.filter((item) =>
-      [
-        safeText(item?.title),
-        safeText(item?.description),
-        safeText(item?.location),
-        normalizeTags(item?.tags ?? item?.tags_json).join(" "),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle)
-    );
+    return items.filter((item) => [safeText(item?.title), safeText(item?.description), safeText(item?.location), normalizeTags(item?.tags ?? item?.tags_json).join(" ")].join(" ").toLowerCase().includes(needle));
   }, [items, q]);
 
   async function onCreateSubmit(e) {
     e.preventDefault();
     if (!orgId || creating) return;
-
     setCreateErr("");
     const title = safeText(form.title).trim();
-    if (!title) {
-      setCreateErr("Title is required.");
-      return;
-    }
-
+    if (!title) { setCreateErr("Title is required."); return; }
+    const orgKey = getCachedOrgKey(orgId);
+    if (!orgKey) { setCreateErr("This device does not have the organization encryption key loaded."); return; }
     const startsAt = toMillisOrNull(form.starts_at);
     const endsAt = toMillisOrNull(form.ends_at);
-
     setCreating(true);
     try {
+      const encrypted_blob = await encryptEvent(orgKey, form);
       await api(`/api/orgs/${encodeURIComponent(orgId)}/events`, {
         method: "POST",
-        body: JSON.stringify({
-          title,
-          starts_at: startsAt,
-          ends_at: endsAt,
-          location: safeText(form.location).trim(),
-          description: safeText(form.description).trim(),
-        }),
+        body: JSON.stringify({ starts_at: startsAt, ends_at: endsAt, encrypted_blob }),
       });
       setForm({ title: "", starts_at: "", ends_at: "", location: "", description: "" });
       setShowCreate(false);
@@ -184,91 +167,38 @@ export default function Events() {
     }
   }
 
-  if (!orgId) {
-    return <div style={{ padding: 16 }}>No org selected.</div>;
-  }
+  if (!orgId) return <div style={{ padding: 16 }}>No org selected.</div>;
 
   return (
     <div className="card" style={{ margin: 16, padding: 12 }}>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-        <h2 className="section-title" style={{ margin: 0, flex: 1 }}>
-          Events
-        </h2>
-        <button className="btn" type="button" onClick={() => setShowCreate((v) => !v)}>
-          {showCreate ? "Cancel" : "New event"}
-        </button>
+        <h2 className="section-title" style={{ margin: 0, flex: 1 }}>Events</h2>
+        <button className="btn" type="button" onClick={() => setShowCreate((v) => !v)}>{showCreate ? "Cancel" : "New event"}</button>
       </div>
 
       {showCreate ? (
         <form className="card" style={{ marginTop: 12, padding: 12 }} onSubmit={onCreateSubmit}>
           <div style={{ fontWeight: 800, marginBottom: 10 }}>Create event</div>
           <div className="grid" style={{ gap: 10 }}>
-            <input
-              className="input"
-              value={form.title}
-              onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-              placeholder="Title"
-              required
-            />
+            <input className="input" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} placeholder="Title" required />
             <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
-              <input
-                className="input"
-                type="datetime-local"
-                value={form.starts_at}
-                onChange={(e) => setForm((prev) => ({ ...prev, starts_at: e.target.value }))}
-                style={{ minWidth: 220, flex: 1 }}
-              />
-              <input
-                className="input"
-                type="datetime-local"
-                value={form.ends_at}
-                onChange={(e) => setForm((prev) => ({ ...prev, ends_at: e.target.value }))}
-                style={{ minWidth: 220, flex: 1 }}
-              />
+              <input className="input" type="datetime-local" value={form.starts_at} onChange={(e) => setForm((prev) => ({ ...prev, starts_at: e.target.value }))} style={{ minWidth: 220, flex: 1 }} />
+              <input className="input" type="datetime-local" value={form.ends_at} onChange={(e) => setForm((prev) => ({ ...prev, ends_at: e.target.value }))} style={{ minWidth: 220, flex: 1 }} />
             </div>
-            <input
-              className="input"
-              value={form.location}
-              onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
-              placeholder="Location"
-            />
-            <textarea
-              className="input"
-              value={form.description}
-              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder="Description"
-              rows={3}
-            />
+            <input className="input" value={form.location} onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))} placeholder="Location" />
+            <textarea className="input" value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} placeholder="Description" rows={3} />
           </div>
-          {createErr ? (
-            <div className="error" style={{ marginTop: 10 }}>
-              {createErr}
-            </div>
-          ) : null}
+          {createErr ? <div className="error" style={{ marginTop: 10 }}>{createErr}</div> : null}
           <div className="row" style={{ marginTop: 10, gap: 10 }}>
-            <button className="btn" type="submit" disabled={creating}>
-              {creating ? "Saving..." : "Save event"}
-            </button>
+            <button className="btn" type="submit" disabled={creating}>{creating ? "Saving..." : "Save event"}</button>
           </div>
         </form>
       ) : null}
 
       <div className="row" style={{ gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-        <input
-          className="input"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by title, location, or description"
-          style={{ minWidth: 240, flex: 1 }}
-        />
-        {q ? (
-          <button className="btn" type="button" onClick={() => setQ("")}>
-            Clear
-          </button>
-        ) : null}
-        <button className="btn" type="button" onClick={() => refresh().catch(console.error)} disabled={loading}>
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
+        <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by title, location, or description" style={{ minWidth: 240, flex: 1 }} />
+        {q ? <button className="btn" type="button" onClick={() => setQ("")}>Clear</button> : null}
+        <button className="btn" type="button" onClick={() => refresh().catch(console.error)} disabled={loading}>{loading ? "Refreshing..." : "Refresh"}</button>
       </div>
 
       {related.length ? (
@@ -278,78 +208,39 @@ export default function Events() {
             {related.map((item, idx) => {
               const key = safeText(item?.id) || `related-${idx}`;
               const href = safeText(item?.href).trim() || "#";
-              return (
-                <Link key={key} to={href} className="helper" style={{ textDecoration: "none" }}>
-                  {safeText(item?.title) || "Untitled witness record"}
-                  {item?.subtitle ? ` — ${safeText(item.subtitle)}` : ""}
-                </Link>
-              );
+              return <Link key={key} to={href} className="helper" style={{ textDecoration: "none" }}>{safeText(item?.title) || "Untitled witness record"}{item?.subtitle ? ` — ${safeText(item.subtitle)}` : ""}</Link>;
             })}
           </div>
         </div>
       ) : null}
 
-      {err ? (
-        <div className="card" style={{ padding: 12, marginTop: 12 }}>
-          <div style={{ fontWeight: 800 }}>Couldn’t load events</div>
-          <div className="error" style={{ marginTop: 8 }}>
-            {err}
-          </div>
-        </div>
-      ) : null}
+      {err ? <div className="card" style={{ padding: 12, marginTop: 12 }}><div style={{ fontWeight: 800 }}>Couldn’t load events</div><div className="error" style={{ marginTop: 8 }}>{err}</div></div> : null}
 
       <div className="grid" style={{ gap: 10, marginTop: 12 }}>
         {loading ? <div className="helper">Loading events...</div> : null}
-
         {!loading && !err && filtered.length === 0 ? (
           <div className="card" style={{ padding: 12 }}>
             <div style={{ fontWeight: 800 }}>{q ? "No matching events" : "No events yet"}</div>
-            <div className="helper" style={{ marginTop: 6 }}>
-              {q
-                ? "Try a different search term."
-                : "Get started by creating your first event with title, date/time, and location."}
-            </div>
-            {!q ? (
-              <button className="btn" type="button" style={{ marginTop: 10 }} onClick={() => setShowCreate(true)}>
-                Create your first event
-              </button>
-            ) : null}
+            <div className="helper" style={{ marginTop: 6 }}>{q ? "Try a different search term." : "Get started by creating your first event with title, date/time, and location."}</div>
+            {!q ? <button className="btn" type="button" style={{ marginTop: 10 }} onClick={() => setShowCreate(true)}>Create your first event</button> : null}
           </div>
         ) : null}
-
-        {!loading &&
-          !err &&
-          filtered.map((item, idx) => {
-            const id = item?.id || item?.event_id || "";
-            const href = id ? `/org/${encodeURIComponent(orgId)}/events/${encodeURIComponent(id)}` : "#";
-            const fallbackKey = `${safeText(item?.title) || "event"}-${safeText(item?.starts_at) || idx}`;
-            return (
-              <div key={id || fallbackKey} className="card" style={{ padding: 12 }}>
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  <div style={{ fontWeight: 800, flex: 1 }}>{safeText(item?.title) || "Untitled event"}</div>
-                  {id ? (
-                    <Link className="btn" to={href}>
-                      Open
-                    </Link>
-                  ) : (
-                    <button className="btn" type="button" disabled>
-                      Open
-                    </button>
-                  )}
-                </div>
-                <div className="helper" style={{ marginTop: 6 }}>
-                  {formatWhen(item?.starts_at)}
-                  {item?.location ? ` • ${safeText(item.location)}` : ""}
-                </div>
-                {item?.description ? <div style={{ marginTop: 8 }}>{safeText(item.description)}</div> : null}
-                {normalizeTags(item?.tags ?? item?.tags_json).length ? (
-                  <div className="helper" style={{ marginTop: 8 }}>
-                    Tags: {normalizeTags(item?.tags ?? item?.tags_json).join(", ")}
-                  </div>
-                ) : null}
+        {!loading && !err && filtered.map((item, idx) => {
+          const id = item?.id || item?.event_id || "";
+          const href = id ? `/org/${encodeURIComponent(orgId)}/events/${encodeURIComponent(id)}` : "#";
+          const fallbackKey = `${safeText(item?.title) || "event"}-${safeText(item?.starts_at) || idx}`;
+          return (
+            <div key={id || fallbackKey} className="card" style={{ padding: 12 }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <div style={{ fontWeight: 800, flex: 1 }}>{safeText(item?.title) || "Untitled event"}</div>
+                {id ? <Link className="btn" to={href}>Open</Link> : <button className="btn" type="button" disabled>Open</button>}
               </div>
-            );
-          })}
+              <div className="helper" style={{ marginTop: 6 }}>{formatWhen(item?.starts_at)}{item?.location ? ` • ${safeText(item.location)}` : ""}</div>
+              {item?.description ? <div style={{ marginTop: 8 }}>{safeText(item.description)}</div> : null}
+              {normalizeTags(item?.tags ?? item?.tags_json).length ? <div className="helper" style={{ marginTop: 8 }}>Tags: {normalizeTags(item?.tags ?? item?.tags_json).join(", ")}</div> : null}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

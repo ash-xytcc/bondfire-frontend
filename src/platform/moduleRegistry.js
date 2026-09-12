@@ -152,13 +152,17 @@ const LIVE_MODULES = [
     label: "Colophon",
     name: "Colophon publishing",
     mark: "CO",
-    description: "Open the existing Colophon publishing workspace when the group is ready to publish.",
+    description: "Run the full Colophon publishing workspace inside the current Bondfire organization.",
     routeBase: "colophon",
-    externalUrl: "https://colophon-hub.github.io/colophon/",
     tier: "live",
     available: true,
     defaultEnabled: true,
-    status: "available-external",
+    status: "available-native",
+    featureFlag: "platform.colophon_native",
+    enabledByDefault: true,
+    getRoutes: () => [
+      { path: "colophon/*", kind: "colophon-native", moduleId: "publishing-colophon" },
+    ],
   },
 ];
 
@@ -267,7 +271,7 @@ export const STARTER_PACKS = Object.freeze([
   {
     id: "full-house",
     label: "Full house",
-    description: "Every current Bondfire module, including the Colophon launch surface.",
+    description: "Every current Bondfire module, including the native Colophon publishing workspace.",
     modules: DEFAULT_ENABLED_MODULE_IDS,
   },
   {
@@ -285,7 +289,7 @@ export const STARTER_PACKS = Object.freeze([
   {
     id: "publishing",
     label: "Publishing room",
-    description: "REC, Drive, Studio, Intake, and the existing Colophon workspace.",
+    description: "REC, Drive, Studio, Intake, and the native Colophon workspace.",
     modules: withCore(["witness-archive", "drive", "studio", "intake", "publishing-colophon"]),
   },
 ]);

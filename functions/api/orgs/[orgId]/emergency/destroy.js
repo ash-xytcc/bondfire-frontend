@@ -1,5 +1,6 @@
 import { requireOrgRole } from '../../../_lib/auth.js';
 import { destroyOrgData, getOrgDestructionPreview } from '../../../_lib/destruction.js';
+import { ensureEmergencySchema } from '../../../_lib/emergency.js';
 import { requireSensitiveAction } from '../../../_lib/sensitiveAction.js';
 import { bad, ok, readJSON } from '../../../_lib/http.js';
 
@@ -7,6 +8,17 @@ export async function onRequestPost({ env, request, params }) {
   const orgId = String(params?.orgId || '');
   const gate = await requireOrgRole({ env, request, orgId, minRole: 'owner', bypassWriteLockdown: true });
   if (!gate.ok) return gate.resp;
+
+  const state = await ensureEmergencySchema(env);
+  if (!state.ok) return state.resp;
+
+  const protocol = await state.db.prepare(
+    'SELECT stage, isolated FROM emergency_protocol_state WHERE org_id = ?'
+  ).bind(orgId).first();
+  const stage = String(protocol?.stage || 'normal');
+  if (stage !== 'prepared' || !protocol?.isolated) {
+    return bad(409, 'DESTRUCTION_NOT_PREPARED', { stage });
+  }
 
   const body = await readJSON(request);
   const fresh = await requireSensitiveAction({

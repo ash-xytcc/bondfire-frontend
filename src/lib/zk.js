@@ -103,6 +103,7 @@ export async function ensureDeviceKeypair() {
   const existing = await idbGet(DEVICE_KEY_ID);
   if (existing?.privJwk && existing?.pubJwk) {
     if (!localStorage.getItem(LS_PUB)) localStorage.setItem(LS_PUB, JSON.stringify(existing.pubJwk));
+    await api("/api/auth/keys", { method: "POST", body: JSON.stringify({ public_key: JSON.stringify(existing.pubJwk) }) });
     return existing;
   }
 

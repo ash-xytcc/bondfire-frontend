@@ -1,6 +1,7 @@
 // src/components/AppHeader.jsx
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import "./AppHeader.css";
 
 const homeHref = "/orgs";
 const NAV_MODULE_LOGOS = Object.freeze({
@@ -35,7 +36,7 @@ function useEnabledOrgModules(orgId) {
         if (!alive || !response.ok || !Array.isArray(payload?.enabled_modules)) return;
         setEnabledModules(new Set(payload.enabled_modules.map((id) => String(id))));
       } catch {
-        // Keep the existing full navigation visible if the module read fails.
+        // Keep the full module list reachable if the module read fails during a rollout.
       }
     };
 
@@ -55,15 +56,13 @@ function useEnabledOrgModules(orgId) {
 
   return enabledModules;
 }
+
 function useOrgIdFromPath() {
   const loc = useLocation();
   const pathname = loc.pathname || "";
   const hash = loc.hash || "";
-
-  // Support BOTH BrowserRouter (/org/...) and HashRouter (#/org/...)
   const m1 = pathname.match(/\/org\/([^/]+)/i);
   const m2 = hash.match(/#\/org\/([^/]+)/i);
-
   const raw = (m1 && m1[1]) || (m2 && m2[1]) || null;
   return raw ? decodeURIComponent(raw) : null;
 }
@@ -71,10 +70,10 @@ function useOrgIdFromPath() {
 function readOrgName(orgId) {
   if (!orgId) return "";
   try {
-    const s = JSON.parse(localStorage.getItem(`bf_org_settings_${orgId}`) || "{}");
+    const settings = JSON.parse(localStorage.getItem(`bf_org_settings_${orgId}`) || "{}");
     const orgs = JSON.parse(localStorage.getItem("bf_orgs") || "[]");
-    const o = Array.isArray(orgs) ? orgs.find((x) => x?.id === orgId) : null;
-    return String((s?.name || o?.name || "").trim() || "");
+    const org = Array.isArray(orgs) ? orgs.find((item) => String(item?.id) === String(orgId)) : null;
+    return String((settings?.name || org?.name || "").trim() || "");
   } catch {
     return "";
   }
@@ -83,42 +82,35 @@ function readOrgName(orgId) {
 function readOrgLogo(orgId) {
   if (!orgId) return null;
   try {
-    const s = JSON.parse(localStorage.getItem(`bf_org_settings_${orgId}`) || "{}");
-    const v = s?.logoDataUrl || s?.logoUrl || s?.logo || null;
-    const str = String(v || "").trim();
-    return str ? str : null;
+    const settings = JSON.parse(localStorage.getItem(`bf_org_settings_${orgId}`) || "{}");
+    const value = settings?.logoDataUrl || settings?.logoUrl || settings?.logo || null;
+    const result = String(value || "").trim();
+    return result || null;
   } catch {
     return null;
   }
 }
 
-// Older patches referenced this name. Keep it so we don't trip over our own feet again.
-function readOrgNameFromStorage(orgId) {
-  return readOrgName(orgId);
-}
-
-const Brand = ({ orgId, logoSrc }) => {
-  const inferredOrgId = orgId || useOrgIdFromPath();
-  const [orgName, setOrgName] = React.useState(() => readOrgNameFromStorage(inferredOrgId));
-  const [orgLogo, setOrgLogo] = React.useState(() => readOrgLogo(inferredOrgId));
+function Brand({ orgId }) {
+  const [orgName, setOrgName] = React.useState(() => readOrgName(orgId));
+  const [orgLogo, setOrgLogo] = React.useState(() => readOrgLogo(orgId));
 
   React.useEffect(() => {
-    setOrgName(readOrgNameFromStorage(inferredOrgId));
-    setOrgLogo(readOrgLogo(inferredOrgId));
+    setOrgName(readOrgName(orgId));
+    setOrgLogo(readOrgLogo(orgId));
 
-    const onChange = (e) => {
-      const changedId = e?.detail?.orgId;
-      if (!changedId || changedId === inferredOrgId) {
-        setOrgName(readOrgNameFromStorage(inferredOrgId));
-        setOrgLogo(readOrgLogo(inferredOrgId));
+    const onChange = (event) => {
+      const changedId = event?.detail?.orgId;
+      if (!changedId || String(changedId) === String(orgId)) {
+        setOrgName(readOrgName(orgId));
+        setOrgLogo(readOrgLogo(orgId));
       }
     };
-
-    const onStorage = (e) => {
-      const k = e?.key || "";
-      if (k === `bf_org_settings_${inferredOrgId}` || k === "bf_orgs") {
-        setOrgName(readOrgNameFromStorage(inferredOrgId));
-        setOrgLogo(readOrgLogo(inferredOrgId));
+    const onStorage = (event) => {
+      const key = event?.key || "";
+      if (key === `bf_org_settings_${orgId}` || key === "bf_orgs") {
+        setOrgName(readOrgName(orgId));
+        setOrgLogo(readOrgLogo(orgId));
       }
     };
 
@@ -128,19 +120,19 @@ const Brand = ({ orgId, logoSrc }) => {
       window.removeEventListener("bf:org_settings_changed", onChange);
       window.removeEventListener("storage", onStorage);
     };
-  }, [inferredOrgId]);
+  }, [orgId]);
 
   const label = orgName || "Org";
-  const imgSrc = logoSrc || "/logos/core.png";
 
   return (
-    <div className="bf-brand-wrap">
-      <Link className="bf-brand" to={homeHref}>
+    <div className="bf-globalBrandWrap">
+      <Link className="bf-globalBrand" to={homeHref} aria-label="Bondfire organizations">
         <img
-          src={imgSrc}
-          alt="Bondfire logo"
+          src="/logos/core.png"
+          alt=""
+          aria-hidden="true"
           onError={(event) => {
-            if (!logoSrc && !event.currentTarget.dataset.fallback) {
+            if (!event.currentTarget.dataset.fallback) {
               event.currentTarget.dataset.fallback = "true";
               event.currentTarget.src = "/logo-bondfire.png";
             }
@@ -149,302 +141,233 @@ const Brand = ({ orgId, logoSrc }) => {
         <span>Bondfire</span>
       </Link>
 
-      {inferredOrgId ? (
-        <span
-          className="bf-brand-org"
-          title={label}
-          style={{ display: "inline-flex", alignItems: "center", gap: 10 }}
-        >
+      {orgId ? (
+        <span className="bf-globalOrgPill" title={label}>
           {orgLogo ? (
             <img
               src={orgLogo}
-              alt={`${label} logo`}
-              className="bf-org-logo"
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: 8,
-                objectFit: "cover",
-                border: "1px solid rgba(255,255,255,0.16)",
-                background: "rgba(255,255,255,0.06)",
-              }}
+              alt=""
+              aria-hidden="true"
               loading="lazy"
               decoding="async"
             />
           ) : null}
-          <span className="bf-org-name">{label}</span>
+          <span>{label}</span>
         </span>
       ) : null}
     </div>
   );
-};
+}
 
-function OrgNav({ variant = "desktop" }) {
-  const orgId = useOrgIdFromPath();
-  const enabledModules = useEnabledOrgModules(orgId);
-
-  const isDrawer = variant === "drawer";
-
-  // Inline styles for drawer so CSS can't hide it.
-  const drawerNavStyle = isDrawer
-    ? {
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        marginTop: 14,
-      }
-    : undefined;
-
-  const drawerLinkStyle = isDrawer
-    ? {
-        display: "block",
-        width: "100%",
-        padding: "12px 14px",
-        borderRadius: 12,
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.12)",
-        color: "#fff",
-        fontWeight: 700,
-      }
-    : undefined;
-
-  const base = orgId ? `/org/${orgId}` : null;
-  const items = base
-    ? [
-        ["Dashboard", base + "/overview", "nav-overview", null],
-        ["Build", base + "/build", "nav-build", null],
-        ["People", base + "/people", "nav-people", "people"],
-        ["Needs", base + "/needs", "nav-needs", "needs"],
-        ["Pledges", base + "/pledges", "nav-pledges", "pledges"],
-        ["Inventory", base + "/inventory", "nav-inventory", "inventory"],
-        ["Meetings", base + "/meetings", "nav-meetings", "meetings"],
-        ["Events", base + "/events", "nav-events", "events"],
-        ["REC", base + "/witness", "nav-witness", "witness-archive"],
-        ["FireChat", base + "/chat", "nav-chat", "bondfire-chat"],
-        ["Intake", base + "/intake", "nav-intake", "intake"],
-        ["Drive", base + "/drive", "nav-drive", "drive"],
-        ["Studio", base + "/studio", "nav-studio", "studio"],
-        ["Colophon", base + "/colophon", "nav-colophon", "publishing-colophon"],
-        ["Settings", base + "/settings", "nav-settings", null],
-        ["Module Chat", base + "/chat-module", "nav-chat-module", "module-chat"],
-      ]
-    : [];
-
-  const visibleItems = enabledModules
-    ? items.filter((item) => !item[3] || enabledModules.has(item[3]))
-    : items;
+function DrawerLink({ to, label, moduleId, tourId, onNavigate, isActiveOverride }) {
+  const logoPath = moduleId ? NAV_MODULE_LOGOS[moduleId] || "" : "";
   return (
-    <nav
-      className={`bf-appnav${isDrawer ? " is-drawer" : ""}`}
-      aria-label="Org navigation"
-      style={drawerNavStyle}
-      data-bf-orgnav={isDrawer ? "drawer" : "desktop"}
+    <NavLink
+      to={to}
+      onClick={onNavigate}
+      data-tour={tourId || undefined}
+      className={({ isActive }) =>
+        `bf-globalDrawerLink${(typeof isActiveOverride === "boolean" ? isActiveOverride : isActive) ? " is-active" : ""}`
+      }
     >
-      <NavLink
-        to="/orgs"
-        style={({ isActive }) =>
-          isDrawer
-            ? {
-                ...drawerLinkStyle,
-                background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
-                border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
-              }
-            : undefined
-        }
-        className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
-        title="All orgs"
-      >
-        All Orgs
-      </NavLink>
+      {logoPath ? (
+        <img
+          className="bf-globalDrawerModuleLogo"
+          src={logoPath}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          onError={(event) => event.currentTarget.remove()}
+        />
+      ) : null}
+      <span>{label}</span>
+    </NavLink>
+  );
+}
 
-      {visibleItems.map(([label, to, tourId, moduleId]) => {
-        const logoPath = NAV_MODULE_LOGOS[moduleId] || "";
-        return (
-          <NavLink
-            key={to}
-            to={to}
-            style={({ isActive }) =>
-              isDrawer
-                ? {
-                    ...drawerLinkStyle,
-                    background: isActive ? "rgba(255,0,0,0.20)" : drawerLinkStyle.background,
-                    border: isActive ? "1px solid rgba(255,0,0,0.30)" : drawerLinkStyle.border,
-                  }
-                : undefined
-            }
-            className={({ isActive }) => `bf-appnav-link${isActive ? " is-active" : ""}`}
-            data-tour={tourId}
-          >
-            {logoPath ? (
-              <img
-                className="bf-appnav-module-logo"
-                src={logoPath}
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-                onError={(event) => event.currentTarget.remove()}
-              />
-            ) : null}
-            <span>{label}</span>
-          </NavLink>
-        );
-      })}
-    </nav>
+function DrawerSection({ title, children }) {
+  return (
+    <section className="bf-globalDrawerSection" aria-labelledby={`bf-nav-${title.toLowerCase()}`}>
+      <h2 id={`bf-nav-${title.toLowerCase()}`}>{title}</h2>
+      <div className="bf-globalDrawerSectionLinks">{children}</div>
+    </section>
   );
 }
 
 export default function AppHeader({ onLogout, showLogout }) {
-  const [mobileOpen, setMobileOpen] = React.useState(false);
-  const loc = useLocation();
+  const [open, setOpen] = React.useState(false);
+  const location = useLocation();
+  const orgId = useOrgIdFromPath();
+  const enabledModules = useEnabledOrgModules(orgId);
+  const menuButtonRef = React.useRef(null);
+  const closeButtonRef = React.useRef(null);
 
-  // Debug toggle: add ?debugNav=1 to URL
-  const debugNav =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).has("debugNav");
+  const closeMenu = React.useCallback((restoreFocus = false) => {
+    setOpen(false);
+    if (restoreFocus) {
+      window.requestAnimationFrame(() => menuButtonRef.current?.focus());
+    }
+  }, []);
 
-  React.useEffect(() => setMobileOpen(false), [loc.pathname, loc.hash]);
+  React.useEffect(() => {
+    setOpen(false);
+  }, [location.pathname, location.hash]);
 
-  const drawerStyle = {
-    position: "fixed",
-    inset: 0,
-    zIndex: 999999,
-    pointerEvents: mobileOpen ? "auto" : "none",
-  };
+  React.useEffect(() => {
+    if (!open) return undefined;
 
-  const backdropStyle = {
-    position: "absolute",
-    inset: 0,
-    background: "rgba(0,0,0,0.65)",
-    opacity: mobileOpen ? 1 : 0,
-    transition: "opacity 160ms ease",
-  };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.requestAnimationFrame(() => closeButtonRef.current?.focus());
 
-  const panelStyle = {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    height: "100%",
-    width: "min(340px, 90vw)",
-    background: "#0b0b0b",
-    borderLeft: "1px solid rgba(255,255,255,0.12)",
-    padding: 14,
-    overflowY: "auto",
-    transform: mobileOpen ? "translateX(0)" : "translateX(100%)",
-    transition: "transform 180ms ease",
-    color: "#fff",
-  };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMenu(true);
+      }
+    };
 
-  const debugOverlayStyle = {
-    position: "fixed",
-    right: 10,
-    bottom: 10,
-    zIndex: 1000000,
-    width: "min(420px, 92vw)",
-    maxHeight: "40vh",
-    overflow: "auto",
-    padding: 10,
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.18)",
-    background: "rgba(0,0,0,0.85)",
-    color: "#fff",
-    fontSize: 12,
-    lineHeight: 1.35,
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-  };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [closeMenu, open]);
+
+  const base = orgId ? `/org/${encodeURIComponent(orgId)}` : null;
+  const path = location.pathname || "";
+  const organizationItems = base
+    ? [
+        { label: "Dashboard", to: `${base}/overview`, tourId: "nav-overview", active: path === base || path === `${base}/` || path === `${base}/overview` },
+        { label: "Build", to: `${base}/build`, tourId: "nav-build" },
+        { label: "People", to: `${base}/people`, tourId: "nav-people" },
+      ]
+    : [];
+  const moduleItems = base
+    ? [
+        { label: "Needs", to: `${base}/needs`, tourId: "nav-needs", moduleId: "needs" },
+        { label: "Pledges", to: `${base}/pledges`, tourId: "nav-pledges", moduleId: "pledges" },
+        { label: "Inventory", to: `${base}/inventory`, tourId: "nav-inventory", moduleId: "inventory" },
+        { label: "Meetings", to: `${base}/meetings`, tourId: "nav-meetings", moduleId: "meetings" },
+        { label: "Events", to: `${base}/events`, tourId: "nav-events", moduleId: "events" },
+        { label: "REC", to: `${base}/witness`, tourId: "nav-witness", moduleId: "witness-archive" },
+        { label: "FireChat", to: `${base}/chat`, tourId: "nav-chat", moduleId: "bondfire-chat" },
+        { label: "Intake", to: `${base}/intake`, tourId: "nav-intake", moduleId: "intake" },
+        { label: "Drive", to: `${base}/drive`, tourId: "nav-drive", moduleId: "drive" },
+        { label: "Studio", to: `${base}/studio`, tourId: "nav-studio", moduleId: "studio" },
+        { label: "Colophon", to: `${base}/colophon`, tourId: "nav-colophon", moduleId: "publishing-colophon" },
+        { label: "Module Chat", to: `${base}/chat-module`, tourId: "nav-chat-module", moduleId: "module-chat" },
+      ].filter((item) => !enabledModules || enabledModules.has(item.moduleId))
+    : [];
+  const supportTo = base ? `${base}/support` : "/support";
 
   return (
     <>
-      <header className="bf-appHeader">
+      <header className="bf-appHeader bf-globalHeader">
         <div className="bf-appHeader-left">
-          <Brand />
+          <Brand orgId={orgId} />
         </div>
 
-        <div className="bf-appHeader-right">
-          <div className="bf-nav-desktop">
-            <OrgNav variant="desktop" />
-          </div>
-
-          {showLogout ? (
-            <button
-              className="bf-logout"
-              type="button"
-              onClick={onLogout}
-              title="Logout"
+        <div className="bf-appHeader-right bf-globalHeaderActions">
+          {base ? (
+            <Link
+              to={`${base}/settings`}
+              className={`bf-globalIconButton${path === `${base}/settings` ? " is-active" : ""}`}
+              aria-label="Organization settings"
+              title="Settings"
+              onClick={() => closeMenu(false)}
             >
-              Logout
-            </button>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 8.5A3.5 3.5 0 1 0 12 15.5 3.5 3.5 0 0 0 12 8.5Zm9 3.5-2.13-.82a7.5 7.5 0 0 0-.66-1.59l.93-2.08-2.65-2.65-2.08.93a7.5 7.5 0 0 0-1.59-.66L12 3H8l-.82 2.13a7.5 7.5 0 0 0-1.59.66l-2.08-.93L.86 7.51l.93 2.08a7.5 7.5 0 0 0-.66 1.59L-1 12l2.13.82c.14.56.36 1.09.66 1.59l-.93 2.08 2.65 2.65 2.08-.93c.5.3 1.03.52 1.59.66L8 21h4l.82-2.13c.56-.14 1.09-.36 1.59-.66l2.08.93 2.65-2.65-.93-2.08c.3-.5.52-1.03.66-1.59L21 12Z" transform="translate(2 0) scale(.83)" />
+              </svg>
+            </Link>
           ) : null}
 
           <button
-            className="bf-hamburger"
+            ref={menuButtonRef}
+            className="bf-globalIconButton bf-globalMenuButton"
             type="button"
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileOpen ? "true" : "false"}
-            onClick={() => setMobileOpen((v) => !v)}
+            aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={open}
+            aria-controls="bf-global-navigation-drawer"
+            onClick={() => setOpen((value) => !value)}
           >
-            <span aria-hidden="true">☰</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
         </div>
       </header>
 
-      <div className="bf-drawer" style={drawerStyle} role="dialog" aria-modal="true">
-        <div style={backdropStyle} onClick={() => setMobileOpen(false)} />
-        <div className="bf-drawer-panel" style={panelStyle}>
-          <div
-            className="bf-drawer-top"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 10,
-            }}
-          >
-            <div
-              className="bf-drawer-title"
-              style={{ fontWeight: 800, letterSpacing: ".3px" }}
-            >
-              Menu
+      <div className={`bf-globalDrawerLayer${open ? " is-open" : ""}`} aria-hidden={!open}>
+        <div className="bf-globalDrawerBackdrop" onClick={() => closeMenu(true)} aria-hidden="true" />
+        <aside
+          id="bf-global-navigation-drawer"
+          className="bf-globalDrawerPanel"
+          role="dialog"
+          aria-labelledby="bf-global-navigation-title"
+        >
+          <div className="bf-globalDrawerTop">
+            <div>
+              <div className="bf-globalDrawerEyebrow">NAVIGATION</div>
+              <h1 id="bf-global-navigation-title">Bondfire</h1>
             </div>
             <button
-              className="bf-drawer-close"
+              ref={closeButtonRef}
+              className="bf-globalIconButton"
               type="button"
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close menu"
-              style={{
-                height: 40,
-                width: 44,
-                borderRadius: 12,
-                border: "1px solid rgba(255,255,255,0.14)",
-                background: "rgba(255,255,255,0.04)",
-                color: "#fff",
-              }}
+              aria-label="Close navigation menu"
+              onClick={() => closeMenu(true)}
             >
-              ✕
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
             </button>
           </div>
 
-          <OrgNav variant="drawer" />
+          <nav className="bf-globalDrawerNav" aria-label="Bondfire navigation">
+            <DrawerLink to="/orgs" label="All Orgs" onNavigate={() => closeMenu(false)} />
 
-          {showLogout ? (
-            <button
-              className="bf-drawer-logout"
-              type="button"
-              onClick={onLogout}
-              style={{ marginTop: 14, width: "100%" }}
-            >
-              Logout
-            </button>
-          ) : null}
-        </div>
+            {base ? (
+              <DrawerSection title="ORGANIZATION">
+                {organizationItems.map((item) => (
+                  <DrawerLink
+                    key={item.to}
+                    {...item}
+                    isActiveOverride={item.active}
+                    onNavigate={() => closeMenu(false)}
+                  />
+                ))}
+              </DrawerSection>
+            ) : null}
+
+            {base ? (
+              <DrawerSection title="MODULES">
+                {moduleItems.map((item) => (
+                  <DrawerLink key={item.to} {...item} onNavigate={() => closeMenu(false)} />
+                ))}
+              </DrawerSection>
+            ) : null}
+
+            <DrawerSection title="ACCOUNT">
+              <DrawerLink to={supportTo} label="Support" onNavigate={() => closeMenu(false)} />
+              {showLogout ? (
+                <button
+                  className="bf-globalDrawerLink bf-globalDrawerLogout"
+                  type="button"
+                  onClick={() => {
+                    closeMenu(false);
+                    onLogout?.();
+                  }}
+                >
+                  <span>Logout</span>
+                </button>
+              ) : null}
+            </DrawerSection>
+          </nav>
+        </aside>
       </div>
-
-      {debugNav ? (
-        <pre style={debugOverlayStyle}>
-          {JSON.stringify({ pathname: loc.pathname, hash: loc.hash }, null, 2)}
-        </pre>
-      ) : null}
     </>
   );
 }

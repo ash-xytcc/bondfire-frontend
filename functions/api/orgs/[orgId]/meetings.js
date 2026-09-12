@@ -1,39 +1,29 @@
 import { json, bad, now, uuid } from "../../_lib/http.js";
 import { requireOrgRole } from "../../_lib/auth.js";
 import { logActivity } from "../../_lib/activity.js";
-import { runAppMigrations } from '../../_lib/migrations.js'
-async function getOrgCryptoKeyVersion(db, orgId) {
-	// org_crypto historically used either key_version or version.
-	try {
-		const r = await db.prepare("SELECT key_version FROM org_crypto WHERE org_id = ?").bind(orgId).first();
-		return Number(r?.key_version) || 1;
-	} catch (e) {
-		const msg = String(e?.message || "");
-		if (!msg.includes("no such column: key_version")) throw e;
-		const r = await db.prepare("SELECT version AS key_version FROM org_crypto WHERE org_id = ?").bind(orgId).first();
-		return Number(r?.key_version) || 1;
-	}
-}
+import { getOrgKeyVersion } from "../../_lib/zk.js";
 
 async function ensureMeetingsZkColumns(db) {
-	try { await db.prepare("ALTER TABLE meetings ADD COLUMN encrypted_notes TEXT").run(); } catch {}
-	try { await db.prepare("ALTER TABLE meetings ADD COLUMN encrypted_blob TEXT").run(); } catch {}
-	try { await db.prepare("ALTER TABLE meetings ADD COLUMN key_version INTEGER").run(); } catch {}
+  try { await db.prepare("ALTER TABLE meetings ADD COLUMN encrypted_notes TEXT").run(); } catch {}
+  try { await db.prepare("ALTER TABLE meetings ADD COLUMN encrypted_blob TEXT").run(); } catch {}
+  try { await db.prepare("ALTER TABLE meetings ADD COLUMN key_version INTEGER").run(); } catch {}
 }
 
 async function ensureMeetingsPublicColumn(db) {
-  try {
-    await db
-      .prepare("ALTER TABLE meetings ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0")
-      .run();
-  } catch {
-    // ignore (already exists)
-  }
+  try { await db.prepare("ALTER TABLE meetings ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0").run(); } catch {}
 }
 
-// Meetings list endpoint
-// Columns expected:
-// id, org_id, title, starts_at, ends_at, location, agenda, notes, created_at, updated_at
+function hasCiphertext(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+async function scrubEncryptedPlaintext(db, orgId) {
+  await db.prepare(
+    `UPDATE meetings
+     SET title = '', location = '', agenda = '', notes = '', encrypted_notes = NULL
+     WHERE org_id = ? AND is_public = 0 AND encrypted_blob IS NOT NULL AND encrypted_blob <> ''`
+  ).bind(orgId).run();
+}
 
 export async function onRequestGet({ env, request, params }) {
   const orgId = params.orgId;
@@ -41,16 +31,14 @@ export async function onRequestGet({ env, request, params }) {
   if (!a.ok) return a.resp;
 
   await ensureMeetingsPublicColumn(env.BF_DB);
-	await ensureMeetingsZkColumns(env.BF_DB);
+  await ensureMeetingsZkColumns(env.BF_DB);
+  await scrubEncryptedPlaintext(env.BF_DB, orgId);
 
-	const res = await env.BF_DB.prepare(
-	  `SELECT id, title, starts_at, ends_at, location, agenda, notes, is_public, encrypted_notes, encrypted_blob, key_version, created_at, updated_at
-     FROM meetings
-     WHERE org_id = ?
-     ORDER BY starts_at DESC, created_at DESC`
-  )
-    .bind(orgId)
-    .all();
+  const res = await env.BF_DB.prepare(
+    `SELECT id, title, starts_at, ends_at, location, agenda, notes, is_public,
+            encrypted_notes, encrypted_blob, key_version, created_at, updated_at
+     FROM meetings WHERE org_id = ? ORDER BY starts_at DESC, created_at DESC`
+  ).bind(orgId).all();
 
   return json({ ok: true, meetings: res.results || [] });
 }
@@ -60,56 +48,44 @@ export async function onRequestPost({ env, request, params }) {
   const a = await requireOrgRole({ env, request, orgId, minRole: "member" });
   if (!a.ok) return a.resp;
 
+  await ensureMeetingsPublicColumn(env.BF_DB);
+  await ensureMeetingsZkColumns(env.BF_DB);
   const body = await request.json().catch(() => ({}));
-  const title = String(body.title || "").trim();
-  if (!title) return bad(400, "MISSING_TITLE");
+  const isPublic = !!body.is_public;
+  const encryptedBlob = hasCiphertext(body.encrypted_blob) ? body.encrypted_blob : null;
+  if (!isPublic && !encryptedBlob) return bad(400, "ENCRYPTED_PAYLOAD_REQUIRED");
+
+  const title = isPublic ? String(body.title || "").trim() : "";
+  if (isPublic && !title) return bad(400, "MISSING_TITLE");
 
   const id = uuid();
   const t = now();
   const startsAt = Number.isFinite(Number(body.starts_at)) ? Number(body.starts_at) : t;
   const endsAt = Number.isFinite(Number(body.ends_at)) ? Number(body.ends_at) : startsAt;
+  const keyVersion = encryptedBlob ? await getOrgKeyVersion(env.BF_DB, orgId) : null;
 
-  await ensureMeetingsPublicColumn(env.BF_DB);
-	await ensureMeetingsZkColumns(env.BF_DB);
+  await env.BF_DB.prepare(
+    `INSERT INTO meetings (
+      id, org_id, title, starts_at, ends_at, location, agenda, notes, is_public,
+      encrypted_notes, encrypted_blob, key_version, created_at, updated_at
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+  ).bind(
+    id, orgId, title, startsAt, endsAt,
+    isPublic ? String(body.location || "") : "",
+    isPublic ? String(body.agenda || "") : "",
+    isPublic ? String(body.notes || "") : "",
+    isPublic ? 1 : 0,
+    null, encryptedBlob, keyVersion, t, t
+  ).run();
 
-	let keyVersion = null;
-	if (body.encrypted_blob) {
-		keyVersion = await getOrgCryptoKeyVersion(env.BF_DB, orgId);
-	}
-
-	await env.BF_DB.prepare(
-	  `INSERT INTO meetings (
-	      id, org_id, title, starts_at, ends_at, location, agenda, notes, is_public, encrypted_notes, encrypted_blob, key_version, created_at, updated_at
-	   ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-	)
-    .bind(
-      id,
-      orgId,
-      title,
-      startsAt,
-      endsAt,
-      String(body.location || ""),
-      String(body.agenda || ""),
-      String(body.notes || ""),
-      body.is_public ? 1 : 0,
-	    body.encrypted_notes ?? null,
-	    body.encrypted_blob ?? null,
-	    keyVersion,
-      t,
-      t
-    )
-    .run();
-
-  try {
-    await logActivity(env, {
+  logActivity(env, {
     orgId,
     kind: "meeting.created",
-    message: `meeting created: ${title}`,
-    actorUserId: a?.user?.sub || null,
-  });
-  } catch (e) {
-    console.error("ACTIVITY_FAIL", e);
-  }
+    message: isPublic ? `Public meeting created: ${title}` : `Encrypted meeting created: ${id}`,
+    actorUserId: a?.user?.sub || a?.user?.id || null,
+    entityType: "meeting",
+    entityId: id,
+  }).catch(() => {});
 
   return json({ ok: true, id });
 }
@@ -119,74 +95,50 @@ export async function onRequestPut({ env, request, params }) {
   const a = await requireOrgRole({ env, request, orgId, minRole: "member" });
   if (!a.ok) return a.resp;
 
+  await ensureMeetingsPublicColumn(env.BF_DB);
+  await ensureMeetingsZkColumns(env.BF_DB);
   const body = await request.json().catch(() => ({}));
-  const id = String(body.id || "");
+  const id = String(body.id || "").trim();
   if (!id) return bad(400, "MISSING_ID");
 
-  await ensureMeetingsPublicColumn(env.BF_DB);
-	await ensureMeetingsZkColumns(env.BF_DB);
+  const existing = await env.BF_DB.prepare(
+    `SELECT id, title, starts_at, ends_at, location, agenda, notes, is_public, encrypted_blob, key_version
+     FROM meetings WHERE id = ? AND org_id = ?`
+  ).bind(id, orgId).first();
+  if (!existing) return bad(404, "NOT_FOUND");
 
-	let keyVersion = null;
-	if (body.encrypted_blob) {
-		keyVersion = await getOrgCryptoKeyVersion(env.BF_DB, orgId);
-	}
+  const isPublic = body.is_public === undefined ? !!existing.is_public : !!body.is_public;
+  const encryptedBlob = hasCiphertext(body.encrypted_blob) ? body.encrypted_blob : existing.encrypted_blob;
+  if (!isPublic && !hasCiphertext(encryptedBlob)) return bad(400, "ENCRYPTED_PAYLOAD_REQUIRED");
 
-  const startsAt =
-    body.starts_at === undefined || body.starts_at === null
-      ? null
-      : Number.isFinite(Number(body.starts_at))
-      ? Number(body.starts_at)
-      : 0;
+  const startsAt = body.starts_at === undefined || body.starts_at === null
+    ? existing.starts_at
+    : (Number.isFinite(Number(body.starts_at)) ? Number(body.starts_at) : existing.starts_at);
+  const endsAt = body.ends_at === undefined || body.ends_at === null
+    ? existing.ends_at
+    : (Number.isFinite(Number(body.ends_at)) ? Number(body.ends_at) : existing.ends_at);
+  const title = isPublic ? (body.title === undefined ? String(existing.title || "") : String(body.title || "").trim()) : "";
+  if (isPublic && !title) return bad(400, "MISSING_TITLE");
+  const location = isPublic ? (body.location === undefined ? String(existing.location || "") : String(body.location || "")) : "";
+  const agenda = isPublic ? (body.agenda === undefined ? String(existing.agenda || "") : String(body.agenda || "")) : "";
+  const notes = isPublic ? (body.notes === undefined ? String(existing.notes || "") : String(body.notes || "")) : "";
+  const keyVersion = hasCiphertext(body.encrypted_blob) ? await getOrgKeyVersion(env.BF_DB, orgId) : existing.key_version;
 
-  const endsAt =
-    body.ends_at === undefined || body.ends_at === null
-      ? null
-      : Number.isFinite(Number(body.ends_at))
-      ? Number(body.ends_at)
-      : 0;
-
-	await env.BF_DB.prepare(
+  await env.BF_DB.prepare(
     `UPDATE meetings
-     SET title = COALESCE(?, title),
-         starts_at = COALESCE(?, starts_at),
-         ends_at = COALESCE(?, ends_at),
-         location = COALESCE(?, location),
-         agenda = COALESCE(?, agenda),
-         notes = COALESCE(?, notes),
-         is_public = COALESCE(?, is_public),
-	       encrypted_notes = COALESCE(?, encrypted_notes),
-	       encrypted_blob = COALESCE(?, encrypted_blob),
-	       key_version = COALESCE(?, key_version),
-         updated_at = ?
+     SET title = ?, starts_at = ?, ends_at = ?, location = ?, agenda = ?, notes = ?, is_public = ?,
+         encrypted_notes = NULL, encrypted_blob = ?, key_version = ?, updated_at = ?
      WHERE id = ? AND org_id = ?`
-  )
-    .bind(
-      body.title ?? null,
-      startsAt,
-      endsAt,
-      body.location ?? null,
-      body.agenda ?? null,
-      body.notes ?? null,
-      body.is_public === undefined ? null : (body.is_public ? 1 : 0),
-	    body.encrypted_notes ?? null,
-	    body.encrypted_blob ?? null,
-	    keyVersion,
-      now(),
-      id,
-      orgId
-    )
-    .run();
+  ).bind(title, startsAt, endsAt, location, agenda, notes, isPublic ? 1 : 0, encryptedBlob || null, keyVersion || null, now(), id, orgId).run();
 
-  try {
-    await logActivity(env, {
+  logActivity(env, {
     orgId,
     kind: "meeting.updated",
-    message: `meeting updated: ${id}`,
-    actorUserId: a?.user?.sub || null,
-  });
-  } catch (e) {
-    console.error("ACTIVITY_FAIL", e);
-  }
+    message: isPublic ? `Public meeting updated: ${title}` : `Encrypted meeting updated: ${id}`,
+    actorUserId: a?.user?.sub || a?.user?.id || null,
+    entityType: "meeting",
+    entityId: id,
+  }).catch(() => {});
 
   return json({ ok: true });
 }
@@ -197,30 +149,19 @@ export async function onRequestDelete({ env, request, params }) {
   if (!a.ok) return a.resp;
 
   const url = new URL(request.url);
-  const id = url.searchParams.get("id");
+  const id = String(url.searchParams.get("id") || "").trim();
   if (!id) return bad(400, "MISSING_ID");
 
-  await env.BF_DB.prepare("DELETE FROM meetings WHERE id = ? AND org_id = ?")
-    .bind(id, orgId)
-    .run();
+  await env.BF_DB.prepare("DELETE FROM meetings WHERE id = ? AND org_id = ?").bind(id, orgId).run();
 
-const prev = await env.BF_DB.prepare(
-  "SELECT title FROM meetings WHERE id = ? AND org_id = ?"
-).bind(id, orgId).first();
-
-const shortId = (x) =>
-  typeof x === "string" && x.length > 12 ? `${x.slice(0, 8)}…${x.slice(-4)}` : (x || "");
-
-const title = String(prev?.title || "").trim();
-const label = title || shortId(id);
-
-logActivity(env, {
-  orgId,
-  kind: "meeting.deleted",
-  message: `Meeting deleted: ${label} (${shortId(id)})`,
-  actorUserId: a?.user?.sub || a?.user?.id || null,
-}).catch(() => {});
-
+  logActivity(env, {
+    orgId,
+    kind: "meeting.deleted",
+    message: `Meeting deleted: ${id}`,
+    actorUserId: a?.user?.sub || a?.user?.id || null,
+    entityType: "meeting",
+    entityId: id,
+  }).catch(() => {});
 
   return json({ ok: true });
 }

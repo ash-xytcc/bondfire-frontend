@@ -196,7 +196,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_drive_files_storage_key ON drive_files(sto
 CREATE INDEX IF NOT EXISTS idx_drive_templates_org_updated ON drive_templates(org_id, updated_at DESC);
 
 
--- Emergency mode backend foundation (non-destructive)
+-- Emergency mode backend foundation.
 CREATE TABLE IF NOT EXISTS emergency_status (
   id TEXT PRIMARY KEY,
   is_active INTEGER NOT NULL DEFAULT 0,
@@ -216,6 +216,18 @@ CREATE TABLE IF NOT EXISTS org_emergency_state (
   lockdown_set_at INTEGER,
   lockdown_cleared_by_user_id TEXT,
   lockdown_cleared_at INTEGER,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS emergency_protocol_state (
+  org_id TEXT PRIMARY KEY,
+  stage TEXT NOT NULL DEFAULT 'normal',
+  isolated INTEGER NOT NULL DEFAULT 0,
+  isolated_by_user_id TEXT,
+  isolated_at INTEGER,
+  recovered_by_user_id TEXT,
+  recovered_at INTEGER,
   updated_at INTEGER NOT NULL,
   FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
 );

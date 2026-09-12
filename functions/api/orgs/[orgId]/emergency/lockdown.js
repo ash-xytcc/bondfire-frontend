@@ -1,8 +1,18 @@
+import { requireOrgRole } from '../../../_lib/auth.js';
 import { ensureEmergencySchema, setOrgLockdownState } from '../../../_lib/emergency.js';
 import { bad, now, ok } from '../../../_lib/http.js';
 
 export async function onRequestPost(ctx) {
   const orgId = String(ctx.params?.orgId || '');
+  const gate = await requireOrgRole({
+    env: ctx.env,
+    request: ctx.request,
+    orgId,
+    minRole: 'admin',
+    bypassWriteLockdown: true,
+  });
+  if (!gate.ok) return gate.resp;
+
   const body = await ctx.request.json().catch(() => ({}));
   const enabled = typeof body.enabled === 'boolean' ? body.enabled : !!body.locked;
 

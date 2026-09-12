@@ -1,3 +1,4 @@
+import { api } from '../utils/api.js';
 // src/pages/Settings.jsx
 import * as React from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
@@ -29,70 +30,7 @@ function humanizeError(msg) {
 
 
 async function authFetch(path, opts = {}) {
-  const relative = path.startsWith("/") ? path : `/${path}`;
-
-  if (isDemoMode()) {
-    ensureDemoOrgList();
-    const handled = demoHandle(relative, opts);
-    if (handled) return handled;
-  }
-  const remote = path.startsWith("http")
-    ? path
-    : `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
-
-  // These endpoints often live on same origin Pages Functions while API_BASE points elsewhere.
-  const isSpecialEndpoint =
-    /^\/api\/(orgs\/[^/]+\/(invites|members|newsletter|pledges|public(?:\/|$))|invites\/redeem)\b/.test(
-      relative
-    );
-
-  const headers = {
-    "Content-Type": "application/json",
-    ...(opts.headers || {}),
-  };
-
-  const doReq = async (u) => {
-    const res = await fetch(u, {
-      ...opts,
-      headers,
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
-      credentials: "include",
-    });
-
-    let j = {};
-    try {
-      j = await res.json();
-    } catch {
-      j = {};
-    }
-
-    if (!res.ok || j.ok === false) {
-      throw new Error(j.error || j.message || `HTTP ${res.status}`);
-    }
-    return j;
-  };
-
-  if (isSpecialEndpoint && API_BASE && remote !== relative) {
-    try {
-      return await doReq(relative);
-    } catch {
-      return await doReq(remote);
-    }
-  }
-
-  try {
-    return await doReq(remote);
-  } catch (e) {
-    const msg = String(e?.message || "");
-    if (
-      API_BASE &&
-      !path.startsWith("http") &&
-      (msg.includes("HTTP 404") || msg.includes("HTTP 500"))
-    ) {
-      return await doReq(relative);
-    }
-    throw e;
-  }
+  return api(path, { ...opts, body: opts.body === undefined ? undefined : typeof opts.body === 'string' ? opts.body : JSON.stringify(opts.body) });
 }
 
 /* ---------- local org settings helpers ---------- */
@@ -113,7 +51,7 @@ function safeMailto(s) {
 }
 
 
-export default function Settings() {
+export default function Settings({ privateMode = false }) {
   const { orgId } = useParams();
 
   /* ---------- Submenu tabs ---------- */
@@ -143,8 +81,8 @@ export default function Settings() {
       ["newsletter", "Newsletter"],
       ["pledges", "Pledges"],
       ["security", "Security"],
-    ],
-    []
+    ].filter(([key]) => !privateMode || ["security","members","invites","pledges"].includes(key)),
+    [privateMode]
   );
 
   /* ========== INVITES (backend) ========== */

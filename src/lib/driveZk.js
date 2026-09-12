@@ -23,17 +23,18 @@ export function isZkString(value) {
 }
 export async function encryptDriveText(orgId, plaintext) {
   const key = getDriveOrgKey(orgId);
-  if (!key) return String(plaintext || '');
+  if (!key) throw new Error('ORG_KEY_MISSING');
   return DRIVE_ZK_PREFIX + await encryptWithOrgKey(key, String(plaintext || ''));
 }
 export async function decryptDriveText(orgId, value, fallback = '') {
-  if (!isZkString(value)) return value == null ? fallback : String(value);
+  if (value == null || value === '') return fallback;
+  if (!isZkString(value)) throw new Error('CIPHERTEXT_REQUIRED');
   const key = getDriveOrgKey(orgId);
-  if (!key) return fallback;
+  if (!key) throw new Error('ORG_KEY_MISSING');
   try {
     return await decryptWithOrgKey(key, String(value).slice(DRIVE_ZK_PREFIX.length));
   } catch {
-    return fallback;
+    throw new Error('DECRYPT_FAILED');
   }
 }
 export async function encryptDriveJson(orgId, obj) {
@@ -44,7 +45,8 @@ export async function decryptDriveJson(orgId, value, fallback = null) {
     const text = await decryptDriveText(orgId, value, '');
     if (!text) return fallback;
     return JSON.parse(text);
-  } catch {
+  } catch (error) {
+    if (error?.message === 'ORG_KEY_MISSING') throw error;
     return fallback;
   }
 }

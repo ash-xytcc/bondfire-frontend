@@ -1,5 +1,6 @@
 import { json } from "../../../_lib/http.js";
 import { requireOrgRole } from "../../../_lib/auth.js";
+import { isOrgModuleEnabled } from "../../../_lib/orgModules.js";
 import {
   createColophonGatewayRequest,
   createColophonScopedEnv,
@@ -233,6 +234,10 @@ async function dispatch(context) {
 
   const auth = await requireOrgRole({ env: context.env, request: context.request, orgId, minRole: "viewer" });
   if (!auth.ok) return auth.resp;
+
+  if (!(await isOrgModuleEnabled(context.env, orgId, "publishing-colophon"))) {
+    return json({ ok: false, error: "MODULE_DISABLED", moduleId: "publishing-colophon" }, 403);
+  }
 
   const role = String(auth.role || "viewer").toLowerCase();
   const denied = await authorizeGatewayRequest({ request: context.request, path, role });

@@ -51,6 +51,20 @@ export async function ensureEmergencySchema(env) {
   ).run();
 
   await db.prepare(
+    `CREATE TABLE IF NOT EXISTS emergency_protocol_state (
+      org_id TEXT PRIMARY KEY,
+      stage TEXT NOT NULL DEFAULT 'normal',
+      isolated INTEGER NOT NULL DEFAULT 0,
+      isolated_by_user_id TEXT,
+      isolated_at INTEGER,
+      recovered_by_user_id TEXT,
+      recovered_at INTEGER,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
+    )`
+  ).run();
+
+  await db.prepare(
     `CREATE TABLE IF NOT EXISTS emergency_reports (
       id TEXT PRIMARY KEY,
       org_id TEXT,
@@ -85,6 +99,7 @@ export async function readEmergencyStatus({ env, request, orgId = null }) {
   ).first();
 
   let orgLockdown = null;
+  let orgProtocol = null;
   if (orgId) {
     const gate = await requireOrgRole({ env, request, orgId, minRole: 'viewer' });
     if (!gate.ok) return gate;
@@ -93,6 +108,13 @@ export async function readEmergencyStatus({ env, request, orgId = null }) {
       `SELECT org_id, lockdown_enabled, lockdown_reason, lockdown_set_by_user_id, lockdown_set_at,
               lockdown_cleared_by_user_id, lockdown_cleared_at, updated_at
        FROM org_emergency_state
+       WHERE org_id = ?`
+    ).bind(orgId).first();
+
+    orgProtocol = await state.db.prepare(
+      `SELECT org_id, stage, isolated, isolated_by_user_id, isolated_at,
+              recovered_by_user_id, recovered_at, updated_at
+       FROM emergency_protocol_state
        WHERE org_id = ?`
     ).bind(orgId).first();
   }
@@ -121,6 +143,27 @@ export async function readEmergencyStatus({ env, request, orgId = null }) {
           updatedAt: orgLockdown.updated_at || null,
         }
       : null,
+    orgProtocol: orgProtocol
+      ? {
+          orgId: orgProtocol.org_id,
+          stage: String(orgProtocol.stage || 'normal'),
+          isolated: !!orgProtocol.isolated,
+          isolatedByUserId: orgProtocol.isolated_by_user_id || null,
+          isolatedAt: orgProtocol.isolated_at || null,
+          recoveredByUserId: orgProtocol.recovered_by_user_id || null,
+          recoveredAt: orgProtocol.recovered_at || null,
+          updatedAt: orgProtocol.updated_at || null,
+        }
+      : {
+          orgId,
+          stage: 'normal',
+          isolated: false,
+          isolatedByUserId: null,
+          isolatedAt: null,
+          recoveredByUserId: null,
+          recoveredAt: null,
+          updatedAt: null,
+        },
   };
 }
 

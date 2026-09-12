@@ -1,3 +1,4 @@
+import { privateRequestGate } from './_lib/privateGate.js';
 import { emergencyRequestGate } from './_lib/emergencyRequestGate.js';
 
 function getOrigin(request) {
@@ -42,7 +43,8 @@ export async function onRequest({ env, request, next }) {
 
   try {
     const blocked = await emergencyRequestGate({ env, request });
-    const resp = blocked || await next();
+    const privateResponse = blocked ? null : await privateRequestGate({ env, request });
+    const resp = blocked || privateResponse || await next();
     const headers = new Headers(resp.headers);
     if (/^\/api\/(?:orgs|public|p|auth)(?:\/|$)/.test(new URL(request.url).pathname)) headers.set('cache-control', 'no-store');
     for (const [k, v] of Object.entries(CORS_HEADERS)) headers.set(k, v);

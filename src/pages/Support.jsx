@@ -11,6 +11,9 @@ const TYPE_OPTIONS = [
 ];
 
 const PUBLIC_TYPES = new Set(["bug", "feature"]);
+const HOSTED_SUPPORT_EMAIL = "support@bondfireapp.org";
+const HOSTED_INFO_EMAIL = "info@bondfireapp.org";
+const HOSTED_SECURITY_EMAIL = "security@bondfireapp.org";
 
 function newIdempotencyKey() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -121,6 +124,8 @@ export default function Support() {
   }), [config.deploymentMode, enabledModules, location.pathname, orgId]);
 
   const isPublic = PUBLIC_TYPES.has(type);
+  const hostedDeployment = String(config.deploymentMode || "hosted").toLowerCase() !== "self-hosted";
+  const supportEmail = config.publicSupportEmail || (hostedDeployment ? HOSTED_SUPPORT_EMAIL : "");
   const validate = () => {
     if (!subject.trim()) return "Subject is required.";
     if (!description.trim()) return "Description is required.";
@@ -202,9 +207,26 @@ export default function Support() {
         <p>
           Use this when you need the people operating this Bondfire installation. The floating Help button remains for instructions about the screen you are using.
         </p>
-        {config.publicSupportEmail ? (
-          <p className="bf-support-identity">Support identity: <strong>{config.publicSupportEmail}</strong></p>
-        ) : null}
+        <div className="bf-support-contacts" aria-label="Bondfire contact addresses">
+          {supportEmail ? (
+            <p className="bf-support-identity">
+              <a href={`mailto:${supportEmail}`}><strong>{supportEmail}</strong></a><br />
+              General support, account problems, and private support.
+            </p>
+          ) : null}
+          {hostedDeployment ? (
+            <>
+              <p className="bf-support-identity">
+                <a href={`mailto:${HOSTED_INFO_EMAIL}`}><strong>{HOSTED_INFO_EMAIL}</strong></a><br />
+                General questions and information.
+              </p>
+              <p className="bf-support-identity">
+                <a href={`mailto:${HOSTED_SECURITY_EMAIL}`}><strong>{HOSTED_SECURITY_EMAIL}</strong></a><br />
+                Security reports and sensitive security-related contact.
+              </p>
+            </>
+          ) : null}
+        </div>
       </section>
 
       <form className="bf-support-form" onSubmit={submit} noValidate>

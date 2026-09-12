@@ -1,3 +1,5 @@
+import { emergencyRequestGate } from './_lib/emergencyRequestGate.js';
+
 function getOrigin(request) {
   const o = request.headers.get("origin");
   return o || "";
@@ -30,7 +32,7 @@ const SECURITY_HEADERS = {
   "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
 };
 
-export async function onRequest({ request, next }) {
+export async function onRequest({ env, request, next }) {
   const CORS_HEADERS = corsHeaders(request);
 
   // Preflight
@@ -39,8 +41,10 @@ export async function onRequest({ request, next }) {
   }
 
   try {
-    const resp = await next();
+    const blocked = await emergencyRequestGate({ env, request });
+    const resp = blocked || await next();
     const headers = new Headers(resp.headers);
+    if (/^\/api\/(?:orgs|public|p|auth)(?:\/|$)/.test(new URL(request.url).pathname)) headers.set('cache-control', 'no-store');
     for (const [k, v] of Object.entries(CORS_HEADERS)) headers.set(k, v);
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
       if (!headers.has(k)) headers.set(k, v);

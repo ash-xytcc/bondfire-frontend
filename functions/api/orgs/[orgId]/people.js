@@ -18,6 +18,10 @@ export async function onRequestGet({ env, request, params }) {
   const a = await requireOrgRole({ env, request, orgId, minRole: "viewer" });
   if (!a.ok) return a.resp;
   await ensurePeopleZkColumns(env.BF_DB);
+  await env.BF_DB.prepare(
+    `UPDATE people SET name = '', role = '', phone = '', skills = '', notes = '', encrypted_notes = NULL
+     WHERE org_id = ? AND encrypted_blob IS NOT NULL AND encrypted_blob <> ''`
+  ).bind(orgId).run();
 
   const res = await env.BF_DB.prepare(
     "SELECT id, name, role, phone, skills, notes, encrypted_notes, encrypted_blob, key_version, created_at, updated_at FROM people WHERE org_id = ? ORDER BY created_at DESC"
@@ -42,20 +46,7 @@ export async function onRequestPost({ env, request, params }) {
   await env.BF_DB.prepare(
     `INSERT INTO people (id, org_id, name, role, phone, skills, notes, encrypted_notes, encrypted_blob, key_version, created_at, updated_at)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`
-  ).bind(
-    id,
-    orgId,
-    "",
-    "",
-    "",
-    "",
-    "",
-    null,
-    body.encrypted_blob,
-    keyVersion,
-    t,
-    t
-  ).run();
+  ).bind(id, orgId, "", "", "", "", "", null, body.encrypted_blob, keyVersion, t, t).run();
 
   logActivity(env, {
     orgId,
@@ -79,9 +70,7 @@ export async function onRequestPut({ env, request, params }) {
   const id = String(body.id || "").trim();
   if (!id) return bad(400, "MISSING_ID");
 
-  const existing = await env.BF_DB.prepare(
-    "SELECT encrypted_blob FROM people WHERE id = ? AND org_id = ?"
-  ).bind(id, orgId).first();
+  const existing = await env.BF_DB.prepare("SELECT encrypted_blob FROM people WHERE id = ? AND org_id = ?").bind(id, orgId).first();
   if (!existing) return bad(404, "NOT_FOUND");
 
   const encryptedBlob = hasCiphertext(body.encrypted_blob) ? body.encrypted_blob : existing.encrypted_blob;
@@ -89,16 +78,8 @@ export async function onRequestPut({ env, request, params }) {
   const keyVersion = hasCiphertext(body.encrypted_blob) ? await getOrgKeyVersion(env.BF_DB, orgId) : null;
 
   await env.BF_DB.prepare(
-    `UPDATE people
-     SET name = '',
-         role = '',
-         phone = '',
-         skills = '',
-         notes = '',
-         encrypted_notes = NULL,
-         encrypted_blob = ?,
-         key_version = COALESCE(?, key_version),
-         updated_at = ?
+    `UPDATE people SET name = '', role = '', phone = '', skills = '', notes = '', encrypted_notes = NULL,
+      encrypted_blob = ?, key_version = COALESCE(?, key_version), updated_at = ?
      WHERE id = ? AND org_id = ?`
   ).bind(encryptedBlob, keyVersion, now(), id, orgId).run();
 
@@ -110,7 +91,6 @@ export async function onRequestPut({ env, request, params }) {
     entityType: "person",
     entityId: id,
   }).catch(() => {});
-
   return json({ ok: true });
 }
 
@@ -118,13 +98,10 @@ export async function onRequestDelete({ env, request, params }) {
   const orgId = params.orgId;
   const a = await requireOrgRole({ env, request, orgId, minRole: "admin" });
   if (!a.ok) return a.resp;
-
   const url = new URL(request.url);
   const id = String(url.searchParams.get("id") || "").trim();
   if (!id) return bad(400, "MISSING_ID");
-
   await env.BF_DB.prepare("DELETE FROM people WHERE id = ? AND org_id = ?").bind(id, orgId).run();
-
   logActivity(env, {
     orgId,
     kind: "person.deleted",
@@ -133,6 +110,5 @@ export async function onRequestDelete({ env, request, params }) {
     entityType: "person",
     entityId: id,
   }).catch(() => {});
-
   return json({ ok: true });
 }

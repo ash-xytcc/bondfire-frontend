@@ -1,3 +1,4 @@
+import { bad } from "../../../_lib/http.js";
 import { requireOrgRole } from "../../../_lib/auth.js";
 import { ensureDriveSchema, getDb, normalizeNullableId, parseTags, created, json, now, uuid } from "../../../_lib/drive.js";
 
@@ -16,9 +17,11 @@ export async function onRequestPost({ env, request, params }) {
   if (!auth.ok) return auth.resp;
   await ensureDriveSchema(env);
   const body = await request.json().catch(() => ({}));
+  const encryptedBlob = String(body.encryptedBlob || "").trim();
+  if (!encryptedBlob) return bad(400, "ENCRYPTED_BLOB_REQUIRED");
   const id = uuid();
   const t = now();
-  const note = { id, parentId: normalizeNullableId(body.parentId), title: String(body.title || "untitled").trim() || "untitled", body: String(body.body || body.content || ""), tags: parseTags(body.tags), encryptedBlob: String(body.encryptedBlob || ""), createdAt: t, updatedAt: t };
-  await getDb(env).prepare(`INSERT INTO drive_notes (id, org_id, parent_id, title, content, tags, encrypted_blob, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, orgId, note.parentId, note.encryptedBlob ? "encrypted note" : note.title, note.encryptedBlob ? "" : note.body, note.encryptedBlob ? "" : note.tags.join(","), note.encryptedBlob || null, t, t).run();
+  const note = { id, parentId: normalizeNullableId(body.parentId), title: "encrypted note", body: "", tags: [], encryptedBlob, createdAt: t, updatedAt: t };
+  await getDb(env).prepare(`INSERT INTO drive_notes (id, org_id, parent_id, title, content, tags, encrypted_blob, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(id, orgId, note.parentId, "encrypted note", "", "", encryptedBlob, t, t).run();
   return created("note", note);
 }

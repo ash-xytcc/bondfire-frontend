@@ -1,3 +1,6 @@
+import { deviceKeyId } from '../../shared/privateContent.js';
+import { decryptPrivate } from '../lib/privateCrypto.js';
+import PrivateStoragePanel from '../components/PrivateStoragePanel.jsx';
 import React from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../utils/api.js";
@@ -190,6 +193,8 @@ export default function Security() {
     try {
       await ensureDeviceKeypair();
 
+      const current = await api(`/api/orgs/${orgId}/crypto`);
+      if (current.has_org_key || current.wrapped_key) throw new Error("This organization already has a key. Load or recover it; do not replace it.");
       const members = await api(`/api/orgs/${orgId}/members`);
       const list = Array.isArray(members.members) ? members.members : [];
 
@@ -220,7 +225,7 @@ export default function Security() {
 
       cacheOrgKey(orgId, key);
       setZkStatus((s) => ({ ...s, orgKey: true }));
-      setMsg("zk enabled for org on this device");
+      setMsg("Organization key created. Content privacy status is shown in the conversion panel.");
     } catch (e) {
       setMsg(e.message || "failed");
     }
@@ -251,18 +256,17 @@ export default function Security() {
       const list = Array.isArray(members.members) ? members.members : [];
 
       const wrapped_keys = [];
+      const privateStatus = await api(`/api/orgs/${encodeURIComponent(orgId)}/privacy`);
+      if (privateStatus.keyCheck) await decryptPrivate(orgKeyBytes, privateStatus.keyCheck, orgId, 'key-check', orgId);
       for (const m of list) {
-        const pk = m?.public_key || m?.publicKey;
-        const uid = m?.user_id || m?.userId;
-        if (!pk || !uid) continue;
-        let pub;
-        try {
-          pub = JSON.parse(pk);
-        } catch {
-          continue;
+        const uid = m.user_id || m.userId;
+        const devices = m.devices?.length ? m.devices : [{public_key: m.public_key || m.publicKey}];
+        for (const device of devices) {
+          if (!uid || !device.public_key) continue;
+          const pub = JSON.parse(device.public_key);
+          const wrapped_key = await wrapForMember(orgKeyBytes, pub);
+          wrapped_keys.push({user_id: uid, wrapped_key, ...(device.device_id ? {device_id: device.device_id} : {})});
         }
-        const wrapped_key = await wrapForMember(orgKeyBytes, pub);
-        wrapped_keys.push({ user_id: uid, wrapped_key, key_version: keyVersion });
       }
 
       if (!wrapped_keys.length) {
@@ -272,7 +276,7 @@ export default function Security() {
 
       await api(`/api/orgs/${orgId}/crypto`, {
         method: "POST",
-        body: JSON.stringify({ wrapped_keys, encrypted_org_metadata: null, key_version: keyVersion }),
+        body: JSON.stringify({ wrapped_keys }),
       });
 
       if (rotate) {
@@ -290,8 +294,8 @@ export default function Security() {
   async function fetchOrgKey() {
     setMsg("");
     try {
-      await ensureDeviceKeypair();
-      const d = await api(`/api/orgs/${orgId}/crypto`, { method: "GET" });
+      const device = await ensureDeviceKeypair();
+      const d = await api(`/api/orgs/${orgId}/crypto?device_id=${await deviceKeyId(device.pubJwk)}`, { method: "GET" });
       if (!d?.wrapped_key) {
         setMsg("no wrapped key for you on this org yet");
         return;
@@ -408,6 +412,8 @@ export default function Security() {
         ) : null}
       </section>
 
+      <PrivateStoragePanel orgId={orgId} />
+
       <EmergencyProtocolPanel
         orgId={orgId}
         lockdown={emergencyStatus.orgLockdownActive}
@@ -497,15 +503,15 @@ export default function Security() {
       </section>
 
       {orgId ?       <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 8 }}>
-        <h3>zero knowledge storage</h3>
+        <h3>Organization encryption keys</h3>
         <div style={{ fontSize: 14, opacity: 0.9 }}>
           device key: {zkStatus.deviceKey ? "ok" : "missing"} | org key cached: {zkStatus.orgKey ? "yes" : "no"} | org key version: {orgKeyVersion}
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          <button onClick={enableZkForOrg}>enable zk for this org (admin)</button>
+          <button onClick={enableZkForOrg}>Create initial organization key (admin)</button>
           <button onClick={() => rewrapOrgKeyForAllMembers({ rotate: false })}>rewrap for all members</button>
-          <button onClick={() => rewrapOrgKeyForAllMembers({ rotate: true })}>rotate org key</button>
+
           <button onClick={fetchOrgKey}>load org key on this device</button>
         </div>
 

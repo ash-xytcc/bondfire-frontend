@@ -10,6 +10,7 @@
     "smoke:thread1": "node scripts/thread1-emergency-smoke.mjs"
   },
   "dependencies": {
+    "colophon": "https://github.com/colophon-hub/colophon/archive/b74e18a1a17ca805c21068a9a768ac9527fb6e7e.tar.gz",
     "lucide-react": "^0.577.0",
     "matrix-js-sdk": "^37.13.0",
     "react": "^18.3.1",
@@ -17,7 +18,7 @@
     "react-grid-layout": "^2.2.2",
     "react-masonry-css": "^1.0.16",
     "react-resizable": "^3.1.3",
-    "react-router-dom": "^6.26.2"
+    "react-router-dom": "^6.30.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",

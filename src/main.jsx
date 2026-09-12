@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import "./index.css";
 import "./v3-theme.css";
 import "./debug/initDebug.js";
+import "./security/ciphertextFetch.js";
 
 // Temporary hard reset of stale PWA/service-worker state.
 // The current repo is configured to keep SW updates until the next reload,

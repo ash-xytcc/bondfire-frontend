@@ -27,8 +27,7 @@ function ColophonNativeStyles() {
 
 function readCookie(name) {
   if (typeof document === "undefined") return "";
-  const safe = name.replace(/[$()*+.?[\]^{|}]/g, "\\  const safe = name.replace(/[$()*+.?[\\\\\\]^{|}]/g, "\\\\$&");
-");
+  const safe = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const match = document.cookie.match(new RegExp(`(?:^|; )${safe}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : "";
 }
@@ -74,7 +73,7 @@ function ensureHostFetchBridge(apiBase) {
     }
 
     const suffix = url.pathname.replace(/^\/api\/?/, "");
-    url.pathname = \`${activeApiBase}/${suffix\`.replace(/\/{2,}/g, "/");
+    url.pathname = `${activeApiBase}/${suffix}`.replace(/\/{2,}/g, "/");
 
     const request = addCsrfHeader(
       input instanceof Request ? new Request(url.toString(), input) : url.toString(),

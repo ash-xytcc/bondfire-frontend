@@ -4,6 +4,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { isDemoMode } from "../demo/demoMode.js";
 import { ensureDemoOrgList, resetDemoState } from "../demo/demoStore.js";
+import AccountDestructionPanel from "../components/AccountDestructionPanel.jsx";
 
 /* ---------- API helper ---------- */
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
@@ -107,6 +108,7 @@ export default function OrgDash() {
   const [orgs, setOrgs] = React.useState([]);
   const [busy, setBusy] = React.useState(false);
   const [msg, setMsg] = React.useState("");
+  const [showAccountDeletionPrompt, setShowAccountDeletionPrompt] = React.useState(false);
 
   const [inviteCode, setInviteCode] = React.useState("");
   const load = React.useCallback(async () => {
@@ -132,6 +134,12 @@ export default function OrgDash() {
 
   React.useEffect(() => {
     load();
+    try {
+      if (sessionStorage.getItem("bf_account_deletion_prompt") === "1") {
+        sessionStorage.removeItem("bf_account_deletion_prompt");
+        setShowAccountDeletionPrompt(true);
+      }
+    } catch {}
   }, [load]);
 
   const joinWithInvite = async (e) => {
@@ -159,6 +167,7 @@ export default function OrgDash() {
 
   return (
     <div style={{ padding: 16 }}>
+      {showAccountDeletionPrompt ? <div role="dialog" aria-modal="true" aria-labelledby="account-deletion-dialog-title" style={{ position: "fixed", inset: 0, zIndex: 1000, display: "grid", placeItems: "center", padding: 16, background: "rgba(0,0,0,.78)" }}><div style={{ width: "min(720px, 100%)", maxHeight: "90vh", overflowY: "auto", position: "relative" }}><button type="button" aria-label="Close account deletion prompt" onClick={() => setShowAccountDeletionPrompt(false)} style={{ position: "absolute", right: 12, top: 12, zIndex: 2 }}>Close</button><div id="account-deletion-dialog-title" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden" }}>Account deletion</div><AccountDestructionPanel initialOpen /></div></div> : null}
       <h1 style={{ marginTop: 0 }}>Org Dashboard</h1>
       <p className="helper">Choose an organization to enter its workspace, or create or join one.</p>
 

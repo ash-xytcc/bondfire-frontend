@@ -4,8 +4,8 @@ import { clearAccountDeviceData, emergencyError } from '../lib/emergencyUi.js';
 
 const CONFIRMATION = 'DELETE MY ACCOUNT';
 
-export default function AccountDestructionPanel() {
-  const [open, setOpen] = React.useState(false);
+export default function AccountDestructionPanel({ initialOpen = false }) {
+  const [open, setOpen] = React.useState(initialOpen);
   const [password, setPassword] = React.useState('');
   const [mfaCode, setMfaCode] = React.useState('');
   const [confirmation, setConfirmation] = React.useState('');

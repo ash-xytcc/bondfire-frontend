@@ -3,6 +3,7 @@ import { bad, json } from './http.js';
 import { getPrivateMode, privateRecords, storedRecord } from './privateStore.js';
 import { privateProtocol } from './privateProtocol.js';
 import { privateRoute } from '../../../shared/privateContent.js';
+import { privateStudio } from './privateStudio.js';
 
 // A deny-by-default route boundary is essential: new or old modules cannot
 // silently bypass private storage by choosing another endpoint.
@@ -49,9 +50,11 @@ export async function privateRequestGate({env,request}) {
   }
   if(route==='modules' && request.method==='GET') {
     const auth=await requireOrgRole({env,request,orgId,minRole:'viewer'});if(!auth.ok)return auth.resp;
-    return json({ok:true,orgId,enabled_modules:['people','needs','pledges','inventory','meetings','drive','events','witness-archive','module-chat','intake'],version:1,can_edit:false,private_mode:true});
+    return json({ok:true,orgId,enabled_modules:['people','needs','pledges','inventory','meetings','drive','events','witness-archive','module-chat','intake','studio'],version:1,can_edit:false,private_mode:true});
   }
   if(mode.state==='migrating') return bad(409,'PRIVATE_MIGRATION_IN_PROGRESS');
+  if(route==='studio/state')return privateStudio({env,request,orgId});
+  if(/^studio\/(docs|blocks)(\/|$)/.test(route)&&request.method!=='GET')return bad(409,'USE_ATOMIC_STUDIO_STATE');
   if(route==='drive' && request.method==='GET') {
     const gate=await requireOrgRole({env,request,orgId,minRole:'viewer'}); if(!gate.ok) return gate.resp;
     const rows=await getDb(env).prepare("SELECT * FROM org_private_records WHERE org_id=? AND kind LIKE 'drive/%' ORDER BY created_at").bind(orgId).all();

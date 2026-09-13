@@ -166,7 +166,7 @@ export function AdminPublicConfigCard() {
       const site = await api(colophonConfigPath, { method: "GET" });
       const config = site?.config || {};
       const existingItems = Array.isArray(config?.navigation?.items) ? config.navigation.items : [];
-      const href = `${window.location.origin}/#/p/${encodeURIComponent(organizationPage.slug)}`;
+      const href = `${window.location.origin}/#/public/${encodeURIComponent(organizationPage.slug)}`;
       const backlink = {
         id: "bondfire-organization-page",
         label: "Organization Page",

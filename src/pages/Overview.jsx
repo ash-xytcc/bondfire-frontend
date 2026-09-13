@@ -423,9 +423,9 @@ export default function Overview() {
       }
 
       const meetsRaw = Array.isArray(d?.meetings) ? d.meetings : (await api(`/api/orgs/${encodeURIComponent(orgId)}/meetings`))?.meetings;
-      const subsResp = await api(`/api/orgs/${encodeURIComponent(orgId)}/newsletter/subscribers`);
-      const pledgesResp = await api(`/api/orgs/${encodeURIComponent(orgId)}/pledges`);
-      const publicInboxResp = await api(`/api/orgs/${encodeURIComponent(orgId)}/public/inbox`).catch(() => ({ items: [] }));
+      const subsResp = Array.isArray(d?.subscribers)?{subscribers:d.subscribers}:await api(`/api/orgs/${encodeURIComponent(orgId)}/newsletter/subscribers`);
+      const pledgesResp = Array.isArray(d?.pledges)?{pledges:d.pledges}:await api(`/api/orgs/${encodeURIComponent(orgId)}/pledges`);
+      const publicInboxResp = Array.isArray(d?.publicInbox)?{items:d.publicInbox}:await api(`/api/orgs/${encodeURIComponent(orgId)}/public/inbox`).catch(() => ({ items: [] }));
 
       const pplDec = await tryDecryptList(orgId, pplRaw, "encrypted_blob");
       const invDec = await tryDecryptList(orgId, invRawFinal, "encrypted_blob");

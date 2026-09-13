@@ -81,6 +81,7 @@ With Node 24 or another Node release providing `node:sqlite`:
 ```
 node scripts/private-storage-regression.mjs
 node scripts/private-studio-regression.mjs
+node scripts/private-publication-regression.mjs
 node scripts/emergency-protocol-regression.mjs
 npm run smoke:thread1
 npm run build
@@ -118,3 +119,24 @@ Deliberately publishing content or sending it to an external processing service
 is a disclosure boundary. It must never silently disclose private source records
 or their keys. An encrypted-at-rest server that decrypts using its own secret does
 not satisfy the requested member-only content confidentiality.
+
+## Publication contract under implementation
+
+The private API now supports an explicit selected-field public copy for Needs,
+Meetings, Inventory, Events, Witness metadata, and public-page configuration.
+Private originals remain encrypted. `privacy/publish` requires an administrator
+and the current source revision; it accepts only each kind's public field list,
+including validation of nested link objects. It never reads or decrypts private
+source fields. Deleting a source removes its published copy atomically.
+
+The client keeps disabled public-page configuration encrypted and uploads a
+readable configuration only when publication is enabled. An interrupted publish
+or unpublish reports a failure and can be retried. Public readers receive the last
+explicitly published copy, not subsequent unpublished edits to the encrypted source.
+Old public slugs stop resolving once the published configuration changes its slug.
+
+This contract does not complete the full rollout: public-page settings remain
+behind the existing private-mode UI restriction until encrypted intake and
+newsletter submission are implemented. Colophon uses a separate host contract and
+has not yet been connected to these projections. The normal registration and
+builder creation paths still use legacy storage; encryption is not the app default.

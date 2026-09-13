@@ -55,8 +55,33 @@ const camel=await decodeLegacyRecord(key,'drive/notes',{encryptedBlob:await encr
 assert.equal(camel.body,'SECRET camel-case note');
 const keyCheck=await encryptPrivate(key,{check:'bondfire-private-mode'},id,'key-check',id);
 const ciphertext=await encryptPrivate(key,{name:'SECRET organization'},id,'organization',id);
-await call('/api/orgs/create',{body:{private_mode:true,id,keyCheck,ciphertext,wrappedKey}});
+await call('/api/orgs/create',{body:{private_mode:true,id,keyCheck,ciphertext,wrappedKey,recovery:{salt:b64(new Uint8Array(16)),iv:b64(new Uint8Array(12)),ct:b64(new Uint8Array(48))}}});
 assert.equal(sql.prepare('SELECT name FROM orgs WHERE id=?').get(id).name,'Private organization');
+assert(sql.prepare('SELECT * FROM org_key_recovery WHERE org_id=?').get(id), 'creation includes recovery');
+await call('/api/orgs/create',{body:{name:'MUST NEVER STORE'}},400);
+for(const variant of ['wrapped_key','recovery_payload']) {
+  if(variant==='recovery_payload') {
+    sql.exec('ALTER TABLE org_key_recovery RENAME TO recovery_saved; CREATE TABLE org_key_recovery(org_id TEXT,user_id TEXT,recovery_payload TEXT NOT NULL,updated_at INTEGER,PRIMARY KEY(org_id,user_id))');
+  }
+  const nextId=crypto.randomUUID();
+  const body={private_mode:true,id:nextId,wrappedKey,
+    ciphertext:await encryptPrivate(key,{name:'SECRET transactional org'},nextId,'organization',nextId),
+    keyCheck:await encryptPrivate(key,{check:'bondfire-private-mode'},nextId,'key-check',nextId),
+    recovery:{salt:b64(new Uint8Array(16)),iv:b64(new Uint8Array(12)),ct:b64(new Uint8Array(48))},enabled_modules:['needs','studio']};
+  await call('/api/orgs/create',{body:{...body,recovery:undefined}},400);
+  failSql=/INSERT INTO org_key_recovery/;
+  await call('/api/orgs/create',{body},500);
+  failSql=null;
+  for(const table of ['orgs','org_memberships','org_private_records','org_key_wrapped','org_private_mode','org_module_configs']) {
+    const column=table==='orgs'?'id':'org_id';
+    assert.equal(sql.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE ${column}=?`).get(nextId).n,0,'failed backup must roll back '+table);
+  }
+  await call('/api/orgs/create',{body});
+  assert.deepEqual(JSON.parse(sql.prepare('SELECT enabled_modules_json FROM org_module_configs WHERE org_id=?').get(nextId).enabled_modules_json),['people','public-site','needs','studio']);
+  assert(sql.prepare('SELECT * FROM org_key_recovery WHERE org_id=?').get(nextId));
+  if(variant==='recovery_payload') sql.exec('DROP TABLE org_key_recovery; ALTER TABLE recovery_saved RENAME TO org_key_recovery');
+}
+
 assert(!JSON.stringify(sql.prepare('SELECT * FROM org_private_records').all()).includes('SECRET'));
 for(const [user,role]of [['member','member'],['viewer','viewer']])sql.prepare('INSERT INTO org_memberships(org_id,user_id,role,created_at) VALUES(?,?,?,0)').run(id,user,role);
 const base='/api/orgs/'+id;

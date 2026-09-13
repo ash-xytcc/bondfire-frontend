@@ -27,7 +27,8 @@ function ColophonNativeStyles() {
 
 function readCookie(name) {
   if (typeof document === "undefined") return "";
-  const safe = name.replace(/[$()*+.?[\\\\\\]^{|}]/g, "\\\\$&");
+  const safe = name.replace(/[$()*+.?[\]^{|}]/g, "\\  const safe = name.replace(/[$()*+.?[\\\\\\]^{|}]/g, "\\\\$&");
+");
   const match = document.cookie.match(new RegExp(`(?:^|; )${safe}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : "";
 }
@@ -49,7 +50,7 @@ function addCsrfHeader(input, init) {
 }
 
 function ensureHostFetchBridge(apiBase) {
-  activeApiBase = String(apiBase || "").replace(/\\/+$/, "");
+  activeApiBase = String(apiBase || "").replace(/\/+$/, "");
   if (originalFetch || typeof window === "undefined" || typeof window.fetch !== "function") return;
 
   originalFetch = window.fetch.bind(window);
@@ -72,8 +73,8 @@ function ensureHostFetchBridge(apiBase) {
       return originalFetch(request.input, request.init);
     }
 
-    const suffix = url.pathname.replace(/^\\/api\\/?/, "");
-    url.pathname = `${activeApiBase}/${suffix}`.replace(/\\/{2,}/g, "/");
+    const suffix = url.pathname.replace(/^\/api\/?/, "");
+    url.pathname = \`${activeApiBase}/${suffix\`.replace(/\/{2,}/g, "/");
 
     const request = addCsrfHeader(
       input instanceof Request ? new Request(url.toString(), input) : url.toString(),
@@ -85,7 +86,7 @@ function ensureHostFetchBridge(apiBase) {
 
 function ColophonPublicLinkGuard({ routeBase }) {
   React.useEffect(() => {
-    const base = String(routeBase || "").replace(/\\/+$/, "");
+    const base = String(routeBase || "").replace(/\/+$/, "");
     if (!base) return undefined;
 
     const onClick = (event) => {
@@ -97,7 +98,7 @@ function ColophonPublicLinkGuard({ routeBase }) {
       try { url = new URL(anchor.href, window.location.origin); } catch { return; }
       if (url.origin !== window.location.origin) return;
 
-      const publicPath = /^\\/(?:post|piece|project|projects|archive|search|publications|reader|campaigns|collections|press|about|security|contact|submit|support|updates)(?:\\/|$)/.test(url.pathname) || url.pathname === "/";
+      const publicPath = /^\/(?:post|piece|project|projects|archive|search|publications|reader|campaigns|collections|press|about|security|contact|submit|support|updates)(?:\/|$)/.test(url.pathname) || url.pathname === "/";
       if (!publicPath || url.pathname.startsWith(base)) return;
 
       event.preventDefault();

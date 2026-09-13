@@ -93,6 +93,23 @@ export async function dispatchPrivate(path,opts,transport) {
   if(status.state!=='enabled') throw new Error('Finish the encrypted-data conversion in Settings → Security before editing this organization.');
   const key=await loadPrivateKey(orgId,status,transport);
   const method=String(opts.method||'GET').toUpperCase();
+  if(tail==='links/search'&&method==='GET') {
+    const query=(url.searchParams.get('q')||'').trim().toLowerCase();
+    if(!query)return {handled:true,data:{ok:true,items:[],results:[]}};
+    // Never put a private search term in an HTTP URL or server log.
+    const collections=await Promise.all(['events','witness'].map(async kind=>{
+      const data=await transport(`/api/orgs/${encodeURIComponent(orgId)}/${kind}`);
+      return {kind,rows:await Promise.all((data[PRIVATE_CONTENT[kind].list]||[]).map(row=>reveal(key,orgId,kind,row,transport)))};
+    }));
+    const items=collections.flatMap(({kind,rows})=>rows.filter(row=>
+      [row.title,row.description,row.location,row.summary,JSON.stringify(row.tags||[])].some(v=>String(v||'').toLowerCase().includes(query))
+    ).sort((a,b)=>Number(b.starts_at||b.updated_at||0)-Number(a.starts_at||a.updated_at||0)).slice(0,25).map(row=>({
+      type:kind==='events'?'event':'witness',id:row.id,title:row.title||(kind==='events'?'Untitled event':'Untitled witness record'),
+      subtitle:kind==='events'?[row.starts_at||'Date pending',row.location].filter(Boolean).join(' • '):row.summary||row.happened_at||'Witness record',
+      href:`/org/${encodeURIComponent(orgId)}/${kind==='events'?'events/'+encodeURIComponent(row.id):'witness'}`,tags:row.tags||[],
+    })));
+    return {handled:true,data:{ok:true,items,results:items}};
+  }
   if(tail==='public/get'&&method==='GET') {
     try {const result=await dispatchPrivate(`/api/orgs/${encodeURIComponent(orgId)}/public/config/${encodeURIComponent(orgId)}`,{},transport);return result;}
     catch(e){if(e.status===404)return {handled:true,data:{ok:true,public:{enabled:false}}};throw e;}

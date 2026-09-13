@@ -1,10 +1,29 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { UNSAFE_RouteContext as RouteContext, useParams } from "react-router-dom";
+import colophonNativeStyles from "./colophon-native.css?inline";
 import { createBondfireColophonAdapter } from "./bondfireAdapter.js";
 import { createColophonHostContext } from "./hostContract.js";
 
 let originalFetch = null;
 let activeApiBase = "";
+
+const EMPTY_COLOPHON_ROUTE_CONTEXT = Object.freeze({
+  outlet: null,
+  matches: [],
+  isDataRoute: false,
+});
+
+function ColophonNativeStyles() {
+  React.useLayoutEffect(() => {
+    const style = document.createElement("style");
+    style.setAttribute("data-bondfire-colophon-native-styles", "true");
+    style.textContent = colophonNativeStyles;
+    document.head.appendChild(style);
+    return () => style.remove();
+  }, []);
+
+  return null;
+}
 
 function ensureHostFetchBridge(apiBase) {
   activeApiBase = String(apiBase || "").replace(/\/+$/, "");
@@ -112,12 +131,17 @@ export default function ColophonNativeModule({ Workspace }) {
   ensureHostFetchBridge(host.apiBase);
 
   return (
-    <Workspace
-      host={host}
-      adapter={adapter}
-      session={state.session}
-      orgId={orgId}
-      embedded
-    />
+    <>
+      <ColophonNativeStyles />
+      <RouteContext.Provider value={EMPTY_COLOPHON_ROUTE_CONTEXT}>
+        <Workspace
+          host={host}
+          adapter={adapter}
+          session={state.session}
+          orgId={orgId}
+          embedded
+        />
+      </RouteContext.Provider>
+    </>
   );
 }

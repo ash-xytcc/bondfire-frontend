@@ -45,6 +45,14 @@ assert.equal(decodedLegacy._legacyEncryptedFields.encrypted_description,oldDescr
 const oldText=await encryptWithOrgKey(key,'SECRET legacy title');
 assert.equal((await decodeLegacyRecord(key,'drive/notes',{title:'bfzk1:'+oldText})).title,'SECRET legacy title');
 await assert.rejects(decodeLegacyRecord(key,'needs',{encrypted_blob:'bad'}));
+const oldScreen=await encryptWithOrgKey(key,JSON.stringify({title:'SECRET edited title',description:'SECRET edited body'}));
+const openedPatch=await decodeLegacyRecord(key,'needs',{title:'__encrypted__',description:'',encrypted_blob:oldScreen},{normalize:false});
+assert.equal(openedPatch.title,'SECRET edited title');
+assert.equal(openedPatch.description,'SECRET edited body');
+const notePatch=await decodeLegacyRecord(key,'drive/notes',{parentId:null},{normalize:false});
+assert(!Object.hasOwn(notePatch,'body'),'partial folder move must not add an empty note body');
+const camel=await decodeLegacyRecord(key,'drive/notes',{encryptedBlob:await encryptWithOrgKey(key,JSON.stringify({body:'SECRET camel-case note'}))},{normalize:false});
+assert.equal(camel.body,'SECRET camel-case note');
 const keyCheck=await encryptPrivate(key,{check:'bondfire-private-mode'},id,'key-check',id);
 const ciphertext=await encryptPrivate(key,{name:'SECRET organization'},id,'organization',id);
 await call('/api/orgs/create',{body:{private_mode:true,id,keyCheck,ciphertext,wrappedKey}});

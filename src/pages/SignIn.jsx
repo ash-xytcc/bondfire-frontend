@@ -1,7 +1,7 @@
 // src/pages/SignIn.jsx
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { clearPendingBuild, readPendingBuild } from "../platform/pendingBuild.js";
+import { readPendingBuild } from "../platform/pendingBuild.js";
 
 function fireAuthChanged() {
 	try {
@@ -35,7 +35,6 @@ export default function SignIn() {
 	const [mfaRecovery, setMfaRecovery] = useState("");
 
 	const [name, setName] = useState("");
-	const [orgName, setOrgName] = useState("Bondfire");
 
 	const [err, setErr] = useState("");
 	const [busy, setBusy] = useState(false);
@@ -52,53 +51,8 @@ export default function SignIn() {
 	}
 
 	async function finishNewBuildAfterAuth() {
-		const pending = readPendingBuild();
-		if (!fromBuilder || !pending.length) return false;
-
-		const newOrgName = String(orgName || "").trim() || "New Bondfire";
-		const { res: orgRes, data: orgData } = await postJson("/api/orgs/create", {
-			name: newOrgName,
-		});
-		if (!orgRes.ok || !orgData?.ok || !orgData?.org?.id) {
-			throw new Error(orgData?.error || "Could not create the new organization");
-		}
-
-		const orgId = String(orgData.org.id);
-		const moduleRes = await fetch(
-			"/api/orgs/" + encodeURIComponent(orgId) + "/modules",
-			{
-				method: "PUT",
-				credentials: "include",
-				headers: {
-					"Content-Type": "application/json",
-					Accept: "application/json",
-				},
-				body: JSON.stringify({ enabled_modules: pending }),
-			}
-		);
-		const moduleData = await safeJson(moduleRes);
-
-		try {
-			const orgsRes = await fetch("/api/orgs", { credentials: "include" });
-			const orgsData = await safeJson(orgsRes);
-			if (orgsRes.ok && orgsData?.ok && Array.isArray(orgsData.orgs)) {
-				localStorage.setItem("bf_orgs", JSON.stringify(orgsData.orgs));
-			}
-		} catch {}
-
-		if (!moduleRes.ok || moduleData?.ok === false) {
-			fireAuthChanged();
-			navigate("/org/" + encodeURIComponent(orgId) + "/build?first=1", {
-				replace: true,
-			});
-			return true;
-		}
-
-		clearPendingBuild();
 		fireAuthChanged();
-		navigate("/org/" + encodeURIComponent(orgId) + "/overview", {
-			replace: true,
-		});
+		navigate('/build?new=1', {replace:true});
 		return true;
 	}
 
@@ -110,7 +64,7 @@ export default function SignIn() {
 			const url = mode === "register" ? "/api/auth/register" : "/api/auth/login";
 			const payload =
 				mode === "register"
-					? { email, password: pass, name, orgName }
+					? { email, password: pass, name }
 					: { email, password: pass };
 
 			const { res, data } = await postJson(url, payload);
@@ -146,39 +100,8 @@ export default function SignIn() {
 				return;
 			}
 
-			// New accounts go through the builder. A staged anonymous build is
-			// applied first so the user only has to press Build once.
-			if (mode === "register" && data?.org?.id) {
-				const pending = fromBuilder ? readPendingBuild() : [];
-				let pendingApplied = false;
-				if (pending.length) {
-					try {
-						const moduleRes = await fetch(
-							"/api/orgs/" + encodeURIComponent(data.org.id) + "/modules",
-							{
-								method: "PUT",
-								credentials: "include",
-								headers: {
-									"Content-Type": "application/json",
-									Accept: "application/json",
-								},
-								body: JSON.stringify({ enabled_modules: pending }),
-							}
-						);
-						const moduleData = await safeJson(moduleRes);
-						pendingApplied = moduleRes.ok && moduleData?.ok !== false;
-					} catch {}
-				}
-				if (pendingApplied) clearPendingBuild();
-				try {
-					localStorage.setItem("bf_orgs", JSON.stringify([data.org]));
-				} catch {}
-				fireAuthChanged();
-				const destination =
-					pending.length && pendingApplied
-						? "/org/" + data.org.id + "/overview"
-						: "/org/" + data.org.id + "/build?first=1";
-				navigate(destination, { replace: true });
+			if (mode === "register") {
+				await finishNewBuildAfterAuth();
 				return;
 			}
 
@@ -363,17 +286,7 @@ export default function SignIn() {
 									onChange={(e) => setName(e.target.value)}
 								/>
 							) : null}
-							<input
-								className="input"
-								type="text"
-								placeholder={
-									fromBuilder && mode === "login"
-										? "New organization name"
-										: "Org name"
-								}
-								value={orgName}
-								onChange={(e) => setOrgName(e.target.value)}
-							/>
+
 						</>
 					)}
 

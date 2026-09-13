@@ -81,7 +81,7 @@ export default function Settings({ privateMode = false }) {
       ["newsletter", "Newsletter"],
       ["pledges", "Pledges"],
       ["security", "Security"],
-    ].filter(([key]) => !privateMode || ["security","members","invites","pledges"].includes(key)),
+    ].filter(([key]) => !privateMode || ["security","members","invites","pledges","public","public-inbox","newsletter"].includes(key)),
     [privateMode]
   );
 
@@ -657,8 +657,11 @@ React.useEffect(() => {
     setNlBusy(true);
 
     try {
-      if (isDemoMode()) {
-        const blob = new Blob([getDemoSubscribersCsv()], { type: "text/csv;charset=utf-8" });
+      if (isDemoMode() || privateMode) {
+        const rows=privateMode?(await authFetch(`/api/orgs/${encodeURIComponent(orgId)}/newsletter/subscribers`)).subscribers:[];
+        const quote=value=>'"'+String(value??'').replaceAll('"','""')+'"';
+        const csv=privateMode?['name,email',...rows.map(row=>[quote(row.name),quote(row.email)].join(','))].join('\r\n'):getDemoSubscribersCsv();
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -763,7 +766,7 @@ React.useEffect(() => {
     setNlBusy(true);
     try {
       await authFetch(`/api/orgs/${encodeURIComponent(orgId)}/newsletter`, {
-        method: "PUT",
+        method: "PUT", body: {list_address:nlListAddress,blurb:nlBlurb},
       });
       setNlMsg("Saved.");
       setTimeout(() => setNlMsg(""), 1200);

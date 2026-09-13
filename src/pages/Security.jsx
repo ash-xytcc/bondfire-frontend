@@ -1,3 +1,4 @@
+import ScopedKeysPanel from '../components/ScopedKeysPanel.jsx';
 import { deviceKeyId } from '../../shared/privateContent.js';
 import { decryptPrivate } from '../lib/privateCrypto.js';
 import PrivateStoragePanel from '../components/PrivateStoragePanel.jsx';
@@ -413,6 +414,7 @@ export default function Security() {
       </section>
 
       <PrivateStoragePanel orgId={orgId} />
+      <ScopedKeysPanel orgId={orgId} />
 
       <EmergencyProtocolPanel
         orgId={orgId}

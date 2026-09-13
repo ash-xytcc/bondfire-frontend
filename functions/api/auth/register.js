@@ -1,6 +1,5 @@
 import { json, bad, now, uuid } from "../_lib/http.js";
 import { issueAccessToken, randomToken, sha256Hex, cookieHeadersForAuth } from "../_lib/session.js";
-import { runAppMigrations } from '../_lib/migrations.js'
 
 const PBKDF2_ITERS = 100000;
 
@@ -30,7 +29,7 @@ export async function onRequestPost({ env, request }) {
     const email = String(body.email || "").trim().toLowerCase();
     const name = String(body.name || "").trim();
     const password = String(body.password || "");
-    const orgName = String(body.orgName || "").trim() || "My Org";
+    if (body.orgName !== undefined) return bad(400, "CREATE_ENCRYPTED_ORGANIZATION_AFTER_SIGNUP");
 
     if (!email || !password) return bad(400, "MISSING_FIELDS");
     if (!env.BF_DB) return bad(500, "BF_DB_MISSING");
@@ -42,31 +41,8 @@ export async function onRequestPost({ env, request }) {
     if (exists) return bad(409, "EMAIL_EXISTS");
 
     const userId = uuid();
-    const orgId = uuid();
     const t = now();
     const passwordHash = await hashPass(password);
-
-    // Create user + org + membership as one batch (prevents partial state)
-    try {
-      await env.BF_DB.batch([
-        env.BF_DB.prepare(
-          "INSERT INTO users (id, email, name, password_hash, created_at) VALUES (?,?,?,?,?)"
-        ).bind(userId, email, name || "", passwordHash, t),
-
-        env.BF_DB.prepare(
-          "INSERT INTO orgs (id, name, created_at) VALUES (?,?,?)"
-        ).bind(orgId, orgName, t),
-
-        env.BF_DB.prepare(
-          "INSERT INTO org_memberships (org_id, user_id, role, created_at) VALUES (?,?,?,?)"
-        ).bind(orgId, userId, "owner", t),
-      ]);
-    } catch (e) {
-      console.error("REGISTER_BATCH_FAILED", e);
-      const msg = e?.message ? String(e.message) : "REGISTER_FAILED";
-      return bad(500, msg);
-    }
-
 
     const user = { id: userId, email, name: name || "" };
     const accessToken = await issueAccessToken(env, user, 60 * 15);
@@ -74,9 +50,16 @@ export async function onRequestPost({ env, request }) {
     const refreshHash = await sha256Hex(refreshToken);
     const expiresAt = Date.now() + 1000 * 60 * 60 * 24 * 30;
 
-    await env.BF_DB.prepare(
-      "INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)"
-    ).bind(crypto.randomUUID(), userId, refreshHash, expiresAt).run();
+    // Account and refresh session commit together. Organization creation is a
+    // separate authenticated, encrypted onboarding step and can be retried.
+    await env.BF_DB.batch([
+      env.BF_DB.prepare(
+        "INSERT INTO users (id, email, name, password_hash, created_at) VALUES (?,?,?,?,?)"
+      ).bind(userId, email, name || "", passwordHash, t),
+      env.BF_DB.prepare(
+        "INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)"
+      ).bind(crypto.randomUUID(), userId, refreshHash, expiresAt),
+    ]);
 
     const isProd = (env?.ENV || env?.NODE_ENV || "").toLowerCase() === "production";
     const setCookies = cookieHeadersForAuth({ accessToken, refreshToken, isProd });
@@ -84,13 +67,11 @@ export async function onRequestPost({ env, request }) {
     const resp = json({
       ok: true,
       user,
-      org: { id: orgId, name: orgName, role: "owner" },
+      requires_org_setup: true,
     });
     for (const c of setCookies) resp.headers.append("set-cookie", c);
     return resp;
   } catch (e) {
-    console.error("REGISTER_THROW", e);
-    const msg = e?.message ? String(e.message) : "REGISTER_FAILED";
-    return bad(500, msg);
+    return bad(500, "REGISTER_FAILED");
   }
 }

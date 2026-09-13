@@ -10,6 +10,10 @@ export async function putPrivateBlob(env,orgId,id,ciphertext,fileId) {
   if(!/^[a-f0-9-]{36}$/.test(id)||!isCiphertext(ciphertext,contentContext(orgId,'drive/blob',id))) throw new Error('VALID_CIPHERTEXT_REQUIRED');
   if(!/^[A-Za-z0-9_.:-]{1,160}$/.test(fileId))throw new Error('INVALID_FILE_ID');
   const db=getDb(env); await ensurePrivateBlobs(db);
+  const hasEpochs=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='org_private_key_state'").first();
+  const state=hasEpochs?await db.prepare('SELECT * FROM org_private_key_state WHERE org_id=?').bind(orgId).first():null;
+  const envelope=JSON.parse(ciphertext);
+  if(state?.epoch&&(state.roster_revision!==state.rotated_revision||envelope.v!==3||envelope.epoch!==state.epoch||envelope.scope!=='viewer'))throw new Error('PRIVATE_KEY_ROTATION_REQUIRED');
   const file=await db.prepare("SELECT deleting FROM org_private_records WHERE org_id=? AND kind='drive/files' AND id=?").bind(orgId,fileId).first();
   if(file?.deleting)throw new Error('PRIVATE_FILE_DELETION_IN_PROGRESS');
   const exists=await db.prepare('SELECT id FROM org_private_blobs WHERE org_id=? AND id=?').bind(orgId,id).first();
@@ -17,7 +21,13 @@ export async function putPrivateBlob(env,orgId,id,ciphertext,fileId) {
   const bucket=getDriveBucket(env);
   if(!bucket&&ciphertext.length>512*1024) throw new Error('ENCRYPTED_FILE_BUCKET_REQUIRED');
   if(bucket) await bucket.put(objectKey(orgId,id),ciphertext,{httpMetadata:{contentType:'application/octet-stream'}});
-  await db.prepare('INSERT INTO org_private_blobs(org_id,id,file_id,inline_ciphertext,created_at) VALUES(?,?,?,?,?)').bind(orgId,id,fileId,bucket?null:ciphertext,Date.now()).run();
+  const sql=state?.epoch?'INSERT INTO org_private_blobs(org_id,id,file_id,inline_ciphertext,created_at) SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM org_private_key_state WHERE org_id=? AND epoch=? AND roster_revision=rotated_revision)':'INSERT INTO org_private_blobs(org_id,id,file_id,inline_ciphertext,created_at) VALUES(?,?,?,?,?)';
+  const args=[orgId,id,fileId,bucket?null:ciphertext,Date.now(),...(state?.epoch?[orgId,state.epoch]:[])];
+  const result=await db.prepare(sql).bind(...args).run();
+  if(Number(result?.meta?.changes||0)!==1) {
+    if(bucket)await bucket.delete(objectKey(orgId,id));
+    throw new Error('PRIVATE_KEY_ROTATION_REQUIRED');
+  }
 }
 export async function getPrivateBlob(env,orgId,id) {
   const db=getDb(env); await ensurePrivateBlobs(db);

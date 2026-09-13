@@ -66,6 +66,7 @@ export async function onRequest({ env, request, next }) {
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
 
     const detail = (e && (e.message || String(e))) || "Unknown error";
+    if(detail.includes('PRIVATE_KEY_ROTATION_REQUIRED'))return new Response(JSON.stringify({ok:false,error:'PRIVATE_KEY_ROTATION_REQUIRED'}),{status:409,headers});
     return new Response(JSON.stringify({ ok: false, error: "INTERNAL", detail }), {
       status: 500,
       headers,

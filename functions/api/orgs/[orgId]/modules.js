@@ -25,7 +25,7 @@ const MODULE_ORDER = Object.freeze([
 
 const EDITOR_ROLES = new Set(["admin", "owner"]);
 
-async function ensureModulesTable(db) {
+export async function ensureModulesTable(db) {
   await db.prepare(
     `CREATE TABLE IF NOT EXISTS org_module_configs (
       org_id TEXT PRIMARY KEY,
@@ -37,7 +37,7 @@ async function ensureModulesTable(db) {
   ).run();
 }
 
-function parseEnabledModules(value) {
+export function parseEnabledModules(value) {
   let parsed = value;
   if (typeof value === "string") {
     try { parsed = JSON.parse(value); } catch { parsed = []; }

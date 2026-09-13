@@ -1,4 +1,5 @@
 import { slugify, uniqueSlug, getPublicCfg, setPublicCfg, setSlugMapping, removeSlugMapping } from "../../../_lib/publicPageStore.js";
+import { normalizeConnectedPublication } from "../../../_lib/publicSurface.js";
 import { bad, ok } from "../../../_lib/http.js";
 import { enforceOrgWriteLockdown } from "../../../_lib/orgLockdown.js";
 
@@ -108,6 +109,7 @@ export async function onRequestPost({ env, request, params }) {
     what_we_do: cleanStrings(what_we_do, 12),
     primary_actions: cleanLinks(primary_actions, 3),
     get_involved_links: cleanLinks(get_involved_links, 4),
+    connected_publication: normalizeConnectedPublication(prev?.connected_publication),
   };
 
   await setPublicCfg(env, orgId, cleaned);

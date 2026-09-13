@@ -1,4 +1,5 @@
 import { getPublicCfg } from "../../../_lib/publicPageStore.js";
+import { normalizeConnectedPublication } from "../../../_lib/publicSurface.js";
 import { bad, ok } from "../../../_lib/http.js";
 
 function authOk(env, request) {
@@ -39,6 +40,7 @@ export async function onRequestGet({ env, request, params }) {
     what_we_do: Array.isArray(cfg?.what_we_do) ? cfg.what_we_do : [],
     primary_actions: Array.isArray(cfg?.primary_actions) ? cfg.primary_actions : [],
     get_involved_links: Array.isArray(cfg?.get_involved_links) ? cfg.get_involved_links : [],
+    connected_publication: normalizeConnectedPublication(cfg?.connected_publication),
   };
 
   return ok({ public: cleaned });

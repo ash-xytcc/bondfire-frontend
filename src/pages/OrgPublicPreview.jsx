@@ -1,80 +1,102 @@
-// src/pages/OrgPublicPreview.jsx
-import * as React from 'react';
-import { useParams } from 'react-router-dom';
-import PublicPage from './PublicPage.jsx';
+import React from "react";
+import { useParams } from "react-router-dom";
+import { api } from "../utils/api.js";
 
-// read whatever we’ve saved locally; be tolerant of shapes
-function readSettings(orgId) {
-  let s = {};
-  try { s = JSON.parse(localStorage.getItem(`bf_org_settings_${orgId}`) || '{}'); } catch {}
-  try {
-    const orgs = JSON.parse(localStorage.getItem('bf_orgs') || '[]');
-    const o = orgs.find(x => x?.id === orgId) || {};
-    s = { ...o, ...s };
-  } catch {}
-  return s || {};
+function Item({ label, children }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-white/10 py-3">
+      <div className="text-sm text-white/60">{label}</div>
+      <div className="text-sm text-white text-right">{children}</div>
+    </div>
+  );
 }
 
-function toArray(v) {
-  if (Array.isArray(v)) return v.filter(Boolean);
-  if (typeof v === 'string')
-    return v.split('\n').map(t => t.trim()).filter(Boolean);
-  return [];
-}
-
-function toLinks(v) {
-  if (Array.isArray(v)) {
-    return v
-      .map(l => (l && l.url ? { text: l.text || l.url, url: l.url } : null))
-      .filter(Boolean);
-  }
-  if (typeof v === 'string') {
-    return v
-      .split('\n')
-      .map(line => {
-        const [text, url] = line.split('|').map(s => (s || '').trim());
-        return url ? { text: text || url, url } : null;
-      })
-      .filter(Boolean);
-  }
-  return [];
-}
-
-export default function OrgPublicPreview() {
+export default function OrgPublicPreview({ orgName, onClose }) {
   const { orgId } = useParams();
-  // read once; if you want live refresh on save, keep your existing bf:org_settings_changed listener
-  const s = readSettings(orgId);
+  const [state, setState] = React.useState({ loading: true, error: "", public: null });
 
-  // Always render with best‑effort data (no “enabled” check)
-  const title =
-    (s.publicTitle || s.title || s.name || 'Public page').trim();
-  const about =
-    (s.publicAbout || s.about || 'This is a live preview of your public page.').trim();
-  const features =
-    toArray(s.publicFeatures ?? s.features);
-  const links =
-    toLinks(s.publicLinks ?? s.links);
-
-  // If literally nothing is configured, show nice defaults so the page isn’t empty.
-  const data = {
-    public: {
-      title,
-      about,
-      features: features.length ? features : [
-        'Mutual aid & community support',
-        'Donations & supplies',
-        'Volunteer coordination',
-      ],
-      links: links.length ? links : [
-        { text: 'Website', url: 'https://example.org' },
-        { text: 'Email',   url: 'mailto:hello@example.org' },
-      ],
+  React.useEffect(() => {
+    let alive = true;
+    if (!orgId) {
+      setState({ loading: false, error: "Missing organization.", public: null });
+      return () => {
+        alive = false;
+      };
     }
-  };
+
+    api(`/api/orgs/${encodeURIComponent(orgId)}/public/get`, { method: "GET" })
+      .then((result) => {
+        if (alive) setState({ loading: false, error: "", public: result?.public || {} });
+      })
+      .catch((error) => {
+        if (alive) setState({ loading: false, error: error?.message || "Unable to load Organization Page settings.", public: null });
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [orgId]);
+
+  const pub = state.public || {};
+  const publication = pub?.connected_publication;
+  const publicationVisible = Boolean(publication?.available && publication?.url);
+  const websiteVisible = Boolean(pub?.show_website_button && pub?.website_link?.url);
+  const organizationPageUrl = pub?.slug ? `${window.location.origin}/#/p/${encodeURIComponent(pub.slug)}` : "";
+  const destinations = [
+    publicationVisible ? { label: "Publication Site", name: publication.publication_name || "Publication Site", url: publication.url } : null,
+    websiteVisible && pub.website_link.url !== publication?.url
+      ? { label: pub.website_link.label || "Website", name: pub.website_link.label || "Website", url: pub.website_link.url }
+      : null,
+  ].filter(Boolean);
 
   return (
-    <div style={{ margin: 16 }}>
-      <PublicPage data={data} />
+    <div className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+        <div>
+          <div className="text-sm font-semibold">Organization Page preview</div>
+          <div className="text-xs text-white/50">Bondfire&apos;s public mutual-aid surface</div>
+        </div>
+        {onClose ? (
+          <button onClick={onClose} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10 transition">
+            Close
+          </button>
+        ) : null}
+      </div>
+
+      <div className="p-5">
+        <div className="rounded-2xl border border-white/10 bg-black/15 p-5">
+          <div className="text-lg font-bold">{pub?.title || orgName || "Organization"}</div>
+          <div className="mt-1 text-sm text-white/60">
+            {pub?.about || "Public needs, meetings, supplies, and participation options appear here when configured."}
+          </div>
+
+          {state.loading ? <div className="mt-5 text-sm text-white/60">Loading Organization Page settings…</div> : null}
+          {state.error ? <div className="mt-5 text-sm text-red-300">{state.error}</div> : null}
+
+          {!state.loading && !state.error ? (
+            <div className="mt-5">
+              <Item label="Status">{pub?.enabled ? "Published" : "Not published"}</Item>
+              {organizationPageUrl ? (
+                <Item label="Organization Page">
+                  <a href={`/#/p/${encodeURIComponent(pub.slug)}`} target="_blank" rel="noreferrer" className="underline">
+                    {organizationPageUrl}
+                  </a>
+                </Item>
+              ) : null}
+              {destinations.map((destination) => (
+                <Item key={`${destination.label}-${destination.url}`} label={destination.label}>
+                  <a href={destination.url} target="_blank" rel="noreferrer" className="underline">
+                    {destination.name}
+                  </a>
+                </Item>
+              ))}
+              {destinations.length === 0 ? (
+                <div className="py-3 text-sm text-white/50">No external public destinations are configured.</div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }

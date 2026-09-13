@@ -1,5 +1,4 @@
 import { json } from "../../_lib/http.js";
-import { runAppMigrations } from '../../_lib/migrations.js'
 
 export async function onRequestGet({ env, params }) {
   const slug = params.slug;
@@ -15,5 +14,14 @@ export async function onRequestGet({ env, params }) {
     "SELECT id, title, description, status, priority, created_at FROM needs WHERE org_id = ? AND is_public = 1 ORDER BY created_at DESC"
   ).bind(orgId).all();
 
-  return json({ ok: true, needs: res.results || [], orgId });
+  const needs = (res.results || []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    status: row.status,
+    priority: row.priority,
+    created_at: row.created_at,
+  }));
+
+  return json({ ok: true, needs });
 }

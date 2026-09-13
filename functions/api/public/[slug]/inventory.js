@@ -55,9 +55,13 @@ export async function onRequestGet({ env, params }) {
     const orgId = await getOrgIdBySlug(env, slug);
     if (!orgId) return json({ ok: false, error: "NOT_FOUND" }, 404);
 
+    const cfgRaw = await env.BF_PUBLIC.get(`org:${orgId}`);
+    const cfg = cfgRaw ? JSON.parse(cfgRaw) : null;
+    if (!cfg?.enabled) return json({ ok: false, error: "NOT_FOUND" }, 404);
+
     const r = await db
       .prepare(
-        `SELECT id, org_id, name, qty, unit, category, location, notes, is_public, created_at, updated_at
+        `SELECT id, name, qty, unit, category, location, notes
          FROM inventory
          WHERE org_id = ? AND is_public = 1 AND COALESCE(qty, 0) > 0
          ORDER BY LOWER(COALESCE(category, '')), LOWER(COALESCE(name, '')), updated_at DESC, created_at DESC`

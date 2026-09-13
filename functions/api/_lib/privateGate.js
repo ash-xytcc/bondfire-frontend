@@ -49,10 +49,7 @@ export async function privateRequestGate({env,request}) {
     if(Object.keys(b).every(k=>['code','role','maxUses','max_uses','expiresInDays'].includes(k))) return null;
     return bad(400,'PLAINTEXT_FIELDS_FORBIDDEN');
   }
-  if(route==='modules' && request.method==='GET') {
-    const auth=await requireOrgRole({env,request,orgId,minRole:'viewer'});if(!auth.ok)return auth.resp;
-    return json({ok:true,orgId,enabled_modules:['people','needs','pledges','inventory','meetings','drive','events','witness-archive','module-chat','intake','studio'],version:1,can_edit:false,private_mode:true});
-  }
+  if(route==='modules') return null;
   if(mode.state==='migrating') return bad(409,'PRIVATE_MIGRATION_IN_PROGRESS');
   if(route==='studio/state')return privateStudio({env,request,orgId});
   if(/^studio\/(docs|blocks)(\/|$)/.test(route)&&request.method!=='GET')return bad(409,'USE_ATOMIC_STUDIO_STATE');

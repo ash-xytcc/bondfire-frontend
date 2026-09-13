@@ -41,7 +41,7 @@ export default function OrgPublicPreview({ orgName, onClose }) {
   const publication = pub?.connected_publication;
   const publicationVisible = Boolean(publication?.available && publication?.url);
   const websiteVisible = Boolean(pub?.show_website_button && pub?.website_link?.url);
-  const organizationPageUrl = pub?.slug ? `${window.location.origin}/#/p/${encodeURIComponent(pub.slug)}` : "";
+  const organizationPageUrl = pub?.slug ? `${window.location.origin}/#/public/${encodeURIComponent(pub.slug)}` : "";
   const destinations = [
     publicationVisible ? { label: "Publication Site", name: publication.publication_name || "Publication Site", url: publication.url } : null,
     websiteVisible && pub.website_link.url !== publication?.url
@@ -78,7 +78,7 @@ export default function OrgPublicPreview({ orgName, onClose }) {
               <Item label="Status">{pub?.enabled ? "Published" : "Not published"}</Item>
               {organizationPageUrl ? (
                 <Item label="Organization Page">
-                  <a href={`/#/p/${encodeURIComponent(pub.slug)}`} target="_blank" rel="noreferrer" className="underline">
+                  <a href={`/#/public/${encodeURIComponent(pub.slug)}`} target="_blank" rel="noreferrer" className="underline">
                     {organizationPageUrl}
                   </a>
                 </Item>

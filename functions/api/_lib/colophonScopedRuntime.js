@@ -1,4 +1,4 @@
-const SQLITE_RESERVED = new Set(["sqlite_master", "sqlite_sequence", "sqlite_schema"]);
+const SQLITE_RESERVED = new Set(["sqlite_master", "sqlite_sequence", "sqlite_schema", "set"]);
 
 function fnv1a(value) {
   let hash = 0x811c9dc5;

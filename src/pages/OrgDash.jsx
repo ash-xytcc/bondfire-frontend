@@ -1,5 +1,4 @@
 import { api } from '../utils/api.js';
-import CreatePrivateOrg from '../components/CreatePrivateOrg.jsx';
 // src/pages/OrgDash.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -194,7 +193,7 @@ export default function OrgDash() {
           >
             Build a new org
           </button>
-          {!demoMode && <CreatePrivateOrg />}
+          
         </div>
 
         <div className="card" style={{ padding: 16 }}>

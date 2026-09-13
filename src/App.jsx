@@ -284,7 +284,7 @@ function Shell() {
 	);
 
 	// Hide the header on public routes
-	const hideHeader = path === "/" || path === "/capture" || path === "/build" || path.startsWith("/p/") || path === "/signin" || path === "/demo" || path === "/customize" || /\\/org\\/[^/]+\\/colophon(?:\\/|$)/.test(path);
+	const hideHeader = path === "/" || path === "/capture" || path === "/build" || path.startsWith("/p/") || path === "/signin" || path === "/demo" || path === "/customize" || /\/org\/[^/]+\/colophon(?:\/|$)/.test(path);
 
 	return (
 		<AuthCtx.Provider value={ctxValue}>

@@ -7,7 +7,7 @@ import { contentContext, isCiphertext } from '../../../shared/privateContent.js'
 
 // Control-plane metadata is necessary for authentication, access control and deletion.
 // Content tables not explicitly supported remain blockers, including plugin tables.
-const CONTROL = new Set(['org_private_mode','org_private_records','org_private_migrations','org_private_assertions','org_private_blobs','org_private_cleanup',
+const CONTROL = new Set(['org_private_studio_state','org_private_mode','org_private_records','org_private_migrations','org_private_assertions','org_private_blobs','org_private_cleanup',
   'org_private_device_wraps','org_crypto','org_keys','org_key_wrapped','org_key_recovery','org_module_configs',
   'emergency_protocol_state']);
 const q = (s) => '"' + String(s).replace(/"/g,'""') + '"';

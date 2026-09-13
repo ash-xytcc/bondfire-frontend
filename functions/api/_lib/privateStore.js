@@ -2,6 +2,7 @@ import { deletePrivateFileBlobs } from './privateBlobs.js';
 import { getDb, requireOrgRole } from './auth.js';
 import { bad, json } from './http.js';
 import { PRIVATE_CONTENT, PRIVATE_KINDS, contentContext, isCiphertext } from '../../../shared/privateContent.js';
+import {ensurePublicationSchema} from './privatePublication.js';
 
 export async function ensurePrivateSchema(db) {
   for (const sql of [
@@ -27,7 +28,7 @@ export async function privateRecords({ env, request, orgId, kind, id = '' }) {
   const contract = PRIVATE_CONTENT[kind];
   if (!contract) return bad(404, 'PRIVATE_CONTENT_KIND_UNKNOWN');
   const method = request.method;
-  const minRole = method === 'GET' ? (contract.read || 'viewer') : method === 'DELETE' ? (contract.remove || 'admin') : 'member';
+  const minRole = method === 'GET' ? (contract.read || 'viewer') : method === 'DELETE' ? (contract.remove || 'admin') : (contract.write || 'member');
   const gate = await requireOrgRole({ env, request, orgId, minRole });
   if (!gate.ok) return gate.resp;
   const db = getDb(env);
@@ -73,6 +74,8 @@ export async function privateRecords({ env, request, orgId, kind, id = '' }) {
       return json({ok:true,deleted:true,id});
     }
     const statements = [];
+    await ensurePublicationSchema(db);
+    statements.push(db.prepare('DELETE FROM org_public_projections WHERE org_id=? AND kind=? AND id=? AND EXISTS(SELECT 1 FROM org_private_records WHERE org_id=? AND kind=? AND id=? AND revision=?)').bind(orgId,kind,id,orgId,kind,id,body.revision));
     // Move children to the deleted folder's parent without touching their ciphertext.
     if (kind === 'drive/folders') statements.push(db.prepare("UPDATE org_private_records SET parent_id=?,revision=revision+1 WHERE org_id=? AND kind IN ('drive/folders','drive/notes','drive/files') AND parent_id=? AND EXISTS (SELECT 1 FROM org_private_records WHERE org_id=? AND kind=? AND id=? AND revision=?)").bind(existing.parent_id, orgId, id, orgId, kind, id, body.revision));
     statements.push(db.prepare('DELETE FROM org_private_records WHERE org_id=? AND kind=? AND id=? AND revision=?').bind(orgId, kind, id, body.revision));

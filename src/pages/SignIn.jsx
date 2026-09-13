@@ -39,24 +39,49 @@ export default function SignIn() {
 	const [err, setErr] = useState("");
 	const [busy, setBusy] = useState(false);
 
-	async function postJson(url, body) {
+	function readCsrfToken() {
+		try {
+			const cookie = document.cookie
+				.split(";")
+				.map((part) => part.trim())
+				.find((part) => part.startsWith("bf_csrf="));
+			return cookie ? decodeURIComponent(cookie.slice(8)) : "";
+		} catch {
+			return "";
+		}
+	}
+
+	async function postJson(url, body, { includeCsrf = false } = {}) {
+		const headers = { "Content-Type": "application/json", Accept: "application/json" };
+		if (includeCsrf) {
+			const csrf = readCsrfToken();
+			if (csrf) headers["X-CSRF"] = csrf;
+		}
 		const res = await fetch(url, {
 			method: "POST",
 			credentials: "include",
-			headers: { "Content-Type": "application/json", Accept: "application/json" },
+			headers,
 			body: JSON.stringify(body || {}),
 		});
 		const data = await safeJson(res);
 		return { res, data };
 	}
 
+	async function redeemInviteCode(code) {
+		const { res, data } = await postJson(
+			"/api/invites/redeem",
+			{ code },
+			{ includeCsrf: true },
+		);
+		if (!res.ok || !data?.ok) {
+			throw new Error(data?.error || "Invite code was not accepted");
+		}
+		return data;
+	}
+
 	async function finishNewBuildAfterAuth() {
 		fireAuthChanged();
-		if (fromBuilder && readPendingBuild().length) {
-			navigate('/build?new=1', {replace:true});
-			return true;
-		}
-		navigate('/orgs', {replace:true});
+		navigate("/orgs", { replace: true });
 		return true;
 	}
 
@@ -109,13 +134,10 @@ export default function SignIn() {
 				return;
 			}
 
-			// Optional invite join (login mode)
+			// Optional invite join after ordinary sign-in.
 			const trimmedCode = String(inviteCode || "").trim().toUpperCase();
 			if (trimmedCode) {
-				const { res: jRes, data: jData } = await postJson("/api/invites/redeem", { code: trimmedCode });
-				if (!jRes.ok || !jData?.ok) {
-					throw new Error(jData?.error || "Invite code was not accepted");
-				}
+				const jData = await redeemInviteCode(trimmedCode);
 				if (jData?.org?.id) {
 					fireAuthChanged();
 					navigate(`/org/${jData.org.id}`, { replace: true });
@@ -162,6 +184,16 @@ export default function SignIn() {
 				throw new Error("SESSION_NOT_ESTABLISHED");
 			}
 
+			const trimmedCode = String(inviteCode || "").trim().toUpperCase();
+			if (trimmedCode) {
+				const jData = await redeemInviteCode(trimmedCode);
+				if (jData?.org?.id) {
+					fireAuthChanged();
+					navigate(`/org/${jData.org.id}`, { replace: true });
+					return;
+				}
+			}
+
 			if (fromBuilder && readPendingBuild().length) {
 				await finishNewBuildAfterAuth();
 				return;
@@ -194,8 +226,8 @@ export default function SignIn() {
 			<p className="helper" style={{ marginTop: 0 }}>
 				{fromBuilder
 					? mode === "login"
-						? "Sign in and Bondfire will create the new organization from the build you just chose."
-						: "Create your account and your first organization from the build you just chose."
+						? "Sign in to choose what to do next: continue building or join an existing organization."
+						: "Create your account, then choose whether to build or join from the organization dashboard."
 					: mode === "login"
 						? "Sign in to continue."
 						: "Create your account and your first org."}
@@ -324,7 +356,7 @@ export default function SignIn() {
 						{busy ? "Working…" : mode === "register"
 							? "Create account"
 							: fromBuilder
-								? "Sign in & create org"
+								? "Sign in"
 								: "Sign in"}
 					</button>
 				</form>

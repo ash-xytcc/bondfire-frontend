@@ -52,7 +52,11 @@ export default function SignIn() {
 
 	async function finishNewBuildAfterAuth() {
 		fireAuthChanged();
-		navigate('/build?new=1', {replace:true});
+		if (fromBuilder && readPendingBuild().length) {
+			navigate('/build?new=1', {replace:true});
+			return true;
+		}
+		navigate('/orgs', {replace:true});
 		return true;
 	}
 

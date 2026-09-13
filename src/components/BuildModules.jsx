@@ -1,3 +1,5 @@
+import { api } from '../utils/api.js';
+import { createEncryptedOrg } from '../lib/createEncryptedOrg.js';
 import * as React from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { isDemoMode } from "../demo/demoMode.js";
@@ -14,7 +16,6 @@ import {
   writePendingBuild,
 } from "../platform/pendingBuild.js";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 const CORE_LOGO_PATH = "/logos/core.png";
 const MODULE_LOGO_PATHS = Object.freeze({
   needs: "/logos/needs.png",
@@ -35,41 +36,7 @@ function modulePath(orgId) {
 }
 
 async function requestModuleConfig(orgId, options = {}) {
-  const path = modulePath(orgId);
-  const urls = API_BASE ? [API_BASE + path, path] : [path];
-  let lastError = null;
-
-  for (let index = 0; index < urls.length; index += 1) {
-    const url = urls[index];
-    try {
-      const response = await fetch(url, {
-        ...options,
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          ...(options.headers || {}),
-        },
-        body:
-          options.body && typeof options.body !== "string"
-            ? JSON.stringify(options.body)
-            : options.body,
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (response.ok && payload?.ok !== false) return payload;
-      lastError = new Error(payload?.error || "Module configuration request failed");
-      const canFallback =
-        index === 0 &&
-        urls.length > 1 &&
-        (response.status === 404 || response.status === 500);
-      if (!canFallback) break;
-    } catch (error) {
-      lastError = error;
-      if (index === urls.length - 1) break;
-    }
-  }
-
-  throw lastError || new Error("Module configuration request failed");
+  return api(modulePath(orgId), {...options, body: options.body && typeof options.body !== 'string' ? JSON.stringify(options.body) : options.body});
 }
 
 function sameIds(a, b) {
@@ -96,9 +63,9 @@ export default function BuildModules() {
   const defaults = React.useMemo(() => getDefaultEnabledModuleIds(), []);
 
   const initialIds = React.useMemo(() => {
-    const pending = isStandalone ? readPendingBuild() : [];
+    const pending = !orgId ? readPendingBuild() : [];
     return normalizeSelectedModuleIds(pending.length ? pending : defaults);
-  }, [defaults, isStandalone]);
+  }, [defaults, orgId]);
 
   const [selected, setSelected] = React.useState(() => new Set(initialIds));
   const [savedIds, setSavedIds] = React.useState(() => initialIds);
@@ -108,6 +75,8 @@ export default function BuildModules() {
   const [query, setQuery] = React.useState("");
   const [notice, setNotice] = React.useState("");
   const [error, setError] = React.useState("");
+  const [recovery, setRecovery] = React.useState("");
+  const [recoveryAgain, setRecoveryAgain] = React.useState("");
   const [orgName, setOrgName] = React.useState("New Bondfire");
 
   const selectedIds = React.useMemo(
@@ -134,7 +103,7 @@ export default function BuildModules() {
     setNotice("");
 
     if (!orgId) {
-      const pending = isStandalone ? readPendingBuild() : [];
+      const pending = !orgId ? readPendingBuild() : [];
       const nextIds = normalizeSelectedModuleIds(
         pending.length ? pending : defaults
       );
@@ -239,27 +208,8 @@ export default function BuildModules() {
           return;
         }
 
-        const orgResponse = await fetch("/api/orgs/create", {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name: trimmedName }),
-        });
-        const orgPayload = await orgResponse.json().catch(() => ({}));
-        if (!orgResponse.ok || !orgPayload?.ok || !orgPayload?.org?.id) {
-          throw new Error(
-            orgPayload?.error || "Could not create this organization."
-          );
-        }
-
+        const orgPayload = await createEncryptedOrg({name: trimmedName, passphrase: recovery, confirmation: recoveryAgain, modules: selectedIds});
         createdOrgId = String(orgPayload.org.id);
-        await requestModuleConfig(createdOrgId, {
-          method: "PUT",
-          body: { enabled_modules: selectedIds },
-        });
         clearPendingBuild();
 
         try {
@@ -387,6 +337,11 @@ export default function BuildModules() {
               />
             </label>
           ) : null}
+          {isNewOrg && <div style={{display:'grid',gap:8}}>
+            <label>Recovery passphrase<input className="input" type="password" autoComplete="new-password" minLength={20} value={recovery} onChange={e=>setRecovery(e.target.value)} disabled={busy}/></label>
+            <label>Confirm recovery passphrase<input className="input" type="password" autoComplete="new-password" value={recoveryAgain} onChange={e=>setRecoveryAgain(e.target.value)} disabled={busy}/></label>
+            <p>Use at least 20 characters and keep this separate from your login password. Keep a safe copy: the server cannot recover your encrypted content.</p>
+          </div>}
           <ul className="bf-build-core-list">
             <li><span>01</span>Overview</li>
             <li><span>02</span>Settings</li>

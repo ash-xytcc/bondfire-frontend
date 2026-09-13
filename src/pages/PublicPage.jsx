@@ -1,3 +1,5 @@
+import {api} from '../utils/api.js';
+import {sealSubmission} from '../../shared/privateSubmission.js';
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { readPublicCustomizerSettings } from "../lib/publicCustomizerLocal.js";
@@ -108,6 +110,20 @@ function getPreviewConfig(orgId) {
 }
 
 async function apiFetch(path, opts = {}) {
+  if(path.startsWith('/api/orgs/'))return api(path,opts);
+  const submission=path.match(/^\/api\/(?:p|public)\/([^/]+)\/(.+)$/);
+  if(submission&&String(opts.method||'GET').toUpperCase()==='POST') {
+    const [,slug,tail]=submission;
+    const page=await apiFetch(`/api/public/${slug}`);
+    if(page.private_mode) {
+      const recipient=await apiFetch(`/api/public/${slug}/submission-key`);
+      const type=tail==='newsletter/subscribe'?'newsletter':tail==='pledges'?'pledges':tail==='intake'?'intake':/^meetings\/[^/]+\/rsvp$/.test(tail)?'rsvp':null;
+      if(!type)throw new Error('This form is not connected to encrypted submissions.');
+      const content=JSON.parse(opts.body||'{}');
+      if(type==='rsvp')content.meeting_id=decodeURIComponent(tail.split('/')[1]);
+      opts={...opts,body:JSON.stringify(await sealSubmission(recipient,type,content))};
+    }
+  }
   const url = path.startsWith("http") ? path : `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
   const res = await fetch(url, opts);
   const j = await res.json().catch(() => ({}));

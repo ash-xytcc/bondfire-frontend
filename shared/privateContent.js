@@ -1,6 +1,10 @@
 // The only fields stored outside ciphertext are opaque identifiers and revision metadata.
 // This contract is shared by the browser, the private API, and migration checks.
 export const PRIVATE_CONTENT = {
+  'intake/reviews': {table:'public_inbox',list:'items',one:'item',read:'admin',write:'admin'},
+  'newsletter/settings': {table:'newsletter_settings',singleton:true,list:'settings',one:'newsletter',read:'admin',write:'admin'},
+  'newsletter/subscribers': {table:'newsletter_subscribers',list:'subscribers',one:'subscriber',read:'admin',write:'admin'},
+  'public/config': {table:'org_public_config_drafts',list:'configs',one:'public',read:'admin',write:'admin'},
   activity: { table: 'activity', list: 'activity', one: 'entry' },
   needs: { table: 'needs', list: 'needs', one: 'need' },
   inventory: { table: 'inventory', list: 'inventory', one: 'item' },
@@ -39,8 +43,9 @@ export function contentContext(orgId, kind, id) {
 export function isCiphertext(value, context) {
   try {
     const b = typeof value === 'string' ? JSON.parse(value) : value;
-    if (!b || b.v !== 2 || b.alg !== 'A256GCM' || b.aad !== context) return false;
-    if (Object.keys(b).sort().join(',') !== 'aad,alg,ct,iv,v') return false;
+    if (!b || ![2,3].includes(b.v) || b.alg !== 'A256GCM' || b.aad !== context) return false;
+    if (Object.keys(b).sort().join(',') !== (b.v===3?'aad,alg,ct,epoch,iv,scope,v':'aad,alg,ct,iv,v')) return false;
+    if(b.v===3&&(!['viewer','member','admin'].includes(b.scope)||!Number.isSafeInteger(b.epoch)||b.epoch<1))return false;
     const decode = (s) => typeof s === 'string' && /^[A-Za-z0-9_-]+$/.test(s) ? atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - s.length % 4) % 4)) : '';
     return decode(b.iv).length === 12 && decode(b.ct).length >= 16 && b.ct.length <= 48 * 1024 * 1024;
   } catch { return false; }

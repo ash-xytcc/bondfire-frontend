@@ -284,7 +284,7 @@ function Shell() {
 	);
 
 	// Hide the header on public routes
-	const hideHeader = path === "/" || path === "/capture" || path === "/build" || path.startsWith("/p/") || path === "/signin" || path === "/demo" || path === "/customize" || /\/org\/[^/]+\/colophon(?:\/|$)/.test(path);
+	const hideHeader = path === "/" || path === "/capture" || path === "/build" || path.startsWith("/public/") || path.startsWith("/p/") || path.startsWith("/site/") || path === "/signin" || path === "/demo" || path === "/customize" || /\/org\/[^/]+\/colophon(?:\/|$)/.test(path);
 
 	return (
 		<AuthCtx.Provider value={ctxValue}>
@@ -297,8 +297,10 @@ function Shell() {
 
 			<Routes>
 				{/* PUBLIC */}
+				<Route path="/public/:slug" element={<PublicPage />} />
 				<Route path="/p/:slug" element={<PublicPage />} />
 				<Route path="/site/:slug" element={<PublicPage />} />
+				<Route path="/public/*" element={<PublicPage />} />
 				<Route path="/p/*" element={<PublicPage />} />
 				<Route path="/signin" element={<SignIn />} />
 				<Route path="/capture" element={<PublicCapture authed={state.authed} />} />

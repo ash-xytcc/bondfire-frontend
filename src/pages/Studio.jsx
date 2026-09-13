@@ -317,6 +317,7 @@ function hasStudioRemoteRows(resp) {
 }
 
 function buildStudioRemoteSignature(resp) {
+  if(resp?.private_mode)return `private:${resp.revision}`;
 	const docsSig = (Array.isArray(resp?.docs) ? resp.docs : [])
 		.map((row) => `${row?.id || ""}:${row?.updated_at || 0}`)
 		.join("|");
@@ -327,6 +328,7 @@ function buildStudioRemoteSignature(resp) {
 }
 
 async function decryptStudioStatePayload(orgId, resp) {
+  if(resp?.private_mode)return {docs:normalizeDocs(resp.docs),blocks:resp.blocks};
 	let orgKey = null;
 	try { orgKey = getCachedOrgKey(orgId); } catch {}
 	if (!orgKey) return null;
@@ -850,6 +852,8 @@ export default function Studio() {
 	const [studioRemoteNotice, setStudioRemoteNotice] = React.useState(null);
 	const [studioKeyNotice, setStudioKeyNotice] = React.useState(null);
 	const studioLoadedRef = React.useRef(false);
+	const studioPrivateRevisionRef = React.useRef(null);
+	const studioPrivateBaselineRef = React.useRef('');
 	const studioSyncTimerRef = React.useRef(null);
 	const studioRemoteSigRef = React.useRef("");
 	const studioPendingRemoteRef = React.useRef(null);
@@ -862,10 +866,14 @@ export default function Studio() {
 	const studioHasAppliedRemoteRef = React.useRef(false);
 	const studioInitialHydrationTimerRef = React.useRef(null);
 	const pinchStateRef = React.useRef(null);
+	const studioFetchRef = React.useRef(null);
+	studioFetchRef.current=fetchAndApplyRemoteStudioState;
 
 	React.useEffect(() => {
 		let cancelled = false;
 		studioLoadedRef.current = false;
+		studioPrivateRevisionRef.current = null;
+		studioPrivateBaselineRef.current = '';
 		if (studioSyncTimerRef.current) {
 			clearTimeout(studioSyncTimerRef.current);
 			studioSyncTimerRef.current = null;
@@ -901,7 +909,7 @@ if (!orgId) {
 	return;
 }
 try {
-	await fetchAndApplyRemoteStudioState({ queueIfBusy: false, forceApply: true, reason: "initial" });
+	await studioFetchRef.current({ queueIfBusy: false, forceApply: true, reason: "initial" });
 } catch (err) {
 	if (!cancelled) setStudioSyncMsg(String(err?.message || err || "Studio sync failed. Using local cache."));
 } finally {
@@ -921,7 +929,7 @@ try {
 			if (cancelled) return;
 			tries += 1;
 			try {
-				await fetchAndApplyRemoteStudioState({ queueIfBusy: false, forceApply: true, reason: "rehydrate" });
+				await studioFetchRef.current({ queueIfBusy: false, forceApply: true, reason: "rehydrate" });
 			} catch {}
 			if (cancelled) return;
 			if (studioHasAppliedRemoteRef.current) {
@@ -995,6 +1003,9 @@ try {
 
 React.useEffect(() => {
 	if (!studioLoadedRef.current || !orgId) return;
+	const privateSnapshot=JSON.stringify({docs:normalizeDocs(docs),blocks:savedBlocks});
+	if(studioPrivateRevisionRef.current!==null&&privateSnapshot===studioPrivateBaselineRef.current)return;
+	const expectedPrivateRevision=studioPrivateRevisionRef.current;
 	let orgKey = null;
 	try { orgKey = getCachedOrgKey(orgId); } catch {}
 	if (!orgKey) return;
@@ -1017,7 +1028,9 @@ React.useEffect(() => {
 					encrypted_blob: await encryptWithOrgKey(orgKey, JSON.stringify(block)),
 				});
 			}
-			await saveStudioStateToServer(orgId, { docs: encDocs, blocks: encBlocks });
+			const saved=await saveStudioStateToServer(orgId, { docs: encDocs, blocks: encBlocks,
+				...(expectedPrivateRevision!==null?{revision:expectedPrivateRevision}:{}) });
+			if(saved.private_mode){studioPrivateRevisionRef.current=saved.revision;studioRemoteSigRef.current=`private:${saved.revision}`;studioPrivateBaselineRef.current=privateSnapshot;}
 			studioLastSharedSaveRef.current = Date.now();
 			studioFastPollUntilRef.current = Date.now() + 12000;
 			setStudioRemoteNotice(null);
@@ -1043,7 +1056,7 @@ React.useEffect(() => {
 
 	const poll = async () => {
 		try {
-			await fetchAndApplyRemoteStudioState({ queueIfBusy: true, forceApply: false, reason: "poll" });
+			await studioFetchRef.current({ queueIfBusy: true, forceApply: false, reason: "poll" });
 		} catch {}
 	};
 
@@ -1086,13 +1099,15 @@ React.useEffect(() => {
 		try { studioStreamRef.current.close(); } catch {}
 		studioStreamRef.current = null;
 	}
+	// Private workspaces already poll authenticated ciphertext; no legacy SSE URL.
+	if(studioPrivateRevisionRef.current!==null)return;
 	const es = openStudioUpdatesStream(orgId, async (payload) => {
 		const sig = String(payload?.sig || "");
 		if (!sig || sig === studioRemoteSigRef.current) return;
 		studioFastPollUntilRef.current = Date.now() + 12000;
 		
 		try {
-			await fetchAndApplyRemoteStudioState({ queueIfBusy: true, forceApply: false, reason: "push" });
+			await studioFetchRef.current({ queueIfBusy: true, forceApply: false, reason: "push" });
 		} catch {}
 	});
 	studioStreamRef.current = es;
@@ -1113,7 +1128,7 @@ React.useEffect(() => {
 			let orgKey = null;
 			try { orgKey = getCachedOrgKey(orgId); } catch {}
 			if (!orgKey) return;
-			await fetchAndApplyRemoteStudioState({ queueIfBusy: false, forceApply: true, reason: "rehydrate" });
+			await studioFetchRef.current({ queueIfBusy: false, forceApply: true, reason: "rehydrate" });
 		} catch {} 
 	}, 600);
 	return () => {
@@ -1126,13 +1141,17 @@ React.useEffect(() => {
 	const pending = studioPendingRemoteRef.current;
 	if (!pending) return;
 	if (dragState || resizeState || marquee || panState || guideDrag || textEditId) return;
+	if(studioPrivateRevisionRef.current!==null&&JSON.stringify({docs:normalizeDocs(docs),blocks:savedBlocks})!==studioPrivateBaselineRef.current)return;
 	const debounceWindowMs = 900;
 	const localEditAgeMs = Date.now() - Number(studioLastLocalEditRef.current || 0);
 	if (studioLastLocalEditRef.current > studioLastSharedSaveRef.current) {
+		if(studioPrivateRevisionRef.current!==null)return;
 		if (localEditAgeMs <= debounceWindowMs) return;
 	}
 	const id = window.setTimeout(() => {
 		studioRemoteSigRef.current = pending.sig;
+		if(pending.revision!==undefined)studioPrivateRevisionRef.current=pending.revision;
+		if(pending.revision!==undefined)studioPrivateBaselineRef.current=JSON.stringify(pending.remoteState);
 		setDocs(pending.remoteState.docs);
 		setSavedBlocks(pending.remoteState.blocks);
 		saveDocs(orgId, pending.remoteState.docs);
@@ -1197,7 +1216,9 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 		return false;
 	}
 	const hasActiveInteraction = !!(dragState || resizeState || marquee || panState || guideDrag || textEditId);
-	const hasUnsyncedLocalEdits = studioLastLocalEditRef.current > studioLastSharedSaveRef.current;
+	const hasUnsyncedLocalEdits = resp.private_mode
+		? studioHasAppliedRemoteRef.current&&JSON.stringify({docs:normalizeDocs(docs),blocks:savedBlocks})!==studioPrivateBaselineRef.current
+		: studioLastLocalEditRef.current > studioLastSharedSaveRef.current;
 	const hasLocalDocs = Array.isArray(docs) && docs.length > 0;
 	const hasLocalBlocks = Array.isArray(savedBlocks) && savedBlocks.length > 0;
 	const needsAuthoritativeRemoteHydration = hasRemoteRows && (
@@ -1208,9 +1229,9 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 	);
 	const debounceWindowMs = 900;
 	const localEditAgeMs = Date.now() - Number(studioLastLocalEditRef.current || 0);
-	const shouldTreatAsRealOverwriteRisk = hasUnsyncedLocalEdits && localEditAgeMs > debounceWindowMs;
+	const shouldTreatAsRealOverwriteRisk = hasUnsyncedLocalEdits && (resp.private_mode||localEditAgeMs > debounceWindowMs);
 	if (!needsAuthoritativeRemoteHydration && !forceApply && queueIfBusy && (hasActiveInteraction || shouldTreatAsRealOverwriteRisk)) {
-		studioPendingRemoteRef.current = { sig, remoteState, receivedAt: Date.now() };
+		studioPendingRemoteRef.current = { sig, remoteState, revision:resp.private_mode?resp.revision:undefined, receivedAt: Date.now() };
 		if (shouldTreatAsRealOverwriteRisk) {
 			setStudioRemoteNotice({
 				kind: "queued",
@@ -1222,6 +1243,8 @@ async function fetchAndApplyRemoteStudioState({ queueIfBusy = true, forceApply =
 		return false;
 	}
 	studioRemoteSigRef.current = sig;
+	if(resp.private_mode)studioPrivateRevisionRef.current=resp.revision;
+	if(resp.private_mode)studioPrivateBaselineRef.current=JSON.stringify(remoteState);
 	studioPendingRemoteRef.current = null;
 	setDocs(remoteDocs);
 	setSavedBlocks(remoteBlocks);
@@ -1511,9 +1534,12 @@ const addImage = () => {
 		try {
 			const data = await api(`/api/orgs/${encodeURIComponent(orgId)}/drive`);
 			const files = Array.isArray(data?.files) ? data.files : [];
-			const images = files
+			const images = await Promise.all(files
 				.filter((file) => String(file?.mime || "").startsWith("image/"))
-				.map((file) => ({ ...file, previewUrl: buildDriveImageUrl(orgId, file.id) }));
+				.map(async(file) => {
+					if(data.private_mode){const opened=await api(`/api/orgs/${encodeURIComponent(orgId)}/drive/files/${encodeURIComponent(file.id)}`);return {...file,previewUrl:opened.file.dataUrl};}
+					return {...file,previewUrl:buildDriveImageUrl(orgId,file.id)};
+				}));
 			setDriveAssets(images);
 		} catch (err) {
 			setDriveError(String(err?.message || err || "Failed to load Drive assets"));
@@ -2479,7 +2505,9 @@ React.useEffect(() => {
 	const applyQueuedRemoteChanges = React.useCallback(() => {
 		const pending = studioPendingRemoteRef.current;
 		if (!pending) return;
+		if(pending.revision!==undefined&&JSON.stringify({docs:normalizeDocs(docs),blocks:savedBlocks})!==studioPrivateBaselineRef.current&&!window.confirm('Replace this device’s unsaved Studio edits with the shared version? Export your local documents first if you need to keep both.'))return;
 		studioRemoteSigRef.current = pending.sig;
+		if(pending.revision!==undefined){studioPrivateRevisionRef.current=pending.revision;studioPrivateBaselineRef.current=JSON.stringify(pending.remoteState);}
 		setDocs(pending.remoteState.docs);
 		setSavedBlocks(pending.remoteState.blocks);
 		saveDocs(orgId, pending.remoteState.docs);
@@ -2491,7 +2519,7 @@ React.useEffect(() => {
 		studioNeedsRemoteHydrationRef.current = false;
 		setStudioRemoteNotice(null);
 		setStudioSyncMsg("Remote Studio changes applied.");
-	}, [orgId]);
+	}, [orgId, docs, savedBlocks]);
 
 	const dismissQueuedRemoteChanges = React.useCallback(() => {
 		if (!studioPendingRemoteRef.current) return;
@@ -2501,7 +2529,7 @@ React.useEffect(() => {
 	const retryStudioRemoteHydration = React.useCallback(async () => {
 		try {
 			setStudioKeyNotice(null);
-			await fetchAndApplyRemoteStudioState({ queueIfBusy: false, forceApply: true, reason: "rehydrate" });
+			await studioFetchRef.current({ queueIfBusy: false, forceApply: true, reason: "rehydrate" });
 		} catch (err) {
 			setStudioSyncMsg(String(err?.message || err || "Studio rehydrate failed."));
 		}
@@ -2509,6 +2537,7 @@ React.useEffect(() => {
 
 	React.useEffect(() => {
 		if (!studioRemoteNotice) return;
+		if(studioPrivateRevisionRef.current!==null&&studioPendingRemoteRef.current)return;
 		if (!studioPendingRemoteRef.current) {
 			setStudioRemoteNotice(null);
 			return;

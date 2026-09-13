@@ -75,10 +75,9 @@ const bucket = {
   async delete(key) { if (failStorage && key === 'org/drive/orphan') throw new Error('storage unavailable'); objects.delete(key); },
   async list({ prefix }) { return { objects: [...objects.keys()].filter((key) => key.startsWith(prefix)).map((key) => ({ key })), truncated: false }; },
 };
-const publicCopies = new Map([['org:org','public config'],['slug:example','org'],['slug:old-name','org'],['slug:other','other']]);
+const publicCopies = new Map([['org:org',JSON.stringify({slug:'example'})],['slug:example','org'],['slug:other','other']]);
 const publicStore = {
   async get(key) { return publicCopies.get(key); }, async put(key, value) { publicCopies.set(key, value); }, async delete(key) { publicCopies.delete(key); },
-  async list({ prefix }) { return { keys: [...publicCopies.keys()].filter((key) => key.startsWith(prefix)).map((name) => ({ name })), list_complete: true }; },
 };
 const env = { BF_DB: db, JWT_SECRET: 'test-only', BF_DRIVE_BUCKET: bucket, BF_PUBLIC: publicStore };
 const tokens = Object.fromEntries(await Promise.all(['owner','admin','member'].map(async (id) => [id, await signJwt(env.JWT_SECRET, { sub: id }, 3600)])));
@@ -137,8 +136,8 @@ await expect(throughGate, ctx('', { user:'member',body:{value:'allowed'},url:'ht
 await expect(destroyAccount, ctx('',{url:'https://example.test/api/auth/destroy-account',body:authBody({confirmation:'DELETE MY ACCOUNT',acknowledgeHistoricalLimit:true})}),409,'SOLE_OWNED_ORGS_REMAIN');
 await expect(lockdown,ctx('lockdown',{body:{enabled:true}}),200);
 await expect(isolate,ctx('isolate',{body:authBody()}),200);
-await expect(prepare,ctx('prepare',{body:authBody({confirmation:'wrong'})}),400,'CONFIRMATION_MISMATCH');
-state = await expect(prepare,ctx('prepare',{body:authBody({confirmation:'PREPARE Example'})}),200);
+await expect(prepare,ctx('prepare',{body:authBody()}),400,'DESTRUCTION_REVIEW_ACK_REQUIRED');
+state = await expect(prepare,ctx('prepare',{body:authBody({acknowledgeDestructionReview:true})}),200);
 assert.equal(state.preview.tableCounts.record_attachments,1);
 assert.equal(state.preview.tableCounts[`${prefix}posts`],1);
 assert.equal(state.preview.erasure.activeDataDeleted,false);
@@ -163,7 +162,7 @@ assert.equal(rowCount('private_records'),1); assert.equal(rowCount('record_attac
 assert.equal(rowCount(`${prefix}posts`),0); assert.equal(rowCount(`${otherPrefix}posts`),1);
 assert.equal(rowCount('org_key_wrapped'),1);
 assert.equal(objects.size,2); assert.equal(objects.has('other/drive/files/f2'),true);
-assert.equal(publicCopies.has('org:org'),false); assert.equal(publicCopies.has('slug:old-name'),false); assert.equal(publicCopies.get('slug:other'),'other');
+assert.equal(publicCopies.has('org:org'),false); assert.equal(publicCopies.has('slug:example'),false); assert.equal(publicCopies.get('slug:other'),'other');
 failSql = /DELETE FROM users/;
 await assert.rejects(destroyAccount(ctx('',{url:'https://example.test/api/auth/destroy-account',body:authBody({confirmation:'DELETE MY ACCOUNT',acknowledgeHistoricalLimit:true})})), /injected/);
 failSql = null;

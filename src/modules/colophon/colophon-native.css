@@ -103,3 +103,215 @@
 .bondfire-colophon-native-shell :where(button,.btn,.button):hover {
   background-color: #202a32;
 }
+
+/* Native workspace containment and typography reset. */
+.bondfire-colophon-native-shell,
+.bondfire-colophon-native-shell * {
+  box-sizing: border-box;
+}
+.bondfire-colophon-native-shell {
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  background: #090b0d;
+  color: #f4f0e8;
+}
+.bondfire-colophon-native-shell .admin-frame {
+  min-height: calc(100vh - 1px);
+  background: #090b0d;
+  color: #f4f0e8;
+}
+.bondfire-colophon-native-shell .admin-frame__main {
+  min-width: 0;
+  background: #090b0d;
+}
+.bondfire-colophon-native-shell .wp-admin-topbar {
+  position: relative;
+  z-index: 20;
+  min-height: 42px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: visible;
+}
+.bondfire-colophon-native-shell .wp-admin-topbar__left,
+.bondfire-colophon-native-shell .wp-admin-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.bondfire-colophon-native-shell .wp-admin-topbar__right {
+  margin-left: auto;
+}
+.bondfire-colophon-native-shell .wp-admin-topbar__button,
+.bondfire-colophon-native-shell .wp-admin-topbar__link,
+.bondfire-colophon-native-shell .admin-rail__toggle,
+.bondfire-colophon-native-shell .admin-rail__group-toggle {
+  width: auto;
+  min-width: 0;
+  min-height: 34px;
+  padding: 7px 11px;
+  white-space: nowrap;
+}
+.bondfire-colophon-native-shell .wp-admin-topbar__dropdown {
+  z-index: 40;
+  min-width: 180px;
+}
+.bondfire-colophon-native-shell .admin-rail {
+  z-index: 10;
+  background: #151b1f;
+  color: #f4f0e8;
+}
+.bondfire-colophon-native-shell .admin-rail__link,
+.bondfire-colophon-native-shell .admin-rail__sublink {
+  color: #e6edf2;
+}
+.bondfire-colophon-native-shell .admin-rail__group-toggle,
+.bondfire-colophon-native-shell .admin-rail__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: #1c2429;
+  color: #f4f0e8;
+  border: 1px solid #3f4b54;
+  text-align: left;
+}
+.bondfire-colophon-native-shell .admin-rail__group-toggle:hover,
+.bondfire-colophon-native-shell .admin-rail__toggle:hover {
+  background: #29343b;
+}
+.bondfire-colophon-native-shell .page {
+  color: #f4f0e8;
+}
+.bondfire-colophon-native-shell .page :where(h1,h2,h3,h4,h5,h6,p,label,legend,dt,dd,li,th,td,strong,small) {
+  color: inherit;
+}
+.bondfire-colophon-native-shell .page :where(a) {
+  color: #a9dcff;
+}
+.bondfire-colophon-native-shell .page :where(input,select,textarea) {
+  width: 100%;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 9px 11px;
+  color: #f4f0e8;
+  background: #111519;
+  border: 1px solid #59636d;
+}
+.bondfire-colophon-native-shell .page :where(button,.button,.btn) {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 13px;
+  color: #f4f0e8;
+  background: #182127;
+  border: 1px solid #6c7b87;
+  white-space: nowrap;
+}
+.bondfire-colophon-native-shell .page :where(button,.button,.btn).button--primary,
+.bondfire-colophon-native-shell .page :where(button,.button,.btn)[type="submit"] {
+  background: #b94b35;
+  border-color: #d77a60;
+  color: #fff8ef;
+}
+.bondfire-colophon-native-shell .page :where(button,.button,.btn):hover {
+  background: #2a3943;
+}
+.bondfire-colophon-native-shell .page :where(button,.button,.btn).button--primary:hover,
+.bondfire-colophon-native-shell .page :where(button,.button,.btn)[type="submit"]:hover {
+  background: #d26149;
+}
+.bondfire-colophon-native-shell .wp-screen-header,
+.bondfire-colophon-native-shell .review-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.bondfire-colophon-native-shell .review-card__actions > * {
+  flex: 0 0 auto;
+}
+.bondfire-colophon-native-shell .wp-list-filter-tabs,
+.bondfire-colophon-native-shell .wp-filter-tabs,
+.bondfire-colophon-native-shell .content-status-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.bondfire-colophon-native-shell .wp-list-filter-tabs > *,
+.bondfire-colophon-native-shell .wp-filter-tabs > *,
+.bondfire-colophon-native-shell .content-status-tabs > * {
+  flex: 0 0 auto;
+  width: auto;
+}
+.bondfire-colophon-native-shell .wp-list-table,
+.bondfire-colophon-native-shell .wp-meta-box,
+.bondfire-colophon-native-shell .wp-filter,
+.bondfire-colophon-native-shell .wp-screen-header {
+  border-color: #39454d;
+  background: #111519;
+}
+.bondfire-colophon-native-shell .wp-list-table th,
+.bondfire-colophon-native-shell .wp-list-table td {
+  background: #151b1f;
+  color: #f4f0e8;
+  border-color: #39454d;
+}
+.bondfire-colophon-native-shell .native-content-editor,
+.bondfire-colophon-native-shell .native-content-editor__body,
+.bondfire-colophon-native-shell .native-content-editor__field,
+.bondfire-colophon-native-shell [contenteditable="true"] {
+  color: #f4f0e8;
+  background: #111519;
+  border-color: #59636d;
+  caret-color: #f4f0e8;
+}
+.bondfire-colophon-native-shell .native-content-editor__body :where(*),
+.bondfire-colophon-native-shell [contenteditable="true"] :where(*) {
+  color: inherit;
+}
+.bondfire-colophon-native-shell .indieweb-meta {
+  display: none !important;
+}
+.bondfire-colophon-native-shell .publication-topbar {
+  position: relative;
+  z-index: 5;
+}
+.bondfire-colophon-native-shell .publication-topbar nav,
+.bondfire-colophon-native-shell .publication-topbar__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.bondfire-colophon-native-shell .piece-article-lead__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.bondfire-colophon-native-shell .piece-article-lead__meta > span + span::before {
+  content: "•";
+  margin-right: 10px;
+  color: #8b969f;
+}
+@media (max-width: 760px) {
+  .bondfire-colophon-native-shell .admin-frame__main {
+    overflow-x: hidden;
+  }
+  .bondfire-colophon-native-shell .wp-screen-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .bondfire-colophon-native-shell .wp-admin-topbar__publication-name {
+    max-width: 30vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

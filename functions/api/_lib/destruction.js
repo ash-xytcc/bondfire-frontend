@@ -123,14 +123,13 @@ export async function getOrgDestructionPreview({ db, orgId }) {
 async function deletePublicCopies(env, orgId) {
   const store = env?.BF_PUBLIC;
   if (!store) return;
-  // Remove all aliases, including old slugs, rather than just the current one.
-  let cursor;
-  do {
-    const page = await store.list({ prefix: 'slug:', ...(cursor ? { cursor } : {}) });
-    for (const key of page.keys || []) if (await store.get(key.name) === orgId) await store.delete(key.name);
-    cursor = page.list_complete ? null : page.cursor;
-    if (!page.list_complete && !cursor) throw new Error('PUBLIC_COPY_LIST_INCOMPLETE');
-  } while (cursor);
+  let config = null;
+  try {
+    const raw = await store.get(`org:${orgId}`);
+    config = raw ? JSON.parse(raw) : null;
+  } catch {}
+  const slug = String(config?.slug || '').trim().toLowerCase();
+  if (slug && await store.get(`slug:${slug}`) === orgId) await store.delete(`slug:${slug}`);
   await store.delete(`org:${orgId}`);
 }
 

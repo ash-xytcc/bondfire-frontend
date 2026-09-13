@@ -1,6 +1,7 @@
 import { decryptWithOrgKey } from './zk.js';
 import { PRIVATE_CONTENT, privateRoute } from '../../shared/privateContent.js';
 import { encryptPrivate, decryptPrivate, loadPrivateKey } from './privateCrypto.js';
+import {PUBLIC_FIELDS,selectPublicFields,wantsPublication} from '../../shared/publicProjection.js';
 
 function parseBody(body) {
   if(body==null) return {};
@@ -92,6 +93,22 @@ export async function dispatchPrivate(path,opts,transport) {
   if(status.state!=='enabled') throw new Error('Finish the encrypted-data conversion in Settings → Security before editing this organization.');
   const key=await loadPrivateKey(orgId,status,transport);
   const method=String(opts.method||'GET').toUpperCase();
+  if(tail==='public/get'&&method==='GET') {
+    try {const result=await dispatchPrivate(`/api/orgs/${encodeURIComponent(orgId)}/public/config/${encodeURIComponent(orgId)}`,{},transport);return result;}
+    catch(e){if(e.status===404)return {handled:true,data:{ok:true,public:{enabled:false}}};throw e;}
+  }
+  if(tail==='public/save'&&method==='POST') {
+    if(!['admin','owner'].includes(status.role))throw new Error('An administrator must publish or change the public page.');
+    const draft=parseBody(opts.body);
+    if(draft.enabled) {
+      const route=await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/public-slug`,{method:'POST',body:JSON.stringify({slug:draft.slug||orgId})});
+      draft.slug=route.slug;
+    }
+    const configPath=`/api/orgs/${encodeURIComponent(orgId)}/public/config/${encodeURIComponent(orgId)}`;
+    let exists=false;
+    try {await transport(configPath);exists=true;}catch(e){if(e.status!==404)throw e;}
+    return dispatchPrivate(configPath,{method:exists?'PUT':'POST',body:JSON.stringify(draft)},transport);
+  }
   if(tail==='studio/state') {
     if(method==='GET') {
       const data=await transport(path,opts);
@@ -166,11 +183,16 @@ export async function dispatchPrivate(path,opts,transport) {
       // Do not fill defaults on a partial patch: absent fields must stay absent.
       const decoded=await decodeLegacyRecord(key,kind,clear,{normalize:false});
       const combined={...(previous||{}),...decoded};
+      if(PUBLIC_FIELDS[kind]&&(wantsPublication(kind,combined)||wantsPublication(kind,previous||{}))&&!['admin','owner'].includes(status.role))throw new Error('An administrator must publish or change a published record.');
       // Content is authoritative inside the envelope. IDs and revisions are checked
       // independently; never merge decrypted content over these protocol fields.
       for(const k of ['ciphertext','encrypted_blob','encryptedBlob','revision','encrypted','previewUrl','downloadUrl','url','storage_key','storageKey']) delete combined[k];
       const ciphertext=await encryptPrivate(key,combined,orgId,kind,id);
       data=await transport(path,{method,body:JSON.stringify({id,ciphertext,revision:previous?.revision||0,...(contract.parent?{parentId:combined[contract.parent]||null}:{})})});
+      if(PUBLIC_FIELDS[kind]&&['admin','owner'].includes(status.role)) {
+        try {await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/publish`,{method:'POST',body:JSON.stringify({kind,id,revision:data[contract.one].revision,public:wantsPublication(kind,combined)?selectPublicFields(kind,combined):null})});}
+        catch(e){throw new Error('The encrypted record was saved, but updating its public copy failed. Retry the save to finish publishing or unpublishing. '+e.message);}
+      }
     }
   }
   const next={...data,private_mode:true};

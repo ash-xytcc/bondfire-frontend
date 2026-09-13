@@ -134,42 +134,21 @@ async function deletePublicCopies(env, orgId) {
 }
 
 async function deleteStorageCopies(env, db, orgId) {
-  const drive = getDriveBucket(env), keys = await driveStorageKeys(db, orgId);
-  // Never introspect arbitrary env bindings. RPC/service bindings can expose a
-  // `list` property that is not an R2 bucket method. Only delete from the
-  // explicitly configured drive bucket.
-  const buckets = drive ? [drive] : [];
+  const drive = getDriveBucket(env);
+  const keys = await driveStorageKeys(db, orgId);
   if (!drive && keys.length) {
-    // Inline D1 storage legitimately has storage_key values too.
     if (!(await tableExists(db, 'drive_file_blobs'))) throw new Error('DRIVE_STORAGE_UNAVAILABLE');
     const missing = await db.prepare(`SELECT f.id FROM drive_files f LEFT JOIN drive_file_blobs b ON b.file_id=f.id AND b.org_id=f.org_id
       WHERE f.org_id=? AND f.storage_key IS NOT NULL AND b.file_id IS NULL LIMIT 1`).bind(orgId).first();
     if (missing) throw new Error('DRIVE_STORAGE_UNAVAILABLE');
   }
+  if (!drive) return 0;
   let deleted = 0;
-  for (const bucket of buckets) {
-    const prefixes = [scopedObjectKey('', orgId), ...(bucket === drive ? [`${orgId}/drive/`] : [])];
-    for (const prefix of prefixes) {
-      // Restart at the beginning after deletion so pagination cannot skip keys.
-      for (;;) {
-        const page = await bucket.list({ prefix, limit: 1000 });
-        const objects = page.objects || [];
-        if (!objects.length) {
-          if (page.truncated) throw new Error('STORAGE_LIST_INCOMPLETE');
-          break;
-        }
-        for (const object of objects) {
-          if (!String(object.key).startsWith(prefix)) throw new Error('STORAGE_SCOPE_MISMATCH');
-          await bucket.delete(object.key); deleted += 1;
-        }
-      }
-    }
-  }
-  if (drive) for (const key of new Set(keys)) {
+  for (const key of new Set(keys)) {
     const other = await db.prepare('SELECT id FROM drive_files WHERE storage_key=? AND org_id<>? LIMIT 1').bind(key, orgId).first();
     if (other) throw new Error('STORAGE_SCOPE_MISMATCH');
-    // Covers older keys stored outside the current prefix.
     await drive.delete(key);
+    deleted += 1;
   }
   return deleted;
 }

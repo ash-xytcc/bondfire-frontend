@@ -1,7 +1,6 @@
 // src/pages/SignIn.jsx
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { readPendingBuild } from "../platform/pendingBuild.js";
 
 function fireAuthChanged() {
 	try {
@@ -122,13 +121,6 @@ export default function SignIn() {
 				throw new Error("SESSION_NOT_ESTABLISHED");
 			}
 
-			// If an existing user signs in from an intentional builder flow,
-			// create the new organization under that account and apply the staged build.
-			if (mode === "login" && fromBuilder && readPendingBuild().length) {
-				await finishNewBuildAfterAuth();
-				return;
-			}
-
 			if (mode === "register") {
 				await finishNewBuildAfterAuth();
 				return;
@@ -194,10 +186,6 @@ export default function SignIn() {
 				}
 			}
 
-			if (fromBuilder && readPendingBuild().length) {
-				await finishNewBuildAfterAuth();
-				return;
-			}
 
 			// Cache org list for UX
 			try {

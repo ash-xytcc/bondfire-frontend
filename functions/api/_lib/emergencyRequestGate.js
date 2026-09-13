@@ -32,7 +32,7 @@ export async function emergencyRequestGate({ env, request }) {
       if (csrf) return csrf;
     }
     const gate = await requireOrgRole({ env, request, orgId,
-      minRole: isWriteMethod(request.method) ? 'member' : 'viewer', bypassWriteLockdown: true });
+      minRole: isWriteMethod(request.method) && route !== 'privacy/keys/device' ? 'member' : 'viewer', bypassWriteLockdown: true });
     if (!gate.ok) return gate.resp;
   } else {
     const state = await getOrgIsolationState({ env, orgId });

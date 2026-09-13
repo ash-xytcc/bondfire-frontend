@@ -5,8 +5,14 @@ import { ensurePrivateSchema, getPrivateMode } from './privateStore.js';
 import { migrationInventory, migrationPage, migrateRecord, cleanupPrivateSources, legacyPrivateFile } from './privateMigration.js';
 import { getPrivateBlob, putPrivateBlob } from './privateBlobs.js';
 import { contentContext, isCiphertext } from '../../../shared/privateContent.js';
+import {publishPrivateCopy,reservePublicSlug} from './privatePublication.js';
 
 export async function privateProtocol({env,request,orgId,path=''}) {
+  if(path==='publish'||path==='public-slug') {
+    const state=await getPrivateMode(env,orgId);
+    if(state?.state!=='enabled')return bad(409,'PRIVATE_MODE_NOT_READY');
+    return path==='publish'?publishPrivateCopy({env,request,orgId}):reservePublicSlug({env,request,orgId});
+  }
   const writing=request.method!=='GET';
   const minRole=path.startsWith('blob/')?(writing?'member':'viewer'):(writing||path==='source'||path==='source-file'?'owner':'viewer');
   const gate=await requireOrgRole({env,request,orgId,minRole});

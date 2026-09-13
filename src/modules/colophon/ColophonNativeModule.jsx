@@ -157,15 +157,16 @@ function NativeLogoUploadControl({ targetInput }) {
 
   return (
     <div className="bondfire-colophon-logo-upload">
-      <label className="bondfire-colophon-logo-upload__picker">
+      <div className="bondfire-colophon-logo-upload__picker">
         <span>Upload logo image</span>
         <input
           type="file"
           accept="image/*"
+          aria-label="Upload publication logo image"
           disabled={state === "uploading"}
           onChange={uploadLogo}
         />
-      </label>
+      </div>
       {previewUrl ? (
         <div className="bondfire-colophon-logo-upload__preview">
           <img src={previewUrl} alt="Current publication logo preview" />

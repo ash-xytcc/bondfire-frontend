@@ -13,8 +13,9 @@ export async function onRequestPost({ env, request, params }) {
   if (!fresh.ok) return fresh.resp;
   const preview = await getOrgDestructionPreview({ db: fresh.db, orgId });
   if (!preview) return bad(404, 'ORG_NOT_FOUND');
-  const phrase = `PREPARE ${String(preview.org.name || '').trim()}`;
-  if (String(body?.confirmation || '') !== phrase) return bad(400, 'CONFIRMATION_MISMATCH', { confirmationPhrase: phrase });
+  // Exact-name confirmation stays at the final destructive action. Requiring a
+  // nearly identical phrase here made this deliberate flow needlessly slow.
+  if (body?.acknowledgeDestructionReview !== true) return bad(400, 'DESTRUCTION_REVIEW_ACK_REQUIRED');
   const result = await transitionEmergency({ env, orgId, userId: fresh.user.sub, from: ['isolated', 'prepared'],
     stage: 'prepared', summary: 'Organization destruction prepared; no data deleted' });
   return result.ok ? ok({ ...result, preview }) : result.resp;

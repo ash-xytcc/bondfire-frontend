@@ -33,10 +33,13 @@ compartmentalization between members; endpoint role checks govern retrieval.
 Private storage supports organization names, Needs, Pledges, Inventory, People,
 meeting details, Events, Witness record metadata, native chat rooms/messages,
 Drive folders/notes/templates/files, and private form/sheet files in Drive.
-The private dashboard and navigation expose these surfaces.
+The private dashboard and navigation expose these surfaces. Studio documents and
+reusable blocks also sync through encrypted storage. A workspace revision protects
+the complete snapshot against stale saves and deletions from another tab. Drive
+images used in Studio are downloaded as ciphertext and opened locally.
 
 Public pages/submissions, newsletter operations, external chat, Colophon,
-Studio, RSVP collection, and integrations without a private adapter are not
+RSVP collection, and integrations without a private adapter are not
 enabled in this mode. The server rejects unsupported organization routes instead
 of falling back to legacy storage. This mode does not convert anonymous REC
 capture into an organization recording workflow.
@@ -77,6 +80,7 @@ With Node 24 or another Node release providing `node:sqlite`:
 
 ```
 node scripts/private-storage-regression.mjs
+node scripts/private-studio-regression.mjs
 node scripts/emergency-protocol-regression.mjs
 npm run smoke:thread1
 npm run build
@@ -88,3 +92,29 @@ revision conflicts, late legacy writes, file ciphertext, source-change rejection
 transaction rollback, and retryable cleanup. Cloudflare Pages Functions bundling
 must also pass before deployment. A successful build is not verification that a
 live organization's data has been converted.
+
+## Required work before making this the platform default
+
+The requested product direction is encryption by default with functional parity,
+not a permanent restricted edition. That transition is **not complete** in this
+revision. Do not advertise all-app zero knowledge or turn off the legacy creation
+path until the following workflows have compatible implementations:
+
+- Registration and both builder creation paths must create encrypted organization
+  identity and recovery material on the device, without sending the org name in
+  registration. Module selections must remain editable and respected.
+- Colophon private content, media, review, search, and server-side processing need
+  an encrypted host contract. The current dependency operates on readable data.
+- Anonymous intake and RSVP submissions require public recipient encryption keys;
+  member-only access and respondent/admin-only access require different key scopes.
+- Membership changes need cryptographic key epochs, device provisioning, rotation,
+  and migration, including role downgrades and removal. The shared org key cannot
+  enforce those boundaries cryptographically.
+- Existing public copies, plugin data, recordings, logs, exports, and account data
+  need an explicit inventory and compatible conversion. Provider backups cannot
+  be retroactively erased by changing the active database.
+
+Deliberately publishing content or sending it to an external processing service
+is a disclosure boundary. It must never silently disclose private source records
+or their keys. An encrypted-at-rest server that decrypts using its own secret does
+not satisfy the requested member-only content confidentiality.

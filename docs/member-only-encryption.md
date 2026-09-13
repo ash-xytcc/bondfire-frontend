@@ -81,6 +81,7 @@ With Node 24 or another Node release providing `node:sqlite`:
 ```
 node scripts/private-storage-regression.mjs
 node scripts/private-studio-regression.mjs
+node scripts/private-publication-regression.mjs
 node scripts/emergency-protocol-regression.mjs
 npm run smoke:thread1
 npm run build
@@ -97,12 +98,16 @@ live organization's data has been converted.
 
 The requested product direction is encryption by default with functional parity,
 not a permanent restricted edition. That transition is **not complete** in this
-revision. Do not advertise all-app zero knowledge or turn off the legacy creation
-path until the following workflows have compatible implementations:
+working branch. Default encrypted creation is implemented here for integration
+testing; do not deploy this branch as the completed all-app rollout until the
+remaining workflows have compatible implementations:
 
-- Registration and both builder creation paths must create encrypted organization
-  identity and recovery material on the device, without sending the org name in
-  registration. Module selections must remain editable and respected.
+- Creation now encrypts organization identity and recovery material on the device.
+  Signup creates only an account/session, then opens the builder with staged
+  selections preserved. Recovery, membership, key wraps, selected modules, and
+  organization records commit atomically. Both historical recovery table shapes
+  are supported. Module configuration is editable again. Full module availability
+  still depends on the work below.
 - Colophon private content, media, review, search, and server-side processing need
   an encrypted host contract. The current dependency operates on readable data.
 - Anonymous intake and RSVP submissions require public recipient encryption keys;
@@ -118,3 +123,31 @@ Deliberately publishing content or sending it to an external processing service
 is a disclosure boundary. It must never silently disclose private source records
 or their keys. An encrypted-at-rest server that decrypts using its own secret does
 not satisfy the requested member-only content confidentiality.
+
+## Publication contract under implementation
+
+The private API now supports an explicit selected-field public copy for Needs,
+Meetings, Inventory, Events, Witness metadata, and public-page configuration.
+Private originals remain encrypted. `privacy/publish` requires an administrator
+and the current source revision; it accepts only each kind's public field list,
+including validation of nested link objects. It never reads or decrypts private
+source fields. Deleting a source removes its published copy atomically.
+
+The client keeps disabled public-page configuration encrypted and uploads a
+readable configuration only when publication is enabled. An interrupted publish
+or unpublish reports a failure and can be retried. Public readers receive the last
+explicitly published copy, not subsequent unpublished edits to the encrypted source.
+Old public slugs stop resolving once the published configuration changes its slug.
+
+This contract does not complete the full rollout: public-page settings remain
+behind the existing private-mode UI restriction until encrypted intake and
+newsletter submission are implemented. Colophon uses a separate host contract and
+has not yet been connected to these projections. The integration branch changes
+registration and builder creation to encrypted setup and rejects legacy plaintext
+organization creation. This must not be represented as functional parity or as a
+completed production rollout. Private event/witness link searches now run on the
+device; query terms never enter HTTP URLs.
+
+Creation regression: `node scripts/private-signup-regression.mjs`. The storage
+regression also injects recovery-write failures and verifies rollback of every
+organization table, and checks both deployed recovery schema variants.

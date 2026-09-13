@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { UNSAFE_RouteContext as RouteContext, useParams } from "react-router-dom";
+import { Link, UNSAFE_RouteContext as RouteContext, useLocation, useParams } from "react-router-dom";
 import colophonNativeStyles from "./colophon-native.css?inline";
 import { createBondfireColophonAdapter } from "./bondfireAdapter.js";
 import { createColophonHostContext } from "./hostContract.js";
@@ -218,6 +218,117 @@ function NativeLogoUploadBridge() {
   return createPortal(<NativeLogoUploadControl targetInput={target.input} />, target.host);
 }
 
+function NativePublicAdminToolbarBridge({ routeBase, capabilities }) {
+  const location = useLocation();
+  const [target, setTarget] = React.useState(null);
+  const canEdit = Array.isArray(capabilities)
+    && (capabilities.includes("*") || capabilities.includes("content:write") || capabilities.includes("site:manage"));
+
+  React.useEffect(() => {
+    if (!canEdit || typeof document === "undefined") {
+      setTarget(null);
+      return undefined;
+    }
+
+    let currentHost = null;
+    const locate = () => {
+      const shell = document.querySelector(".bondfire-colophon-native-shell .public-route-shell");
+      if (!shell) {
+        setTarget(null);
+        return;
+      }
+
+      const nativeToolbar = shell.querySelector(".wp-public-admin-bar:not(.bondfire-colophon-public-admin-bar)");
+      if (nativeToolbar) {
+        currentHost?.remove();
+        currentHost = null;
+        setTarget(null);
+        return;
+      }
+
+      let host = shell.querySelector(":scope > [data-bondfire-colophon-public-toolbar-host]");
+      if (!host) {
+        host = document.createElement("div");
+        host.setAttribute("data-bondfire-colophon-public-toolbar-host", "true");
+        shell.prepend(host);
+      }
+      currentHost = host;
+      setTarget((current) => (current === host ? current : host));
+    };
+
+    locate();
+    const observer = new MutationObserver(locate);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      currentHost?.remove();
+    };
+  }, [canEdit, location.pathname]);
+
+  if (!canEdit || !target) return null;
+
+  const base = String(routeBase || "").replace(/\/+$/, "");
+  const editSiteParams = new URLSearchParams(location.search);
+  editSiteParams.set("edit", "site");
+  const editSiteLink = `${location.pathname}?${editSiteParams.toString()}`;
+
+  return createPortal(
+    <div className="wp-public-admin-bar bondfire-colophon-public-admin-bar" role="navigation" aria-label="Editor toolbar">
+      <div className="wp-public-admin-bar__left">
+        <Link className="wp-public-admin-bar__item" to={`${base}/wp-admin`}>Dashboard</Link>
+        <Link className="wp-public-admin-bar__item" to={`${base}/wp-admin/add-new`}>New</Link>
+        <Link className="wp-public-admin-bar__item" to={`${base}/wp-admin/posts`}>Posts</Link>
+        <Link className="wp-public-admin-bar__item" to={`${base}/wp-admin/media`}>Media</Link>
+        <Link className="wp-public-admin-bar__item" to={`${base}/wp-admin/settings`}>Settings</Link>
+        <Link className="wp-public-admin-bar__item" to={editSiteLink}>Edit Site</Link>
+      </div>
+    </div>,
+    target,
+  );
+}
+
+function NativeColophonFooterLinkBridge() {
+  React.useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+
+    const apply = () => {
+      const nodes = document.querySelectorAll(
+        ".bondfire-colophon-native-shell .publication-footer__software",
+      );
+
+      nodes.forEach((node) => {
+        if (node.querySelector("a[data-bondfire-colophon-repo-link]")) return;
+        const text = String(node.textContent || "");
+        const phrase = "Powered by Colophon";
+        const phraseIndex = text.lastIndexOf(phrase);
+        if (phraseIndex < 0) return;
+
+        const colophonIndex = phraseIndex + "Powered by ".length;
+        const prefix = text.slice(0, colophonIndex);
+        const suffix = text.slice(colophonIndex + "Colophon".length);
+        const link = document.createElement("a");
+        link.href = "https://github.com/colophon-hub/colophon";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Colophon";
+        link.setAttribute("data-bondfire-colophon-repo-link", "true");
+        node.replaceChildren(
+          document.createTextNode(prefix),
+          link,
+          document.createTextNode(suffix),
+        );
+      });
+    };
+
+    apply();
+    const observer = new MutationObserver(apply);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  return null;
+}
+
 function ColophonPublicLinkGuard({ routeBase }) {
   React.useEffect(() => {
     const base = String(routeBase || "").replace(/\/+$/, "");
@@ -325,6 +436,8 @@ export default function ColophonNativeModule({ Workspace }) {
     <div className="bondfire-colophon-native-shell">
       <ColophonNativeStyles />
       <NativeLogoUploadBridge />
+      <NativePublicAdminToolbarBridge routeBase={host.routeBase} capabilities={host.capabilities} />
+      <NativeColophonFooterLinkBridge />
       <ColophonPublicLinkGuard routeBase={host.routeBase} />
       <RouteContext.Provider value={EMPTY_COLOPHON_ROUTE_CONTEXT}>
         <Workspace

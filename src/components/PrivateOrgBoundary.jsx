@@ -40,6 +40,6 @@ export default function PrivateOrgBoundary({children}) {
   if(tail==='chat')return <Navigate to={prefix+'/chat-module'} replace/>;
   if(tail==='intake')return <Navigate to={prefix+'/drive'} replace/>;
   if(tail==='pledges')return <Navigate to={prefix+'/settings?tab=pledges'} replace/>;
-  if(/^(needs|inventory|people|meetings|events|drive|witness|chat-module|studio)(\/|$)/.test(tail))return children;
+  if(/^(build|needs|inventory|people|meetings|events|drive|witness|chat-module|studio)(\/|$)/.test(tail))return children;
   return <main style={{padding:24}}><h2>Unavailable in member-only mode</h2><p>This feature has not been connected to member-only encrypted storage. It cannot send or process readable organization content here.</p><Link to={prefix}>Return to private organization</Link></main>;
 }

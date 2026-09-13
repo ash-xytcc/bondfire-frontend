@@ -135,8 +135,10 @@ async function deletePublicCopies(env, orgId) {
 
 async function deleteStorageCopies(env, db, orgId) {
   const drive = getDriveBucket(env), keys = await driveStorageKeys(db, orgId);
-  const buckets = [...new Set(Object.values(env || {}).filter((value) => value && typeof value.get === 'function' && typeof value.put === 'function' && typeof value.delete === 'function' && typeof value.list === 'function' && value !== env.BF_PUBLIC))];
-  if (drive && !buckets.includes(drive)) buckets.push(drive);
+  // Never introspect arbitrary env bindings. RPC/service bindings can expose a
+  // `list` property that is not an R2 bucket method. Only delete from the
+  // explicitly configured drive bucket.
+  const buckets = drive ? [drive] : [];
   if (!drive && keys.length) {
     // Inline D1 storage legitimately has storage_key values too.
     if (!(await tableExists(db, 'drive_file_blobs'))) throw new Error('DRIVE_STORAGE_UNAVAILABLE');

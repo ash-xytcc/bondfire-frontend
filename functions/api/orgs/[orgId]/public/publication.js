@@ -8,7 +8,7 @@ function organizationPageState(cfg) {
   return {
     slug,
     available: Boolean(cfg?.enabled && slug),
-    path: slug ? `/#/p/${encodeURIComponent(slug)}` : "",
+    path: slug ? `/#/public/${encodeURIComponent(slug)}` : "",
   };
 }
 

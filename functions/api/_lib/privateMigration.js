@@ -7,7 +7,7 @@ import { contentContext, isCiphertext } from '../../../shared/privateContent.js'
 
 // Control-plane metadata is necessary for authentication, access control and deletion.
 // Content tables not explicitly supported remain blockers, including plugin tables.
-const CONTROL = new Set(['org_private_studio_state','org_private_mode','org_private_records','org_private_migrations','org_private_assertions','org_private_blobs','org_private_cleanup',
+const CONTROL = new Set(['org_private_submission_keys','org_private_submissions','org_private_key_state','org_private_scope_keys','org_private_scope_wraps','org_private_scope_recovery','org_private_key_assertions','org_public_projections','org_private_studio_state','org_private_mode','org_private_records','org_private_migrations','org_private_assertions','org_private_blobs','org_private_cleanup',
   'org_private_device_wraps','org_crypto','org_keys','org_key_wrapped','org_key_recovery','org_module_configs',
   'emergency_protocol_state']);
 const q = (s) => '"' + String(s).replace(/"/g,'""') + '"';
@@ -57,12 +57,13 @@ export async function migrationInventory(env, orgId) {
       continue;
     }
     const kind=map[name];
-    if (!kind || !cols.some(c=>c.name==='id')) {
+    const singleton=PRIVATE_CONTENT[kind]?.singleton;
+    if (!kind || (!singleton&&!cols.some(c=>c.name==='id'))) {
       blockers.push({ table:name, count:count.n, reason:'This data needs a dedicated migration before private mode can be enabled.' });
       continue;
     }
     // Child tables outside this inventory must not be silently skipped.
-    const remaining = await db.prepare(`SELECT COUNT(*) AS n FROM ${q(name)} s WHERE ${isRoot?'s.id=?':'s.org_id=?'} AND NOT EXISTS (SELECT 1 FROM org_private_migrations m WHERE m.org_id=? AND m.kind=? AND m.id=s.id)`).bind(orgId,orgId,kind).first();
+    const remaining = await db.prepare(`SELECT COUNT(*) AS n FROM ${q(name)} s WHERE ${isRoot?'s.id=?':'s.org_id=?'} AND NOT EXISTS (SELECT 1 FROM org_private_migrations m WHERE m.org_id=? AND m.kind=? AND m.id=s.${singleton?'org_id':'id'})`).bind(orgId,orgId,kind).first();
     tables.push({kind,table:name,count:count.n,remaining:remaining?.n||0});
   }
   // Unscoped dependent rows may contain private content too. Block rather than
@@ -89,11 +90,12 @@ export async function migrationInventory(env, orgId) {
 export async function migrationPage(env,orgId,kind) {
   const db=getDb(env), table=kind==='organization'?'orgs':PRIVATE_CONTENT[kind]?.table;
   if(!table) throw new Error('UNKNOWN_MIGRATION_KIND');
-  const rows=await db.prepare(`SELECT * FROM ${q(table)} s WHERE ${table==='orgs'?'s.id':'s.org_id'}=? AND NOT EXISTS (SELECT 1 FROM org_private_migrations m WHERE m.org_id=? AND m.kind=? AND m.id=s.id) ORDER BY id LIMIT 10`).bind(orgId,orgId,kind).all();
+  const singleton=PRIVATE_CONTENT[kind]?.singleton;
+  const rows=await db.prepare(`SELECT * FROM ${q(table)} s WHERE ${table==='orgs'?'s.id':'s.org_id'}=? AND NOT EXISTS (SELECT 1 FROM org_private_migrations m WHERE m.org_id=? AND m.kind=? AND m.id=s.${singleton?'org_id':'id'}) ORDER BY ${singleton?'org_id':'id'} LIMIT 10`).bind(orgId,orgId,kind).all();
   const result=[];
   for(const row of rows.results||[]) {
     const par=kind==='inventory'?await inventoryPar(db,orgId,row.id):null;
-    const view=kind==='inventory'?{...row,par:par?.par??null}:row;
+    const view=kind==='inventory'?{...row,par:par?.par??null}:singleton?{...row,id:orgId}:row;
     result.push({row:view,sourceHash:await sourceHash(view)});
   }
   return result;
@@ -103,12 +105,13 @@ export async function migrateRecord(env,orgId,body) {
   const table=kind==='organization'?'orgs':PRIVATE_CONTENT[kind]?.table;
   if(typeof ciphertext==='string'&&ciphertext.length>1024*1024)throw new Error('PRIVATE_RECORD_TOO_LARGE');
   if(!table || !isCiphertext(ciphertext,contentContext(orgId,kind,id))) throw new Error('VALID_CIPHERTEXT_REQUIRED');
-  const where=table==='orgs'?'id=?':'org_id=? AND id=?';
-  const args=table==='orgs'?[orgId]:[orgId,id];
+  const singleton=PRIVATE_CONTENT[kind]?.singleton;
+  const where=table==='orgs'?'id=?':singleton?'org_id=?':'org_id=? AND id=?';
+  const args=table==='orgs'||singleton?[orgId]:[orgId,id];
   const row=await db.prepare(`SELECT * FROM ${q(table)} WHERE ${where}`).bind(...args).first();
   const par=kind==='inventory'?await inventoryPar(db,orgId,id):null;
-  const view=kind==='inventory'?{...row,par:par?.par??null}:row;
-  if(!row || row.id!==id || await sourceHash(view)!==body.sourceHash) throw new Error('MIGRATION_SOURCE_CHANGED');
+  const view=kind==='inventory'?{...row,par:par?.par??null}:singleton?{...row,id:orgId}:row;
+  if(!row || (singleton?orgId:row.id)!==id || await sourceHash(view)!==body.sourceHash) throw new Error('MIGRATION_SOURCE_CHANGED');
   if(kind==='drive/files') {
     const blob=await db.prepare('SELECT id FROM org_private_blobs WHERE org_id=? AND id=? AND file_id=?').bind(orgId,body.payloadId||'',id).first();
     if(!blob) throw new Error('ENCRYPTED_FILE_REQUIRED');

@@ -25,13 +25,39 @@ function ColophonNativeStyles() {
   return null;
 }
 
+function readCookie(name) {
+  if (typeof document === "undefined") return "";
+  const safe = name.replace(/[$()*+.?[\\\\\\]^{|}]/g, "\\\\$&");
+  const match = document.cookie.match(new RegExp(`(?:^|; )${safe}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
+function addCsrfHeader(input, init) {
+  const method = String(init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+  if (["GET", "HEAD", "OPTIONS"].includes(method)) return { input, init };
+
+  const token = readCookie("bf_csrf");
+  if (!token) return { input, init };
+
+  const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
+  if (!headers.has("X-CSRF")) headers.set("X-CSRF", token);
+
+  if (input instanceof Request) {
+    return { input: new Request(input, { headers }), init };
+  }
+  return { input, init: { ...init, headers } };
+}
+
 function ensureHostFetchBridge(apiBase) {
-  activeApiBase = String(apiBase || "").replace(/\/+$/, "");
+  activeApiBase = String(apiBase || "").replace(/\\/+$/, "");
   if (originalFetch || typeof window === "undefined" || typeof window.fetch !== "function") return;
 
   originalFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {
-    if (!activeApiBase) return originalFetch(input, init);
+    if (!activeApiBase) {
+      const request = addCsrfHeader(input, init);
+      return originalFetch(request.input, request.init);
+    }
 
     const raw = input instanceof Request ? input.url : String(input || "");
     const url = new URL(raw, window.location.origin);
@@ -42,17 +68,48 @@ function ensureHostFetchBridge(apiBase) {
       url.pathname.startsWith("/api/support/");
 
     if (!sameOrigin || !url.pathname.startsWith("/api/") || isBondfireOwned) {
-      return originalFetch(input, init);
+      const request = addCsrfHeader(input, init);
+      return originalFetch(request.input, request.init);
     }
 
-    const suffix = url.pathname.replace(/^\/api\/?/, "");
-    url.pathname = `${activeApiBase}/${suffix}`.replace(/\/{2,}/g, "/");
+    const suffix = url.pathname.replace(/^\\/api\\/?/, "");
+    url.pathname = `${activeApiBase}/${suffix}`.replace(/\\/{2,}/g, "/");
 
-    if (input instanceof Request) {
-      return originalFetch(new Request(url.toString(), input), init);
-    }
-    return originalFetch(url.toString(), init);
+    const request = addCsrfHeader(
+      input instanceof Request ? new Request(url.toString(), input) : url.toString(),
+      init,
+    );
+    return originalFetch(request.input, request.init);
   };
+}
+
+function ColophonPublicLinkGuard({ routeBase }) {
+  React.useEffect(() => {
+    const base = String(routeBase || "").replace(/\\/+$/, "");
+    if (!base) return undefined;
+
+    const onClick = (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target?.closest?.("a[href]");
+      if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+
+      let url;
+      try { url = new URL(anchor.href, window.location.origin); } catch { return; }
+      if (url.origin !== window.location.origin) return;
+
+      const publicPath = /^\\/(?:post|piece|project|projects|archive|search|publications|reader|campaigns|collections|press|about|security|contact|submit|support|updates)(?:\\/|$)/.test(url.pathname) || url.pathname === "/";
+      if (!publicPath || url.pathname.startsWith(base)) return;
+
+      event.preventDefault();
+      window.history.pushState({}, "", `${base}${url.pathname === "/" ? "/" : url.pathname}${url.search}${url.hash}`);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    };
+
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [routeBase]);
+
+  return null;
 }
 
 export default function ColophonNativeModule({ Workspace }) {
@@ -95,9 +152,7 @@ export default function ColophonNativeModule({ Workspace }) {
   React.useEffect(() => {
     if (!host?.apiBase) return undefined;
     ensureHostFetchBridge(host.apiBase);
-    return () => {
-      activeApiBase = "";
-    };
+    return () => { activeApiBase = ""; };
   }, [host?.apiBase]);
 
   if (state.loading) {
@@ -131,8 +186,9 @@ export default function ColophonNativeModule({ Workspace }) {
   ensureHostFetchBridge(host.apiBase);
 
   return (
-    <>
+    <div className="bondfire-colophon-native-shell">
       <ColophonNativeStyles />
+      <ColophonPublicLinkGuard routeBase={host.routeBase} />
       <RouteContext.Provider value={EMPTY_COLOPHON_ROUTE_CONTEXT}>
         <Workspace
           host={host}
@@ -142,6 +198,6 @@ export default function ColophonNativeModule({ Workspace }) {
           embedded
         />
       </RouteContext.Provider>
-    </>
+    </div>
   );
 }

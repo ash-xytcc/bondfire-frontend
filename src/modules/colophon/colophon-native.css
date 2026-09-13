@@ -70,3 +70,36 @@
 @import "../../../node_modules/colophon/src/public-publication-theme.css";
 @import "../../../node_modules/colophon/src/course.css";
 @import "../../../node_modules/colophon/src/admin-dark-mode-fixes.css";
+
+
+/* Bondfire-native contrast reset: Colophon owns this workspace's visual surface. */
+.bondfire-colophon-native-shell {
+  color: #f4f0e8;
+  background: #090b0d;
+  min-height: 100%;
+}
+.bondfire-colophon-native-shell :where(h1,h2,h3,h4,h5,h6,p,label,legend,dt,dd,span,strong,small) {
+  color: #f4f0e8;
+}
+.bondfire-colophon-native-shell :where(input,select,textarea,button) {
+  color: #f4f0e8;
+  background-color: #111519;
+  border-color: #59636d;
+}
+.bondfire-colophon-native-shell :where(input::placeholder,textarea::placeholder) {
+  color: #aab4bd;
+}
+.bondfire-colophon-native-shell :where(.native-content-editor,.native-content-editor__body,.native-content-editor__field,.editor-shell,.editor-shell__body,[contenteditable="true"]) {
+  color: #f4f0e8;
+  background: #111519;
+  caret-color: #f4f0e8;
+}
+.bondfire-colophon-native-shell :where(.native-content-editor__body,[contenteditable="true"]) * {
+  color: inherit;
+}
+.bondfire-colophon-native-shell :where(a) {
+  color: #9ed8ff;
+}
+.bondfire-colophon-native-shell :where(button,.btn,.button):hover {
+  background-color: #202a32;
+}

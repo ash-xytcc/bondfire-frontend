@@ -1,5 +1,5 @@
 import { createPrivateOrg } from '../_lib/privateCreate.js';
-import { json, bad, now, uuid } from "../_lib/http.js";
+import { bad } from "../_lib/http.js";
 import { getDb, requireUser } from "../_lib/auth.js";
 
 export async function onRequestPost({ request, env }) {
@@ -16,21 +16,5 @@ export async function onRequestPost({ request, env }) {
 
   const body = await request.json().catch(() => ({}));
   if (body.private_mode === true) return createPrivateOrg({ db, request, userId: meId, body });
-  const name = String(body?.name || "").trim();
-  if (!name) return bad(400, "Missing org name");
-
-  const orgId = uuid();
-  const t = now();
-
-  await db.prepare("INSERT INTO orgs (id, name, created_at) VALUES (?, ?, ?)")
-    .bind(orgId, name, t)
-    .run();
-
-  await db.prepare(
-    "INSERT INTO org_memberships (org_id, user_id, role, created_at) VALUES (?, ?, ?, ?)"
-  )
-    .bind(orgId, meId, "owner", t)
-    .run();
-
-  return json({ ok: true, org: { id: orgId, name }, membership: { role: "owner" } });
+  return bad(400, 'ENCRYPTED_ORGANIZATION_REQUIRED');
 }

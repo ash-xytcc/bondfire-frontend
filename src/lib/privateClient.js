@@ -22,13 +22,14 @@ export function normalizePrivateRecord(kind,row) {
   }
   return clear;
 }
-export async function decodeLegacyRecord(key,kind,row) {
+export async function decodeLegacyRecord(key,kind,row,{normalize=true}={}) {
   let clear={...row};
   const legacy={};
-  if(row.encrypted_blob) {
-    const value=JSON.parse(await decryptWithOrgKey(key,row.encrypted_blob));
+  const unified=row.encrypted_blob||row.encryptedBlob;
+  if(unified) {
+    const value=JSON.parse(await decryptWithOrgKey(key,unified));
     if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Unsupported legacy encrypted record. Original data was preserved.');
-    clear={...clear,...value};legacy.encrypted_blob=row.encrypted_blob;
+    clear={...clear,...value};legacy.encrypted_blob=unified;
   }
   for(const [field,target]of [['encrypted_description','description'],['encrypted_notes','notes']]) {
     if(!row[field])continue;
@@ -36,7 +37,7 @@ export async function decodeLegacyRecord(key,kind,row) {
     let value=text;
     let parsedObject=null;
     try {const parsed=JSON.parse(text);if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))parsedObject=parsed;else value=parsed;}catch{}
-    if(!row.encrypted_blob) {
+    if(!unified) {
       if(parsedObject)clear={...clear,...parsedObject};
       else clear[target]=value;
     }
@@ -46,7 +47,7 @@ export async function decodeLegacyRecord(key,kind,row) {
     if(typeof value==='string'&&value.startsWith('bfzk1:'))clear[field]=await decryptWithOrgKey(key,value.slice(6));
   }
   if(Object.keys(legacy).length)clear._legacyEncryptedFields=legacy;
-  return normalizePrivateRecord(kind,clear);
+  return normalize?normalizePrivateRecord(kind,clear):clear;
 }
 async function reveal(key,orgId,kind,row,transport,hydrate=false) {
   if(!row) return row;
@@ -91,6 +92,25 @@ export async function dispatchPrivate(path,opts,transport) {
   if(status.state!=='enabled') throw new Error('Finish the encrypted-data conversion in Settings → Security before editing this organization.');
   const key=await loadPrivateKey(orgId,status,transport);
   const method=String(opts.method||'GET').toUpperCase();
+  if(tail==='studio/state') {
+    if(method==='GET') {
+      const data=await transport(path,opts);
+      return {handled:true,data:{...data,private_mode:true,
+        docs:await Promise.all(data.docs.map(row=>reveal(key,orgId,'studio/docs',row,transport))),
+        blocks:await Promise.all(data.blocks.map(row=>reveal(key,orgId,'studio/blocks',row,transport)))}};
+    }
+    if(method!=='POST')throw new Error('Unsupported Studio operation.');
+    const body=parseBody(opts.body),sealed={revision:body.revision,docs:[],blocks:[]};
+    for(const type of ['docs','blocks']) {
+      if(!Array.isArray(body[type]))throw new Error('Studio must save both document collections.');
+      for(const row of body[type]) {
+        const clear=await decodeLegacyRecord(key,'studio/'+type,row);
+        for(const field of ['encrypted_blob','encryptedBlob','_legacyEncryptedFields'])delete clear[field];
+        sealed[type].push({id:row.id,ciphertext:await encryptPrivate(key,clear,orgId,'studio/'+type,row.id)});
+      }
+    }
+    return {handled:true,data:await transport(path,{method:'POST',body:JSON.stringify(sealed)})};
+  }
   if(tail==='organization'&&method==='GET') {
     const data=await transport(path,opts);
     return {handled:true,data:{...data,organization:await reveal(key,orgId,'organization',data.organization,transport)}};
@@ -140,7 +160,12 @@ export async function dispatchPrivate(path,opts,transport) {
     if(method==='DELETE') {
       data=await transport(path,{method,body:JSON.stringify({id,revision:previous.revision})});
     } else {
-      const combined={...(previous||{}),...clear};
+      // Older screens already encrypted selected fields and replaced their visible
+      // values with placeholders. Open those fields before constructing the new
+      // authoritative envelope; dropping them would permanently lose the edit.
+      // Do not fill defaults on a partial patch: absent fields must stay absent.
+      const decoded=await decodeLegacyRecord(key,kind,clear,{normalize:false});
+      const combined={...(previous||{}),...decoded};
       // Content is authoritative inside the envelope. IDs and revisions are checked
       // independently; never merge decrypted content over these protocol fields.
       for(const k of ['ciphertext','encrypted_blob','encryptedBlob','revision','encrypted','previewUrl','downloadUrl','url','storage_key','storageKey']) delete combined[k];

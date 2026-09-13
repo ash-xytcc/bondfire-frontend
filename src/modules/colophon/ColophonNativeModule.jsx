@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { UNSAFE_RouteContext as RouteContext, useParams } from "react-router-dom";
 import colophonNativeStyles from "./colophon-native.css?inline";
 import { createBondfireColophonAdapter } from "./bondfireAdapter.js";
@@ -81,6 +82,139 @@ function ensureHostFetchBridge(apiBase) {
     );
     return originalFetch(request.input, request.init);
   };
+}
+
+function setControlledInputValue(input, value) {
+  if (!input) return;
+  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+  if (setter) setter.call(input, value);
+  else input.value = value;
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function NativeLogoUploadControl({ targetInput }) {
+  const [state, setState] = React.useState("idle");
+  const [message, setMessage] = React.useState("");
+  const [previewUrl, setPreviewUrl] = React.useState(() => String(targetInput?.value || ""));
+
+  React.useEffect(() => {
+    const sync = () => setPreviewUrl(String(targetInput?.value || ""));
+    sync();
+    targetInput?.addEventListener("input", sync);
+    targetInput?.addEventListener("change", sync);
+    return () => {
+      targetInput?.removeEventListener("input", sync);
+      targetInput?.removeEventListener("change", sync);
+    };
+  }, [targetInput]);
+
+  async function uploadLogo(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!String(file.type || "").startsWith("image/")) {
+      setState("error");
+      setMessage("Choose an image file for the publication logo.");
+      return;
+    }
+
+    setState("uploading");
+    setMessage("");
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("filename", file.name);
+      form.append("title", "Publication logo");
+      form.append("folder", "logos");
+      form.append("role", "publication-logo");
+      form.append("mimeType", file.type || "application/octet-stream");
+
+      const response = await fetch("/api/media/files", {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data?.ok === false) {
+        throw new Error(data?.error || `Logo upload failed (${response.status})`);
+      }
+
+      const media = data.media || data.asset || data.item || {};
+      const url = String(media.publicUrl || media.url || media.downloadUrl || "").trim();
+      if (!url) throw new Error("Logo uploaded but no usable media URL was returned.");
+
+      setControlledInputValue(targetInput, url);
+      setPreviewUrl(url);
+      setState("saved");
+      setMessage("Logo uploaded. Publish changes to make it live on the Publication Site.");
+    } catch (error) {
+      setState("error");
+      setMessage(String(error?.message || error));
+    } finally {
+      event.target.value = "";
+    }
+  }
+
+  return (
+    <div className="bondfire-colophon-logo-upload">
+      <label className="bondfire-colophon-logo-upload__picker">
+        <span>Upload logo image</span>
+        <input
+          type="file"
+          accept="image/*"
+          disabled={state === "uploading"}
+          onChange={uploadLogo}
+        />
+      </label>
+      {previewUrl ? (
+        <div className="bondfire-colophon-logo-upload__preview">
+          <img src={previewUrl} alt="Current publication logo preview" />
+        </div>
+      ) : null}
+      <small className={state === "error" ? "is-error" : ""}>
+        {message || "Upload PNG, JPG, WebP, GIF, or SVG. The Logo URL field remains available for remote images."}
+      </small>
+    </div>
+  );
+}
+
+function NativeLogoUploadBridge() {
+  const [target, setTarget] = React.useState({ host: null, input: null });
+
+  React.useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+
+    const locate = () => {
+      const fields = Array.from(document.querySelectorAll(
+        ".bondfire-colophon-native-shell .admin-public-config-card__identity label.native-content-editor__field",
+      ));
+      const field = fields.find((candidate) => {
+        const label = candidate.querySelector("span");
+        return String(label?.textContent || "").trim() === "Logo URL";
+      });
+      const input = field?.querySelector('input[type="url"], input');
+      if (!field || !input) return;
+
+      let host = field.querySelector("[data-bondfire-colophon-logo-upload-host]");
+      if (!host) {
+        host = document.createElement("div");
+        host.setAttribute("data-bondfire-colophon-logo-upload-host", "true");
+        field.appendChild(host);
+      }
+
+      setTarget((current) => (
+        current.host === host && current.input === input ? current : { host, input }
+      ));
+    };
+
+    locate();
+    const observer = new MutationObserver(locate);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  if (!target.host || !target.input) return null;
+  return createPortal(<NativeLogoUploadControl targetInput={target.input} />, target.host);
 }
 
 function ColophonPublicLinkGuard({ routeBase }) {
@@ -188,6 +322,7 @@ export default function ColophonNativeModule({ Workspace }) {
   return (
     <div className="bondfire-colophon-native-shell">
       <ColophonNativeStyles />
+      <NativeLogoUploadBridge />
       <ColophonPublicLinkGuard routeBase={host.routeBase} />
       <RouteContext.Provider value={EMPTY_COLOPHON_ROUTE_CONTEXT}>
         <Workspace

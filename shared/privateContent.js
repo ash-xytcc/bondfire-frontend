@@ -1,6 +1,7 @@
 // The only fields stored outside ciphertext are opaque identifiers and revision metadata.
 // This contract is shared by the browser, the private API, and migration checks.
 export const PRIVATE_CONTENT = {
+  'public/config': {table:'org_public_config_drafts',list:'configs',one:'public',read:'admin',write:'admin'},
   activity: { table: 'activity', list: 'activity', one: 'entry' },
   needs: { table: 'needs', list: 'needs', one: 'need' },
   inventory: { table: 'inventory', list: 'inventory', one: 'item' },

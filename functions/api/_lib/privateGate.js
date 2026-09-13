@@ -4,6 +4,7 @@ import { getPrivateMode, privateRecords, storedRecord } from './privateStore.js'
 import { privateProtocol } from './privateProtocol.js';
 import { privateRoute } from '../../../shared/privateContent.js';
 import { privateStudio } from './privateStudio.js';
+import {publicPrivateResponse} from './privatePublication.js';
 
 // A deny-by-default route boundary is essential: new or old modules cannot
 // silently bypass private storage by choosing another endpoint.
@@ -17,7 +18,7 @@ export async function privateRequestGate({env,request}) {
     let orgId='';
     if(form) orgId=(await getDb(env).prepare('SELECT org_id FROM drive_files WHERE id=?').bind(decodeURIComponent(form[1])).first())?.org_id;
     else if(page&&env.BF_PUBLIC) orgId=await env.BF_PUBLIC.get(`slug:${decodeURIComponent(page[2])}`);
-    if(orgId&&await getPrivateMode(env,orgId)) return bad(404,'NOT_FOUND');
+    if(orgId&&await getPrivateMode(env,orgId))return form?bad(404,'NOT_FOUND'):publicPrivateResponse({env,request,orgId});
     return null;
   }
   const orgId=decodeURIComponent(m[1]),route=(m[2]||'').replace(/\/+$/,'');

@@ -233,7 +233,8 @@ function ColophonPublicLinkGuard({ routeBase }) {
       if (url.origin !== window.location.origin) return;
 
       const publicPath = /^\/(?:post|piece|project|projects|archive|search|publications|reader|campaigns|collections|press|about|security|contact|submit|support|updates)(?:\/|$)/.test(url.pathname) || url.pathname === "/";
-      if (!publicPath || url.pathname.startsWith(base)) return;
+      const adminPath = /^\/wp-admin(?:\/|$)/.test(url.pathname);
+      if ((!publicPath && !adminPath) || url.pathname.startsWith(base)) return;
 
       event.preventDefault();
       window.history.pushState({}, "", `${base}${url.pathname === "/" ? "/" : url.pathname}${url.search}${url.hash}`);

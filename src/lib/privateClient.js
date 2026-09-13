@@ -1,6 +1,8 @@
+import {openSubmission} from '../../shared/privateSubmission.js';
 import { decryptWithOrgKey } from './zk.js';
 import { PRIVATE_CONTENT, privateRoute } from '../../shared/privateContent.js';
 import { encryptPrivate, decryptPrivate, loadPrivateKey } from './privateCrypto.js';
+import {PUBLIC_FIELDS,selectPublicFields,wantsPublication} from '../../shared/publicProjection.js';
 
 function parseBody(body) {
   if(body==null) return {};
@@ -23,6 +25,7 @@ export function normalizePrivateRecord(kind,row) {
   return clear;
 }
 export async function decodeLegacyRecord(key,kind,row,{normalize=true}={}) {
+  key=key.legacy||key;
   let clear={...row};
   const legacy={};
   const unified=row.encrypted_blob||row.encryptedBlob;
@@ -92,6 +95,102 @@ export async function dispatchPrivate(path,opts,transport) {
   if(status.state!=='enabled') throw new Error('Finish the encrypted-data conversion in Settings → Security before editing this organization.');
   const key=await loadPrivateKey(orgId,status,transport);
   const method=String(opts.method||'GET').toUpperCase();
+  if(method!=='GET'&&key.rotationRequired)throw new Error('Membership or devices changed. An owner must rotate encryption keys in Security before saving.');
+  async function submissions() {
+    if(!key.scopes?.admin)return [];
+    const data=await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/submissions`);
+    return Promise.all(data.submissions.map(async row=>{
+      const privateJwk=key.scopes.admin.submissions?.[row.epoch];
+      if(!privateJwk)throw new Error('The submission decryption key is missing. Restore administrator keys in Security.');
+      const opened=await openSubmission(orgId,row,privateJwk);
+      if(!opened||typeof opened!=='object'||Array.isArray(opened))throw new Error('Invalid submission content.');
+      const clear={};
+      for(const field of ['name','email','contact','details','extra','source_kind','status','meeting_id','need_id','pledger_name','pledger_email','amount','unit','note'])if(['string','number','boolean'].includes(typeof opened[field]))clear[field]=String(opened[field]);
+      if(typeof opened.type==='string')clear.pledge_type=opened.type;
+
+      return {...clear,id:row.id,type:row.type,created_at:row.created_at,review_status:'new',admin_note:''};
+    }));
+  }
+  if(tail==='dashboard'&&method==='GET') {
+    const data={};
+    await Promise.all(['people','inventory','needs','meetings'].map(async kind=>{
+      const result=await dispatchPrivate(`/api/orgs/${encodeURIComponent(orgId)}/${kind}`,{},transport);
+      data[kind]=result.data[PRIVATE_CONTENT[kind].list];
+    }));
+    data.pledges=status.role==='viewer'?[]:(await dispatchPrivate(`/api/orgs/${encodeURIComponent(orgId)}/pledges`,{},transport)).data.pledges;
+    const admin=['admin','owner'].includes(status.role);
+    data.subscribers=admin?(await dispatchPrivate(`/api/orgs/${encodeURIComponent(orgId)}/newsletter/subscribers`,{},transport)).data.subscribers:[];
+    data.publicInbox=admin?(await dispatchPrivate(`/api/orgs/${encodeURIComponent(orgId)}/public/inbox`,{},transport)).data.items:[];
+    const upcoming=data.meetings.filter(row=>Number(row.starts_at)>=Date.now()).sort((a,b)=>Number(a.starts_at)-Number(b.starts_at));
+    data.counts={people:data.people.length,inventory:data.inventory.length,needs:data.needs.length,needsOpen:data.needs.filter(row=>row.status==='open').length,meetingsUpcoming:upcoming.length,pledges:data.pledges.length,pledgesActive:data.pledges.filter(row=>!['fulfilled','cancelled'].includes(row.status)).length,subscribers:data.subscribers.length,publicInbox:data.publicInbox.filter(row=>!['closed','done','archived','rejected'].includes(row.review_status)).length};
+    return {handled:true,data:{ok:true,private_mode:true,role:status.role,...data,nextMeeting:upcoming[0]||null}};
+  }
+  if(tail==='public/inbox') {
+    if(!['admin','owner'].includes(status.role))throw new Error('Administrator access is required for the public inbox.');
+    if(method!=='GET') {
+      const body=parseBody(opts.body),target=`/api/orgs/${encodeURIComponent(orgId)}/intake/reviews/${encodeURIComponent(body.id)}`;
+      let exists=false;try{await transport(target);exists=true;}catch(e){if(e.status!==404)throw e;}
+      await dispatchPrivate(target,{method:exists?'PUT':'POST',body:JSON.stringify(body)},transport);
+    }
+    const originals=await submissions();
+    const reviews=(await dispatchPrivate(`/api/orgs/${encodeURIComponent(orgId)}/intake/reviews`,{},transport)).data.items;
+    const overlays=new Map(reviews.map(row=>[row.id,row]));
+    const items=originals.map(row=>({...row,...overlays.get(row.id),title:row.source_kind||row.type,contact:row.contact||row.email||row.pledger_email||'',name:row.name||row.pledger_name||'',details:row.details||row.note||row.status||'',id:row.id}));
+    for(const row of reviews)if(!originals.some(original=>original.id===row.id))items.push(row);
+    return {handled:true,data:{ok:true,items}};
+  }
+  if(tail==='newsletter') {
+    const target=`/api/orgs/${encodeURIComponent(orgId)}/newsletter/settings/${encodeURIComponent(orgId)}`;
+    if(method==='GET') {
+      try{return await dispatchPrivate(target,{},transport);}catch(e){if(e.status===404)return {handled:true,data:{ok:true,newsletter:{enabled:false,list_address:'',blurb:''}}};throw e;}
+    }
+    let exists=false;try{await transport(target);exists=true;}catch(e){if(e.status!==404)throw e;}
+    return dispatchPrivate(target,{method:exists?'PUT':'POST',body:opts.body},transport);
+  }
+  if(tail==='newsletter/subscribers'&&method==='GET') {
+    if(!['admin','owner'].includes(status.role))throw new Error('Administrator access is required for subscribers.');
+    const stored=await transport(path,opts);
+    const rows=await Promise.all((stored.subscribers||[]).map(row=>reveal(key,orgId,'newsletter/subscribers',row,transport)));
+    const incoming=(await submissions()).filter(row=>row.type==='newsletter');
+    return {handled:true,data:{ok:true,subscribers:[...rows,...incoming.filter(row=>!rows.some(existing=>existing.id===row.id))]}};
+  }
+  if(tail==='public/generate'&&method==='POST') {
+    const result=await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/public-slug`,{method:'POST',body:JSON.stringify({slug:crypto.randomUUID()})});
+    return {handled:true,data:{ok:true,public:{slug:result.slug}}};
+  }
+  if(tail==='links/search'&&method==='GET') {
+    const query=(url.searchParams.get('q')||'').trim().toLowerCase();
+    if(!query)return {handled:true,data:{ok:true,items:[],results:[]}};
+    // Never put a private search term in an HTTP URL or server log.
+    const collections=await Promise.all(['events','witness'].map(async kind=>{
+      const data=await transport(`/api/orgs/${encodeURIComponent(orgId)}/${kind}`);
+      return {kind,rows:await Promise.all((data[PRIVATE_CONTENT[kind].list]||[]).map(row=>reveal(key,orgId,kind,row,transport)))};
+    }));
+    const items=collections.flatMap(({kind,rows})=>rows.filter(row=>
+      [row.title,row.description,row.location,row.summary,JSON.stringify(row.tags||[])].some(v=>String(v||'').toLowerCase().includes(query))
+    ).sort((a,b)=>Number(b.starts_at||b.updated_at||0)-Number(a.starts_at||a.updated_at||0)).slice(0,25).map(row=>({
+      type:kind==='events'?'event':'witness',id:row.id,title:row.title||(kind==='events'?'Untitled event':'Untitled witness record'),
+      subtitle:kind==='events'?[row.starts_at||'Date pending',row.location].filter(Boolean).join(' • '):row.summary||row.happened_at||'Witness record',
+      href:`/org/${encodeURIComponent(orgId)}/${kind==='events'?'events/'+encodeURIComponent(row.id):'witness'}`,tags:row.tags||[],
+    })));
+    return {handled:true,data:{ok:true,items,results:items}};
+  }
+  if(tail==='public/get'&&method==='GET') {
+    try {const result=await dispatchPrivate(`/api/orgs/${encodeURIComponent(orgId)}/public/config/${encodeURIComponent(orgId)}`,{},transport);return result;}
+    catch(e){if(e.status===404)return {handled:true,data:{ok:true,public:{enabled:false}}};throw e;}
+  }
+  if(tail==='public/save'&&method==='POST') {
+    if(!['admin','owner'].includes(status.role))throw new Error('An administrator must publish or change the public page.');
+    const draft=parseBody(opts.body);
+    if(draft.enabled) {
+      const route=await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/public-slug`,{method:'POST',body:JSON.stringify({slug:draft.slug||orgId})});
+      draft.slug=route.slug;
+    }
+    const configPath=`/api/orgs/${encodeURIComponent(orgId)}/public/config/${encodeURIComponent(orgId)}`;
+    let exists=false;
+    try {await transport(configPath);exists=true;}catch(e){if(e.status!==404)throw e;}
+    return dispatchPrivate(configPath,{method:exists?'PUT':'POST',body:JSON.stringify(draft)},transport);
+  }
   if(tail==='studio/state') {
     if(method==='GET') {
       const data=await transport(path,opts);
@@ -166,11 +265,16 @@ export async function dispatchPrivate(path,opts,transport) {
       // Do not fill defaults on a partial patch: absent fields must stay absent.
       const decoded=await decodeLegacyRecord(key,kind,clear,{normalize:false});
       const combined={...(previous||{}),...decoded};
+      if(PUBLIC_FIELDS[kind]&&(wantsPublication(kind,combined)||wantsPublication(kind,previous||{}))&&!['admin','owner'].includes(status.role))throw new Error('An administrator must publish or change a published record.');
       // Content is authoritative inside the envelope. IDs and revisions are checked
       // independently; never merge decrypted content over these protocol fields.
       for(const k of ['ciphertext','encrypted_blob','encryptedBlob','revision','encrypted','previewUrl','downloadUrl','url','storage_key','storageKey']) delete combined[k];
       const ciphertext=await encryptPrivate(key,combined,orgId,kind,id);
       data=await transport(path,{method,body:JSON.stringify({id,ciphertext,revision:previous?.revision||0,...(contract.parent?{parentId:combined[contract.parent]||null}:{})})});
+      if(PUBLIC_FIELDS[kind]&&['admin','owner'].includes(status.role)) {
+        try {await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/publish`,{method:'POST',body:JSON.stringify({kind,id,revision:data[contract.one].revision,public:wantsPublication(kind,combined)?selectPublicFields(kind,combined):null})});}
+        catch(e){throw new Error('The encrypted record was saved, but updating its public copy failed. Retry the save to finish publishing or unpublishing. '+e.message);}
+      }
     }
   }
   const next={...data,private_mode:true};

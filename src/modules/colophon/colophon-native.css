@@ -315,3 +315,135 @@
     text-overflow: ellipsis;
   }
 }
+
+/* Final native-only overrides. These intentionally win over Bondfire's generic button rules. */
+.bondfire-colophon-native-shell .admin-rail__toggle,
+.bondfire-colophon-native-shell .admin-rail__group-toggle {
+  width: 100% !important;
+  min-height: 38px !important;
+  display: grid !important;
+  grid-template-columns: 30px minmax(0, 1fr) 16px !important;
+  align-items: center !important;
+  background: #1d252a !important;
+  color: #e8edf0 !important;
+  border: 1px solid #3b4851 !important;
+  text-align: left !important;
+}
+.bondfire-colophon-native-shell .admin-rail__toggle {
+  grid-template-columns: 30px minmax(0, 1fr) !important;
+}
+.bondfire-colophon-native-shell .admin-rail__toggle-label,
+.bondfire-colophon-native-shell .admin-rail__text {
+  color: inherit !important;
+}
+.bondfire-colophon-native-shell .admin-rail__group-toggle:hover,
+.bondfire-colophon-native-shell .admin-rail__toggle:hover,
+.bondfire-colophon-native-shell .admin-rail__group-toggle:focus-visible,
+.bondfire-colophon-native-shell .admin-rail__toggle:focus-visible {
+  background: #2b3942 !important;
+  color: #fff !important;
+}
+.bondfire-colophon-native-shell .admin-rail__subnav {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+}
+.bondfire-colophon-native-shell .admin-rail__subnav[hidden] {
+  display: none !important;
+}
+.bondfire-colophon-native-shell .wp-admin-topbar {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 42px !important;
+  padding: 4px 8px !important;
+  background: #101416 !important;
+  color: #eef2f4 !important;
+}
+.bondfire-colophon-native-shell .wp-admin-topbar__button,
+.bondfire-colophon-native-shell .wp-admin-topbar__link,
+.bondfire-colophon-native-shell .wp-admin-topbar__command {
+  width: auto !important;
+  min-height: 34px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  background: transparent !important;
+  color: #eef2f4 !important;
+  border: 0 !important;
+}
+.bondfire-colophon-native-shell .wp-admin-topbar__button:hover,
+.bondfire-colophon-native-shell .wp-admin-topbar__link:hover {
+  background: #27343b !important;
+  color: #fff !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card,
+.bondfire-colophon-native-shell .install-readiness-card,
+.bondfire-colophon-native-shell .desktop-publish-card {
+  color: #f4f0e8 !important;
+  background: #0f1417 !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card__identity,
+.bondfire-colophon-native-shell .publishing-modules-card__item,
+.bondfire-colophon-native-shell .publishing-modules-card__logo-preview {
+  background: #182025 !important;
+  border-color: #4b5963 !important;
+  color: #f4f0e8 !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card__item strong,
+.bondfire-colophon-native-shell .publishing-modules-card__item small,
+.bondfire-colophon-native-shell .publishing-modules-card__identity label,
+.bondfire-colophon-native-shell .publishing-modules-card__identity label > span {
+  color: #f4f0e8 !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card__item small {
+  opacity: .82 !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card input[type="checkbox"] {
+  width: auto !important;
+  min-height: 0 !important;
+  accent-color: #c65b42;
+}
+.bondfire-colophon-native-shell .publishing-preset-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+.bondfire-colophon-native-shell .publishing-preset-row > button,
+.bondfire-colophon-native-shell .publishing-preset-row > .button {
+  width: auto !important;
+  flex: 0 0 auto !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card__identity input,
+.bondfire-colophon-native-shell .publishing-modules-card__identity textarea {
+  background: #0d1215 !important;
+  color: #f4f0e8 !important;
+  border-color: #64727d !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card__logo-preview {
+  min-width: 0 !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card__logo-preview img {
+  max-width: min(220px, 100%) !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card > button,
+.bondfire-colophon-native-shell .publishing-modules-card .button,
+.bondfire-colophon-native-shell .publishing-modules-card button {
+  width: auto !important;
+  max-width: 100% !important;
+  background: #26343c !important;
+  color: #fff8ef !important;
+  border-color: #78909e !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card > button.button--primary,
+.bondfire-colophon-native-shell .publishing-modules-card > button[type="submit"] {
+  background: #b94b35 !important;
+  border-color: #d77a60 !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card__item {
+  min-width: 0 !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card__item span {
+  min-width: 0 !important;
+  color: #f4f0e8 !important;
+}
+.bondfire-colophon-native-shell .publishing-modules-card__item span small {
+  overflow-wrap: anywhere;
+}

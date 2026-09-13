@@ -353,7 +353,6 @@ function Shell() {
 					<Route path="build" element={<BuildModules />} />
 					<Route path="pledges" element={<ModuleRouteGate moduleId="pledges"><Navigate to="../settings?tab=pledges" replace /></ModuleRouteGate>} />
 					<Route path="intake" element={<ModuleRouteGate moduleId="intake"><Navigate to="../settings?tab=public-inbox" replace /></ModuleRouteGate>} />
-					<Route path="colophon" element={<ModuleRouteGate moduleId="publishing-colophon"><Colophon /></ModuleRouteGate>} />
 					<Route index element={<Overview />} />
 					<Route path="overview" element={<Overview />} />
 					<Route path="people" element={<ModuleRouteGate moduleId="people"><People /></ModuleRouteGate>} />

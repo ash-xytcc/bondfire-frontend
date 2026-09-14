@@ -152,16 +152,23 @@ function isBucketLike(value) {
   return Boolean(value && typeof value === "object" && typeof value.get === "function" && typeof value.put === "function" && !value.prepare);
 }
 
+function gatewaySecret(env, orgId) {
+  const master = String(env?.COLOPHON_GATEWAY_SECRET || env?.JWT_SECRET || "");
+  if (!master) throw new Error("COLOPHON_GATEWAY_SECRET_REQUIRED");
+  return `${master}:bondfire-colophon-gateway:${fnv1a(orgId)}`;
+}
+
 export function createColophonScopedEnv(env, orgId) {
   const source = env || {};
   const db = source.BF_DB || source.DB || null;
   const scopedDb = createOrgScopedD1(db, orgId);
   const bucketCache = new Map();
+  const sessionSecret = gatewaySecret(source, orgId);
 
   return new Proxy(source, {
     get(target, prop) {
       if (prop === "BF_DB" || prop === "DB") return scopedDb;
-      if (prop === "colophon_SESSION_SECRET") return `bondfire-colophon-gateway:${fnv1a(orgId)}`;
+      if (prop === "colophon_SESSION_SECRET") return sessionSecret;
       const value = target[prop];
       if (!isBucketLike(value)) return value;
       if (!bucketCache.has(value)) bucketCache.set(value, createOrgScopedBucket(value, orgId));
@@ -187,15 +194,16 @@ async function sign(secret, value) {
   return new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value)));
 }
 
-export async function createColophonGatewayRequest(request, orgId, actor = {}) {
+export async function createColophonGatewayRequest(request, orgId, actor = {}, env = {}) {
   const now = Math.floor(Date.now() / 1000);
-  const secret = `bondfire-colophon-gateway:${fnv1a(orgId)}`;
+  const secret = gatewaySecret(env, orgId);
+  const role = String(actor.role || "viewer").toLowerCase();
   const payload = {
     v: 2,
     sub: String(actor.email || actor.id || "bondfire-user").slice(0, 254),
     userId: "",
     email: String(actor.email || "").slice(0, 254),
-    role: "owner",
+    role,
     iat: now,
     exp: now + 300,
     sid: `bondfire-${fnv1a(`${orgId}:${actor.id || actor.email || now}`)}`,
@@ -210,7 +218,7 @@ export async function createColophonGatewayRequest(request, orgId, actor = {}) {
   cookies.push(`colophon_session=${encodeURIComponent(`${encoded}.${signature}`)}`);
   headers.set("cookie", cookies.join("; "));
   headers.set("x-bondfire-colophon-org", String(orgId));
-  headers.set("x-bondfire-colophon-role", String(actor.role || "viewer"));
+  headers.set("x-bondfire-colophon-role", role);
 
   return new Request(request, { headers });
 }

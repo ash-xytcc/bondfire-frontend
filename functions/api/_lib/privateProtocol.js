@@ -5,7 +5,7 @@ import { getDb, requireOrgRole } from './auth.js';
 import { bad, json } from './http.js';
 import { ensurePrivateSchema, getPrivateMode } from './privateStore.js';
 import { migrationInventory, migrationPage, migrateRecord, cleanupPrivateSources, legacyPrivateFile } from './privateMigration.js';
-import { getPrivateBlob, putPrivateBlob } from './privateBlobs.js';
+import { cleanupOrphanedPrivateBlobs, getPrivateBlob, putPrivateBlob } from './privateBlobs.js';
 import { contentContext, isCiphertext } from '../../../shared/privateContent.js';
 import {publishPrivateCopy,reservePublicSlug} from './privatePublication.js';
 
@@ -32,7 +32,12 @@ export async function privateProtocol({env,request,orgId,path=''}) {
     if(request.method==='GET' && !path) {
       const audit=url.searchParams.get('audit')==='1';
       if(audit && gate.role!=='owner') return bad(403,'OWNER_REQUIRED');
+      // Interrupted encrypted file uploads can leave ciphertext that was never
+      // attached to a Drive record. Only aged, definitely unattached blobs are
+      // removed; opaque payloads belonging to live file records are untouched.
+      const cleanup=await cleanupOrphanedPrivateBlobs(env,orgId);
       return json({ok:true,state:mode?.state||'off',keyCheck:mode?.key_check||null,userId:gate.user.sub,role:gate.role,
+        orphanCleanupPending:cleanup.pending>0,
         ...(audit?{inventory:await migrationInventory(env,orgId)}:{})});
     }
     if(path==='begin'&&request.method==='POST') {

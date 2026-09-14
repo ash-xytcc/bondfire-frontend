@@ -16,7 +16,7 @@ export async function putPrivateBlob(env,orgId,id,ciphertext,fileId) {
   if(state?.epoch&&(state.roster_revision!==state.rotated_revision||envelope.v!==3||envelope.epoch!==state.epoch||envelope.scope!=='viewer'))throw new Error('PRIVATE_KEY_ROTATION_REQUIRED');
   const file=await db.prepare("SELECT deleting FROM org_private_records WHERE org_id=? AND kind='drive/files' AND id=?").bind(orgId,fileId).first();
   if(file?.deleting)throw new Error('PRIVATE_FILE_DELETION_IN_PROGRESS');
-  const exists=await db.prepare('SELECT id FROM org_private_blobs WHERE org_id=? AND id=?').bind(orgId,id).first();
+  const exists=await db.prepare('SELECT file_id,inline_ciphertext FROM org_private_blobs WHERE org_id=? AND id=?').bind(orgId,id).first();
   if(exists) throw new Error('BLOB_ALREADY_EXISTS');
   const bucket=getDriveBucket(env);
   if(!bucket&&ciphertext.length>512*1024) throw new Error('ENCRYPTED_FILE_BUCKET_REQUIRED');
@@ -37,6 +37,24 @@ export async function getPrivateBlob(env,orgId,id) {
   const object=await getDriveBucket(env)?.get(objectKey(orgId,id));
   if(!object) throw new Error('BLOB_NOT_FOUND');
   return await object.text();
+}
+
+export async function cleanupOrphanedPrivateBlobs(env,orgId,{olderThanMs=24*60*60*1000,now=Date.now()}={}) {
+  const db=getDb(env);await ensurePrivateBlobs(db);
+  const cutoff=Math.max(0,Number(now)-Math.max(0,Number(olderThanMs)||0));
+  const rows=await db.prepare("SELECT b.id,b.inline_ciphertext FROM org_private_blobs b WHERE b.org_id=? AND b.created_at<=? AND NOT EXISTS(SELECT 1 FROM org_private_records r WHERE r.org_id=b.org_id AND r.kind='drive/files' AND r.id=b.file_id)").bind(orgId,cutoff).all();
+  let removed=0,pending=0;
+  for(const row of rows.results||[]) {
+    if(row.inline_ciphertext===null) {
+      const bucket=getDriveBucket(env);
+      if(!bucket){pending+=1;continue;}
+      try {await bucket.delete(objectKey(orgId,row.id));}
+      catch {pending+=1;continue;}
+    }
+    const result=await db.prepare('DELETE FROM org_private_blobs WHERE org_id=? AND id=?').bind(orgId,row.id).run();
+    removed+=Number(result?.meta?.changes||0);
+  }
+  return {removed,pending};
 }
 
 export async function deletePrivateFileBlobs(env,orgId,fileId) {

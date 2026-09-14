@@ -75,13 +75,22 @@ async function reveal(key,orgId,kind,row,transport,hydrate=false) {
   }
   return result;
 }
+async function deletePayload(orgId,payloadId,fileId,transport) {
+  if(!payloadId)return;
+  await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/blob/${payloadId}`,{method:'DELETE',body:JSON.stringify({fileId})});
+}
 async function uploadPayload(key,orgId,bytes,transport,fileId) {
   const payloadId=crypto.randomUUID();
   const ciphertext=await encryptPrivate(key,bytes,orgId,'drive/blob',payloadId);
-  await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/blob/${payloadId}`,{method:'POST',body:JSON.stringify({ciphertext,fileId})});
-  const check=await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/blob/${payloadId}`);
-  if(check.ciphertext!==ciphertext) throw new Error('Encrypted upload verification failed.');
-  return payloadId;
+  try {
+    await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/blob/${payloadId}`,{method:'POST',body:JSON.stringify({ciphertext,fileId})});
+    const check=await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/blob/${payloadId}`);
+    if(check.ciphertext!==ciphertext) throw new Error('Encrypted upload verification failed.');
+    return payloadId;
+  } catch(error) {
+    try {await deletePayload(orgId,payloadId,fileId,transport);} catch {}
+    throw error;
+  }
 }
 export { uploadPayload };
 export async function dispatchPrivate(path,opts,transport) {
@@ -172,7 +181,7 @@ export async function dispatchPrivate(path,opts,transport) {
       type:kind==='events'?'event':'witness',id:row.id,title:row.title||(kind==='events'?'Untitled event':'Untitled witness record'),
       subtitle:kind==='events'?[row.starts_at||'Date pending',row.location].filter(Boolean).join(' • '):row.summary||row.happened_at||'Witness record',
       href:`/org/${encodeURIComponent(orgId)}/${kind==='events'?'events/'+encodeURIComponent(row.id):'witness'}`,tags:row.tags||[],
-    })));
+    }));
     return {handled:true,data:{ok:true,items,results:items}};
   }
   if(tail==='public/get'&&method==='GET') {
@@ -230,23 +239,21 @@ export async function dispatchPrivate(path,opts,transport) {
   let data;
   if(method==='GET') data=await transport(path,opts);
   else {
-    let clear;
+    let clear,uploadBytes=null;
     if(opts.body instanceof Blob) {
       if(kind!=='drive/files') throw new Error('Binary uploads must use encrypted Drive.');
       const headers=new Headers(opts.headers||{});
       clear={name:opts.body.name||headers.get('x-drive-name')||'file',mime:opts.body.type||headers.get('x-drive-mime')||'application/octet-stream',size:opts.body.size,parentId:headers.get('x-drive-parent-id')||null};
       clear.id=route.id||crypto.randomUUID();
-      clear.payloadId=await uploadPayload(key,orgId,new Uint8Array(await opts.body.arrayBuffer()),transport,clear.id);
+      uploadBytes=new Uint8Array(await opts.body.arrayBuffer());
     } else {
       clear=parseBody(opts.body);
       if(kind==='drive/files'&&(clear.textContent!==undefined||clear.dataUrl!==undefined)) {
-        let bytes;
         if(clear.dataUrl) {
           const u=String(clear.dataUrl);if(!u.startsWith('data:')) throw new Error('File data must be local.');
-          bytes=new Uint8Array(await (await fetch(u)).arrayBuffer());
-        } else bytes=new TextEncoder().encode(String(clear.textContent||''));
+          uploadBytes=new Uint8Array(await (await fetch(u)).arrayBuffer());
+        } else uploadBytes=new TextEncoder().encode(String(clear.textContent||''));
         clear.id=route.id||clear.id||crypto.randomUUID();
-        clear.payloadId=await uploadPayload(key,orgId,bytes,transport,clear.id);
         delete clear.dataUrl;delete clear.textContent;
       }
     }
@@ -255,6 +262,12 @@ export async function dispatchPrivate(path,opts,transport) {
     if(method!=='POST') {
       const current=await transport(`/api/orgs/${encodeURIComponent(orgId)}/${kind}/${encodeURIComponent(id)}`);
       previous=await reveal(key,orgId,kind,current[contract.one],transport);
+    }
+    let uploadedPayloadId=null;
+    if(kind==='drive/files'&&uploadBytes) {
+      uploadedPayloadId=await uploadPayload(key,orgId,uploadBytes,transport,id);
+      clear.payloadId=uploadedPayloadId;
+      clear.size=uploadBytes.length;
     }
     if(method==='DELETE') {
       data=await transport(path,{method,body:JSON.stringify({id,revision:previous.revision})});
@@ -270,7 +283,15 @@ export async function dispatchPrivate(path,opts,transport) {
       // independently; never merge decrypted content over these protocol fields.
       for(const k of ['ciphertext','encrypted_blob','encryptedBlob','revision','encrypted','previewUrl','downloadUrl','url','storage_key','storageKey']) delete combined[k];
       const ciphertext=await encryptPrivate(key,combined,orgId,kind,id);
-      data=await transport(path,{method,body:JSON.stringify({id,ciphertext,revision:previous?.revision||0,...(contract.parent?{parentId:combined[contract.parent]||null}:{})})});
+      try {
+        data=await transport(path,{method,body:JSON.stringify({id,ciphertext,revision:previous?.revision||0,...(contract.parent?{parentId:combined[contract.parent]||null}:{})})});
+      } catch(error) {
+        if(uploadedPayloadId)try {await deletePayload(orgId,uploadedPayloadId,id,transport);} catch {}
+        throw error;
+      }
+      if(uploadedPayloadId&&previous?.payloadId&&previous.payloadId!==uploadedPayloadId) {
+        try {await deletePayload(orgId,previous.payloadId,id,transport);} catch {}
+      }
       if(PUBLIC_FIELDS[kind]&&['admin','owner'].includes(status.role)) {
         try {await transport(`/api/orgs/${encodeURIComponent(orgId)}/privacy/publish`,{method:'POST',body:JSON.stringify({kind,id,revision:data[contract.one].revision,public:wantsPublication(kind,combined)?selectPublicFields(kind,combined):null})});}
         catch(e){throw new Error('The encrypted record was saved, but updating its public copy failed. Retry the save to finish publishing or unpublishing. '+e.message);}

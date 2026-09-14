@@ -5,7 +5,7 @@ import { getDb, requireOrgRole } from './auth.js';
 import { bad, json } from './http.js';
 import { ensurePrivateSchema, getPrivateMode } from './privateStore.js';
 import { migrationInventory, migrationPage, migrateRecord, cleanupPrivateSources, legacyPrivateFile } from './privateMigration.js';
-import { getPrivateBlob, putPrivateBlob } from './privateBlobs.js';
+import { deletePrivateBlob, getPrivateBlob, putPrivateBlob } from './privateBlobs.js';
 import { contentContext, isCiphertext } from '../../../shared/privateContent.js';
 import {publishPrivateCopy,reservePublicSlug} from './privatePublication.js';
 
@@ -55,6 +55,12 @@ export async function privateProtocol({env,request,orgId,path=''}) {
         const body=await request.json();
         if(Object.keys(body).some(k=>!['ciphertext','fileId'].includes(k))) return bad(400,'PLAINTEXT_FIELDS_FORBIDDEN');
         await putPrivateBlob(env,orgId,id,body.ciphertext,body.fileId);
+        return json({ok:true,id});
+      }
+      if(request.method==='DELETE') {
+        const body=await request.json().catch(()=>({}));
+        if(Object.keys(body).some(k=>k!=='fileId')) return bad(400,'PLAINTEXT_FIELDS_FORBIDDEN');
+        await deletePrivateBlob(env,orgId,id,body.fileId);
         return json({ok:true,id});
       }
     }

@@ -158,6 +158,24 @@ function gatewaySecret(env, orgId) {
   return `${master}:bondfire-colophon-gateway:${fnv1a(orgId)}`;
 }
 
+function colophonRole(role) {
+  const value = String(role || "viewer").toLowerCase();
+  if (value === "member") return "contributor";
+  if (["owner", "admin", "editor", "contributor", "viewer"].includes(value)) return value;
+  return "viewer";
+}
+
+function gatewayActorIdentity(orgId, actor = {}) {
+  const sourceId = String(actor.id || actor.email || "bondfire-user").slice(0, 180);
+  const id = `bondfire-${fnv1a(`${orgId}:${sourceId}`)}`;
+  return {
+    id,
+    email: `${id}@gateway.invalid`,
+    displayName: String(actor.email || sourceId || "Bondfire member").slice(0, 160),
+    role: colophonRole(actor.role),
+  };
+}
+
 export function createColophonScopedEnv(env, orgId) {
   const source = env || {};
   const db = source.BF_DB || source.DB || null;
@@ -175,6 +193,43 @@ export function createColophonScopedEnv(env, orgId) {
       return bucketCache.get(value);
     },
   });
+}
+
+export async function ensureColophonGatewayActor(scopedEnv, orgId, actor = {}) {
+  const db = scopedEnv?.BF_DB || scopedEnv?.DB || null;
+  if (!db?.prepare) throw new Error("COLOPHON_GATEWAY_DB_REQUIRED");
+  const identity = gatewayActorIdentity(orgId, actor);
+  const now = new Date().toISOString();
+  await db.prepare(`CREATE TABLE IF NOT EXISTS admin_users (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL DEFAULT '',
+    password_hash TEXT NOT NULL,
+    password_salt TEXT NOT NULL,
+    password_iterations INTEGER NOT NULL DEFAULT 100000,
+    role TEXT NOT NULL DEFAULT 'viewer',
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TEXT
+  )`).run();
+  await db.prepare(`INSERT INTO admin_users (
+    id, email, display_name, password_hash, password_salt, password_iterations, role, status, created_at, updated_at
+  ) VALUES (?, ?, ?, 'gateway-managed', 'gateway-managed', 1, ?, 'active', ?, ?)
+  ON CONFLICT(id) DO UPDATE SET
+    email = excluded.email,
+    display_name = excluded.display_name,
+    role = excluded.role,
+    status = 'active',
+    updated_at = excluded.updated_at`).bind(
+    identity.id,
+    identity.email,
+    identity.displayName,
+    identity.role,
+    now,
+    now,
+  ).run();
+  return identity;
 }
 
 function base64Url(bytes) {
@@ -197,11 +252,12 @@ async function sign(secret, value) {
 export async function createColophonGatewayRequest(request, orgId, actor = {}, env = {}) {
   const now = Math.floor(Date.now() / 1000);
   const secret = gatewaySecret(env, orgId);
-  const role = String(actor.role || "viewer").toLowerCase();
+  const bondfireRole = String(actor.bondfireRole || actor.role || "viewer").toLowerCase();
+  const role = colophonRole(actor.role);
   const payload = {
     v: 2,
-    sub: String(actor.email || actor.id || "bondfire-user").slice(0, 254),
-    userId: "",
+    sub: String(actor.displayName || actor.email || actor.id || "bondfire-user").slice(0, 254),
+    userId: String(actor.id || "").slice(0, 180),
     email: String(actor.email || "").slice(0, 254),
     role,
     iat: now,
@@ -218,7 +274,7 @@ export async function createColophonGatewayRequest(request, orgId, actor = {}, e
   cookies.push(`colophon_session=${encodeURIComponent(`${encoded}.${signature}`)}`);
   headers.set("cookie", cookies.join("; "));
   headers.set("x-bondfire-colophon-org", String(orgId));
-  headers.set("x-bondfire-colophon-role", role);
+  headers.set("x-bondfire-colophon-role", bondfireRole);
 
   return new Request(request, { headers });
 }

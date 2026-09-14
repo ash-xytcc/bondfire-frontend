@@ -14,21 +14,23 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["favicon.svg", "robots.txt", "apple-touch-icon.png"],
+      includeAssets: ["icons/favicon.png", "icons/apple-touch-icon.png"],
       manifest: {
         name: "Bondfire",
         short_name: "Bondfire",
-        description: "Mutual aid org management",
-        start_url: "/",
+        description: "Mutual aid coordination, inventories, needs, meetings, and pledges.",
+        id: "/",
+        start_url: "/?source=pwa",
         scope: "/",
         display: "standalone",
-        background_color: "#0b0b0f",
-        theme_color: "#0b0b0f",
+        background_color: "#0b0b0b",
+        theme_color: "#8b1d1d",
         icons: [
-          { src: "/pwa-192.png", sizes: "192x192", type: "image/png" },
-          { src: "/pwa-512.png", sizes: "512x512", type: "image/png" },
-          { src: "/pwa-192-maskable.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
-          { src: "/pwa-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
+          { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+          { src: "/icons/icon-192-maskable.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+          { src: "/icons/icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          { src: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
         ]
       },
       workbox: {

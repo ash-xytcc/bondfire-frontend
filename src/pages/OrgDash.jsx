@@ -6,8 +6,9 @@ import { isDemoMode } from "../demo/demoMode.js";
 import { ensureDemoOrgList, resetDemoState } from "../demo/demoStore.js";
 import AccountDestructionPanel from "../components/AccountDestructionPanel.jsx";
 
-/* ---------- API helper ---------- */
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+const PENDING_INVITE_KEY = "bf_pending_invite_v1";
+const PENDING_INVITE_ERROR_KEY = "bf_pending_invite_error_v1";
 
 function useIsMobile(maxWidthPx = 720) {
   const [isMobile, setIsMobile] = React.useState(() => {
@@ -33,8 +34,6 @@ function useIsMobile(maxWidthPx = 720) {
 }
 
 function getToken() {
-  // Back-compat: older builds stored a JWT in storage.
-  // Newer cookie-session builds won't have this, and that's OK.
   return localStorage.getItem("bf_auth_token") || sessionStorage.getItem("bf_auth_token") || "";
 }
 
@@ -43,6 +42,19 @@ function readCookie(name) {
   const safe = name.replace(/[$()*+.?[\\\]^{|}]/g, "\\$&");
   const m = document.cookie.match(new RegExp(`(?:^|; )${safe}=([^;]*)`));
   return m ? decodeURIComponent(m[1]) : "";
+}
+
+function friendlyOrgError(error, fallback) {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return "You are offline. Reconnect and try again; nothing was changed.";
+  }
+  const status = Number(error?.status || 0);
+  if (status === 401) return "Your session expired. Sign in again, then retry this action.";
+  if (status === 403) return "You do not have permission to do that in this organization.";
+  if (status === 404) return "That organization or invitation could not be found. Refresh the dashboard or check the invite code.";
+  if (status === 410) return "That invitation has expired. Ask an organization admin for a new invite.";
+  if (status === 429) return "Too many attempts. Wait a little before trying again.";
+  return String(error?.message || fallback);
 }
 
 async function authFetch(path, opts = {}) {
@@ -69,14 +81,26 @@ async function authFetch(path, opts = {}) {
   }
 
   const doReq = async (u) => {
-    const res = await fetch(u, {
-      ...opts,
-      credentials: "include",
-      headers,
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
-    });
+    let res;
+    try {
+      res = await fetch(u, {
+        ...opts,
+        credentials: "include",
+        headers,
+        body: opts.body ? JSON.stringify(opts.body) : undefined,
+      });
+    } catch (cause) {
+      const error = new Error("The server could not be reached.");
+      error.cause = cause;
+      throw error;
+    }
     const j = await res.json().catch(() => ({}));
-    if (!res.ok || j.ok === false) throw new Error(j.error || j.message || `HTTP ${res.status}`);
+    if (!res.ok || j.ok === false) {
+      const error = new Error(j.error || j.message || `Request failed (${res.status})`);
+      error.status = res.status;
+      error.code = j.error;
+      throw error;
+    }
     return j;
   };
 
@@ -87,11 +111,10 @@ async function authFetch(path, opts = {}) {
       return await doReq(u);
     } catch (e) {
       lastErr = e;
-      const msg = String(e?.message || "");
       const shouldTryNext = i < candidates.length - 1 && (
-        msg.includes("HTTP 404") ||
-        msg.includes("HTTP 500") ||
-        msg.includes("Failed to fetch")
+        e?.status === 404 ||
+        e?.status >= 500 ||
+        !e?.status
       );
       if (!shouldTryNext) throw e;
     }
@@ -108,11 +131,17 @@ export default function OrgDash() {
   const [orgs, setOrgs] = React.useState([]);
   const [busy, setBusy] = React.useState(false);
   const [msg, setMsg] = React.useState("");
+  const [msgKind, setMsgKind] = React.useState("info");
   const [showAccountDeletionPrompt, setShowAccountDeletionPrompt] = React.useState(false);
+  const [inviteCode, setInviteCode] = React.useState(() => {
+    try { return sessionStorage.getItem(PENDING_INVITE_KEY) || ""; } catch { return ""; }
+  });
 
-  const [inviteCode, setInviteCode] = React.useState("");
-  const load = React.useCallback(async () => {
-    setMsg("");
+  const load = React.useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) {
+      setMsg("");
+      setMsgKind("info");
+    }
     try {
       if (demoMode) {
         const demoOrg = ensureDemoOrgList();
@@ -128,7 +157,8 @@ export default function OrgDash() {
       }));
       setOrgs(revealed);
     } catch (e) {
-      setMsg(e.message || "Failed to load orgs");
+      setMsg(friendlyOrgError(e, "Could not load your organizations. Refresh to try again."));
+      setMsgKind("error");
     }
   }, [demoMode]);
 
@@ -139,6 +169,12 @@ export default function OrgDash() {
         sessionStorage.removeItem("bf_account_deletion_prompt");
         setShowAccountDeletionPrompt(true);
       }
+      const pendingInviteError = sessionStorage.getItem(PENDING_INVITE_ERROR_KEY);
+      if (pendingInviteError) {
+        sessionStorage.removeItem(PENDING_INVITE_ERROR_KEY);
+        setMsg(pendingInviteError);
+        setMsgKind("error");
+      }
     } catch {}
   }, [load]);
 
@@ -148,6 +184,7 @@ export default function OrgDash() {
     if (!code) return;
     setBusy(true);
     setMsg("");
+    setMsgKind("info");
     try {
       if (demoMode) {
         setMsg("Invite join is disabled in demo mode.");
@@ -155,27 +192,42 @@ export default function OrgDash() {
       }
       const r = await authFetch("/api/invites/redeem", { method: "POST", body: { code } });
       setInviteCode("");
-      await load();
+      try {
+        sessionStorage.removeItem(PENDING_INVITE_KEY);
+        sessionStorage.removeItem(PENDING_INVITE_ERROR_KEY);
+      } catch {}
+      await load({ quiet: true });
       if (r?.org?.id) nav(`/org/${encodeURIComponent(r.org.id)}`);
-      else setMsg("Joined.");
+      else {
+        setMsg("Invitation accepted. The organization is now in your list.");
+        setMsgKind("success");
+      }
     } catch (e2) {
-      setMsg(e2.message || "Failed to join");
+      try { sessionStorage.setItem(PENDING_INVITE_KEY, code); } catch {}
+      setMsg(friendlyOrgError(e2, "The invitation could not be accepted. Check the code and try again."));
+      setMsgKind("error");
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div style={{ padding: 16 }}>
+    <main className="bf-org-dashboard" style={{ padding: 16 }}>
       {showAccountDeletionPrompt ? <div role="dialog" aria-modal="true" aria-labelledby="account-deletion-dialog-title" style={{ position: "fixed", inset: 0, zIndex: 1000, display: "grid", placeItems: "center", padding: 16, background: "rgba(0,0,0,.78)" }}><div style={{ width: "min(720px, 100%)", maxHeight: "90vh", overflowY: "auto", position: "relative" }}><button type="button" aria-label="Close account deletion prompt" onClick={() => setShowAccountDeletionPrompt(false)} style={{ position: "absolute", right: 12, top: 12, zIndex: 2 }}>Close</button><div id="account-deletion-dialog-title" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden" }}>Account deletion</div><AccountDestructionPanel initialOpen /></div></div> : null}
-      <h1 style={{ marginTop: 0 }}>Org Dashboard</h1>
+      <h1 style={{ marginTop: 0 }}>Organization Dashboard</h1>
       <p className="helper">Choose an organization to enter its workspace, or create or join one.</p>
+
+      {msg ? (
+        <div className={msgKind === "error" ? "error" : "helper"} role={msgKind === "error" ? "alert" : "status"} style={{ marginBottom: 14 }}>
+          {msg}
+        </div>
+      ) : null}
 
       {demoMode ? (
         <div className="card" style={{ padding: 12, marginBottom: 16, background: "rgba(255,255,255,0.03)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <div style={{ fontWeight: 800, flex: 1 }}>Demo Mode is active. Changes are saved only in this browser.</div>
-            <button className="btn" type="button" onClick={() => { resetDemoState(); ensureDemoOrgList(); load(); setMsg("Demo reset."); try { window.dispatchEvent(new Event("bf-demo-tour-open")); } catch {} }}>
+            <button className="btn" type="button" onClick={() => { resetDemoState(); ensureDemoOrgList(); load(); setMsg("Demo reset."); setMsgKind("success"); try { window.dispatchEvent(new Event("bf-demo-tour-open")); } catch {} }}>
               Reset Demo
             </button>
           </div>
@@ -183,16 +235,16 @@ export default function OrgDash() {
       ) : null}
 
       <div
-        className="grid"
+        className="grid bf-org-dashboard-actions"
         style={{
           gap: 16,
           gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
         }}
       >
-        <div className="card" style={{ padding: 16 }}>
+        <section className="card" style={{ padding: 16 }}>
           <h2 style={{ marginTop: 0 }}>Create a new org</h2>
           <p className="helper" style={{ lineHeight: 1.55 }}>
-            Choose the modules first, then name the organization and bring it into the room.
+            Choose the modules first, then name the organization and bring it into the room. Any staged builder choices from before sign-in are preserved.
           </p>
           <button
             className="btn-red"
@@ -202,10 +254,9 @@ export default function OrgDash() {
           >
             Build a new org
           </button>
-          
-        </div>
+        </section>
 
-        <div className="card" style={{ padding: 16 }}>
+        <section className="card" style={{ padding: 16 }}>
           <h2 style={{ marginTop: 0 }}>Join with an invite code</h2>
           <form onSubmit={joinWithInvite} className="grid" style={{ gap: 10 }}>
             <label className="grid" style={{ gap: 6 }}>
@@ -213,41 +264,36 @@ export default function OrgDash() {
               <input
                 className="input"
                 value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                 placeholder="Paste invite code"
                 autoCapitalize="characters"
                 autoCorrect="off"
+                spellCheck="false"
               />
             </label>
             <button className="btn-red" disabled={busy || !inviteCode.trim()}>
-              Join
+              {busy ? "Joining…" : "Join"}
             </button>
           </form>
-        </div>
+        </section>
       </div>
 
-      <div className="card" style={{ padding: 16, marginTop: 16 }}>
+      <section className="card" style={{ padding: 16, marginTop: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <h2 style={{ margin: 0, flex: 1, minWidth: 140 }}>Your orgs</h2>
-          <button className="btn" style={{ whiteSpace: "nowrap" }} onClick={load} disabled={busy}>
+          <button className="btn" style={{ whiteSpace: "nowrap" }} onClick={() => load()} disabled={busy}>
             Refresh
           </button>
         </div>
 
-        {msg && (
-          <div className={msg.toLowerCase().includes("fail") ? "error" : "helper"} style={{ marginTop: 10 }}>
-            {msg}
-          </div>
-        )}
-
         {orgs.length === 0 ? (
-          <div className="helper" style={{ marginTop: 12 }}>No orgs yet.</div>
+          <div className="helper" style={{ marginTop: 12 }}>No organizations yet. Build one or join with an invite above.</div>
         ) : (
           <div style={{ marginTop: 12 }}>
             {orgs.map((o) => (
               <div
                 key={o.id}
-                className="row"
+                className="row bf-org-dashboard-row"
                 style={{
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -263,7 +309,7 @@ export default function OrgDash() {
                   </div>
                   <div className="helper">Role: {o.role || "member"}</div>
                 </div>
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <div className="bf-org-dashboard-row-actions" style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                   <button
                     className="btn-red"
                     data-tour="demo-org-open"
@@ -271,7 +317,7 @@ export default function OrgDash() {
                     onClick={() => nav(`/org/${encodeURIComponent(o.id)}`)}
                     disabled={busy}
                   >
-                    Open
+                    Open workspace
                   </button>
                   {['owner', 'admin'].includes(o.role) ? (
                     <button className="btn" disabled={busy} onClick={() => nav(`/org/${encodeURIComponent(o.id)}/settings?tab=security`)}>
@@ -279,12 +325,11 @@ export default function OrgDash() {
                     </button>
                   ) : null}
                 </div>
-
               </div>
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

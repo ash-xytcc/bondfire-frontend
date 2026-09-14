@@ -8,7 +8,6 @@ function getOrigin(request) {
 
 function corsHeaders(request) {
   const origin = getOrigin(request);
-  // Cookie auth requires an explicit Origin (not '*') and Allow-Credentials.
   return {
     "Access-Control-Allow-Origin": origin || "*",
     "Access-Control-Allow-Credentials": "true",
@@ -22,21 +21,17 @@ const SECURITY_HEADERS = {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "no-referrer",
   "X-Frame-Options": "DENY",
-  // CSP tuned for this app (React inline styles are used heavily).
-  // If you later remove inline styles, drop 'unsafe-inline'.
   "Content-Security-Policy":
     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
     "script-src 'self'; style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: https:; font-src 'self' data:; " +
     "connect-src 'self' https: wss:;",
-  // Keep it boring.
   "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
 };
 
 export async function onRequest({ env, request, next }) {
   const CORS_HEADERS = corsHeaders(request);
 
-  // Preflight
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
@@ -58,16 +53,19 @@ export async function onRequest({ env, request, next }) {
       headers,
     });
   } catch (e) {
-    // If a function throws, Cloudflare will otherwise serve HTML (1101).
+    // Do not reflect raw exception text. Database/crypto/storage errors may
+    // contain SQL, identifiers, ciphertext fragments, or private values.
     const headers = new Headers({
       "content-type": "application/json; charset=utf-8",
       ...CORS_HEADERS,
     });
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
 
-    const detail = (e && (e.message || String(e))) || "Unknown error";
-    if(detail.includes('PRIVATE_KEY_ROTATION_REQUIRED'))return new Response(JSON.stringify({ok:false,error:'PRIVATE_KEY_ROTATION_REQUIRED'}),{status:409,headers});
-    return new Response(JSON.stringify({ ok: false, error: "INTERNAL", detail }), {
+    const code = String(e?.code || e?.message || '');
+    if (code.includes('PRIVATE_KEY_ROTATION_REQUIRED')) {
+      return new Response(JSON.stringify({ ok: false, error: 'PRIVATE_KEY_ROTATION_REQUIRED' }), { status: 409, headers });
+    }
+    return new Response(JSON.stringify({ ok: false, error: "INTERNAL" }), {
       status: 500,
       headers,
     });

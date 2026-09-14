@@ -17,14 +17,15 @@
     const dump = () => {
       const out = {
         now: new Date().toISOString(),
-        href: window.location.href,
+        path: window.location.pathname,
         helpMounted: !!window.__BF_HELP_MOUNTED,
         swController: !!navigator.serviceWorker?.controller,
       };
       try {
-        out.orgs = JSON.parse(localStorage.getItem('bf_orgs') || '[]');
+        const orgs = JSON.parse(localStorage.getItem('bf_orgs') || '[]');
+        out.orgCount = Array.isArray(orgs) ? orgs.length : 0;
       } catch {
-        out.orgs = '(unreadable)';
+        out.orgCount = 0;
       }
       return out;
     };

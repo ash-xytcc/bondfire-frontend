@@ -13,10 +13,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - name: Show scripts
         run: npm run
       - name: Test
         run: npm test
+      - name: Signup regression
+        run: node scripts/private-signup-regression.mjs
+      - name: Emergency smoke
+        run: npm run smoke:thread1
       - name: Production build
         run: npm run build

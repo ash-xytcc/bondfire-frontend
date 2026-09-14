@@ -43,8 +43,10 @@
       dump,
       log(...args) {
         if (!isEnabled()) return;
+        // Debug console output must not become an alternate plaintext channel.
+        // Preserve only primitive state useful to testers; redact strings/objects.
         // eslint-disable-next-line no-console
-        console.log('[BF]', ...args);
+        console.log('[BF]', ...args.map((value) => value == null || typeof value === 'number' || typeof value === 'boolean' ? value : `[redacted-${typeof value}]`));
       },
     };
 

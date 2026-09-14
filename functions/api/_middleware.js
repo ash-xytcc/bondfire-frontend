@@ -58,16 +58,18 @@ export async function onRequest({ env, request, next }) {
       headers,
     });
   } catch (e) {
-    // If a function throws, Cloudflare will otherwise serve HTML (1101).
+    // If a function throws, Cloudflare will otherwise serve HTML (1101). Do not
+    // reflect exception messages because they can contain request or storage data.
     const headers = new Headers({
       "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
       ...CORS_HEADERS,
     });
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
 
     const detail = (e && (e.message || String(e))) || "Unknown error";
     if(detail.includes('PRIVATE_KEY_ROTATION_REQUIRED'))return new Response(JSON.stringify({ok:false,error:'PRIVATE_KEY_ROTATION_REQUIRED'}),{status:409,headers});
-    return new Response(JSON.stringify({ ok: false, error: "INTERNAL", detail }), {
+    return new Response(JSON.stringify({ ok: false, error: "INTERNAL" }), {
       status: 500,
       headers,
     });

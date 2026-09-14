@@ -252,7 +252,7 @@ async function dispatch(context) {
     role,
   };
   const scopedEnv = createColophonScopedEnv(context.env, orgId);
-  const gatewayRequest = await createColophonGatewayRequest(context.request, orgId, actor);
+  const gatewayRequest = await createColophonGatewayRequest(context.request, orgId, actor, context.env);
   const response = await handler({
     ...context,
     env: scopedEnv,

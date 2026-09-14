@@ -5,7 +5,8 @@ import { contentContext, isCiphertext } from '../../../shared/privateContent.js'
 export async function ensurePrivateBlobs(db) {
   await db.prepare('CREATE TABLE IF NOT EXISTS org_private_blobs (org_id TEXT NOT NULL,id TEXT NOT NULL,file_id TEXT NOT NULL,inline_ciphertext TEXT,created_at INTEGER NOT NULL,PRIMARY KEY(org_id,id))').run();
 }
-const objectKey=(orgId,id)=>`${orgId}/drive/private/${id}`;
+export const privateBlobObjectKey=(orgId,id)=>`${orgId}/drive/private/${id}`;
+const objectKey=privateBlobObjectKey;
 export async function putPrivateBlob(env,orgId,id,ciphertext,fileId) {
   if(!/^[a-f0-9-]{36}$/.test(id)||!isCiphertext(ciphertext,contentContext(orgId,'drive/blob',id))) throw new Error('VALID_CIPHERTEXT_REQUIRED');
   if(!/^[A-Za-z0-9_.:-]{1,160}$/.test(fileId))throw new Error('INVALID_FILE_ID');

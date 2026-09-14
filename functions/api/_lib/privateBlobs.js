@@ -40,6 +40,20 @@ export async function getPrivateBlob(env,orgId,id) {
   return await object.text();
 }
 
+export async function deletePrivateBlob(env,orgId,id,fileId) {
+  if(!/^[a-f0-9-]{36}$/.test(id))throw new Error('INVALID_BLOB_ID');
+  if(!/^[A-Za-z0-9_.:-]{1,160}$/.test(fileId))throw new Error('INVALID_FILE_ID');
+  const db=getDb(env);await ensurePrivateBlobs(db);
+  const row=await db.prepare('SELECT file_id,inline_ciphertext FROM org_private_blobs WHERE org_id=? AND id=?').bind(orgId,id).first();
+  if(!row)return;
+  if(row.file_id!==fileId)throw new Error('BLOB_FILE_MISMATCH');
+  if(row.inline_ciphertext===null) {
+    const bucket=getDriveBucket(env);if(!bucket)throw new Error('ENCRYPTED_FILE_BUCKET_REQUIRED');
+    await bucket.delete(objectKey(orgId,id));
+  }
+  await db.prepare('DELETE FROM org_private_blobs WHERE org_id=? AND id=? AND file_id=?').bind(orgId,id,fileId).run();
+}
+
 export async function deletePrivateFileBlobs(env,orgId,fileId) {
   const db=getDb(env);await ensurePrivateBlobs(db);
   const rows=await db.prepare('SELECT id,inline_ciphertext FROM org_private_blobs WHERE org_id=? AND file_id=?').bind(orgId,fileId).all();

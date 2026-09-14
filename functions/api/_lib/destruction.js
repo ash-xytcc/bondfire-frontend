@@ -85,6 +85,24 @@ async function driveStorageKeys(db, orgId) {
   return (result?.results || []).map((row) => String(row?.storage_key || '')).filter(Boolean);
 }
 
+async function listBucketKeys(bucket, prefix) {
+  if (!bucket?.list) return [];
+  const keys = [];
+  let cursor = null;
+  for (;;) {
+    const result = await bucket.list({ prefix, ...(cursor ? { cursor } : {}) });
+    for (const item of result?.objects || []) {
+      const key = String(item?.key || '');
+      if (key) keys.push(key);
+    }
+    if (!result?.truncated) break;
+    const nextCursor = String(result?.cursor || '');
+    if (!nextCursor || nextCursor === cursor) throw new Error('STORAGE_LIST_INCOMPLETE');
+    cursor = nextCursor;
+  }
+  return keys;
+}
+
 export async function getOrgDestructionPreview({ db, orgId }) {
   const org = await db.prepare('SELECT id, name FROM orgs WHERE id = ? LIMIT 1').bind(orgId).first();
   if (!org) return null;
@@ -135,16 +153,22 @@ async function deletePublicCopies(env, orgId) {
 
 async function deleteStorageCopies(env, db, orgId) {
   const drive = getDriveBucket(env);
-  const keys = await driveStorageKeys(db, orgId);
-  if (!drive && keys.length) {
+  const referencedKeys = await driveStorageKeys(db, orgId);
+  if (!drive && referencedKeys.length) {
     if (!(await tableExists(db, 'drive_file_blobs'))) throw new Error('DRIVE_STORAGE_UNAVAILABLE');
     const missing = await db.prepare(`SELECT f.id FROM drive_files f LEFT JOIN drive_file_blobs b ON b.file_id=f.id AND b.org_id=f.org_id
       WHERE f.org_id=? AND f.storage_key IS NOT NULL AND b.file_id IS NULL LIMIT 1`).bind(orgId).first();
     if (missing) throw new Error('DRIVE_STORAGE_UNAVAILABLE');
   }
   if (!drive) return 0;
+
+  const keys = new Set(referencedKeys);
+  for (const prefix of [`${orgId}/drive/`, scopedObjectKey('', orgId)]) {
+    for (const key of await listBucketKeys(drive, prefix)) keys.add(key);
+  }
+
   let deleted = 0;
-  for (const key of new Set(keys)) {
+  for (const key of keys) {
     const other = await db.prepare('SELECT id FROM drive_files WHERE storage_key=? AND org_id<>? LIMIT 1').bind(key, orgId).first();
     if (other) throw new Error('STORAGE_SCOPE_MISMATCH');
     await drive.delete(key);

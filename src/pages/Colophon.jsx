@@ -6,10 +6,29 @@ import {
 import { ColophonWorkspace } from "colophon/workspace";
 import ColophonNativeModule from "../modules/colophon/ColophonNativeModule.jsx";
 
+const COLOPHON_ROUTE_RE = /^\/(?:wp-admin|post|piece|project|projects|archive|search|publications|reader|campaigns|collections|investigations|courses|feeds|gallery|press|about|security|contact|submit|support|updates|print|zine)(?:\/|$)/;
+
+function routeFromAnchor(anchor) {
+  const raw = String(anchor?.getAttribute?.("href") || "").trim();
+  if (!raw || raw === "#" || /^(?:mailto|tel|javascript):/i.test(raw)) return "";
+  if (raw.startsWith("#/") || raw.startsWith("#/")) return raw.slice(1);
+  if (raw.startsWith("#")) return "";
+
+  try {
+    const url = new URL(raw, window.location.origin);
+    if (url.origin !== window.location.origin) return "";
+    if (url.hash.startsWith("#/")) return url.hash.slice(1);
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return "";
+  }
+}
+
 function NativeColophonBoundary({ children }) {
   const { orgId } = useParams();
   const locationContext = React.useContext(LocationContext);
   const routeBase = `/org/${encodeURIComponent(String(orgId || ""))}/colophon`;
+  const bondfireHome = `/org/${encodeURIComponent(String(orgId || ""))}/overview`;
 
   const embeddedLocationContext = React.useMemo(() => {
     if (!locationContext?.location || locationContext.location.pathname !== routeBase) {
@@ -80,6 +99,66 @@ function NativeColophonBoundary({ children }) {
       history.pushState = originalPushState;
     };
   }, [routeBase]);
+
+  React.useLayoutEffect(() => {
+    if (!routeBase || typeof document === "undefined") return undefined;
+
+    const onClick = (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target?.closest?.("a[href]");
+      if (!anchor || !anchor.closest(".bondfire-colophon-native-shell")) return;
+      if (anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+
+      let target = routeFromAnchor(anchor);
+      if (!target) return;
+
+      const pathname = target.split(/[?#]/, 1)[0] || "/";
+      if (target === routeBase || target.startsWith(`${routeBase}/`)) {
+        // Already an absolute Bondfire-hosted Colophon route.
+      } else if (target === bondfireHome || target.startsWith(`/org/${encodeURIComponent(String(orgId || ""))}/`)) {
+        // Explicit navigation back into Bondfire stays outside Colophon.
+      } else if (pathname === "/" || COLOPHON_ROUTE_RE.test(pathname)) {
+        target = `${routeBase}${target === "/" ? "/" : target}`;
+      } else {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      const nextHash = `#${target}`;
+      if (window.location.hash !== nextHash) window.location.hash = nextHash;
+    };
+
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [bondfireHome, orgId, routeBase]);
+
+  React.useLayoutEffect(() => {
+    if (!routeBase || typeof document === "undefined") return undefined;
+
+    const addExitLink = (parent, className) => {
+      if (!parent || parent.querySelector("[data-bondfire-colophon-exit]")) return;
+      const link = document.createElement("a");
+      link.href = `#${bondfireHome}`;
+      link.className = className;
+      link.textContent = "← Bondfire";
+      link.setAttribute("data-bondfire-colophon-exit", "true");
+      link.setAttribute("aria-label", "Back to Bondfire organization workspace");
+      parent.prepend(link);
+    };
+
+    const apply = () => {
+      const shell = document.querySelector(".bondfire-colophon-native-shell");
+      if (!shell) return;
+      addExitLink(shell.querySelector(".wp-public-admin-bar__left"), "wp-public-admin-bar__item bondfire-colophon-exit-link");
+      addExitLink(shell.querySelector(".wp-admin-topbar__left"), "wp-admin-topbar__link bondfire-colophon-exit-link");
+    };
+
+    apply();
+    const observer = new MutationObserver(apply);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [bondfireHome, routeBase]);
 
   if (!locationContext || embeddedLocationContext === locationContext) return children;
   return (

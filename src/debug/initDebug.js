@@ -17,14 +17,15 @@
     const dump = () => {
       const out = {
         now: new Date().toISOString(),
-        href: window.location.href,
+        path: window.location.pathname,
         helpMounted: !!window.__BF_HELP_MOUNTED,
         swController: !!navigator.serviceWorker?.controller,
       };
       try {
-        out.orgs = JSON.parse(localStorage.getItem('bf_orgs') || '[]');
+        const orgs = JSON.parse(localStorage.getItem('bf_orgs') || '[]');
+        out.orgCount = Array.isArray(orgs) ? orgs.length : 0;
       } catch {
-        out.orgs = '(unreadable)';
+        out.orgCount = null;
       }
       return out;
     };
@@ -40,10 +41,14 @@
         return true;
       },
       dump,
-      log(...args) {
+      log(message, meta) {
         if (!isEnabled()) return;
+        const safeMessage = typeof message === 'string' ? message.slice(0, 300) : '[diagnostic]';
+        const safeMeta = meta && typeof meta === 'object'
+          ? Object.fromEntries(Object.entries(meta).filter(([key, value]) => !/(token|secret|key|cookie|password|authorization|ciphertext|content|body|notes?|phone|address|email)/i.test(key) && ['string', 'number', 'boolean'].includes(typeof value)).slice(0, 20))
+          : undefined;
         // eslint-disable-next-line no-console
-        console.log('[BF]', ...args);
+        console.log('[BF]', safeMessage, safeMeta || '');
       },
     };
 

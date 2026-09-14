@@ -7,9 +7,10 @@
     "dev": "vite --port 5174",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "npm run test:public && npm run test:security",
+    "test": "npm run test:public && npm run test:security && npm run test:migrations",
     "test:public": "node scripts/public-surface-regression.mjs",
     "test:security": "node scripts/auth-hardening-regression.mjs && node scripts/private-signup-regression.mjs && node scripts/private-storage-regression.mjs && node scripts/private-key-scopes-regression.mjs && node scripts/private-singleton-migration-regression.mjs && node scripts/private-submissions-regression.mjs && node scripts/private-publication-regression.mjs && node scripts/private-studio-regression.mjs && node scripts/emergency-protocol-regression.mjs",
+    "test:migrations": "node scripts/app-migrations-regression.mjs",
     "smoke:thread1": "node scripts/thread1-emergency-smoke.mjs"
   },
   "dependencies": {
@@ -29,6 +30,6 @@
     "vite-plugin-pwa": "^1.2.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=24.0.0"
   }
 }

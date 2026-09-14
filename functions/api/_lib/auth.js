@@ -1,5 +1,6 @@
 import { bad } from "./http.js";
 import { verifyJwt } from "./jwt.js";
+import { requireCookieCsrf } from "./csrf.js";
 import { enforceOrgIsolationAccess, enforceOrgWriteLockdown, isWriteMethod } from "./orgLockdown.js";
 
 // Bindings can be named differently across environments.
@@ -12,7 +13,8 @@ export async function requireUser({ env, request }) {
   const h = request.headers.get("authorization") || "";
   const m = h.match(/^Bearer\s+(.+)$/);
   // Support both Bearer auth AND cookie sessions (httpOnly).
-  // This allows a gradual migration away from localStorage tokens.
+  // Authentication tokens are intentionally never accepted from the URL because
+  // query strings can escape into browser history, proxies, analytics and logs.
   const cookieHeader = request.headers.get("cookie") || "";
   const cookies = {};
   for (const part of cookieHeader.split(";")) {
@@ -21,9 +23,7 @@ export async function requireUser({ env, request }) {
     cookies[k] = decodeURIComponent(rest.join("=") || "");
   }
 
-  const url = new URL(request.url);
-  const queryToken = url.searchParams.get("bf_token") || "";
-  const token = (m && m[1]) || cookies.bf_at || cookies.bf_auth_token || cookies.bf_token || queryToken || "";
+  const token = (m && m[1]) || cookies.bf_at || cookies.bf_auth_token || cookies.bf_token || "";
   if (!token) return { ok: false, resp: bad(401, "UNAUTHORIZED") };
 
   const payload = await verifyJwt(env.JWT_SECRET, token);
@@ -52,6 +52,13 @@ export async function requireOrgRole({ env, request, orgId, minRole, bypassWrite
 
   if (!row) return { ok: false, resp: bad(403, "NOT_A_MEMBER") };
   if ((roleRank[row.role] || 0) < need) return { ok: false, resp: bad(403, "INSUFFICIENT_ROLE") };
+
+  // Every authenticated organization mutation made with cookie auth must carry
+  // the matching non-secret CSRF token. Bearer-authenticated requests are exempt.
+  if (isWriteMethod(request?.method)) {
+    const csrf = requireCookieCsrf(request);
+    if (csrf) return { ok: false, resp: csrf };
+  }
 
   if (String(row.role || '').toLowerCase() !== 'owner') {
     const isolation = await enforceOrgIsolationAccess({ env, orgId });

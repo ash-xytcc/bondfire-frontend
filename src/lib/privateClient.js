@@ -181,7 +181,7 @@ export async function dispatchPrivate(path,opts,transport) {
       type:kind==='events'?'event':'witness',id:row.id,title:row.title||(kind==='events'?'Untitled event':'Untitled witness record'),
       subtitle:kind==='events'?[row.starts_at||'Date pending',row.location].filter(Boolean).join(' • '):row.summary||row.happened_at||'Witness record',
       href:`/org/${encodeURIComponent(orgId)}/${kind==='events'?'events/'+encodeURIComponent(row.id):'witness'}`,tags:row.tags||[],
-    }));
+    })));
     return {handled:true,data:{ok:true,items,results:items}};
   }
   if(tail==='public/get'&&method==='GET') {
@@ -272,18 +272,19 @@ export async function dispatchPrivate(path,opts,transport) {
     if(method==='DELETE') {
       data=await transport(path,{method,body:JSON.stringify({id,revision:previous.revision})});
     } else {
-      // Older screens already encrypted selected fields and replaced their visible
-      // values with placeholders. Open those fields before constructing the new
-      // authoritative envelope; dropping them would permanently lose the edit.
-      // Do not fill defaults on a partial patch: absent fields must stay absent.
-      const decoded=await decodeLegacyRecord(key,kind,clear,{normalize:false});
-      const combined={...(previous||{}),...decoded};
-      if(PUBLIC_FIELDS[kind]&&(wantsPublication(kind,combined)||wantsPublication(kind,previous||{}))&&!['admin','owner'].includes(status.role))throw new Error('An administrator must publish or change a published record.');
-      // Content is authoritative inside the envelope. IDs and revisions are checked
-      // independently; never merge decrypted content over these protocol fields.
-      for(const k of ['ciphertext','encrypted_blob','encryptedBlob','revision','encrypted','previewUrl','downloadUrl','url','storage_key','storageKey']) delete combined[k];
-      const ciphertext=await encryptPrivate(key,combined,orgId,kind,id);
+      let combined;
       try {
+        // Older screens already encrypted selected fields and replaced their visible
+        // values with placeholders. Open those fields before constructing the new
+        // authoritative envelope; dropping them would permanently lose the edit.
+        // Do not fill defaults on a partial patch: absent fields must stay absent.
+        const decoded=await decodeLegacyRecord(key,kind,clear,{normalize:false});
+        combined={...(previous||{}),...decoded};
+        if(PUBLIC_FIELDS[kind]&&(wantsPublication(kind,combined)||wantsPublication(kind,previous||{}))&&!['admin','owner'].includes(status.role))throw new Error('An administrator must publish or change a published record.');
+        // Content is authoritative inside the envelope. IDs and revisions are checked
+        // independently; never merge decrypted content over these protocol fields.
+        for(const k of ['ciphertext','encrypted_blob','encryptedBlob','revision','encrypted','previewUrl','downloadUrl','url','storage_key','storageKey']) delete combined[k];
+        const ciphertext=await encryptPrivate(key,combined,orgId,kind,id);
         data=await transport(path,{method,body:JSON.stringify({id,ciphertext,revision:previous?.revision||0,...(contract.parent?{parentId:combined[contract.parent]||null}:{})})});
       } catch(error) {
         if(uploadedPayloadId)try {await deletePayload(orgId,uploadedPayloadId,id,transport);} catch {}

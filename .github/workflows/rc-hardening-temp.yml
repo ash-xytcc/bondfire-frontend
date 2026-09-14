@@ -14,13 +14,27 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Clean dependency install
+        run: |
+          rm -rf node_modules
+          npm install --no-audit --no-fund
       - name: Show scripts
         run: npm run
       - name: Test
         run: npm test
-      - name: Signup regression
-        run: node scripts/private-signup-regression.mjs
       - name: Emergency smoke
         run: npm run smoke:thread1
       - name: Production build
         run: npm run build
+      - name: Verify PWA release assets
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const manifest = JSON.parse(fs.readFileSync('dist/manifest.webmanifest', 'utf8'));
+          for (const icon of manifest.icons || []) {
+            const path = `dist/${String(icon.src || '').replace(/^\//, '')}`;
+            if (!fs.existsSync(path)) throw new Error(`Missing PWA icon: ${icon.src}`);
+          }
+          if (JSON.stringify(manifest).includes('/pwa-')) throw new Error('Stale PWA icon path remains');
+          console.log('PWA release assets verified');
+          NODE

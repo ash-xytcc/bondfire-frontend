@@ -12,7 +12,8 @@ export async function requireUser({ env, request }) {
   const h = request.headers.get("authorization") || "";
   const m = h.match(/^Bearer\s+(.+)$/);
   // Support both Bearer auth AND cookie sessions (httpOnly).
-  // This allows a gradual migration away from localStorage tokens.
+  // Never accept session credentials in a URL: query strings can leak through
+  // browser history, referrers, request logs, analytics, and copied links.
   const cookieHeader = request.headers.get("cookie") || "";
   const cookies = {};
   for (const part of cookieHeader.split(";")) {
@@ -21,9 +22,7 @@ export async function requireUser({ env, request }) {
     cookies[k] = decodeURIComponent(rest.join("=") || "");
   }
 
-  const url = new URL(request.url);
-  const queryToken = url.searchParams.get("bf_token") || "";
-  const token = (m && m[1]) || cookies.bf_at || cookies.bf_auth_token || cookies.bf_token || queryToken || "";
+  const token = (m && m[1]) || cookies.bf_at || cookies.bf_auth_token || cookies.bf_token || "";
   if (!token) return { ok: false, resp: bad(401, "UNAUTHORIZED") };
 
   const payload = await verifyJwt(env.JWT_SECRET, token);

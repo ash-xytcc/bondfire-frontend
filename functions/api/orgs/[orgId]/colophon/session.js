@@ -1,27 +1,7 @@
 import { bad, json } from "../../../_lib/http.js";
 import { requireOrgRole } from "../../../_lib/auth.js";
 import { isOrgModuleEnabled } from "../../../_lib/orgModules.js";
-
-const ROLE_CAPABILITIES = Object.freeze({
-  viewer: Object.freeze(["content:read", "media:read"]),
-  member: Object.freeze(["content:read", "content:write", "media:read", "media:write"]),
-  admin: Object.freeze([
-    "content:read",
-    "content:write",
-    "content:publish",
-    "media:read",
-    "media:write",
-    "publishing:write",
-    "analytics:view",
-    "site:manage",
-    "system:view",
-  ]),
-  owner: Object.freeze(["*"]),
-});
-
-function capabilitiesForRole(role) {
-  return [...(ROLE_CAPABILITIES[String(role || "").toLowerCase()] || ROLE_CAPABILITIES.viewer)];
-}
+import { resolveColophonIdentity } from "../../../_lib/colophonIdentity.js";
 
 export async function onRequestGet({ env, request, params }) {
   const orgId = String(params?.orgId || "").trim();
@@ -34,20 +14,22 @@ export async function onRequestGet({ env, request, params }) {
     return bad(403, "MODULE_DISABLED", { moduleId: "publishing-colophon" });
   }
 
-  const user = auth.user || {};
-  const role = String(auth.role || "viewer").toLowerCase();
+  const identity = await resolveColophonIdentity({ env, orgId, auth });
+  if (!identity.ok) return bad(identity.status || 403, identity.error || "COLOPHON_EDITORIAL_ACCESS_REQUIRED");
+  const actor = identity.actor;
 
   return json({
     ok: true,
     authenticated: true,
-    mode: "bondfire",
+    mode: "colophon",
     orgId,
-    role,
-    capabilities: capabilitiesForRole(role),
+    role: actor.role,
+    capabilities: actor.capabilities || [],
+    bootstrap: actor.bootstrap === true,
     user: {
-      id: user.sub || user.id || user.userId || null,
-      email: user.email || "",
-      displayName: user.name || user.displayName || user.email || role,
+      id: actor.id || null,
+      email: actor.email || "",
+      displayName: actor.displayName || actor.email || actor.role,
     },
   });
 }

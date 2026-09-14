@@ -1,4 +1,5 @@
 const PENDING_BUILD_KEY = "bf_pending_module_build_v1";
+const PENDING_BUILD_NAME_KEY = "bf_pending_build_name_v1";
 
 export function readPendingBuild() {
   try {
@@ -20,8 +21,25 @@ export function writePendingBuild(ids) {
   } catch {}
 }
 
+export function readPendingBuildName() {
+  try {
+    return String(localStorage.getItem(PENDING_BUILD_NAME_KEY) || "").trim();
+  } catch {
+    return "";
+  }
+}
+
+export function writePendingBuildName(name) {
+  try {
+    const safe = String(name || "").trim();
+    if (safe) localStorage.setItem(PENDING_BUILD_NAME_KEY, safe);
+    else localStorage.removeItem(PENDING_BUILD_NAME_KEY);
+  } catch {}
+}
+
 export function clearPendingBuild() {
   try {
     localStorage.removeItem(PENDING_BUILD_KEY);
+    localStorage.removeItem(PENDING_BUILD_NAME_KEY);
   } catch {}
 }

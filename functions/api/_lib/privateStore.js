@@ -83,6 +83,7 @@ export async function privateRecords({ env, request, orgId, kind, id = '' }) {
     if (Number(result.at(-1)?.meta?.changes || 0) !== 1) return bad(409, 'PRIVATE_REVISION_CONFLICT');
     return json({ ok: true, deleted: true, id });
   }
+  if (contract.append && existing) return bad(409, 'APPEND_ONLY_RECORD');
   if (existing?.deleting) return bad(409,'PRIVATE_FILE_DELETION_IN_PROGRESS');
   if (typeof body.ciphertext === 'string' && body.ciphertext.length > 1024*1024) return bad(413,'PRIVATE_RECORD_TOO_LARGE');
   if (!isCiphertext(body.ciphertext, contentContext(orgId, kind, id))) return bad(400, 'VALID_CIPHERTEXT_REQUIRED');

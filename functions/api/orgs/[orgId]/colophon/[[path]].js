@@ -2,9 +2,9 @@ import { json } from "../../../_lib/http.js";
 import { requireOrgRole } from "../../../_lib/auth.js";
 import { isOrgModuleEnabled } from "../../../_lib/orgModules.js";
 import {
-  createColophonGatewayRequest,
-  createColophonScopedEnv,
-} from "../../../_lib/colophonScopedRuntime.js";
+  createColophonIdentityRequest,
+  resolveColophonIdentity,
+} from "../../../_lib/colophonIdentity.js";
 
 import * as accountSecurity from "../../../../../node_modules/colophon/functions/api/account-security.js";
 import * as analyticsCollect from "../../../../../node_modules/colophon/functions/api/analytics/collect.js";
@@ -139,7 +139,7 @@ function pathStartsWith(path, prefixes) {
 }
 
 function roleRank(role) {
-  return ({ viewer: 0, member: 1, admin: 2, owner: 3 })[String(role || "").toLowerCase()] ?? 0;
+  return ({ viewer: 0, contributor: 1, editor: 2, admin: 3, owner: 4 })[String(role || "").toLowerCase()] ?? 0;
 }
 
 async function requestAttemptsPublication(request) {
@@ -239,23 +239,19 @@ async function dispatch(context) {
     return json({ ok: false, error: "MODULE_DISABLED", moduleId: "publishing-colophon" }, 403);
   }
 
-  const role = String(auth.role || "viewer").toLowerCase();
+  const identity = await resolveColophonIdentity({ env: context.env, orgId, auth });
+  if (!identity.ok) return json({ ok: false, error: identity.error || "COLOPHON_EDITORIAL_ACCESS_REQUIRED" }, identity.status || 403);
+  const role = String(identity.actor?.role || "viewer").toLowerCase();
   const denied = await authorizeGatewayRequest({ request: context.request, path, role });
   if (denied) return denied;
 
   const handler = methodHandler(handlerModule, context.request.method);
   if (!handler) return json({ ok: false, error: "METHOD_NOT_ALLOWED" }, 405);
 
-  const actor = {
-    id: auth.user?.sub || auth.user?.id || auth.user?.userId || "",
-    email: auth.user?.email || "",
-    role,
-  };
-  const scopedEnv = createColophonScopedEnv(context.env, orgId);
-  const gatewayRequest = await createColophonGatewayRequest(context.request, orgId, actor);
+  const gatewayRequest = await createColophonIdentityRequest(context.request, identity.scopedEnv, orgId, identity.actor);
   const response = await handler({
     ...context,
-    env: scopedEnv,
+    env: identity.scopedEnv,
     request: gatewayRequest,
   });
   return rewriteEmbeddedResponse(response, context.request.url, orgId);

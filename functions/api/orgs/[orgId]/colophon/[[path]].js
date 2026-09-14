@@ -4,6 +4,7 @@ import { isOrgModuleEnabled } from "../../../_lib/orgModules.js";
 import {
   createColophonGatewayRequest,
   createColophonScopedEnv,
+  ensureColophonGatewayActor,
 } from "../../../_lib/colophonScopedRuntime.js";
 
 import * as accountSecurity from "../../../../../node_modules/colophon/functions/api/account-security.js";
@@ -252,7 +253,13 @@ async function dispatch(context) {
     role,
   };
   const scopedEnv = createColophonScopedEnv(context.env, orgId);
-  const gatewayRequest = await createColophonGatewayRequest(context.request, orgId, actor, context.env);
+  const colophonActor = await ensureColophonGatewayActor(scopedEnv, orgId, actor);
+  const gatewayRequest = await createColophonGatewayRequest(
+    context.request,
+    orgId,
+    { ...colophonActor, bondfireRole: role },
+    context.env,
+  );
   const response = await handler({
     ...context,
     env: scopedEnv,

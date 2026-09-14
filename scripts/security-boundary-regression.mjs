@@ -17,14 +17,15 @@ const destruction = read('functions/api/_lib/destruction.js');
 const protocol = read('functions/api/_lib/privateProtocol.js');
 const privateClient = read('src/lib/privateClient.js');
 const debug = read('src/debug/initDebug.js');
+const gatewayRuntime = read('functions/api/_lib/colophonScopedRuntime.js');
 const gatewayRouter = read('functions/api/orgs/[orgId]/colophon/[[path]].js');
 
 // Authentication credentials must not be accepted from URLs.
 assert.doesNotMatch(auth, /searchParams\.get\(\s*['"](?:token|access_token|auth|authorization)['"]/i);
 assert.doesNotMatch(auth, /[?&](?:token|access_token|authorization)=/i);
 
-// Colophon gateway sessions must be signed with a server-held secret and retain
-// the caller's real Bondfire role rather than silently becoming owner sessions.
+// Colophon gateway sessions must be signed with a server-held secret. They must
+// also carry a real userId so Colophon does not treat them as bootstrap owners.
 const request = new Request('https://bondfire.test/api/orgs/org-a/colophon/native-content');
 const actor = { id: 'user-a', email: 'member@example.test', role: 'member' };
 const envA = { JWT_SECRET: 'test-server-secret-a' };
@@ -40,9 +41,14 @@ const encodedSession = decodeURIComponent(cookie.match(/(?:^|;\s*)colophon_sessi
 const payloadPart = encodedSession.split('.')[0];
 assert.ok(payloadPart, 'Colophon gateway session cookie was not created');
 const payload = JSON.parse(Buffer.from(payloadPart, 'base64url').toString('utf8'));
-assert.equal(payload.role, 'member');
+assert.equal(payload.userId, 'user-a');
+assert.equal(payload.role, 'contributor');
 assert.equal(gatewayRequest.headers.get('x-bondfire-colophon-role'), 'member');
-assert.match(gatewayRouter, /createColophonGatewayRequest\(context\.request,\s*orgId,\s*actor,\s*context\.env\)/);
+assert.match(gatewayRuntime, /export async function ensureColophonGatewayActor\(/);
+assert.match(gatewayRuntime, /if \(value === ["']member["']\) return ["']contributor["']/);
+assert.match(gatewayRouter, /ensureColophonGatewayActor\(scopedEnv,\s*orgId,\s*actor\)/);
+assert.match(gatewayRouter, /bondfireRole:\s*role/);
+assert.match(gatewayRouter, /createColophonGatewayRequest\([\s\S]*context\.env,[\s\S]*\)/);
 
 // Private blob object naming is shared with destructive cleanup, and temporary
 // upload objects can be deleted only through the authenticated org-scoped API.

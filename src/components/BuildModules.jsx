@@ -13,7 +13,9 @@ import {
 import {
   clearPendingBuild,
   readPendingBuild,
+  readPendingBuildName,
   writePendingBuild,
+  writePendingBuildName,
 } from "../platform/pendingBuild.js";
 
 const CORE_LOGO_PATH = "/logos/core.png";
@@ -41,6 +43,16 @@ async function requestModuleConfig(orgId, options = {}) {
 
 function sameIds(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function buildErrorMessage(error, fallback) {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return "You are offline. Your staged build is still saved in this browser. Reconnect and try again.";
+  }
+  if (error?.status === 401) return "Your session expired. Sign in again; your staged build is still saved in this browser.";
+  if (error?.status === 403) return "You do not have permission to change this build. Ask an organization admin or owner.";
+  if (error?.status === 404) return "This organization could not be found. Return to the organization dashboard and choose an available workspace.";
+  return String(error?.message || fallback);
 }
 
 export default function BuildModules() {
@@ -77,7 +89,7 @@ export default function BuildModules() {
   const [error, setError] = React.useState("");
   const [recovery, setRecovery] = React.useState("");
   const [recoveryAgain, setRecoveryAgain] = React.useState("");
-  const [orgName, setOrgName] = React.useState("New Bondfire");
+  const [orgName, setOrgName] = React.useState(() => readPendingBuildName() || "New Bondfire");
 
   const selectedIds = React.useMemo(
     () => normalizeSelectedModuleIds([...selected]),
@@ -103,7 +115,7 @@ export default function BuildModules() {
     setNotice("");
 
     if (!orgId) {
-      const pending = !orgId ? readPendingBuild() : [];
+      const pending = readPendingBuild();
       const nextIds = normalizeSelectedModuleIds(
         pending.length ? pending : defaults
       );
@@ -157,15 +169,23 @@ export default function BuildModules() {
       setSelected(new Set(defaults));
       setSavedIds(defaults);
       setCanEdit(false);
-      setError(loadError?.message || "Could not load this Bondfire build.");
+      setError(buildErrorMessage(loadError, "Could not load this Bondfire build."));
     } finally {
       setLoading(false);
     }
-  }, [defaults, isOnboarding, isStandalone, orgId]);
+  }, [defaults, isOnboarding, orgId]);
 
   React.useEffect(() => {
     loadConfig();
   }, [loadConfig]);
+
+  React.useEffect(() => {
+    if (!orgId && !loading) writePendingBuild(selectedIds);
+  }, [loading, orgId, selectedIds]);
+
+  React.useEffect(() => {
+    if (isNewOrg) writePendingBuildName(orgName);
+  }, [isNewOrg, orgName]);
 
   const toggleModule = (moduleId) => {
     if (!canEdit) return;
@@ -262,13 +282,14 @@ export default function BuildModules() {
     } catch (saveError) {
       if (createdOrgId) {
         writePendingBuild(selectedIds);
+        writePendingBuildName(orgName);
         navigate(
           "/org/" + encodeURIComponent(createdOrgId) + "/build?first=1",
           { replace: true }
         );
         return;
       }
-      setError(saveError?.message || "Could not save this build.");
+      setError(buildErrorMessage(saveError, "Could not save this build. Your staged choices are still saved in this browser."));
     } finally {
       setBusy(false);
     }
@@ -381,14 +402,13 @@ export default function BuildModules() {
               </p>
             ) : null}
             {error ? (
-              <p className="bf-build-message is-error">{error}</p>
+              <p className="bf-build-message is-error" role="alert">{error}</p>
             ) : null}
-            {notice ? <p className="bf-build-message">{notice}</p> : null}
+            {notice ? <p className="bf-build-message" role="status">{notice}</p> : null}
             {isStandalone ? (
               <Link
                 className="helper"
-                to="/signin?mode=login"
-                onClick={clearPendingBuild}
+                to="/signin?mode=login&from=builder"
                 style={{ display: "inline-block", marginTop: 12 }}
               >
                 Already have an account? Sign in instead.

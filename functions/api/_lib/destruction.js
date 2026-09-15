@@ -201,6 +201,8 @@ async function deleteColophonStorage(env, orgId) {
     seen.add(bucket);
     deleted += await deleteBucketPrefix(bucket, prefix);
   }
+  const drive = getDriveBucket(env);
+  if (drive && !seen.has(drive)) deleted += await deleteBucketPrefix(drive, prefix);
   return deleted;
 }
 

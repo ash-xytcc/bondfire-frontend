@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "ash-xytcc/bondfire-frontend",
+    "branch": "red-harbor",
+    "commit": "bedd38d8ef947c88e1bdebca8823fb45269556ba"
+  },
+  "target": {
+    "repository": "BondfireApp/Bondfire",
+    "foundation": "current V3 main"
+  },
+  "identity": {
+    "legacyOrgAlias": "red-harbor",
+    "canonicalOrgId": null,
+    "publicHostname": "redharbor.org",
+    "publicationHostnameCandidate": "bulletin.redharbor.org",
+    "workspaceHostname": "bondfireapp.org",
+    "branchEmail": "redharboriww@gmail.com",
+    "membershipUrl": "https://redcard.iww.org/"
+  },
+  "publicRoutes": [
+    "/",
+    "/membership",
+    "/labor-history",
+    "/bulletin",
+    "/bulletin/:slug"
+  ],
+  "preserveFiles": [
+    "src/pages/RedHarborHome.jsx",
+    "src/pages/MembershipPage.jsx",
+    "src/pages/LaborHistoryPage.jsx",
+    "src/pages/BulletinIndexPage.jsx",
+    "src/pages/BulletinArticlePage.jsx",
+    "src/pages/BranchBoard.jsx",
+    "src/components/BulletinArticle.jsx",
+    "src/components/BulletinFeedList.jsx",
+    "src/components/BulletinHomeSection.jsx",
+    "src/components/BulletinUtils.js",
+    "src/styles/redharbor.css",
+    "src/styles/redharbor-public-pass1.css",
+    "src/styles/redharbor-membership.css",
+    "src/styles/redharbor-backend.css",
+    "src/styles/labor-history.css",
+    "src/styles/bulletin.css",
+    "src/styles/branch-board.css",
+    "src/redHarborPass3.css",
+    "src/redHarborPass3Boot.js",
+    "public/red-harbor-logo.png",
+    "public/red-harbor-hero.jpg"
+  ],
+  "preserveDirectories": [
+    "src/pages/redharbor/",
+    "src/components/redharbor/",
+    "src/components/archive/",
+    "src/archive/",
+    "src/assets/redharbor/",
+    "public/home-archive/",
+    "public/archive/"
+  ],
+  "referenceOnly": [
+    "src/App.jsx",
+    "src/lib/appMode.js",
+    "functions/",
+    "db/",
+    "migrations/",
+    "wrangler.toml",
+    "public/_worker.js"
+  ],
+  "legacyCapabilities": [
+    {
+      "legacyRequest": "GET /api/public-home/red-harbor",
+      "purpose": "Read Red Harbor public-site configuration",
+      "migration": "Map to V3 org-scoped public-site configuration"
+    },
+    {
+      "legacyRequest": "POST /api/orgs/:orgId/public/save",
+      "purpose": "Save rich Red Harbor homepage configuration",
+      "migration": "Use authenticated, authorized V3 org-scoped public-site persistence"
+    },
+    {
+      "legacyRequest": "GET /api/public/bulletin?org=red-harbor&limit=:limit",
+      "purpose": "List published Red Harbor bulletin posts",
+      "migration": "Map to Red Harbor-scoped V3 Colophon/publication data"
+    },
+    {
+      "legacyRequest": "GET /api/public/bulletin/:slug?org=red-harbor",
+      "purpose": "Read one published Red Harbor bulletin post",
+      "migration": "Map to Red Harbor-scoped V3 Colophon/publication data"
+    },
+    {
+      "legacyRequest": "POST /api/p/red-harbor/newsletter/subscribe",
+      "purpose": "Public newsletter signup",
+      "migration": "Map to the supported V3 public subscription/intake path"
+    },
+    {
+      "legacyRequest": "GET /api/auth/me",
+      "purpose": "Detect authenticated editor/member session",
+      "migration": "Use current V3 session state"
+    }
+  ],
+  "doNotPortAsProduction": [
+    "legacy authentication handlers",
+    "legacy D1 schema",
+    "legacy publicPageStore implementation",
+    "legacy write-lock authorization shortcut",
+    "legacy generic Bondfire module pages/backend",
+    "legacy encryption/security implementation",
+    "legacy service-worker/deployment behavior"
+  ],
+  "acceptance": [
+    "redharbor.org renders the preserved Red Harbor public frontend",
+    "homepage settings load and save through V3 using the canonical Red Harbor organization UUID",
+    "red-harbor remains a stable public alias rather than a database primary key",
+    "membership and labor-history routes retain current presentation and assets",
+    "bulletin/publication content is scoped to the Red Harbor organization",
+    "member sign-in reaches the Red Harbor V3 organization workspace",
+    "private organization data uses current V3 encryption and authorization",
+    "legacy Red Harbor backend is unnecessary for live traffic"
+  ]
+}

@@ -62,7 +62,7 @@ export async function onRequest({ env, request, next }) {
     });
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
 
-    const code = String(e?.code || e?.message || '');
+    const code = `${e?.code || ''} ${e?.message || ''}`;
     if (code.includes('PRIVATE_KEY_ROTATION_REQUIRED')) {
       return new Response(JSON.stringify({ ok: false, error: 'PRIVATE_KEY_ROTATION_REQUIRED' }), { status: 409, headers });
     }

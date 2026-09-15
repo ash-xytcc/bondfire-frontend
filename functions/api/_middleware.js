@@ -57,6 +57,7 @@ export async function onRequest({ env, request, next }) {
     // contain SQL, identifiers, ciphertext fragments, or private values.
     const headers = new Headers({
       "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
       ...CORS_HEADERS,
     });
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);

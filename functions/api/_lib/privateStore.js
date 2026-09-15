@@ -31,6 +31,7 @@ export async function privateRecords({ env, request, orgId, kind, id = '' }) {
   const minRole = method === 'GET' ? (contract.read || 'viewer') : method === 'DELETE' ? (contract.remove || 'admin') : (contract.write || 'member');
   const gate = await requireOrgRole({ env, request, orgId, minRole });
   if (!gate.ok) return gate.resp;
+  if (method === 'GET' && contract.read === 'admin' && !['admin','owner'].includes(String(gate.role || '').toLowerCase())) return bad(403, 'INSUFFICIENT_ROLE');
   const db = getDb(env);
   await ensurePrivateSchema(db);
   const state = await getPrivateMode(env, orgId);
@@ -68,8 +69,6 @@ export async function privateRecords({ env, request, orgId, kind, id = '' }) {
         if (Number(locked?.meta?.changes||0)!==1) return bad(409,'PRIVATE_REVISION_CONFLICT');
         revision += 1;
       }
-      // Retain the metadata and a retryable deletion marker until all stored
-      // encrypted versions have actually been removed.
       await deletePrivateFileBlobs(env,orgId,id);
       await db.prepare('DELETE FROM org_private_records WHERE org_id=? AND kind=? AND id=? AND revision=? AND deleting=1').bind(orgId,kind,id,revision).run();
       return json({ok:true,deleted:true,id});
@@ -77,7 +76,6 @@ export async function privateRecords({ env, request, orgId, kind, id = '' }) {
     const statements = [];
     await ensurePublicationSchema(db);
     statements.push(db.prepare('DELETE FROM org_public_projections WHERE org_id=? AND kind=? AND id=? AND EXISTS(SELECT 1 FROM org_private_records WHERE org_id=? AND kind=? AND id=? AND revision=?)').bind(orgId,kind,id,orgId,kind,id,body.revision));
-    // Move children to the deleted folder's parent without touching their ciphertext.
     if (kind === 'drive/folders') statements.push(db.prepare("UPDATE org_private_records SET parent_id=?,revision=revision+1 WHERE org_id=? AND kind IN ('drive/folders','drive/notes','drive/files') AND parent_id=? AND EXISTS (SELECT 1 FROM org_private_records WHERE org_id=? AND kind=? AND id=? AND revision=?)").bind(existing.parent_id, orgId, id, orgId, kind, id, body.revision));
     statements.push(db.prepare('DELETE FROM org_private_records WHERE org_id=? AND kind=? AND id=? AND revision=?').bind(orgId, kind, id, body.revision));
     const result = await db.batch(statements);

@@ -72,7 +72,7 @@ export async function initialScopedKeyStatements(db,orgId,userId,deviceId,keys,s
   await ensureScopedKeys(db);
   if(submissionPublicKey&&!validPublicKey(submissionPublicKey))throw new Error('INVALID_SUBMISSION_PUBLIC_KEY');
   const statements=[db.prepare('INSERT INTO org_private_key_state VALUES(?,1,0,0)').bind(orgId)];
-  if(submissionPublicKey)statements.push(db.prepare('INSERT INTO org_private_submission_keys VALUES(?,?,?)').bind(orgId,JSON.stringify(submissionPublicKey)));
+  if(submissionPublicKey)statements.push(db.prepare('INSERT INTO org_private_submission_keys VALUES(?,?,?)').bind(orgId,1,JSON.stringify(submissionPublicKey)));
   for(const scope of KEY_SCOPES) {
     const key=keys.find(k=>k.scope===scope);
     if(!key||Object.keys(key).some(k=>!['scope','check','archive','wrapped_key','recovery'].includes(k))||!isCiphertext(key.check,contentContext(orgId,'scope-check/'+scope,orgId))||!isCiphertext(key.archive,contentContext(orgId,'scope-archive/'+scope,orgId))||!validWrappedKey(key.wrapped_key)||!validRecoveryPayload(key.recovery)||Object.keys(key.recovery).some(k=>!['salt','iv','ct'].includes(k)))throw new Error('INVALID_SCOPED_KEY');
@@ -91,6 +91,8 @@ export async function provisionOwnScopedDevice({env,request,orgId}) {
   const b=await request.json().catch(()=>null);
   if(!b||Object.keys(b).some(k=>!['epoch','device_id','keys'].includes(k))||!Array.isArray(b.keys))return bad(400,'INVALID_SCOPED_KEY');
   if(!await db.prepare('SELECT device_id FROM user_device_keys WHERE user_id=? AND device_id=?').bind(gate.user.sub,b.device_id).first())return bad(400,'KEY_RECIPIENT_DEVICE_UNKNOWN');
+  const state=await db.prepare('SELECT epoch FROM org_private_key_state WHERE org_id=?').bind(orgId).first();
+  if(!state||b.epoch!==state.epoch)return bad(409,'PRIVATE_KEY_ROSTER_CHANGED');
   const expected=new Set(KEY_SCOPES.filter(scope=>canReadScope(gate.role,scope)));
   for(const k of b.keys)if(!expected.delete(k.scope)||Object.keys(k).some(f=>!['scope','wrapped_key','recovery'].includes(f))||!validWrappedKey(k.wrapped_key)||!validRecoveryPayload(k.recovery)||Object.keys(k.recovery).some(f=>!['salt','iv','ct'].includes(f)))return bad(400,'INVALID_SCOPED_KEY');
   if(expected.size)return bad(400,'KEY_RECIPIENT_MISSING');

@@ -63,7 +63,7 @@ export async function scopedKeys({env,request,orgId}) {
   }
   if(body.submissionPublicKey)stmts.push(db.prepare('INSERT INTO org_private_submission_keys VALUES(?,?,?) ON CONFLICT(org_id) DO UPDATE SET epoch=excluded.epoch,public_key=excluded.public_key').bind(orgId,body.epoch,JSON.stringify(body.submissionPublicKey)));
   stmts.push(db.prepare('DELETE FROM org_private_key_assertions WHERE org_id=?').bind(orgId));
-  try{await db.batch(stmts);}catch(e){if(/CHECK constraint failed/.test(e.message))return bad(409,'PRIVATE_KEY_ROSTER_CHANGED');throw e;}
+  try{await db.batch(stmts);}catch(e){const detail=`${e?.code||''} ${e?.message||''}`;if(/CHECK constraint failed|SQLITE_CONSTRAINT_CHECK|org_private_key_assertions/.test(detail))return bad(409,'PRIVATE_KEY_ROSTER_CHANGED');throw e;}
   return json({ok:true,epoch:body.epoch});
 }
 
@@ -72,7 +72,7 @@ export async function initialScopedKeyStatements(db,orgId,userId,deviceId,keys,s
   await ensureScopedKeys(db);
   if(submissionPublicKey&&!validPublicKey(submissionPublicKey))throw new Error('INVALID_SUBMISSION_PUBLIC_KEY');
   const statements=[db.prepare('INSERT INTO org_private_key_state VALUES(?,1,0,0)').bind(orgId)];
-  if(submissionPublicKey)statements.push(db.prepare('INSERT INTO org_private_submission_keys VALUES(?,1,?)').bind(orgId,JSON.stringify(submissionPublicKey)));
+  if(submissionPublicKey)statements.push(db.prepare('INSERT INTO org_private_submission_keys VALUES(?,?,?)').bind(orgId,JSON.stringify(submissionPublicKey)));
   for(const scope of KEY_SCOPES) {
     const key=keys.find(k=>k.scope===scope);
     if(!key||Object.keys(key).some(k=>!['scope','check','archive','wrapped_key','recovery'].includes(k))||!isCiphertext(key.check,contentContext(orgId,'scope-check/'+scope,orgId))||!isCiphertext(key.archive,contentContext(orgId,'scope-archive/'+scope,orgId))||!validWrappedKey(key.wrapped_key)||!validRecoveryPayload(key.recovery)||Object.keys(key.recovery).some(k=>!['salt','iv','ct'].includes(k)))throw new Error('INVALID_SCOPED_KEY');
@@ -100,6 +100,6 @@ export async function provisionOwnScopedDevice({env,request,orgId}) {
     statements.push(db.prepare('INSERT INTO org_private_scope_recovery VALUES(?,?,?,?) ON CONFLICT(org_id,scope,user_id) DO UPDATE SET payload=excluded.payload').bind(orgId,k.scope,gate.user.sub,JSON.stringify(k.recovery)));
   }
   statements.push(db.prepare('DELETE FROM org_private_key_assertions WHERE org_id=?').bind(orgId));
-  try{await db.batch(statements);}catch(e){if(/CHECK constraint failed/.test(e.message))return bad(409,'PRIVATE_KEY_ROSTER_CHANGED');throw e;}
+  try{await db.batch(statements);}catch(e){const detail=`${e?.code||''} ${e?.message||''}`;if(/CHECK constraint failed|SQLITE_CONSTRAINT_CHECK|org_private_key_assertions/.test(detail))return bad(409,'PRIVATE_KEY_ROSTER_CHANGED');throw e;}
   return json({ok:true});
 }

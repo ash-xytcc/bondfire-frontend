@@ -1,6 +1,7 @@
 import { deletePrivateFileBlobs } from './privateBlobs.js';
 import { getDb, requireOrgRole } from './auth.js';
 import { bad, json } from './http.js';
+import { requireCookieCsrf } from './csrf.js';
 import { PRIVATE_CONTENT, PRIVATE_KINDS, contentContext, isCiphertext } from '../../../shared/privateContent.js';
 import {ensurePublicationSchema} from './privatePublication.js';
 
@@ -28,10 +29,13 @@ export async function privateRecords({ env, request, orgId, kind, id = '' }) {
   const contract = PRIVATE_CONTENT[kind];
   if (!contract) return bad(404, 'PRIVATE_CONTENT_KIND_UNKNOWN');
   const method = request.method;
+  if (method !== 'GET') {
+    const csrf = requireCookieCsrf(request);
+    if (csrf) return csrf;
+  }
   const minRole = method === 'GET' ? (contract.read || 'viewer') : method === 'DELETE' ? (contract.remove || 'admin') : (contract.write || 'member');
   const gate = await requireOrgRole({ env, request, orgId, minRole });
   if (!gate.ok) return gate.resp;
-  if (method === 'GET' && contract.read === 'admin' && !['admin','owner'].includes(String(gate.role || '').toLowerCase())) return bad(403, 'INSUFFICIENT_ROLE');
   const db = getDb(env);
   await ensurePrivateSchema(db);
   const state = await getPrivateMode(env, orgId);

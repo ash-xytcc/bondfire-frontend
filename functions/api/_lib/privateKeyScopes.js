@@ -90,9 +90,9 @@ export async function provisionOwnScopedDevice({env,request,orgId}) {
   const db=getDb(env);await ensureScopedKeys(db);
   const b=await request.json().catch(()=>null);
   if(!b||Object.keys(b).some(k=>!['epoch','device_id','keys'].includes(k))||!Array.isArray(b.keys))return bad(400,'INVALID_SCOPED_KEY');
-  if(!await db.prepare('SELECT device_id FROM user_device_keys WHERE user_id=? AND device_id=?').bind(gate.user.sub,b.device_id).first())return bad(400,'KEY_RECIPIENT_DEVICE_UNKNOWN');
   const state=await db.prepare('SELECT epoch FROM org_private_key_state WHERE org_id=?').bind(orgId).first();
   if(!state||b.epoch!==state.epoch)return bad(409,'PRIVATE_KEY_ROSTER_CHANGED');
+  if(!await db.prepare('SELECT device_id FROM user_device_keys WHERE user_id=? AND device_id=?').bind(gate.user.sub,b.device_id).first())return bad(400,'KEY_RECIPIENT_DEVICE_UNKNOWN');
   const expected=new Set(KEY_SCOPES.filter(scope=>canReadScope(gate.role,scope)));
   for(const k of b.keys)if(!expected.delete(k.scope)||Object.keys(k).some(f=>!['scope','wrapped_key','recovery'].includes(f))||!validWrappedKey(k.wrapped_key)||!validRecoveryPayload(k.recovery)||Object.keys(k.recovery).some(f=>!['salt','iv','ct'].includes(f)))return bad(400,'INVALID_SCOPED_KEY');
   if(expected.size)return bad(400,'KEY_RECIPIENT_MISSING');

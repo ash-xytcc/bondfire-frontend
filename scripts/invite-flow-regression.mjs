@@ -91,11 +91,11 @@ assert.equal(sqlite.prepare("SELECT role FROM org_memberships WHERE org_id='org-
 assert.equal(sqlite.prepare('SELECT uses FROM invites WHERE code=?').get(created.invite.code).uses, 1);
 assert.equal(sqlite.prepare("SELECT COUNT(*) AS n FROM org_memberships WHERE org_id='org-b' AND user_id='member'").get().n, 0, 'redeeming one org invite must not create another membership');
 
-// Re-redeeming while already a member is harmless and must not consume another use.
+// A one-use code stays exhausted after redemption, even for the member who used it.
 await read(await redeemInvite({
   env,
   request: request('/api/invites/redeem', 'member', { code: created.invite.code }),
-}), 200);
+}), 400);
 assert.equal(sqlite.prepare('SELECT uses FROM invites WHERE code=?').get(created.invite.code).uses, 1);
 
 await read(await redeemInvite({

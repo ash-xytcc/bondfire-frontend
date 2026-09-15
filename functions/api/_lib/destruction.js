@@ -134,8 +134,8 @@ async function deleteStorageCopies(env, db, orgId) {
   const drive = getDriveBucket(env);
   const legacyKeys = await driveStorageKeys(db, orgId);
   const privateKeys = await privateBlobStorageKeys(db, orgId);
-  const keys = [...new Set([...legacyKeys, ...privateKeys])];
-  if (!drive && keys.length) {
+  const directKeys = [...new Set([...legacyKeys, ...privateKeys])];
+  if (!drive && directKeys.length) {
     if (privateKeys.length) throw new Error('ENCRYPTED_FILE_BUCKET_REQUIRED');
     if (!(await tableExists(db, 'drive_file_blobs'))) throw new Error('DRIVE_STORAGE_UNAVAILABLE');
     const missing = await db.prepare(`SELECT f.id FROM drive_files f LEFT JOIN drive_file_blobs b ON b.file_id=f.id AND b.org_id=f.org_id
@@ -144,13 +144,29 @@ async function deleteStorageCopies(env, db, orgId) {
   }
   if (!drive) return 0;
   let deleted = 0;
-  for (const key of keys) {
+  for (const key of directKeys) {
     if (legacyKeys.includes(key)) {
       const other = await db.prepare('SELECT id FROM drive_files WHERE storage_key=? AND org_id<>? LIMIT 1').bind(key, orgId).first();
       if (other) throw new Error('STORAGE_SCOPE_MISMATCH');
     }
     await drive.delete(key);
     deleted += 1;
+  }
+  if (drive.list && drive.delete) {
+    let cursor;
+    const prefix = `${orgId}/drive/`;
+    do {
+      const page = await drive.list({ prefix, ...(cursor ? { cursor } : {}) });
+      for (const object of page?.objects || []) {
+        const key = String(object?.key || '');
+        if (!key.startsWith(prefix)) throw new Error('STORAGE_SCOPE_MISMATCH');
+        if (directKeys.includes(key)) continue;
+        await drive.delete(key);
+        deleted += 1;
+      }
+      cursor = page?.truncated ? page.cursor : null;
+      if (page?.truncated && !cursor) throw new Error('DRIVE_STORAGE_LIST_INCOMPLETE');
+    } while (cursor);
   }
   return deleted;
 }

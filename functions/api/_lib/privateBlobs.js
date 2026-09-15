@@ -54,6 +54,24 @@ export async function deletePrivateBlob(env,orgId,id,fileId) {
   await db.prepare('DELETE FROM org_private_blobs WHERE org_id=? AND id=? AND file_id=?').bind(orgId,id,fileId).run();
 }
 
+export async function cleanupOrphanedPrivateBlobs(env,orgId,{olderThanMs=24*60*60*1000,now=Date.now()}={}) {
+  const db=getDb(env);await ensurePrivateBlobs(db);
+  const cutoff=now-olderThanMs;
+  const rows=await db.prepare('SELECT id,file_id,inline_ciphertext FROM org_private_blobs WHERE org_id=? AND created_at<=?').bind(orgId,cutoff).all();
+  let removed=0;
+  for(const row of rows.results||[]) {
+    const attached=await db.prepare("SELECT id FROM org_private_records WHERE org_id=? AND kind='drive/files' AND id=?").bind(orgId,row.file_id).first();
+    if(attached)continue;
+    if(row.inline_ciphertext===null) {
+      const bucket=getDriveBucket(env);if(!bucket)continue;
+      await bucket.delete(objectKey(orgId,row.id));
+    }
+    await db.prepare('DELETE FROM org_private_blobs WHERE org_id=? AND id=?').bind(orgId,row.id).run();
+    removed+=1;
+  }
+  return {removed};
+}
+
 export async function deletePrivateFileBlobs(env,orgId,fileId) {
   const db=getDb(env);await ensurePrivateBlobs(db);
   const rows=await db.prepare('SELECT id,inline_ciphertext FROM org_private_blobs WHERE org_id=? AND file_id=?').bind(orgId,fileId).all();

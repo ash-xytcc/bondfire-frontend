@@ -149,8 +149,11 @@ async function deleteStorageCopies(env, db, orgId) {
       const other = await db.prepare('SELECT id FROM drive_files WHERE storage_key=? AND org_id<>? LIMIT 1').bind(key, orgId).first();
       if (other) throw new Error('STORAGE_SCOPE_MISMATCH');
     }
-    await drive.delete(key);
-    deleted += 1;
+    const existing = drive.get ? await drive.get(key) : true;
+    if (existing) {
+      await drive.delete(key);
+      deleted += 1;
+    }
   }
   if (drive.list && drive.delete) {
     let cursor;

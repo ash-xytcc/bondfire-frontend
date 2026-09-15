@@ -1,16 +1,19 @@
-Bondfire – Patch: remove redundant subnav + use org name on Overview
-==================================================================
+Bondfire
+========
 
-What this patch changes (base code only):
-- Removes the inline text nav ("Overview People Inventory Needs Meetings Settings") from the **Org Overview** page.
-- Replaces the "Org space" heading with the actual org's name (resolved from state).
+Bondfire is the React + Vite frontend and Cloudflare Pages Functions backend for the Bondfire coordination platform.
 
-Files to overwrite in your repo:
-- src/pages/org/Overview.jsx
+Release validation:
 
-How to apply:
-1) Unzip and overwrite the file above inside your source tree.
-2) Rebuild and deploy as usual.
-3) Hard refresh with DevTools → Network → Disable cache.
+  npm install --no-audit --no-fund
+  npm test
+  npm run smoke:thread1
+  npm run build
 
-Generated: 2025-08-17 05:57:03 UTC
+Node.js 24 or newer is required by the current release test suite.
+
+Deployment documentation:
+- Hosted / support configuration: docs/SUPPORT_DEPLOYMENT.md
+- Self-hosting, bindings, D1 setup, upgrades, and backups: docs/SELF_HOSTING.md
+
+Production builds are written to dist/.
